@@ -22,7 +22,7 @@ using namespace RedFoxMaths;
 
 int main() 
 {
-#pragma region Float2Test
+#pragma region Float2
     TEST_SEQ_START("VECTOR 2");
     {
         float expected = glm_vec2_cross(new(vec2){2.f,3.f}, new(vec2){7.f,8.f});
@@ -76,7 +76,7 @@ int main()
     TEST_SEQ_END();
 #pragma endregion
     
-#pragma region Float3Test
+#pragma region Float3
     TEST_SEQ_START("VECTOR 3");
     {
         vec3s expected = {0};
@@ -126,7 +126,7 @@ int main()
     TEST_SEQ_END();
 #pragma endregion
     
-#pragma region Float4Test
+#pragma region Float4
     TEST_SEQ_START("VECTOR 4");
     {
         float expected = glm_vec4_dot(new(vec4){2.f,3.f,4.f,5.f}, new(vec4){7.f,8.f,9.f,10.f});
@@ -385,7 +385,7 @@ int main()
     TEST_SEQ_END();
 #pragma endregion
     
-#pragma QuatTest
+#pragma region Quaternion
     TEST_SEQ_START("QUATERNION");
     {
         versors q = glms_quat_init(1.f,2.f,3.f,4.f);
