@@ -92,5 +92,8 @@
     <ClInclude Include="include\RedfoxMaths.hpp">
       <Filter>Header Files\External Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\OpenGLFunctions.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

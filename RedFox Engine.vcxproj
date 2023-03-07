@@ -149,6 +149,7 @@
     <ClInclude Include="include\Model.hpp" />
     <ClInclude Include="include\MyMemory.hpp" />
     <ClInclude Include="include\ObjParser.hpp" />
+    <ClInclude Include="include\OpenGLFunctions.hpp" />
     <ClInclude Include="include\OpenGLGraphics.hpp" />
     <ClInclude Include="include\RedfoxMaths.hpp" />
     <ClInclude Include="include\Win32Platform.hpp" />
