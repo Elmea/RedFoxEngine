@@ -1,4 +1,6 @@
-#pragma once
+#ifndef REDFOXMATHS
+#define REDFOXMATHS
+//#pragma once
 
 #ifndef PI
 #define PI 3.14159265f
@@ -13,8 +15,8 @@
 
 namespace RedFoxMaths
 {
-#undef near
 #undef far
+#undef near
     // ----------------- [Vector] -----------------
 #pragma region Vector
 
@@ -329,11 +331,15 @@ namespace RedFoxMaths
         Float3 calcNormal(const Float3& p1, const Float3& p2, const Float3& p3);
     }
 #pragma endregion
-
+}
     // ----------------------------------------------------------- [Implementation] -----------------------------------------------------------
 
+
+#endif //REDFOXMATHS
 #ifdef REDFOXMATHS_IMPLEMENTATION
 
+namespace RedFoxMaths
+{
 #pragma region Float2
 
     float Float2::CrossProduct(Float2 other) const
@@ -1527,6 +1533,6 @@ namespace RedFoxMaths
         }
     }
 #pragma endregion
-
-#endif
 }
+#endif
+

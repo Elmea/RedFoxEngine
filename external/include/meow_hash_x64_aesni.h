@@ -125,12 +125,16 @@
 #if !defined(__clang__)
 #define INSTRUCTION_REORDER_BARRIER _ReadWriteBarrier()
 #else
+#include <x86intrin.h>
+#include <wmmintrin.h>
+#include <tmmintrin.h>
+#include <smmintrin.h>
 #endif
 #include <intrin.h>
 #else
 #include <x86intrin.h>
 #endif
-
+ 
 #define meow_u8 char unsigned
 #define meow_u64 long long unsigned
 #define meow_u128 __m128i

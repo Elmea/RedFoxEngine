@@ -1,52 +1,53 @@
-#include "ObjParser.h"
+#include "ObjParser.hpp"
+
+#define MATHS_HPP_IMPLEMENTATION
+#include "engine_math.hpp"
+
+#define MEMORY_IMPLEMENTATION
+#include "MyMemory.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_NO_STDIO
 #include <STB_Image/stb_image.h>
 
-#include <meow_hash_x64_aesni.h>
-#ifndef MEMORY_IMPLEMENTATION
-#define MEMORY_IMPLEMENTATION
+#ifdef __llvm__
+#include <x86intrin.h>
+#include <intrin.h>
+#include <avxintrin.h>
+#include <avx2intrin.h>
 #endif
-#define MATHS_HPP_IMPLEMENTATION
-#include "engine_math.h"
-
-#include "MyMemory.h"
 
 /*
-Function that uses intrinsics to read 32 bytes by 32 bytes
-until it finds the newline character  - '\n' or the end of string ('\0')
-and advances the str pointer to that character.
+	Function that uses intrinsics to read 32 bytes by 32 bytes
+	until it finds the newline character  - '\n' or the end of string ('\0')
+	and advances the str pointer to that character.
 */
-
-char *
-get_next_line(MyString buffer, char *str)
+char *get_next_line(MyString buffer, char *str)
 {
 	if (*str == '\n' || *str == '\r')     /* If we are on the newline character we try to find the next one. */
 		str = str + 1;
 	__m256i Carriage  = _mm256_set1_epi8('\n');     /* We first load 32 bytes of newline characters into the Carriage 256 bits register. */
-	//	__m256i CarriageR = _mm256_set1_epi8('\r');
 	__m256i Zero      = _mm256_set1_epi8(0);
 
 	/* If the string is smaller than 32 bytes, we can't use the intrinsics,
-	and load 32 bytes at a time. That's why we go byte by byte.       */
+		and load 32 bytes at a time. That's why we go byte by byte.       */
 	while (buffer.size - (str - (char *)buffer.data) >= 32)
 	{
 		__m256i Batch = _mm256_loadu_si256((__m256i *)str);  /* We then load 32 bytes from string into the Batch 256 bits register */
 
 		/* We then check if there are any newline characters in the first string
-		by comparing 32 bytes at a time. The result*/
+			by comparing 32 bytes at a time. The result*/
 		__m256i TestC = _mm256_cmpeq_epi8(Batch, Carriage);
 		__m256i TestZ = _mm256_cmpeq_epi8(Batch, Zero);
 
 		__m256i Test  = _mm256_or_si256(TestC, TestZ);      /* We check if either the '\n' character or '\0' character were found*/
 
 		/* We store the results of the check into a int,
-		transforming the mask from 256 bits, into a 1bit mask*/
+			transforming the mask from 256 bits, into a 1bit mask*/
 		s32 Check = _mm256_movemask_epi8(Test);
 		if(Check)
 		{
-			/* The _tzcnt_u32 counts the numbers of zeros inside the parameter.
+			/* The _tzcnt_u32 func counts the numbers of zeros inside the parameter.
 			In our case it's going to count how many characters different than '\n' there are*/
 
 			s32 Advance = _tzcnt_u32(Check);
@@ -67,25 +68,16 @@ get_next_line(MyString buffer, char *str)
 	return (str);
 }
 
-char
-is_whitespace(char c)
-{
-	if (c == ' ' || c == '\t')
-		return (1);
-	return (0);
-}
-
 /*
-Function that uses intrinsics to read 16 bytes by 16 bytes
-until it finds a character different than space(' ') or tab('\t')
-and advances the str pointer to that character.
+	Function that uses intrinsics to read 16 bytes by 16 bytes
+	until it finds a character different than space(' ') or tab('\t')
+	and advances the str pointer to that character.
 
-It has the exact same logic as the get_next_line above,
-but instead of looking for a character, it looks for the lack of a character.
-*/
+	It has the exact same logic as the func get_next_line above,
+	but instead of looking for a character, it looks for the lack of a character.
+	*/
 
-char *
-get_next_word(char *str)
+char *get_next_word(char *str)
 {
 	__m256i Space   = _mm256_set1_epi8(' ');
 	__m256i Tab     = _mm256_set1_epi8('\t');
@@ -118,8 +110,7 @@ get_next_word(char *str)
 	return (str);
 }
 
-s32
-_digit_value (char c) {
+s32 _digit_value (char c) {
 	s32 ri = c;
 	s32 v = 16;
 
@@ -132,25 +123,28 @@ _digit_value (char c) {
 	return v;
 }
 
-s32
-parse_i64(char *str, s32 size) {
+s32 parse_i32(char *str) {
+	const __m256i zeroCharacter   = _mm256_set1_epi8('0');
+
 	s32 value = 0;
 	char *s = str;
 
 	char neg = 0;
-	if (size > 1) {
-		switch (s[0]) {
-			case '-': {neg = 1; s++; break;}
-			case '+': s++;
-		}
+	switch (s[0]) {
+		case '-': {neg = 1; s++; break;}
+		case '+': s++;
 	}
-	s32 base = 10;
+	const s32 base = 10;
 	s32 i = 0;
 
-	while  (i < size) {
+	__m256i Batch = _mm256_loadu_si256((__m256i *)s);
+	__m256i digitValue = _mm256_sub_epi8(Batch, zeroCharacter);
 
-		s32 v = (s32)_digit_value(s[i]);
-		if (v >= base) {
+	s = (char *)&digitValue;
+	while  (i < 9) {
+
+		s32 v = s[i];
+		if (v >= base || v < 0) {
 			break;
 		}
 		value *= base;
@@ -164,8 +158,7 @@ parse_i64(char *str, s32 size) {
 	return value;
 }
 
-f64
-parse_f64(char *str, s32 size){
+f64 parse_f64(char *str, s32 size){
 	f64 value = 0;
 	char *s = str;
 
@@ -239,8 +232,7 @@ parse_f64(char *str, s32 size){
 	return (value);
 }
 
-vec3
-getvec3(char **str)
+vec3 getvec3(char * __restrict *str)
 {
 	vec3 result;
 
@@ -252,8 +244,7 @@ getvec3(char **str)
 	return (result);
 }
 
-vec2
-getvec2(char **str)
+vec2 getvec2(char * __restrict *str)
 {
 	vec2 result;
 
@@ -263,14 +254,7 @@ getvec2(char **str)
 	return (result);
 }
 
-void FatalError(const char* message, char *file, int line)
-{
-	MessageBoxA(NULL, message, "Error", MB_ICONEXCLAMATION);
-	ExitProcess(0);
-}
-
-void
-initImage(ImageData *result, Memory *memory)
+void initImage(ObjImageData *result, Memory *memory)
 {
 	fileResource file = FileResourceInit((char *)result->path.data, memory);
 	LoadFile(&file, memory);
@@ -286,49 +270,53 @@ initImage(ImageData *result, Memory *memory)
 	fileResource imageFile = FileResourceInit(tempBuffer, memory);
 	LoadFile(&imageFile, memory);
 	if (imageFile.handle != INVALID_HANDLE_VALUE) {
-		ImageData temp;
-		temp = *((ImageData *)imageFile.data);
+		ObjImageData temp;
+		temp = *((ObjImageData *)imageFile.data);
 		if (result->hash64 == temp.hash64) {
 			result->width  = temp.width;
 			result->height = temp.height;
 			result->nrChannels = temp.nrChannels;
-			result->imageSize = imageFile.size;
-			result->data = (unsigned char *)((size_t)imageFile.data + sizeof(ImageData));
+			result->data = (unsigned char *)((size_t)imageFile.data + sizeof(ObjImageData));
 		}
 		else {
-			FatalError("Invalid hashed image file", __FILE__, __LINE__);
+			__debugbreak();
+			//			FatalError("Invalid hashed image file");
 		}
 
 		CloseHandle(imageFile.handle);
 	} else {
+		// TODO(V. Caraulan): check if texture loaded before
 		stbi_set_flip_vertically_on_load(1);
-		result->data = stbi_load_from_memory(file.data, file.size, &result->width, &result->height, &result->nrChannels, STBI_rgb_alpha);
+		result->data = stbi_load_from_memory((u8 *)file.data, file.size, &result->width, &result->height, &result->nrChannels, STBI_rgb_alpha);
 
 		HANDLE File = CreateFileA(tempBuffer,
-								  GENERIC_WRITE,
-								  FILE_SHARE_WRITE | FILE_SHARE_READ,
-								  NULL,
-								  CREATE_NEW,
-								  FILE_ATTRIBUTE_NORMAL,
-								  NULL);
+		                          GENERIC_WRITE,
+		                          FILE_SHARE_WRITE | FILE_SHARE_READ,
+		                          NULL,
+		                          CREATE_NEW,
+		                          FILE_ATTRIBUTE_NORMAL,
+		                          NULL);
 		DWORD bytesWritten = 0;
-		WriteFile(File, result, sizeof(ImageData), &bytesWritten, NULL);
-		WriteFile(File, result->data, result->width * result->height * result->nrChannels, &bytesWritten, NULL);
+		WriteFile(File, result, sizeof(ObjImageData), &bytesWritten, NULL);
+		WriteFile(File, result->data, result->width * result->height * STBI_rgb_alpha, &bytesWritten, NULL);
+#ifdef DEBUG
 		DWORD LastError = GetLastError();
 
 		CloseHandle(File);
+
+		LastError = GetLastError();
+#endif
 	}
 }
 
-Material
-initMaterial()
+ObjMaterial initMaterial()
 {
-	Material result = {0};
+	ObjMaterial result = {};
 
-	result.ambient    = {0.2f, 0.2f, 0.2f};
-	result.diffuse    = {0.8f, 0.8f, 0.8f};
-	result.specular   = {0};
-	result.emissive   = {0};
+	result.ambient    = {{0.2f, 0.2f, 0.2f}};
+	result.diffuse    = {{0.8f, 0.8f, 0.8f}};
+	result.specular   = {{0}};
+	result.emissive   = {{0}};
 	result.Shininess  = 25.f;
 	result.Opaqueness = 1;
 	return (result);
@@ -336,53 +324,102 @@ initMaterial()
 
 
 typedef struct ParameterImageThread{
-	ImageData *result;
+	ObjImageData *result;
 	u64 	   count;
 	Memory *memory;
 } ParameterImageThread;
 
 void initImageThread(void *parameter)
 {
-	ParameterImageThread*p = (ParameterImageThread *)parameter;
-	for (int i = 0; i < p->count; i++)
-	{
+	ParameterImageThread *p = (ParameterImageThread *)parameter;
+	for (int i = 0; i < (int)p->count; i++)
 		initImage(&p->result[i], p->memory);
-	}
 }
 
-ObjMaterials
-ParseMTL(MyString buffer, ObjImages *ImagesOut, Memory *imageMem, Memory *meshMem)
+/*
+	Takes the path to .obj file, the file contents inside a MyString struct, a pointer to the images array,
+	and the arena allocators for image, and meshes, also a temporary that can get discarded imediately.
+
+	The separate arenas are here to allow multithreaded loading, and freeing of memory at 
+	different steps after the function LoadModel returns.
+
+	The meshes have a material index that coresponds to a material inside materials array 
+	The materials have an index to the image inside the images array
+
+	Return - the function returns the array of materials
+*/
+ObjMaterials ParseMTL(const char *objPath, MyString objBuffer, ObjImages *ImagesOut,
+					  Memory *imageMem, Memory *meshMem, Memory *tempMem)
 {
-	ObjMaterials result = { 0 };
+	ObjMaterials result = {};
+	char mtlLibFilePath[255];
 
-	char *current = (char *)buffer.data;
-	char *endOfLine = (char *)buffer.data;
-	int i = -1;
+	char *mtlLib = nullptr;
+	int pathLen = 0;
+	for (pathLen = 0; objPath[pathLen]; pathLen++)
+		;
+	for(int i = 0; i < (int)objBuffer.size; i++)
+	{
+		if (StringsAreEqual({6, 6 ,&objBuffer.data[i]}, {6, 6, "mtllib"}))
+		{
+			mtlLib = (char *)&objBuffer.data[i + 7];
+			break;
+		}
+	}
+	if (mtlLib)
+		my_strncpy_s(mtlLibFilePath, 255, objPath, pathLen);
 
-	// TODO(V. Caraulan): Return default material in case of empty buffer
+	int i = 0;
+	while (mtlLibFilePath[i] != '\0')
+		i++;
+	while ((!(mtlLibFilePath[i] == '/' || mtlLibFilePath[i] == '\\')) && i >= 0)
+		i--;
+	i++;
+	s64 j = 0;
+	if (mtlLib != NULL)
+	{
+		while (mtlLib[j] != '\n' && mtlLib[j] != '\t' && mtlLib[j] != '\r')
+		{
+			mtlLibFilePath[i] = mtlLib[j++];
+			i++;
+		}
+		mtlLibFilePath[i] = '\0';
+	}
+
+	fileResource mtlLibData = FileResourceInit(mtlLibFilePath, tempMem);
+	LoadFile(&mtlLibData, tempMem);
+
+	if (mtlLibData.handle)
+		CloseHandle(mtlLibData.handle);
+
+	char *current = (char *)mtlLibData.data;
+	char *endOfLine = (char *)mtlLibData.data;
+
+	i = -1;
 
 	while (*endOfLine != '\0')
 	{
 		current = endOfLine;
 		while (*current == '#')
-			current = get_next_line(buffer, current) + 1;
+			current = get_next_line(mtlLibData.file, current) + 1;
 		endOfLine = get_next_word(current);
-		MyString temp = { 7, 7, (u8 *)"newmtl " };
-		if (StringsAreEqual_C(temp, current, NULL))
+		if (StringsAreEqual_C({ 7, 7, "newmtl "}, current, NULL))
 			result.count++;
 	}
-	result.material = (Material *)MyMalloc(meshMem, sizeof(Material) * result.count);
-	ImagesOut->data = (ImageData *)MyMalloc(imageMem, sizeof(ImageData) * result.count);
+	result.material = (ObjMaterial *)MyMalloc(meshMem, sizeof(ObjMaterial) * result.count);
+	ImagesOut->data = (ObjImageData *)MyMalloc(imageMem, sizeof(ObjImageData) * result.count);
 	ParameterImageThread *para = (ParameterImageThread *)MyMalloc(imageMem, sizeof(ParameterImageThread));
-	current = (char *)buffer.data;
-	endOfLine = (char *)buffer.data;
+
+	current = (char *)mtlLibData.data;
+	endOfLine = (char *)mtlLibData.data;
+
 	while (*endOfLine != '\0')
 	{
 		current = endOfLine;
 		while (*current == '#')
-			current = get_next_line(buffer, current) + 1;
+			current = get_next_line(mtlLibData.file, current) + 1;
 		endOfLine = get_next_word(current);
-		if (StringsAreEqual_C({ 7, 7, (u8 *)"newmtl " }, current, NULL))
+		if (StringsAreEqual_C({ 7, 7, "newmtl " }, current, NULL))
 		{
 			i++;
 			result.material[i] = initMaterial();
@@ -394,9 +431,9 @@ ParseMTL(MyString buffer, ObjImages *ImagesOut, Memory *imageMem, Memory *meshMe
 				   current[j + 7] != '\0')
 				j++;
 			result.material[i].name = initStringChar(&current[7], j, meshMem);
-			endOfLine = get_next_line(buffer, current) + 1;
+			endOfLine = get_next_line(mtlLibData.file, current) + 1;
 		}
-		if (StringsAreEqual_C({ 7, 7, (u8 *)"map_Kd " }, current, NULL))
+		if (StringsAreEqual_C({ 7, 7, "map_Kd " }, current, NULL))
 		{
 			result.material[i].hasTexture = 1;
 			int j = 0;
@@ -407,7 +444,7 @@ ParseMTL(MyString buffer, ObjImages *ImagesOut, Memory *imageMem, Memory *meshMe
 				j++;
 			ImagesOut->data[ImagesOut->count].path = initStringChar(&current[7], j, meshMem);
 			u8 found = 0;
-			for (int k = 0; k < ImagesOut->count; k++)
+			for (int k = 0; k < (int)ImagesOut->count; k++)
 			{
 				if (k != i && StringsAreEqual(ImagesOut->data[ImagesOut->count].path, ImagesOut->data[k].path))
 				{
@@ -418,50 +455,50 @@ ParseMTL(MyString buffer, ObjImages *ImagesOut, Memory *imageMem, Memory *meshMe
 			}
 			if (!found)
 			{
+//				initImage(&ImagesOut->data[ImagesOut->count], imageMem);
 				result.material[i].diffuseMap.index0 = ImagesOut->count;
 				ImagesOut->count++;
 			}
 			//TODO else remove the path allocation from ImagesOut
-			endOfLine = get_next_line(buffer, current) + 1;
+			endOfLine = get_next_line(mtlLibData.file, current) + 1;
 		}
-		else if (StringsAreEqual_C({ 3, 3, (u8 *)"Kd " }, current, NULL))
+		else if (StringsAreEqual_C({ 3, 3, "Kd " }, current, NULL))
 		{
 			current = get_next_word(current);
 			result.material[i].diffuse = getvec3(&current);
-			endOfLine = get_next_line(buffer, current) + 1;
+			endOfLine = get_next_line(mtlLibData.file	, current) + 1;
 		}
-		else if (StringsAreEqual_C({ 3, 3, (u8 *)"Ks " }, current, NULL))
+		else if (StringsAreEqual_C({ 3, 3, "Ks " }, current, NULL))
 		{
 			current = get_next_word(current);
 			result.material[i].specular = getvec3(&current);
-			endOfLine = get_next_line(buffer, current) + 1;
+			endOfLine = get_next_line(mtlLibData.file, current) + 1;
 		}
-		else if (StringsAreEqual_C( { 3, 3, (u8 *)"Ke " }, current, NULL))
+		else if (StringsAreEqual_C({ 3, 3, "Ke " }, current, NULL))
 		{
 			current = get_next_word(current);
 			result.material[i].emissive = getvec3(&current);
-			endOfLine = get_next_line(buffer, current) + 1;
+			endOfLine = get_next_line(mtlLibData.file , current) + 1;
 		}
-		else if (StringsAreEqual_C({ 2, 2, (u8 *)"d " }, current, NULL))
+		else if (StringsAreEqual_C({ 2, 2, "d " }, current, NULL))
 		{
 			current = get_next_word(current);
 			result.material[i].Opaqueness = (f32)parse_f64(current, 32);
-			endOfLine = get_next_line(buffer, current) + 1;
+			endOfLine = get_next_line(mtlLibData.file, current) + 1;
 		}
 	}
 	para[0] = {ImagesOut->data,ImagesOut->count, imageMem};
-	ImagesOut->thread = CreateThread(NULL,                                    //[in, optional]  LPSECURITY_ATTRIBUTES   lpThreadAttributes,
-									 sizeof(ParameterImageThread),            //[in]            SIZE_T                  dwStackSize,
-									 (LPTHREAD_START_ROUTINE)initImageThread, //[in]            LPTHREAD_START_ROUTINE  lpStartAddress,
-									 &para[0],                 //[in, optional]  __drv_aliasesMem LPVOID lpParameter,
-									 0,                                       //[in]            DWORD                   dwCreationFlags,
-									 NULL);                                   //[out, optional] LPDWORD                 lpThreadId
+	ImagesOut->thread = CreateThread(NULL,										//[in, optional]  LPSECURITY_ATTRIBUTES   lpThreadAttributes,
+									 sizeof(ParameterImageThread),						//[in]            SIZE_T                  dwStackSize,
+									 (LPTHREAD_START_ROUTINE)initImageThread,	//[in]            LPTHREAD_START_ROUTINE  lpStartAddress,
+									 &para[0],																//[in, optional]  __drv_aliasesMem LPVOID lpParameter,
+									 0,																				//[in]            DWORD                   dwCreationFlags,
+									 NULL);																		//[out, optional] LPDWORD                 lpThreadId
 	return result;
 }
 
 
-void
-Countvector2(char * __restrict current, s64 * __restrict Count, vec2 **  __restrict v, Memory *  __restrict temp, int * __restrict size)
+void Countvector2(char * __restrict current, s64 * __restrict Count, vec2 **  __restrict v, Memory *  __restrict temp, u32 * __restrict size)
 {
 	if (*Count >= *size)
 	{
@@ -473,10 +510,8 @@ Countvector2(char * __restrict current, s64 * __restrict Count, vec2 **  __restr
 	*Count = *Count + 1;
 }
 
-void
-Countvector3(char * __restrict current, s64 * __restrict Count, vec3 ** __restrict v, Memory * __restrict temp, int * __restrict size)
+void Countvector3(char * __restrict current, s64 * __restrict Count, vec3 ** __restrict v, Memory * __restrict temp, u32 * __restrict size)
 {
-	vec3 zero = {};
 	if (*Count >= *size)
 	{
 		MyMalloc(temp, sizeof(vec3) * *size);
@@ -484,13 +519,8 @@ Countvector3(char * __restrict current, s64 * __restrict Count, vec3 ** __restri
 	}
 	current = get_next_word(current);
 	(*v)[*Count] = getvec3(&current);
-	//if (memcmp(&((*v)[*Count]), &zero, sizeof(vec3)) == 0)
-	//__debugbreak();
 	*Count = *Count + 1;
 }
-
-
-//typedef DWORD (__stdcall *LPTHREAD_START_ROUTINE) ([in] LPVOID lpThreadParameter);
 
 typedef struct VertexKey
 {
@@ -499,29 +529,33 @@ typedef struct VertexKey
 	VertexKey		*next;
 } VertexKey;
 
-int
-ParseModel(ObjModel *result, char *path)
+/*
+	Takes the model it will output, and the path to the obj file
+
+	Returns a value less than 0 if an error occurs
+	                          0 if it succeds (not all error states are handled)
+*/
+int ParseModel(ObjModel *result, const char *path)
 {
+	if (result == nullptr)
+		return (-3);
+	*result = {};
 	ObjParsingObject tempParser = {};
 
-	result->meshMem = InitVirtualMemory(1ULL * GigaByte);
-	result->vertexMem = InitVirtualMemory(1ULL * GigaByte);
-	result->indexMem = InitVirtualMemory(1ULL * GigaByte);
-	result->imageMem = InitVirtualMemory(1ULL * GigaByte);
-
-	Memory temporary = InitVirtualMemory(1ULL * GigaByte);
-
+	result->meshMem   = InitVirtualMemory(1ULL * GigaByte);
+	result->imageMem  = InitVirtualMemory(1ULL * GigaByte);
+	Memory temporary  = InitVirtualMemory(1ULL * GigaByte);
+	
 	fileResource objFile = FileResourceInit(path, &temporary);
 	LoadFile(&objFile, &temporary);
 
-	// TODO(V. Caraulan): deinit memory
 	if (objFile.handle == INVALID_HANDLE_VALUE)
 		return -1;
 
 	if (objFile.data == NULL)
-		return -1;
+		return -2;
 
-	char *mtlLib;
+	result->materials = ParseMTL(path, objFile.file, &result->images, &result->imageMem, &result->meshMem, &temporary);
 
 	u64 start = __rdtsc();
 	u64 end;
@@ -532,194 +566,196 @@ ParseModel(ObjModel *result, char *path)
 	QueryPerformanceCounter(&StartingTime);
 
 	char OutputStringDebug[254];
-	Memory tempVertexMem  = InitVirtualMemory(1LL * GigaByte);
+	Memory tempPosition				= InitVirtualMemory(1LL * GigaByte);
+	Memory tempNormal					= InitVirtualMemory(1LL * GigaByte);
+	Memory tempTexture				= InitVirtualMemory(1LL * GigaByte);
+	Memory tempVertexIndexMem	= InitVirtualMemory(1LL * GigaByte);
+	Memory tempVertexHashMem	= InitVirtualMemory(1LL * GigaByte);
 
-	Memory tempVertexHashMem  = InitVirtualMemory(1LL * GigaByte);
+	result->vertexMem = InitVirtualMemory(1ULL * GigaByte);
+	result->indexMem  = InitVirtualMemory(1ULL * GigaByte);
 
-	Memory tempPosition= InitVirtualMemory(1LL * GigaByte);
-	Memory tempNormal  = InitVirtualMemory(1LL * GigaByte);
-	Memory tempTexture = InitVirtualMemory(1LL * GigaByte);
+	u32 vertexSize = 1024 * 4;
+	u32 posSize    = 1024 * 4;
+	u32 normalSize = 1024 * 4;
+	u32 uvSize     = 1024 * 4;
+  u32 vertexIndicesSize = 1024 * 4;
+	
+	tempParser.position  = (vec3*)MyMalloc(&tempPosition, sizeof(vec3) * posSize);
+	tempParser.normal    = (vec3*)MyMalloc(&tempNormal,   sizeof(vec3) * normalSize);
+	tempParser.textureUV = (vec2*)MyMalloc(&tempTexture,  sizeof(vec2) * uvSize);
+	tempParser.vertexIndices = (ObjVertexIndex*)MyMalloc(&tempVertexIndexMem, sizeof(ObjVertexIndex) * vertexIndicesSize);
+	
+	result->meshes = (ObjMesh *)MyMalloc(&result->meshMem, sizeof(ObjMesh));
+	
+	__m256i MaterialChar     = _mm256_set1_epi8('m');
+	__m256i VertexIndexBegin = _mm256_set1_epi8('f');
+	__m256i VertexBegin      = _mm256_set1_epi8('v');
 
-	int posSize    = 3;
-	int normalSize = 3;
-	int uvSize     = 3;
-	int indexSize  = 3;
-	int vertexSize = 3;
+	char *current   = (char *)objFile.data;
+	char *endOfLine = (char *)objFile.data;
 
-	result->vertices = (ObjVertex*)MyMalloc(&result->vertexMem, sizeof(ObjVertex) * vertexSize);
-	result->indices  = (u32 *)MyMalloc(&result->indexMem , sizeof(u32) * indexSize);
-	tempParser.verticesIndices = (ObjVertexIndex*)MyMalloc(&tempVertexMem, sizeof(ObjVertexIndex) * indexSize);
-	tempParser.position        = (vec3*)MyMalloc(&tempPosition, sizeof(vec3) * posSize);
-	tempParser.normal          = (vec3*)MyMalloc(&tempNormal,  sizeof(vec3) * normalSize);
-	tempParser.textureUV       = (vec2*)MyMalloc(&tempTexture, sizeof(vec2) * uvSize);
-
-	//	struct { ObjVertexIndex key; u32 value; } *hash = NULL;
-	//	hmdefault(hash, -1);
-	int deduplicates = 0;
-
-	char ended = 0;
-	char parsed = 0;
+	while (objFile.size - (current - (char *)objFile.data) >= 32)
 	{
-		mtlLib = NULL;
-		__m256i MaterialChar     = _mm256_set1_epi8('m');
-		__m256i VertexIndexBegin = _mm256_set1_epi8('f');
-		__m256i VertexBegin      = _mm256_set1_epi8('v');
+		current = endOfLine;
 
-		size_t currentRead = 0;
+		while (*current == '#')
+			current = get_next_line(objFile.file, current) + 1;
 
-		char *current   = (char *)objFile.data;
-		char *endOfLine = (char *)objFile.data;
-		while (objFile.size - (current - (char *)objFile.data) >= 32)
-		{
-			current = endOfLine;
+		__m256i Batch       = _mm256_loadu_si256((__m256i *)current);
+		__m256i TestM       = _mm256_cmpeq_epi8(Batch, MaterialChar);
+		__m256i TestF       = _mm256_cmpeq_epi8(Batch, VertexIndexBegin);
+		__m256i TestV       = _mm256_cmpeq_epi8(Batch, VertexBegin);
 
-			while (*current == '#')
-				current = get_next_line(objFile.file, current) + 1;
-
-			__m256i Batch       = _mm256_loadu_si256((__m256i *)current);
-			__m256i TestM       = _mm256_cmpeq_epi8(Batch, MaterialChar);
-			__m256i TestF       = _mm256_cmpeq_epi8(Batch, VertexIndexBegin);
-			__m256i TestV       = _mm256_cmpeq_epi8(Batch, VertexBegin);
-
-			int Check  = 0;
-			int Count  = 0;
+		int Check  = 0;
+		if ((Check = _mm256_movemask_epi8(TestV))) {
+			char *tempStr = current;
+			tempStr += _tzcnt_u32(Check) + 1;
+			char parsed = 0;
+			switch (*tempStr)
+			{
+				case ' ': Countvector3(tempStr, &tempParser.PosCount      , &tempParser.position , &tempPosition, &posSize);   parsed = 1; break;
+				case 't': Countvector2(tempStr, &tempParser.TextureUVCount, &tempParser.textureUV, &tempTexture , &uvSize);    parsed = 1; break;
+				case 'n': Countvector3(tempStr, &tempParser.NormalCount   , &tempParser.normal   , &tempNormal  , &normalSize);parsed = 1; break;
+			}
+			if (parsed)
+				current = tempStr;
+		}
+		else if ((Check = _mm256_movemask_epi8(TestM))) {
+			int advance = 1;
 			char *temp = current;
-
-			if (Check = _mm256_movemask_epi8(TestV)) {
-				char *tempStr = current;
-				tempStr += _tzcnt_u32(Check) + 1;
-				char tempParsed = parsed;
-				parsed = 0;
-				switch (*tempStr)
+			int strCount = 0;
+			while (strCount < 32 && Check && advance)
+			{
+				bool found = false;
+				advance = _tzcnt_u32(Check);
+				strCount += advance;
+				//TODO count meshes from g and o, materials from mtl file
+				if (StringsAreEqual_C({6, 6, "usemtl"}, temp + advance - 3, NULL))
 				{
-					case ' ': Countvector3(tempStr, &tempParser.PosCount, &tempParser.position, &tempPosition, &posSize);parsed = ' '; break;
-					case 'n': Countvector3(tempStr, &tempParser.NormalCount, &tempParser.normal, &tempNormal, &normalSize);parsed = 'n'; break;
-					case 't': Countvector2(tempStr, &tempParser.TextureUVCount, &tempParser.textureUV, &tempTexture, &uvSize);parsed = 't'; break;
-				}
-				if (parsed)
-				{
-					if (ended != parsed) // TODO(V. Caraulan): DELETE ???
-						ended = parsed;
-					current = tempStr;
-				}
-				else
-					parsed = tempParsed;
-			}
-
-			if (Check = _mm256_movemask_epi8(TestM)) {
-				int Advance = 1;
-				temp = current;
-				Count = 0;
-				while (Count < 32 && Check && Advance)
-				{
-					Advance = _tzcnt_u32(Check);
-					Count += Advance;
-					if (StringsAreEqual_C({6, 6, (u8 *)"mtllib"}, temp + Advance, NULL))
-						mtlLib = temp + Advance + 7;
-					else if (StringsAreEqual_C({6, 6, (u8 *)"usemtl"}, temp + Advance - 3, NULL))
-						result->materials.count++; // TODO(V. Caraulan): remove this
-					else
-						break;
-					Check = Check << Advance;
-					temp += Advance;
-				}
-			}
-
-			if (Check = _mm256_movemask_epi8(TestF)) {
-				temp = current;
-				int Advance = 1;
-				Count = 0;
-				int j = 0;
-				while (Count < 32 && Check && Advance)
-				{
-					Advance = _tzcnt_u32(Check);
-					Count += Advance;
-					temp += Advance;
-					if (temp[0] != 'f' && temp[1] != ' ')
-					{
-						break;
-						__debugbreak();
+					MyMalloc(&result->meshMem, sizeof(ObjMesh));
+					if (result->meshCount >= 1) {
+						result->meshes[result->meshCount].indexStart = result->indexCount;
+						result->meshes[result->meshCount - 1].indexCount  = result->indexCount - result->meshes[result->meshCount - 1].indexStart;
 					}
-					else
-					{
-						parsed = 'f';
-						if (ended != parsed)
+
+					result->meshes[result->meshCount].materialIndex = -1;
+					int j = 0;
+					for (j = 0; j < (int)result->materials.count; j++) {
+						if (StringsAreEqual_C(result->materials.material[j].name, temp + advance + 4, " \t\n\r"))
 						{
-							ended = parsed;
+							result->meshes[result->meshCount].materialIndex = j;
+							break;
 						}
 					}
-					for (s64 i = 0; temp[i] != '\n' && temp[i + 1] != '\r' && temp[i + 1] != '\n'; i++)
+
+					if (result->meshes[result->meshCount].materialIndex == (u32)-1)
+						__debugbreak(); //FatalError("Material unassigned");
+					result->meshCount++;
+					found = true;
+				}
+				Check = Check << advance;
+				temp += advance;
+				if (found)
+					current = temp;
+			}
+		}
+		else if ((Check = _mm256_movemask_epi8(TestF))) {
+			char *temp = current;
+			int Advance = 1;
+			Advance = _tzcnt_u32(Check);
+			temp += Advance;
+			Check = Check << Advance;
+			int i = 0;
+			int j = 0;
+			while (*current != 's' && temp[i] != '\n' && temp[i] != '\r')
+			{
+				if (result->indexCount >= vertexIndicesSize)
+				{
+					MyMalloc(&tempVertexIndexMem, sizeof(ObjVertexIndex) * vertexIndicesSize);
+					vertexIndicesSize *= 2;
+				} 
+				int tempIndex = parse_i32(&temp[i + 1]) - 1;
+				switch (temp[i])
+				{
+					case ' ':
+					case '/':
 					{
-						if (temp[i] == ' ' || temp[i] == '/')
+						if (tempIndex != -1)
 						{
-							if (result->IndexCount >= indexSize)
-							{
-								MyMalloc(&result->indexMem , sizeof(u32) * indexSize);
-								MyMalloc(&tempVertexMem, sizeof(ObjVertexIndex) * indexSize);
-								indexSize *= 2;
-							}
-							s64 TempIndex = parse_i64(&temp[i + 1], 32);
-							if(TempIndex == 0)
-							{
-								//__debugbreak();
-								break;
-							}
-							else if (TempIndex - 1 < 0)
+#ifdef DEBUG
+							if(tempIndex > tempParser.PosCount && j % 3 == 0)
 								__debugbreak();
-							if (j % 3 == 0)
-								tempParser.verticesIndices[result->IndexCount].positionIndex = TempIndex - 1;
-							else if (j % 3 == 1)
-								tempParser.verticesIndices[result->IndexCount].textureIndex = TempIndex - 1;
-							else if (j % 3 == 2)
+							if(tempIndex > tempParser.NormalCount && j % 3 == 2)
+								__debugbreak();
+							if(tempIndex > tempParser.TextureUVCount && j % 3 == 1)
+								__debugbreak();
+#endif
+							switch(j % 3)
 							{
-								tempParser.verticesIndices[result->IndexCount].normalIndex = TempIndex - 1;
-								result->indices[result->IndexCount] = result->IndexCount;
-								result->IndexCount++;
+								case 0: tempParser.vertexIndices[result->indexCount].positionIndex = tempIndex; break;
+								case 1: tempParser.vertexIndices[result->indexCount].textureIndex  = tempIndex; break;
+								case 2:	tempParser.vertexIndices[result->indexCount++].normalIndex = tempIndex; break;
 							}
 							j++;
 						}
-					}
-					Check = Check << Advance;
+ 					}break;
 				}
+				i++;
 			}
-			endOfLine = get_next_line(objFile.file, current) + 1;
 		}
 
-		if (result->materials.count == 0)
-			result->materials.count = 1;
-		result->meshes = (ObjMesh   *)MyMalloc(&result->meshMem, result->materials.count * sizeof(ObjMesh));
-		// TODO(V. Caraulan): Overcounting meshes
-		result->meshCount = result->materials.count;
+		endOfLine = get_next_line(objFile.file, current) + 1;
+	}
+	if (result->materials.count == 0)
+		result->materials.count = 1;
+	result->indices     = (u32    *)   MyMalloc(&result->indexMem, result->indexCount * sizeof(u32));
+
+	if (result->materials.count == 0)
+	{
+		result->materials.count = 1;
+		result->materials.material  = (ObjMaterial *)MyMalloc(&result->meshMem, sizeof(ObjMaterials) + sizeof(ObjMaterial));
+		*result->materials.material = initMaterial();
 	}
 
-	VertexKey *hash = (VertexKey*)MyMalloc(&tempVertexHashMem, sizeof(VertexKey) * result->IndexCount);
-	VertexKey *tempNext = (VertexKey*)MyMalloc(&tempVertexHashMem, sizeof(VertexKey) * result->IndexCount);
+	result->meshes[result->meshCount - 1].indexCount  = result->indexCount - result->meshes[result->meshCount - 1].indexStart;
+	if (result->meshes[result->meshCount - 1].materialIndex == (u32)-1)
+	{
+		__debugbreak();
+	}
+
+	//Custom hash map with custom hash function to deduplicate vertices
+	result->vertices    = (ObjVertex *)   MyMalloc(&result->vertexMem, result->indexCount * sizeof(ObjVertex));
+	VertexKey *hash = (VertexKey*)MyMalloc(&tempVertexHashMem, sizeof(VertexKey) * result->indexCount);
+	VertexKey *tempNext = (VertexKey*)MyMalloc(&tempVertexHashMem, sizeof(VertexKey) * result->indexCount);
 	u64 listCount = 0;
 
+	int deduplicates = 0;
 	ObjVertexIndex zero = {};
 	u32 tempCount = 0;
 	u32 tempIndex = 0;
 
-	for (int i = 0; i < result->IndexCount; i++)
+	ObjVertexIndex *vertexIndices = tempParser.vertexIndices;
+	for (int i = 0; i < (int)result->indexCount; i++)
 	{
-		meow_u128 Hash = MeowHash(MeowDefaultSeed, sizeof(ObjVertexIndex), &tempParser.verticesIndices[i]);
-		u64 hashSlot = MeowU64From(Hash, 0) % result->IndexCount;
+		// TODO(V. Caraulan): Write a better hash function
+		u64 hashSlot = (int)(vertexIndices[i].positionIndex + vertexIndices[i].normalIndex * 2 + vertexIndices[i].textureIndex * 3) % (result->indexCount);
 		VertexKey *key = hash + hashSlot;
 
 		tempIndex = tempCount;
-		if (tempCount > vertexSize)
+		if (tempCount > (u32)vertexSize)
 		{
 			MyMalloc(&result->vertexMem, sizeof(ObjVertex) * vertexSize);
 			vertexSize *= 2;
 		}
 		if (memcmp(&key->key, &zero, sizeof(ObjVertexIndex)) == 0)
 		{
-			key->key = tempParser.verticesIndices[i];
 			ObjVertex tempVrtx = {
-				tempParser.position [tempParser.verticesIndices[i].positionIndex],
-				tempParser.normal   [tempParser.verticesIndices[i].  normalIndex],
-				tempParser.textureUV[tempParser.verticesIndices[i]. textureIndex]
+				tempParser.position [tempParser.vertexIndices[i].positionIndex],
+				tempParser.normal   [tempParser.vertexIndices[i].  normalIndex],
+				tempParser.textureUV[tempParser.vertexIndices[i]. textureIndex]
 			};
+			key->key = tempParser.vertexIndices[i];
 			result->vertices[tempCount] = tempVrtx;
 			key->index = tempCount;
 			tempCount++;
@@ -729,227 +765,103 @@ ParseModel(ObjModel *result, char *path)
 			VertexKey *current = key;
 			while (current->next != nullptr)
 			{
-				if (memcmp(&current->key, &tempParser.verticesIndices[i], sizeof(ObjVertexIndex)) == 0)
+				if (memcmp(&current->key, &tempParser.vertexIndices[i], sizeof(ObjVertexIndex)) == 0)
 				{
 					tempIndex = current->index;
+					deduplicates++;
 					break;
 				}
 				current = current->next;
 			}
-			if (current->next == nullptr && memcmp(&current->key, &tempParser.verticesIndices[i], sizeof(ObjVertexIndex)) != 0)
+			if (current->next == nullptr && memcmp(&current->key, &tempParser.vertexIndices[i], sizeof(ObjVertexIndex)) != 0)
 			{
+				ObjVertex tempVrtx = {
+					tempParser.position [tempParser.vertexIndices[i].positionIndex],
+					tempParser.normal   [tempParser.vertexIndices[i].  normalIndex],
+					tempParser.textureUV[tempParser.vertexIndices[i]. textureIndex]
+				};
 				current->next = tempNext + listCount;
-				current->next->key = tempParser.verticesIndices[i];
+				current->next->key = tempParser.vertexIndices[i];
 				current->next->index = tempCount;
 				listCount++;
-
-				ObjVertex tempVrtx = {
-					tempParser.position [tempParser.verticesIndices[i].positionIndex],
-					tempParser.normal   [tempParser.verticesIndices[i].  normalIndex],
-					tempParser.textureUV[tempParser.verticesIndices[i]. textureIndex]
-				};
 				result->vertices[tempCount] = tempVrtx;
 				tempIndex = tempCount;
 				tempCount++;
 			}
-			else if(memcmp(&current->key, &tempParser.verticesIndices[i], sizeof(ObjVertexIndex)) == 0)
+			else if(memcmp(&current->key, &tempParser.vertexIndices[i], sizeof(ObjVertexIndex)) == 0)
 			{
+				deduplicates++;
 				tempIndex = current->index;
 			}
 		}
 		result->indices[i] = tempIndex;
 	}
 	result->vertexCount = tempCount;
-
-	if (objFile.data == NULL)
-		return {0};
-
-	if (mtlLib == NULL)
-		result->materials.count = 1;
-	char MtlLibFilePath[255] = {0};
-
-	int pathLen = 0;
-	for (pathLen = 0; path[pathLen]; pathLen++)
-		;
-
-	if (mtlLib)
-		my_strncpy_s(MtlLibFilePath, 255, path, pathLen);
-
-
-	s64 i = 0;
-	while (MtlLibFilePath[i] != '\0')
-		i++;
-	while ((!(MtlLibFilePath[i] == '/' || MtlLibFilePath[i] == '\\')) && i >= 0)
-		i--;
-	i++;
-	s64 j = 0;
-	if (mtlLib != NULL)
-	{
-		while (mtlLib[j] != '\n' && mtlLib[j] != '\t' && mtlLib[j] != '\r')
-		{
-			MtlLibFilePath[i] = mtlLib[j++];
-			i++;
-		}
-		MtlLibFilePath[i] = '\0';
-	}
-
-	fileResource mtlLibData = FileResourceInit(MtlLibFilePath, &temporary);
-	LoadFile(&mtlLibData, &temporary);
-
-	if (mtlLibData.handle)
-		CloseHandle(mtlLibData.handle);
-	if (mtlLibData.file.data)
-		result->materials = ParseMTL(mtlLibData.file, &result->images, &result->imageMem, &result->meshMem);
-
-	char *current = (char *)objFile.data;
-	char *endOfLine = (char *)objFile.data;
-
-	s64 meshIndex      = 0;
-	s64 vertexIndex = 0;
-	while (*endOfLine != '\0') {
-		if (StringsAreEqual_C({6, 6, (u8 *)"usemtl"}, current, NULL)) {
-			if (meshIndex >= 1) {
-				result->meshes[meshIndex].indexStart = vertexIndex;
-				result->meshes[meshIndex - 1].indexCount  = vertexIndex - result->meshes[meshIndex - 1].indexStart;
-			}
-
-			result->meshes[meshIndex].materialIndex = -1;
-			int j = 0;
-			for (j = 0; j < result->materials.count; j++) {
-				if (StringsAreEqual_C(result->materials.material[j].name, &current[7], " \t\n\r"))
-					result->meshes[meshIndex].materialIndex = j;
-			}
-
-			if (result->meshes[meshIndex].materialIndex == -1)
-				FatalError("Material unassigned", __FILE__, __LINE__);
-			meshIndex++;
-			current = endOfLine;
-		}
-		else if (*current == 'f' && current[1] == ' ') {
-			vertexIndex += 3;
-			endOfLine = get_next_line(objFile.file, current);
-		}
-		endOfLine = get_next_line(objFile.file, current);
-		current = endOfLine + 1;
-	}
-
-	QueryPerformanceCounter(&EndingTime);
-	ElapsedMicroseconds.QuadPart = EndingTime.QuadPart - StartingTime.QuadPart;
-	ElapsedMicroseconds.QuadPart *= 1000000;
-	ElapsedMicroseconds.QuadPart /= Frequency.QuadPart;
-	end = __rdtsc();
-
-	snprintf(OutputStringDebug, 254, "%lld cy, %lld us, %lld ms %s\n", end - start, ElapsedMicroseconds.QuadPart, ElapsedMicroseconds.QuadPart / 1000, path);
+	
+	snprintf(OutputStringDebug, 254, "%d deduplicates %lld hash collisions\n", deduplicates, listCount);
 	OutputDebugStringA(OutputStringDebug);
-
-	if (meshIndex == 0)
-	{
-		meshIndex++;
-		result->materials.material  = (Material *)MyMalloc(&result->meshMem, sizeof(ObjMaterials) + sizeof(Material));
-		*result->materials.material = initMaterial();
-		result->materials.count     = 1;
-
-		result->meshes[meshIndex - 1].materialIndex = 0;
-	}
-
-	result->meshes[meshIndex - 1].indexCount  = vertexIndex - result->meshes[meshIndex - 1].indexStart;
-	if (result->meshes[meshIndex - 1].materialIndex == -1)
-	{
-		__debugbreak();
-	}
-
-	snprintf(OutputStringDebug, 254, "duplicates %d\n", deduplicates / 3);
-	OutputDebugStringA(OutputStringDebug);
-
-	DeInitMemory(&tempVertexHashMem);
-	DeInitMemory(&tempVertexMem);
 	DeInitMemory(&tempPosition);
 	DeInitMemory(&tempNormal);
 	DeInitMemory(&tempTexture);
 	DeInitMemory(&temporary);
-
+	DeInitMemory(&tempVertexIndexMem);
+	DeInitMemory(&tempVertexHashMem);
+	
 	end = __rdtsc();
 	QueryPerformanceCounter(&EndingTime);
-
 	ElapsedMicroseconds.QuadPart = EndingTime.QuadPart - StartingTime.QuadPart;
+
 	ElapsedMicroseconds.QuadPart *= 1000000;
 	ElapsedMicroseconds.QuadPart /= Frequency.QuadPart;
 
 	snprintf(OutputStringDebug, 254, "%lld cy, %lld us, %lld ms %s\n", end - start, ElapsedMicroseconds.QuadPart, ElapsedMicroseconds.QuadPart / 1000, path);
 	OutputDebugStringA(OutputStringDebug);
+
 	return 0;
 }
 
-void DeInitObj(ObjModel *obj)
+ObjModel CreateCube(Memory *memory)
 {
-	if (obj->meshMem.virtualSize)
-		DeInitMemory(&obj->meshMem);
-	if (obj->imageMem.virtualSize)
-		DeInitMemory(&obj->imageMem);
-	if (obj->vertexMem.virtualSize)
-		DeInitMemory(&obj->vertexMem);
-	if (obj->indexMem.virtualSize)
-		DeInitMemory(&obj->indexMem);
-}
+	ObjModel result = {};
 
-void DeInitGraphicsObj(ObjModel *obj)
-{
-	if (obj->imageMem.virtualSize)
-		DeInitMemory(&obj->imageMem);
-	if (obj->vertexMem.virtualSize)
-		DeInitMemory(&obj->vertexMem);
-	if (obj->indexMem.virtualSize)
-		DeInitMemory(&obj->indexMem);
-}
-
-ObjModel
-CreateCube()
-{
-	ObjParsingObject tempParser = {0};
-	ObjModel result = {0};
-
-	result.meshMem   = InitVirtualMemory(4 * KiloByte);
-	result.vertexMem = InitVirtualMemory(4 * KiloByte);
-	result.indexMem  = InitVirtualMemory(4 * KiloByte);
-
-	ObjMesh *tmp = (ObjMesh *)MyMalloc(&result.meshMem, sizeof(ObjMesh));
+	ObjMesh *tmp = (ObjMesh *)MyMalloc(memory, sizeof(ObjMesh));
 
 	result.meshes = tmp;
 	result.meshCount = 1;
 
 	vec3 positions[] = {
-		{0.50000f, -0.50000f, -0.50000f},
-		{0.50000f, -0.50000f, 0.50000f},
-		{-0.50000f, -0.50000f, 0.50000f},
-		{-0.50000f, -0.50000f, -0.50000f},
-		{0.50000f, 0.50000f, -0.5000f},
-		{0.50000f, 0.50000f, 0.50000f},
-		{-0.50000f, 0.50000f, 0.50000f},
-		{-0.50000f, 0.50000f, -0.50000f},
+		{{0.50000f, -0.50000f, -0.50000f}},
+		{{0.50000f, -0.50000f, 0.50000f}},
+		{{-0.50000f, -0.50000f, 0.50000f}},
+		{{-0.50000f, -0.50000f, -0.50000f}},
+		{{0.50000f, 0.50000f, -0.5000f}},
+		{{0.50000f, 0.50000f, 0.50000f}},
+		{{-0.50000f, 0.50000f, 0.50000f}},
+		{{-0.50000f, 0.50000f, -0.50000f}},
 	};
 	vec3 normals[] ={
-		{0.00000f, -1.00000f, 0.00000f},
-		{0.00000f, 1.00000f, 0.00000f},
-		{1.00000f, 0.00000f, 0.00000f},
-		{-0.00000f, 0.00000f, 1.00000f},
-		{-1.00000f, -0.00000f, -0.00000f},
-		{0.00000f, 0.00000f, -1.00000f},
+		{{0.00000f, -1.00000f, 0.00000f}},
+		{{0.00000f, 1.00000f, 0.00000f}},
+		{{1.00000f, 0.00000f, 0.00000f}},
+		{{-0.00000f, 0.00000f, 1.00000f}},
+		{{-1.00000f, -0.00000f, -0.00000f}},
+		{{0.00000f, 0.00000f, -1.00000f}},
 	};
 	vec2 uv[] = {
-		{1.00000f, 0.333333f},
-		{1.00000f, 0.666667f},
-		{0.666667f, 0.666667f},
-		{0.666667f, 0.333333f},
-		{0.666667f, 0.00000f},
-		{0.00000f, 0.333333f},
-		{0.00000f, 0.00000f},
-		{0.333333f, 0.00000f},
-		{0.333333f, 1.00000f},
-		{0.00000f, 1.00000f},
-		{0.00000f, 0.666667f},
-		{0.333333f, 0.333333f},
-		{0.333333f, 0.666667f},
-		{1        , 0},
+		{{1.00000f, 0.333333f}},
+		{{1.00000f, 0.666667f}},
+		{{0.666667f, 0.666667f}},
+		{{0.666667f, 0.333333f}},
+		{{0.666667f, 0.00000f}},
+		{{0.00000f, 0.333333f}},
+		{{0.00000f, 0.00000f}},
+		{{0.333333f, 0.00000f}},
+		{{0.333333f, 1.00000f}},
+		{{0.00000f, 1.00000f}},
+		{{0.00000f, 0.666667f}},
+		{{0.333333f, 0.333333f}},
+		{{0.333333f, 0.666667f}},
+		{{1        , 0}},
 	};
 
 	ObjVertex vertices[] = {
@@ -967,11 +879,11 @@ CreateCube()
 		{positions[4], normals[5], uv[5]},                                                                         // 23 15 17
 	};
 
-	result.vertexCount = sizeof(vertices) / sizeof(ObjVertex);
-	result.vertices = (ObjVertex *)MyMalloc(&result.vertexMem, sizeof(ObjVertex) * result.vertexCount);
+	u32 vertexCount = sizeof(vertices) / sizeof(ObjVertex);
+	ObjVertex *vrtx = (ObjVertex *)MyMalloc(memory, sizeof(ObjVertex) * vertexCount);
 
-	for (int i = 0; i < (int)result.vertexCount; i++)
-		result.vertices[i] = vertices[i];
+	for (int i = 0; i < (int)vertexCount; i++)
+		vrtx[i] = vertices[i];
 
 	int triangleIndices[] =
 	{
@@ -989,57 +901,54 @@ CreateCube()
 		23, 15, 17
 	};
 	tmp->indexCount = sizeof(triangleIndices) / sizeof(int);
-	tmp->indexStart = 0;
-	result.IndexCount = tmp->indexCount;
-	result.indices = (u32 *)MyMalloc(&result.indexMem, sizeof(u32) * tmp->indexCount);
+	u32    *indices = (u32 *)MyMalloc(memory, sizeof(u32) * tmp->indexCount);
 
 	for (int i = 0; i < (int)tmp->indexCount; i++)
-		result.indices[i] = triangleIndices[i];
+		indices[i] = triangleIndices[i];
 
-	// TODO(V. Caraulan): create material
-	//	tmp->material->ambient = {1, 1, 1};
-	//	tmp->material->diffuse = {1, 1, 1};
-	//	tmp->material->Opaqueness = 1.f;
 
+	//tmp->material.ambient = (vec3){1, 1, 1};
+	//tmp->material.diffuse = (vec3){1, 1, 1};
+	//tmp->material.Opaqueness = 1.f;
+
+	//	GenerateBuffers(&result.VAO, vertexCount, tmp->indexCount, vrtx, indices);
 	return (result);
 }
 
-
-ObjModel
-CreateSphere(int latitudeCount, int longitudeCount, Memory *memory)
+ObjModel CreateSphere(int latitudeCount, int longitudeCount, Memory *memory)
 {
-	ObjModel result = {0};
+	ObjModel result = {};
 
 	ObjMesh *mesh = (ObjMesh *)MyMalloc(memory, sizeof(ObjMesh));
 
-	result.meshes    = mesh;
+	result.meshes = mesh;
 	result.meshCount = 1;
 
-	mesh->indexCount =  6 * longitudeCount   * (latitudeCount - 1);
-	mesh->indexStart = 0;
-	result.vertexCount  = (longitudeCount + 1) * (latitudeCount + 1);
-	result.IndexCount = mesh->indexCount;
+	u32 indexCount = 6 * longitudeCount  * (latitudeCount - 1);
+	u32 vertexCount = (longitudeCount + 1) * (latitudeCount + 1);
+	mesh->indexCount = indexCount;
 
-	result.indices  = (u32 *)MyMalloc(memory, sizeof(u32)    * mesh->indexCount);
-	result.vertices = (ObjVertex *)MyMalloc(memory, sizeof(ObjVertex) * result.vertexCount);
+	u32    *indices = (u32 *)MyMalloc(memory, sizeof(u32) * mesh->indexCount);
+	ObjVertex *vertices = (ObjVertex *)MyMalloc(memory, sizeof(ObjVertex) * vertexCount);
 
-	float longitudeStep = M_PI * 2 / longitudeCount;
-	float latitudeStep  = M_PI     / latitudeCount;
+	float longitudeStep = M_PI*2 / longitudeCount;
+	float latitudeStep  = M_PI   / latitudeCount;
 
 	int v = 0;
 	for (int i = 0; i <= latitudeCount; ++i)
 	{
 		for (int j = 0; j <= longitudeCount; ++j, v++)
 		{
-			result.vertices[v].position = {
-				cosf(longitudeStep * j) * sinf(i * latitudeStep),
-				cosf(i * latitudeStep - M_PI)                     ,
-				sinf(longitudeStep * j) * sinf(i * latitudeStep)
-			};
+			vertices[v].position = {{
+					cosf(longitudeStep * j) * sinf(i * latitudeStep),
+					cosf(i * latitudeStep - M_PI)                     ,
+					sinf(longitudeStep * j) * sinf(i * latitudeStep)
+				}};
 
-			result.vertices[v].normal = -result.vertices[v].position;
-			NormalizeV3(result.vertices[v].normal);
-			result.vertices[v].textureUV = {(f32)j / longitudeCount, (f32)i / latitudeCount};
+			vec3 zero = {};
+			vertices[v].normal = zero - vertices[v].position;
+			NormalizeV3(vertices[v].normal);
+			vertices[v].textureUV = {{(f32)j / longitudeCount, (f32)i / latitudeCount}};
 		}
 	}
 
@@ -1048,9 +957,9 @@ CreateSphere(int latitudeCount, int longitudeCount, Memory *memory)
 	v = longitudeCount + 1;
 	for (int lon = 0; lon < longitudeCount; lon++, v++)
 	{
-		result.indices[i++] = lon;
-		result.indices[i++] = v;
-		result.indices[i++] = v + 1;
+		indices[i++] = lon;
+		indices[i++] = v;
+		indices[i++] = v + 1;
 	}
 
 	v = longitudeCount + 1;
@@ -1058,27 +967,25 @@ CreateSphere(int latitudeCount, int longitudeCount, Memory *memory)
 	{
 		for (int lon = 0; lon < longitudeCount; lon++, v++)
 		{
-			result.indices[i++] = v;
-			result.indices[i++] = v + longitudeCount + 1;
-			result.indices[i++] = v + 1;
+			indices[i++] = v;
+			indices[i++] = v + longitudeCount + 1;
+			indices[i++] = v + 1;
 
-			result.indices[i++] = v + 1;
-			result.indices[i++] = v + longitudeCount + 1;
-			result.indices[i++] = v + longitudeCount + 2;
+			indices[i++] = v + 1;
+			indices[i++] = v + longitudeCount + 1;
+			indices[i++] = v + longitudeCount + 2;
 		}
 	}
 
 	for (int lon = 0; lon < longitudeCount; lon++, v++)
 	{
-		result.indices[i++] = v;
-		result.indices[i++] = v + longitudeCount + 1;
-		result.indices[i++] = v + 1;
+		indices[i++] = v;
+		indices[i++] = v + longitudeCount + 1;
+		indices[i++] = v + 1;
 	}
-
-	// TODO(V. Caraulan): create material
-	//	mesh->material->ambient    = {1, 1, 1};
-	//	mesh->material->diffuse    = {1, 1, 1};
-	//	mesh->material->Opaqueness = 1.f;
-
+	//mesh->material.ambient    = (vec3){1, 1, 1};
+	//mesh->material.diffuse    = (vec3){1, 1, 1};
+	//mesh->material.Opaqueness = 1.f;
+	//GenerateBuffers(&result.VAO, vertexCount, indexCount, vertices, indices);
 	return result;
 }

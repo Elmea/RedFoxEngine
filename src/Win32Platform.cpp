@@ -1,4 +1,4 @@
-#include "win32Platform.h"
+#include "Win32Platform.hpp"
 
 using namespace RedFoxEngine;
 
@@ -61,7 +61,7 @@ static HGLRC Win32InitOpenGL(HWND window)
 
 		// uncomment for sRGB framebuffer, from WGL_ARB_framebuffer_sRGB extension
 		// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_framebuffer_sRGB.txt
-		//WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB, GL_TRUE,
+		WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB, GL_TRUE,
 
 		// uncomment for multisampeld framebuffer, from WGL_ARB_multisample extension
 		// https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_multisample.txt
@@ -72,7 +72,7 @@ static HGLRC Win32InitOpenGL(HWND window)
 	};
 
 	HDC WindowDC = GetDC(window);
-	PIXELFORMATDESCRIPTOR DesiredPixelFormat = { 0 };
+	PIXELFORMATDESCRIPTOR DesiredPixelFormat = {};
 
 	int format;
 	unsigned int formats;
@@ -159,9 +159,12 @@ void Platform::MessageProcessing(Input *input)
 	{
 		switch(Message.message)
 		{
+
+			//NOTE This message gets called on window resize
 			case WM_SIZE:
 			{
 				GetWindowDimension();
+				glViewport(0, 0, windowDimension.width, windowDimension.height);
 			} break;
 			case WM_MOUSEMOVE:
 			{
@@ -276,11 +279,11 @@ static LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message,
 			Platform::m_running = 0;
 			PostQuitMessage(0);
 		} break;
+
 		case WM_QUIT:
 		{
 			Platform::m_running = 0;
 			DestroyWindow(Window);
-
 		} break;
 
 		case WM_CLOSE:
@@ -331,7 +334,6 @@ Window Platform::CreateRedFoxWindow(int Width, int Height)
 								 NULL, // Menu
 								 WindowClass.hInstance,// Instance handle
 								 NULL);  // Additional application data
-
 	}
 	return (window);
 }
@@ -351,7 +353,6 @@ void Platform::GetWglFunctions(void)
 
 	if (!dummy && "Failed to create dummy window")
 	{ __debugbreak(); return; }
-
 	HDC dc = GetDC(dummy);
 	if (!dc && "Failed to get device context for dummy window")
 	{ __debugbreak(); return; }

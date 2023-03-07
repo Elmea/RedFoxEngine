@@ -1,17 +1,19 @@
-#include "Engine.h"
-
-#include <stdio.h>
-
-#define MATHS_HPP_IMPLEMENTATION
-#include "engine_math.h" // TODO(V. Caraulan) remove
+#include "Engine.hpp"
 
 #define MEMORY_IMPLEMENTATION
-#include "MyMemory.h" // TODO(V. Caraulan) remove
+#include "MyMemory.hpp"
 
 #define REDFOXMATHS_IMPLEMENTATION
 #include "RedfoxMaths.hpp"
 
 using namespace RedFoxEngine;
+
+void Engine::ObjModelPush(const char *path)
+{
+	int errorState = 0;
+	if ((errorState = ParseModel(&m_models[m_modelCount++].obj, path)))
+		__debugbreak();
+}
 
 Engine::Engine(int width, int height)
 {
@@ -20,18 +22,18 @@ Engine::Engine(int width, int height)
 
 	new (&m_platform) Platform(width, height);
 
+ 	m_platform.GetWindowDimension();
 	m_graphics.InitGraphics();
 
-	m_platform.GetWindowDimension();
-	m_models = (ObjModel *)MyMalloc(&m_arenaAllocator, sizeof(ObjModel) * 100);
-	ParseModel(m_models, "vokselia_spawn.obj");
-	//ParseModel(m_models, "barbarian.obj");
-	//ParseModel(m_models, "ts_bot912.obj");
+	m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 100);
+	m_modelCount = 0;
+	ObjModelPush("ts_bot912.obj");
 
-	m_graphics.InitModel(m_models);
-	DeInitGraphicsObj(m_models);
+	for (int i = 0; i < (int)m_modelCount; i++)
+		m_graphics.InitModel(&m_models[i]);
+	//DeInitGraphicsObj(&parsingObject); TODO
 	QueryPerformanceFrequency((LARGE_INTEGER*)&m_frequency);
-	QueryPerformanceCounter(&m_startingTime);
+	QueryPerformanceCounter((LARGE_INTEGER *)&m_startingTime);
 	m_input = {};
 }
 
@@ -103,27 +105,23 @@ void Engine::Update()
 	float aspect = (float)m_platform.windowDimension.width / (float)m_platform.windowDimension.height;
 
 	Mat4 projection = Mat4::GetPerspectiveMatrix(aspect , 90, 0.01f, 100);
-	Mat4 view	   = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x)).GetTransposedMatrix();
-	view = view * Mat4::GetTranslation(cameraPosition);
+	Mat4 view	   = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x)).GetTransposedMatrix() * Mat4::GetTranslation(cameraPosition);
 
-	Mat4 model	  = Mat4::GetTranslation(modelPosition);
+  static f32 time;
+	time += m_deltaTime * 0.1f;
+	for (int i = 0; i < (int)m_modelCount; i++)//TODO physics code here ?
+	{
+		m_models[i].scale = 1;	
+		m_models[i].position = Float3(sinf(time * i), cosf(time), 0);	
+	}
 
-	Mat4 vp = projection * view;
-
-	GLint u_matrix = 0;
-	glProgramUniformMatrix4fv(m_graphics.vshader, u_matrix, 1, GL_TRUE, vp.AsPtr());
-
-	u_matrix = 1;
-	glProgramUniformMatrix4fv(m_graphics.vshader, u_matrix, 1, GL_TRUE, model.AsPtr());
-
-	u_matrix = 2;
-	glProgramUniformMatrix4fv(m_graphics.vshader, u_matrix, 1, GL_TRUE, model.AsPtr());
+	m_graphics.SetViewProjectionMatrix(projection * view);
 }
 
 void Engine::Draw()
 {
 	HDC dc = GetDC(m_platform.m_window);
-	m_graphics.Draw(m_models, m_platform.windowDimension);
+	m_graphics.Draw(m_models, m_modelCount);
 	// swap the buffers to show output
 
 	if (!SwapBuffers(dc))
@@ -137,5 +135,5 @@ void Engine::Draw()
 Engine::~Engine()
 {
 	// TODO(V. Caraulan): for loop on resources
-	DeInitObj(m_models);
+	//DeInitObj(m_models);
 }
