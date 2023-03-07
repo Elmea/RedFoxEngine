@@ -5,59 +5,61 @@
 
 #define _AMD64_
 #define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <memoryapi.h>
 #include "engine_math.hpp"
+#include <memoryapi.h>
+#include <windows.h>
 
 typedef struct
 {
-	u32	size;
-	u32	capacity;
-	const char *data;
+    u32 size;
+    u32 capacity;
+    const char *data;
 } MyString;
 
-typedef struct ArenaAllocator{
-	void   *data;
-	size_t virtualSize;
-	size_t usedSize;
-	size_t totalCapacity;
+typedef struct ArenaAllocator
+{
+    void *data;
+    size_t virtualSize;
+    size_t usedSize;
+    size_t totalCapacity;
 } Memory;
 
 typedef struct
 {
-	HANDLE handle;
-	MyString path;
-	union {
-		MyString file;
-		struct {
-		u32  size;
-		u32  capacity;
-		s8  *data;
-	};
-};
+    HANDLE handle;
+    MyString path;
+    union {
+        MyString file;
+        struct
+        {
+            u32 size;
+            u32 capacity;
+            s8 *data;
+        };
+    };
 } fileResource;
 
 /*
-	Initizlize an arena allocator with the maximum possible memory size
-	it's going to use. This function is usually preceded by calls to MyMalloc();
+    Initizlize an arena allocator with the maximum possible memory size
+    it's going to use. This function is usually preceded by calls to MyMalloc();
 */
 
 Memory InitVirtualMemory(size_t size);
 /*
-	Takes an arena allocator __memory__, and a __size__, and returns
-	a pointer with requested memory of the size __size__
+    Takes an arena allocator __memory__, and a __size__, and returns
+    a pointer with requested memory of the size __size__
 */
 
 void *MyMalloc(Memory *memory, size_t size);
 /*
-	Takes an arena allocator and increases the requested physical memory
-	by AmountIncrease.
+    Takes an arena allocator and increases the requested physical memory
+    by AmountIncrease.
 */
 void IncreaseTotalCapacity(Memory *memory, size_t AmountIncrease);
 
 /*
-	Takes a filepath and an arena allocator. It returns a MyString
-	with the contents of the file read. TODO Handle error cases
+    Takes a filepath and an arena allocator. It returns a MyString
+    with the contents of the file read. TODO Handle error cases
 */
 MyString OpenAndReadEntireFile(const char *filePath, Memory *memory);
 void MyFree(Memory *mem, size_t size);
@@ -77,7 +79,7 @@ u32 my_strnlen(char *src, u64 n);
 #define GigaByte 1024LL * MegaByte
 #define TeraByte 1024LL * GigaByte
 
-#endif //MY_MEMORY_H
+#endif // MY_MEMORY_H
 
 #ifdef MEMORY_IMPLEMENTATION
 
@@ -87,13 +89,14 @@ static void IncreaseTotalCapacity(Memory *memory, size_t AmountIncrease)
     if (memory->totalCapacity + AmountIncrease > memory->virtualSize)
         __debugbreak();
 #endif
-	VirtualAlloc((void *)((u8 *)memory->data + memory->usedSize), AmountIncrease, MEM_COMMIT, PAGE_READWRITE);
-	memory->totalCapacity += AmountIncrease;
+    VirtualAlloc((void *)((u8 *)memory->data + memory->usedSize), AmountIncrease, MEM_COMMIT, PAGE_READWRITE);
+    memory->totalCapacity += AmountIncrease;
 }
 
 static int StringsAreEqual(MyString a, MyString b)
 {
-    if (a.size == b.size) {
+    if (a.size == b.size)
+    {
         int i = 0;
         while (a.data[i] == b.data[i] && i < a.size)
             i++;
@@ -109,14 +112,18 @@ static int StringsAreEqual_C(MyString a, const char *str, const char *delimiter)
 
     while (a.data[i] == str[i] && i < a.size)
         i++;
-    if (i == a.size) {
-        if (delimiter) {
+    if (i == a.size)
+    {
+        if (delimiter)
+        {
             int j = 0;
-            if (!delimiter[j])  {
+            if (!delimiter[j])
+            {
                 if (str[i] == '\0')
                     return (1);
             }
-            while (delimiter[j]) {
+            while (delimiter[j])
+            {
                 if (str[i] == '\0' || delimiter[j] == str[i])
                     return (1);
                 j++;
@@ -128,11 +135,11 @@ static int StringsAreEqual_C(MyString a, const char *str, const char *delimiter)
     return (0);
 }
 
-static Memory  InitVirtualMemory(size_t size)
+static Memory InitVirtualMemory(size_t size)
 {
     Memory memory = {0};
 
-	memory.virtualSize = size;
+    memory.virtualSize = size;
     memory.data = VirtualAlloc(NULL, size, MEM_RESERVE, PAGE_READWRITE);
     memory.usedSize = 0;
     memory.totalCapacity = 0;
@@ -154,7 +161,7 @@ static void *MyMalloc(Memory *memory, size_t size)
 #endif
     VirtualAlloc((void *)((size_t)memory->data + memory->usedSize), size, MEM_COMMIT, PAGE_READWRITE);
     size_t memoryAlgebra = (size_t)memory->data + memory->usedSize;
-    memory->usedSize     += size + (64 - size % 64);
+    memory->usedSize += size + (64 - size % 64);
     return ((void *)memoryAlgebra);
 }
 
@@ -165,7 +172,8 @@ static void MyFree(Memory *m, size_t size)
     m->usedSize -= size;
 }
 
-static void DeInitMemory(Memory *memory){
+static void DeInitMemory(Memory *memory)
+{
     VirtualFree(memory->data, 0, MEM_RELEASE);
     Memory result = {NULL, 0, 0, 0};
     *memory = result;
@@ -192,7 +200,7 @@ static MyString initStringChar(const char *str, u64 n, Memory *memory)
     result.data = (const char *)MyMalloc(memory, n);
 
     i = 0;
-	char *temp = (char *)result.data;
+    char *temp = (char *)result.data;
 
     while (i < result.size)
         temp[i] = str[i++];
@@ -203,14 +211,8 @@ static MyString OpenAndReadEntireFile(const char *filePath, Memory *memory)
 {
     MyString result = {0};
 
-
-	HANDLE File = CreateFileA(filePath,
-                              GENERIC_READ,
-                              FILE_SHARE_WRITE | FILE_SHARE_READ,
-                              NULL,
-                              OPEN_EXISTING,
-                              FILE_ATTRIBUTE_NORMAL,
-                              NULL);
+    HANDLE File = CreateFileA(filePath, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                              FILE_ATTRIBUTE_NORMAL, NULL);
 
     if (File)
     {
@@ -218,8 +220,8 @@ static MyString OpenAndReadEntireFile(const char *filePath, Memory *memory)
         result = initString(result.size, memory);
         DWORD test = 0;
         ReadFile(File, (void *)result.data, result.size, &test, NULL);
-		//        assert(test == result.size);
-		char *temp = (char *)result.data;
+        //        assert(test == result.size);
+        char *temp = (char *)result.data;
         temp[result.size] = '\0';
         CloseHandle(File);
     }
@@ -240,8 +242,7 @@ int strncmp(const char *s1, const char *s2, u64 n)
 #endif
 
 #pragma function(strcmp)
-static
-int strcmp(const char *s1, const char *s2)
+static int strcmp(const char *s1, const char *s2)
 {
     u64 i = 0;
     while (s1[i] == s2[i] && s1[i])
@@ -249,8 +250,7 @@ int strcmp(const char *s1, const char *s2)
     return (s1[i] - s2[i]);
 }
 
-static
-u32 my_strlen(char *src)
+static u32 my_strlen(char *src)
 {
     int i = 0;
     while (src[i])
@@ -258,8 +258,7 @@ u32 my_strlen(char *src)
     return (i);
 }
 
-static
-u32 my_strnlen(char *src, u64 n)
+static u32 my_strnlen(char *src, u64 n)
 {
     int i = 0;
     while (src[i] && i < n)
@@ -267,8 +266,7 @@ u32 my_strnlen(char *src, u64 n)
     return (i);
 }
 
-static
-char *my_strncpy_s(char *dest, u64 dest_size, const char *src, u64 src_size)
+static char *my_strncpy_s(char *dest, u64 dest_size, const char *src, u64 src_size)
 {
     int i = 0;
     while (i < dest_size && i < src_size)
@@ -284,8 +282,7 @@ char *my_strncpy_s(char *dest, u64 dest_size, const char *src, u64 src_size)
     return (dest);
 }
 
-static
-char *my_strcpy_s(char *dest, u64 n, char *src)
+static char *my_strcpy_s(char *dest, u64 n, char *src)
 {
     int i = 0;
     while (i < n && src[i])
@@ -298,8 +295,7 @@ char *my_strcpy_s(char *dest, u64 n, char *src)
 }
 #endif
 
-static fileResource
-FileResourceInit(const char *fileName, Memory *m)
+static fileResource FileResourceInit(const char *fileName, Memory *m)
 {
     fileResource result;
 
@@ -309,16 +305,15 @@ FileResourceInit(const char *fileName, Memory *m)
     return (result);
 }
 
-static fileResource
-*LoadFile(fileResource *result, Memory *memory)
+static fileResource *LoadFile(fileResource *result, Memory *memory)
 {
-    result->handle = CreateFileA((LPCSTR)result->path.data,        //PATH
-                                 GENERIC_READ,          //Desired access
-                                 0,                     //Share Mode
-                                 NULL,                  //Security Attributes
-                                 OPEN_EXISTING,         //Creation Disposition
-                                 FILE_ATTRIBUTE_NORMAL, //Flags and attributes
-                                 NULL);                 //Template file
+    result->handle = CreateFileA((LPCSTR)result->path.data, // PATH
+                                 GENERIC_READ,              // Desired access
+                                 0,                         // Share Mode
+                                 NULL,                      // Security Attributes
+                                 OPEN_EXISTING,             // Creation Disposition
+                                 FILE_ATTRIBUTE_NORMAL,     // Flags and attributes
+                                 NULL);                     // Template file
 
     if (result->handle != INVALID_HANDLE_VALUE)
     {
@@ -326,10 +321,10 @@ static fileResource
         result->data = (s8 *)MyMalloc(memory, result->size);
 
         ReadFile(result->handle, // file handle
-                 result->data, // buffer
-                 result->size, // number of bytes to read
-                 NULL,        // number of bytes read
-                 NULL);       // lpoverlapped
+                 result->data,   // buffer
+                 result->size,   // number of bytes to read
+                 NULL,           // number of bytes read
+                 NULL);          // lpoverlapped
         CloseHandle(result->handle);
         result->handle = 0;
     }
@@ -337,4 +332,4 @@ static fileResource
 }
 
 #undef MEMORY_IMPLEMENTATION
-#endif //MEMORY_IMPLEMENTATION
+#endif // MEMORY_IMPLEMENTATION
