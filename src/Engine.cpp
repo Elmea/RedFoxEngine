@@ -17,7 +17,7 @@ void Engine::ObjModelPush(const char *path)
 
 Engine::Engine(int width, int height)
 {
-    memset(this, 0, sizeof(Engine)); //TODO formalize this in a C++ way
+	memset(this, 0, sizeof(Engine)); //TODO formalize this in a C++ way
 	m_arenaAllocator = InitVirtualMemory(1 * GigaByte);
 	IncreaseTotalCapacity(&m_arenaAllocator, 1 * MegaByte);
 
