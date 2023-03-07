@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="Header Files\External Files">
+      <UniqueIdentifier>{27e2faf2-a6f8-4720-98c3-7ea70bdd1734}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\External Files">
+      <UniqueIdentifier>{77476c34-8f73-40c9-a24a-27e81dc2bb29}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine.cpp">
@@ -21,70 +27,70 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ObjParser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\OpenGLGraphics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Win32Platform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\ObjParser.cpp">
+      <Filter>Source Files\External Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="external\include\glcorearb.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\include\imconfig.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\include\imgui.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\include\imgui_impl_opengl3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\include\imgui_internal.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\include\imstb_rectpack.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\include\imstb_textedit.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\include\imstb_truetype.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\include\wglext.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\include\khr\khrplatform.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="external\include\stb_image\stb_image.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\Engine.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Model.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\MyMemory.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\ObjParser.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\OpenGLGraphics.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\RedfoxMaths.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Win32Platform.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\include\glcorearb.h">
+      <Filter>Header Files\External Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\include\imconfig.h">
+      <Filter>Header Files\External Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\include\imgui.h">
+      <Filter>Header Files\External Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\include\imgui_impl_opengl3.h">
+      <Filter>Header Files\External Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\include\imgui_internal.h">
+      <Filter>Header Files\External Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\include\imstb_rectpack.h">
+      <Filter>Header Files\External Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\include\imstb_textedit.h">
+      <Filter>Header Files\External Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\include\imstb_truetype.h">
+      <Filter>Header Files\External Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\include\khr\khrplatform.h">
+      <Filter>Header Files\External Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\include\stb_image\stb_image.h">
+      <Filter>Header Files\External Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\include\wglext.h">
+      <Filter>Header Files\External Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MyMemory.hpp">
+      <Filter>Header Files\External Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ObjParser.hpp">
+      <Filter>Header Files\External Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\RedfoxMaths.hpp">
+      <Filter>Header Files\External Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
