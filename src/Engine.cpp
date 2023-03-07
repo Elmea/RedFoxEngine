@@ -52,19 +52,25 @@ void Engine::GetInputs()
 	if (GetFocus() == m_platform.m_window)
 	{
 		POINT cursorPos;
-		cursorPos.x = m_platform.windowDimension.width / 2;
-		cursorPos.y = m_platform.windowDimension.height / 2;
 
-		// TODO(V. Caraulan): show mouse on imgui
-		ShowCursor(0);
-
-		m_input.mouseXDelta += m_input.mouseXPosition - cursorPos.x;
-		m_input.mouseYDelta += m_input.mouseYPosition - cursorPos.y;
-		ClientToScreen(m_platform.m_window, &cursorPos);
-		SetCursorPos(cursorPos.x, cursorPos.y);
+		GetCursorPos(&cursorPos);
+		ScreenToClient(m_platform.m_window, &cursorPos);
+		if (cursorPos.x > 0 && cursorPos.y > 0 &&
+		  cursorPos.x < m_platform.GetWindowDimension().width && 
+		  cursorPos.y < m_platform.GetWindowDimension().height)
+		{
+			m_input.mouseXDelta += m_input.mouseXPosition - cursorPos.x;
+			m_input.mouseYDelta += m_input.mouseYPosition - cursorPos.y;
+		}
+		else
+		{
+			m_input.mouseXDelta = m_input.mouseYDelta = 0;	
+		}
 	}
 	else
-		ShowCursor(1);
+	{
+			m_input.mouseXDelta = m_input.mouseYDelta = 0;	
+	}
 }
 
 using namespace RedFoxMaths;

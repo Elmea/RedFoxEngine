@@ -141,6 +141,11 @@ Platform::Platform(int width, int height)
 	m_window = CreateRedFoxWindow(width, height);
 	HGLRC glContext = Win32InitOpenGL(m_window);
 	ShowWindow(m_window, 5);
+	HCURSOR hCurs1;
+
+	hCurs1 = LoadCursor(NULL, IDC_ARROW);
+	SetCursor(hCurs1);
+
 }
 
 WindowDimension Platform::GetWindowDimension()

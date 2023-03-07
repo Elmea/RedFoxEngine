@@ -211,8 +211,8 @@ namespace RedFoxEngine
 		{
 			if (model.obj.materials.material[model.obj.meshes[i].materialIndex].hasTexture)
 				glBindTextureUnit(diffuseMap, model.obj.materials.material[model.obj.meshes[i].materialIndex].diffuseMap.index0);
-			//			else
-			//				glBindTextureUnit(diffuseMap, 0); TODO: create a default 'missing' texture
+			else
+				glBindTextureUnit(diffuseMap, 0); //TODO: create a default 'missing' texture
 			glDrawElements(GL_TRIANGLES, model.obj.meshes[i].indexCount, GL_UNSIGNED_INT, (void*)(model.obj.meshes[i].indexStart * sizeof(u32)));
 		}
 	}
