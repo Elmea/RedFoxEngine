@@ -17,6 +17,7 @@ void Engine::ObjModelPush(const char *path)
 
 Engine::Engine(int width, int height)
 {
+    memset(this, 0, sizeof(Engine)); //TODO formalize this in a C++ way
 	m_arenaAllocator = InitVirtualMemory(1 * GigaByte);
 	IncreaseTotalCapacity(&m_arenaAllocator, 1 * MegaByte);
 
@@ -107,7 +108,7 @@ void Engine::Update()
 	Mat4 projection = Mat4::GetPerspectiveMatrix(aspect , 90, 0.01f, 100);
 	Mat4 view	   = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x)).GetTransposedMatrix() * Mat4::GetTranslation(cameraPosition);
 
-  static f32 time;
+	static f32 time;
 	time += m_deltaTime * 0.1f;
 	for (int i = 0; i < (int)m_modelCount; i++)//TODO physics code here ?
 	{
