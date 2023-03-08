@@ -30,7 +30,9 @@ Engine::Engine(int width, int height)
 
     m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 100);
     m_modelCount = 0;
-    ObjModelPush("ts_bot912.obj");
+    m_models[0].obj = CreateCube(&m_arenaAllocator);
+    m_modelCount++;
+//    ObjModelPush("ts_bot912.obj");
    
     for (int i = 0; i < (int)m_modelCount; i++)
     {

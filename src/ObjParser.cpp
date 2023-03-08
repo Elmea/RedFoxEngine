@@ -940,6 +940,7 @@ ObjModel CreateCube(Memory *memory)
     ObjMesh *tmp = (ObjMesh *)MyMalloc(memory, sizeof(ObjMesh));
 
     result.meshes = tmp;
+    *tmp = {};
     result.meshCount = 1;
 
     vec3 positions[] = {
@@ -982,20 +983,19 @@ ObjModel CreateCube(Memory *memory)
         {positions[4], normals[5], uv[5]},  // 23 15 17
     };
 
-    u32 vertexCount = sizeof(vertices) / sizeof(ObjVertex);
-    ObjVertex *vrtx = (ObjVertex *)MyMalloc(memory, sizeof(ObjVertex) * vertexCount);
+    result.vertexCount = sizeof(vertices) / sizeof(ObjVertex);
+    result.vertices = (ObjVertex *)MyMalloc(memory, sizeof(ObjVertex) * result.vertexCount);
 
-    for (int i = 0; i < (int)vertexCount; i++)
-        vrtx[i] = vertices[i];
+    for (int i = 0; i < (int)result.vertexCount; i++)
+        result.vertices[i] = vertices[i];
 
     int triangleIndices[] = {0,  1, 2, 3,  4, 5, 6,  7, 8, 9,  10, 11, 12, 13, 14, 15, 16, 17,
                              18, 0, 2, 19, 3, 5, 20, 6, 8, 21, 9,  11, 22, 12, 14, 23, 15, 17};
-    tmp->indexCount = sizeof(triangleIndices) / sizeof(int);
-    u32 *indices = (u32 *)MyMalloc(memory, sizeof(u32) * tmp->indexCount);
+    tmp->indexCount = result.indexCount = sizeof(triangleIndices) / sizeof(int);
+    result.indices = (u32 *)MyMalloc(memory, sizeof(u32) * result.indexCount);
 
     for (int i = 0; i < (int)tmp->indexCount; i++)
-        indices[i] = triangleIndices[i];
-
+        result.indices[i] = triangleIndices[i];
     // tmp->material.ambient = (vec3){1, 1, 1};
     // tmp->material.diffuse = (vec3){1, 1, 1};
     // tmp->material.Opaqueness = 1.f;

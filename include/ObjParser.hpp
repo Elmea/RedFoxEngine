@@ -108,7 +108,7 @@ typedef struct ObjModel
 
 int ParseModel(ObjModel *result, const char *path);
 // void FatalError(const char* message, const char *file, int line);
-ObjModel CreateCube();
+ObjModel CreateCube(Memory *memory);
 void DeInitObj(ObjModel *obj);
 //void DeInitGraphicsObj(ObjModel *obj);
 

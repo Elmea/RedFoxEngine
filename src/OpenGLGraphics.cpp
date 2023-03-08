@@ -306,7 +306,7 @@ void Graphics::DrawModel(Model model)
 
     for (int i = 0; i < (int)model.obj.meshCount; i++)
     {
-        if (model.obj.materials.material[model.obj.meshes[i].materialIndex].hasTexture)
+        if (model.obj.materials.count && model.obj.materials.material[model.obj.meshes[i].materialIndex].hasTexture)
             glBindTextureUnit(diffuseMap,
                               model.obj.materials.material[model.obj.meshes[i].materialIndex].diffuseMap.index0);
         else
