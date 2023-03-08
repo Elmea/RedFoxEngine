@@ -198,8 +198,7 @@ void Graphics::DrawModel(Model model)
     glProgramUniformMatrix4fv(m_vshader, u_matrix, 1, GL_TRUE, m_viewProjection.AsPtr());
 
     u_matrix = 1;
-    RedFoxMaths::Mat4 modelMatrix = RedFoxMaths::Mat4::CreateTransformMatrix(
-        model.position, model.orientation.ToEuler(), RedFoxMaths::Float3(model.scale, model.scale, model.scale));
+    RedFoxMaths::Mat4 modelMatrix = model.GetWorldMatrix();
     glProgramUniformMatrix4fv(m_vshader, u_matrix, 1, GL_TRUE, modelMatrix.AsPtr());
 
     // provide vertex input
