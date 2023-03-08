@@ -411,7 +411,7 @@ ObjMaterials ParseMTL(const char *objPath, MyString objBuffer, ObjImages *Images
                       Memory *tempMem)
 {
     ObjMaterials result = {};
-    char mtlLibFilePath[255];
+    char mtlLibFilePath[255] = {};
 
     char *mtlLib = nullptr;
     int pathLen = 0;
