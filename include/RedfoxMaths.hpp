@@ -236,7 +236,8 @@ namespace RedFoxMaths
         static Mat4 GetIdentityMatrix();
         
         Float4 GetMatLine(int index);
-        
+        Quaternion ToQuaternion();
+
         bool operator==(const Mat4& pOther);
     };
     
@@ -1170,6 +1171,17 @@ namespace RedFoxMaths
         };
         
         res = matrice;
+        return res;
+    }
+
+    Quaternion Mat4::ToQuaternion()
+    {
+        Quaternion res;
+        res.a = sqrt(1 + mat[0][0] + mat[1][1] + mat[2][2]) / 2;
+        res.b = (mat[2][1] - mat[1][2]) / (4 * res.a);
+        res.c = (mat[0][2] - mat[2][0]) / (4 * res.a);
+        res.d = (mat[1][0] - mat[0][1]) / (4 * res.a);
+
         return res;
     }
     
