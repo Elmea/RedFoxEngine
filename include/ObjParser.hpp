@@ -47,7 +47,7 @@ typedef struct ObjImages
 {
     ObjImageData *data;
     u64 count;
-    HANDLE thread;
+    //HANDLE thread;
 } ObjImages;
 
 typedef struct ObjMaterials

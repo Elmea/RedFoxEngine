@@ -467,7 +467,7 @@ ObjMaterials ParseMTL(const char *objPath, MyString objBuffer, ObjImages *Images
     }
     result.material = (ObjMaterial *)MyMalloc(meshMem, sizeof(ObjMaterial) * result.count);
     ImagesOut->data = (ObjImageData *)MyMalloc(imageMem, sizeof(ObjImageData) * result.count);
-    ParameterImageThread *para = (ParameterImageThread *)MyMalloc(imageMem, sizeof(ParameterImageThread));
+    //ParameterImageThread *para = (ParameterImageThread *)MyMalloc(imageMem, sizeof(ParameterImageThread));
 
     current = (char *)mtlLibData.data;
     endOfLine = (char *)mtlLibData.data;
@@ -542,14 +542,9 @@ ObjMaterials ParseMTL(const char *objPath, MyString objBuffer, ObjImages *Images
             endOfLine = get_next_line(mtlLibData.file, current) + 1;
         }
     }
-    para[0] = {ImagesOut->data, ImagesOut->count, imageMem};
-    ImagesOut->thread =
-        CreateThread(NULL,                         //[in, optional]  LPSECURITY_ATTRIBUTES   lpThreadAttributes,
-                     sizeof(ParameterImageThread), //[in]            SIZE_T                  dwStackSize,
-                     (LPTHREAD_START_ROUTINE)initImageThread, //[in]            LPTHREAD_START_ROUTINE  lpStartAddress,
-                     &para[0],                                //[in, optional]  __drv_aliasesMem LPVOID lpParameter,
-                     0,                                       //[in]            DWORD                   dwCreationFlags,
-                     NULL);                                   //[out, optional] LPDWORD                 lpThreadId
+    //para[0] = {ImagesOut->data, ImagesOut->count, imageMem};
+    for (int i = 0; i < (int)ImagesOut->count;i++)
+        initImage(&ImagesOut->data[i], imageMem);
     return result;
 }
 

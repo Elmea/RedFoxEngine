@@ -74,7 +74,7 @@ void Graphics::InitTexture(ObjModel *model)
         model->materials.material[i].diffuseMap.index0 = texture[temp];
     }
 
-    WaitForSingleObject(model->images.thread, INFINITE); // TODO(V. Caraulan): Wrap in waiting for thread function
+    //WaitForSingleObject(model->images.thread, INFINITE); // TODO(V. Caraulan): Wrap in waiting for thread function
     for (int i = 0; i < (int)model->images.count; i++)
     {
         glTextureParameteri(texture[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
