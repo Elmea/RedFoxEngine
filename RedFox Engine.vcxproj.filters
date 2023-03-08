@@ -36,6 +36,18 @@
     <ClCompile Include="src\ObjParser.cpp">
       <Filter>Source Files\External Files</Filter>
     </ClCompile>
+    <ClCompile Include="external\imgui.cpp">
+      <Filter>Source Files\External Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui_draw.cpp">
+      <Filter>Source Files\External Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui_tables.cpp">
+      <Filter>Source Files\External Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui_widgets.cpp">
+      <Filter>Source Files\External Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Engine.hpp">

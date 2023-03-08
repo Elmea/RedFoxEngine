@@ -407,8 +407,8 @@ void initImageThread(void *parameter)
 
     Return - the function returns the array of materials
 */
-ObjMaterials ParseMTL(const char *objPath, MyString objBuffer, ObjImages *ImagesOut, Memory *imageMem, Memory *meshMem,
-                      Memory *tempMem)
+ObjMaterials ParseMTL(const char *objPath, MyString objBuffer, ObjImages *ImagesOut,
+    Memory *imageMem, Memory *meshMem, Memory *tempMem)
 {
     ObjMaterials result = {};
     char mtlLibFilePath[255] = {};
@@ -417,7 +417,7 @@ ObjMaterials ParseMTL(const char *objPath, MyString objBuffer, ObjImages *Images
     int pathLen = 0;
     for (pathLen = 0; objPath[pathLen]; pathLen++)
         ;
-    for (int i = 0; i < (int)objBuffer.size; i++)
+    for (int i = 0; i + 6 < (int)objBuffer.size; i++)
     {
         if (StringsAreEqual({6, 6, &objBuffer.data[i]}, {6, 6, "mtllib"}))
         {
@@ -801,6 +801,19 @@ int ParseModel(ObjModel *result, const char *path)
     }
 
     // Custom hash map with custom hash function to deduplicate vertices
+#if 1
+    result->vertices = (ObjVertex *)MyMalloc(&result->vertexMem, result->indexCount * sizeof(ObjVertex));
+    result->vertexCount = result->indexCount;
+    for (int i = 0; i < (int)result->indexCount; i++)
+    {
+        result->indices[i] = i;
+        ObjVertex tempVrtx = {tempParser.position[tempParser.vertexIndices[i].positionIndex],
+                              tempParser.normal[tempParser.vertexIndices[i].normalIndex],
+                              tempParser.textureUV[tempParser.vertexIndices[i].textureIndex]};
+
+        result->vertices[i] = tempVrtx;
+    }
+#else
     result->vertices = (ObjVertex *)MyMalloc(&result->vertexMem, result->indexCount * sizeof(ObjVertex));
     VertexKey *hash = (VertexKey *)MyMalloc(&tempVertexHashMem, sizeof(VertexKey) * result->indexCount);
     VertexKey *tempNext = (VertexKey *)MyMalloc(&tempVertexHashMem, sizeof(VertexKey) * result->indexCount);
@@ -873,8 +886,10 @@ int ParseModel(ObjModel *result, const char *path)
     }
     result->vertexCount = tempCount;
 
-    snprintf(OutputStringDebug, 254, "%d deduplicates %lld hash collisions\n", deduplicates, listCount);
-    OutputDebugStringA(OutputStringDebug);
+   snprintf(OutputStringDebug, 254, "%d deduplicates %lld hash collisions\n", deduplicates, listCount);
+   OutputDebugStringA(OutputStringDebug);
+#endif
+
     DeInitMemory(&tempPosition);
     DeInitMemory(&tempNormal);
     DeInitMemory(&tempTexture);

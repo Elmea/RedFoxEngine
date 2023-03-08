@@ -38,4 +38,7 @@
     X(PFNGLTEXTUREPARAMETERIPROC, glTextureParameteri)                                                                 \
     X(PFNGLTEXTURESTORAGE2DPROC, glTextureStorage2D)                                                                   \
     X(PFNGLTEXTURESUBIMAGE2DPROC, glTextureSubImage2D)                                                                 \
-    X(PFNGLDEBUGMESSAGECALLBACKPROC, glDebugMessageCallback)
+    X(PFNGLDEBUGMESSAGECALLBACKPROC, glDebugMessageCallback)                                                           \
+    X(PFNGLBLENDEQUATIONPROC, glBlendEquation)                                                                         \
+    X(PFNGLBLENDFUNCSEPARATEPROC, glBlendFuncSeparate)
+//    X(PFNGLGETPROGRAMUNIFORMMATRIXPROC, glGetProgramUniformMatrix(

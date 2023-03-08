@@ -6,6 +6,8 @@
 #define REDFOXMATHS_IMPLEMENTATION
 #include "RedfoxMaths.hpp"
 
+#include <imgui.h>
+
 using namespace RedFoxEngine;
 
 void Engine::ObjModelPush(const char *path)
@@ -39,7 +41,6 @@ Engine::Engine(int width, int height)
         {
             m_models[i].parent = &m_models[i - 1];
         }
-        DeInitGraphicsObj(&m_models[i].obj);
     }
     m_models[1] = m_models[0];
     m_models[1].position.x += 2.f;
@@ -49,7 +50,7 @@ Engine::Engine(int width, int height)
     m_input = {};
 }
 
-void Engine::GetInputs()
+void Engine::ProcessInputs()
 {
     m_time = Platform::GetTimer();
 
@@ -69,6 +70,10 @@ void Engine::GetInputs()
     }
 }
 
+Input Engine::GetInputs()
+{
+    return (m_input);
+}
 using namespace RedFoxMaths;
 
 void Engine::Update()
@@ -132,6 +137,7 @@ void Engine::Draw()
     HDC dc = GetDC(m_platform.m_window);
     m_graphics.Draw(m_models, m_modelCount);
     // swap the buffers to show output
+    m_graphics.DrawIMGUI(m_platform.windowDimension);
 
     if (!SwapBuffers(dc))
         m_platform.FatalError("Failed to swap OpenGL buffers!");

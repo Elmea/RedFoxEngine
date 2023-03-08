@@ -34,13 +34,17 @@ class Graphics
   private:
     RedFoxMaths::Mat4 m_viewProjection;
     GLuint m_pipeline;
+    GLuint m_imguiPipeline;
     GLuint m_vshader, m_fshader;
+    GLuint m_imguivshader, m_imguifshader;
 
   public:
     void Draw(Model *model, int modelCount);
+    void DrawIMGUI(WindowDimension windowDimension);
     void DrawModel(Model model);
     void InitModel(Model *model);
     void InitTexture(ObjModel *model);
+    void InitTexture(void *data,int height, int width, GLuint &texture);
     void InitShaders();
     void InitGraphics();
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
