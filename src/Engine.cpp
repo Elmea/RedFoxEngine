@@ -29,12 +29,21 @@ Engine::Engine(int width, int height)
     m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 100);
     m_modelCount = 0;
     ObjModelPush("ts_bot912.obj");
-
+   
     for (int i = 0; i < (int)m_modelCount; i++)
+    {
+        m_graphics.InitModel(&m_models[i]);
+        m_models[i].parentId = -1;
+        // Tmp code for scene graph
+        if (i > 0)
         {
-            m_graphics.InitModel(&m_models[i]);
-            DeInitGraphicsObj(&m_models[i].obj);
+            m_models[i].parentId = i - 1;
         }
+        DeInitGraphicsObj(&m_models[i].obj);
+    }
+    m_models[1] = m_models[0];
+    m_models[1].position.x += 2.f;
+    m_modelCount++;
     QueryPerformanceFrequency((LARGE_INTEGER *)&m_frequency);
     QueryPerformanceCounter((LARGE_INTEGER *)&m_startingTime);
     m_input = {};
@@ -107,8 +116,34 @@ void Engine::Update()
     time += m_deltaTime * 0.1f;
     for (int i = 0; i < (int)m_modelCount; i++) // TODO physics code here ?
     {
-        m_models[i].scale = 1;
-        m_models[i].position = Float3(sinf(time * i), cosf(time), 0);
+        if (m_models[i].parentId == -1)
+        {
+            m_models[i].position = Float3(sinf(time * i), cosf(time), 0);
+            m_models[i].orientation =  Quaternion::SLerp({ 1,0.2f,0.2f,0.2f }, { 1,0.8f,0.8f,0.8f }, time);
+            m_models[i].scale = 1;
+        }
+        else
+        {
+            // TODO(a.perche): Move this code in a SceneGraph abstraction
+            Mat4 currentMat = Mat4::CreateTransformMatrix(
+                m_models[i].position,
+                m_models[i].orientation,
+                { m_models[i].scale, m_models[i].scale, m_models[i].scale });
+
+            Model* parent = &m_models[i];
+            while (parent->parentId != -1)
+            {
+                parent = &m_models[m_models[i].parentId];
+                Mat4 parentMat = Mat4::CreateTransformMatrix(
+                    parent->position,
+                    parent->orientation,
+                    { parent->scale, parent->scale, parent->scale });
+                currentMat = currentMat * parentMat;
+                m_models[i].position = { currentMat.mat[0][3], currentMat.mat[1][3], currentMat.mat[2][3] };
+                m_models[i].orientation = currentMat.ToQuaternion(); // TODO: Fix quaternions ?
+                m_models[i].scale = currentMat.mat[3][0];
+            }
+        }
     }
 
     m_graphics.SetViewProjectionMatrix(projection * view);

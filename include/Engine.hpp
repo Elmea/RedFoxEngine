@@ -13,31 +13,30 @@
 
 namespace RedFoxEngine
 {
+    class Engine
+    {
+      private:
+        u64 m_startingTime;
+        Memory m_arenaAllocator;
+        Model *m_models;
+        u64 m_modelCount;
+        Input m_input;
+        u64 m_frequency;
 
-class Engine
-{
-  private:
-    u64 m_startingTime;
-    Memory m_arenaAllocator;
-    Model *m_models;
-    u64 m_modelCount;
-    Input m_input;
-    u64 m_frequency;
+      public:
+        Platform m_platform; // TODO(V. Caraulan): make private
+        Graphics m_graphics;
+        u64 m_time;
+        f64 m_deltaTime;
 
-  public:
-    Platform m_platform; // TODO(V. Caraulan): make private
-    Graphics m_graphics;
-    u64 m_time;
-    f64 m_deltaTime;
+      private:
+      public:
+        Engine(int width, int height);
+        ~Engine();
 
-  private:
-  public:
-    Engine(int width, int height);
-    ~Engine();
-    void GetInputs();
-    void Update();
-    void Draw();
-    void ObjModelPush(const char *objPath);
-    void SetViewProjectionMatrix(RedFoxMaths::Mat4 viewProjection);
-};
-} // namespace RedFoxEngine
+        void GetInputs();
+        void Update();
+        void Draw();
+        void ObjModelPush(const char *objPath);
+    };
+}
