@@ -39,6 +39,9 @@
     <ClCompile Include="external\imgui.cpp">
       <Filter>Source Files\External Files</Filter>
     </ClCompile>
+    <ClCompile Include="external\imgui_demo.cpp">
+      <Filter>Source Files\External Files</Filter>
+    </ClCompile>
     <ClCompile Include="external\imgui_draw.cpp">
       <Filter>Source Files\External Files</Filter>
     </ClCompile>

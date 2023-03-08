@@ -127,6 +127,11 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="external\imgui.cpp" />
+    <ClCompile Include="external\imgui_demo.cpp" />
+    <ClCompile Include="external\imgui_draw.cpp" />
+    <ClCompile Include="external\imgui_tables.cpp" />
+    <ClCompile Include="external\imgui_widgets.cpp" />
     <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\ObjParser.cpp" />
