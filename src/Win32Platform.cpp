@@ -1,5 +1,5 @@
 #include "Win32Platform.hpp"
-
+#include "imgui_impl_win32.h"
 using namespace RedFoxEngine;
 
 int Platform::m_running;
@@ -179,6 +179,8 @@ void Platform::MessageProcessing(Input *input)
     MSG Message;
     while (PeekMessageA(&Message, NULL, 0, 0, PM_REMOVE))
     {
+        TranslateMessage(&Message);
+        DispatchMessage(&Message);
         switch (Message.message)
         {
 
@@ -321,8 +323,12 @@ void Platform::MessageProcessing(Input *input)
     }
 }
 
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 static LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WParam, LPARAM LParam)
 {
+    if (ImGui_ImplWin32_WndProcHandler(Window, Message, WParam, LParam))
+            return 1;
     LRESULT Result = 0;
     switch (Message)
     {

@@ -7,6 +7,8 @@
 #include "RedfoxMaths.hpp"
 
 #include <imgui.h>
+#include "imgui_impl_opengl3.h"
+#include "imgui_impl_win32.h"
 
 using namespace RedFoxEngine;
 
@@ -137,7 +139,14 @@ void Engine::Draw()
     HDC dc = GetDC(m_platform.m_window);
     m_graphics.Draw(m_models, m_modelCount);
     // swap the buffers to show output
-    m_graphics.DrawIMGUI(m_platform.windowDimension);
+    ImGui_ImplWin32_NewFrame();
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui::NewFrame();
+    ImGui::Begin("Test window");
+    ImGui::Text("Hello, world!");
+    ImGui::End();
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     if (!SwapBuffers(dc))
         m_platform.FatalError("Failed to swap OpenGL buffers!");

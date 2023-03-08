@@ -51,6 +51,12 @@
     <ClCompile Include="external\imgui_widgets.cpp">
       <Filter>Source Files\External Files</Filter>
     </ClCompile>
+    <ClCompile Include="external\imgui_impl_win32.cpp">
+      <Filter>Source Files\External Files</Filter>
+    </ClCompile>
+    <ClCompile Include="external\imgui_impl_opengl3.cpp">
+      <Filter>Source Files\External Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Engine.hpp">

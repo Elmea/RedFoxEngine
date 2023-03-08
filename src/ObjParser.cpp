@@ -801,7 +801,7 @@ int ParseModel(ObjModel *result, const char *path)
     }
 
     // Custom hash map with custom hash function to deduplicate vertices
-#if 1
+#if 0
     result->vertices = (ObjVertex *)MyMalloc(&result->vertexMem, result->indexCount * sizeof(ObjVertex));
     result->vertexCount = result->indexCount;
     for (int i = 0; i < (int)result->indexCount; i++)

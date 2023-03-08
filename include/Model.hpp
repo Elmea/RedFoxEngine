@@ -5,7 +5,7 @@ namespace RedFoxEngine
 {
     struct Model
     {
-        int parentId;
+//        int parentId;
         Model* parent;
         u32 vao;
         ObjModel obj;

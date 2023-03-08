@@ -24,7 +24,6 @@ void Graphics::InitGraphics()
     wglSwapIntervalEXT(1);
 }
 
-// TODO(V. Caraulan): replace with modulable functions from model
 void Graphics::InitModel(Model *model)
 {
     // vertex buffer containing triangle vertices
@@ -159,43 +158,8 @@ void Graphics::InitShaders() // TODO(V. Caraulan):
             "    o_color = texture(diffuseMap, vs_in.TexCoord); \n"
             "}                                             \n";
 
-
-        const GLchar* imgui_vertex_shader =
-            "#version 450 core                             \n"
-            "#line " STR(__LINE__) "                     \n\n"
-            "layout (location = 0) in vec2 Position;\n"
-            "layout (location = 1) in vec2 UV;\n"
-            "layout (location = 2) in vec4 Color;\n"
-            "layout (location = 0)                           \n"
-
-            "out gl_PerVertex { vec4 gl_Position; };       \n" // required because of
-            "uniform mat4 ProjMtx;\n"
-            "out vec2 Frag_UV;\n"
-            "out vec4 Frag_Color;\n"
-            "void main()\n"
-            "{\n"
-            "    Frag_UV = UV;\n"
-            "    Frag_Color = Color;\n"
-            "    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
-            "}\n";
-
-        const GLchar* imgui_fragment_shader =
-            "#version 450 core                             \n"
-            "#line " STR(__LINE__) "                     \n\n"
-            "in vec2 Frag_UV;\n"
-            "in vec4 Frag_Color;\n"
-            "uniform sampler2D Texture;\n"
-            "layout (location = 0) out vec4 Out_Color;\n"
-            "void main()\n"
-            "{\n"
-            "    Out_Color = Frag_Color * texture(Texture, Frag_UV.st);\n"
-            "}\n";
-
         m_vshader = glCreateShaderProgramv(GL_VERTEX_SHADER, 1, &glslVshader);
         m_fshader = glCreateShaderProgramv(GL_FRAGMENT_SHADER, 1, &glslFshader);
-
-        m_imguivshader = glCreateShaderProgramv(GL_VERTEX_SHADER, 1, &imgui_vertex_shader);
-        m_imguifshader = glCreateShaderProgramv(GL_FRAGMENT_SHADER, 1, &imgui_fragment_shader);
 
         GLint linked;
         glGetProgramiv(m_vshader, GL_LINK_STATUS, &linked);
@@ -216,31 +180,10 @@ void Graphics::InitShaders() // TODO(V. Caraulan):
             Assert(!"Failed to create fragment shader!");
         }
 
-        glGetProgramiv(m_imguifshader, GL_LINK_STATUS, &linked);
-        if (!linked)
-        {
-            char message[1024];
-            glGetProgramInfoLog(m_imguifshader, sizeof(message), NULL, message);
-            OutputDebugStringA(message);
-            Assert(!"Failed to create fragment shader!");
-        }
-
-        glGetProgramiv(m_imguivshader, GL_LINK_STATUS, &linked);
-        if (!linked)
-        {
-            char message[1024];
-            glGetProgramInfoLog(m_imguivshader, sizeof(message), NULL, message);
-            OutputDebugStringA(message);
-            Assert(!"Failed to create fragment shader!");
-        }
 
         glGenProgramPipelines(1, &m_pipeline);
         glUseProgramStages(m_pipeline, GL_VERTEX_SHADER_BIT, m_vshader);
         glUseProgramStages(m_pipeline, GL_FRAGMENT_SHADER_BIT, m_fshader);
-
-        glGenProgramPipelines(1, &m_imguiPipeline);
-        glUseProgramStages(m_imguiPipeline, GL_VERTEX_SHADER_BIT, m_imguivshader);
-        glUseProgramStages(m_imguiPipeline, GL_FRAGMENT_SHADER_BIT, m_imguivshader);
     }
 }
 
@@ -262,30 +205,6 @@ void Graphics::Draw(Model *model, int modelCount)
     {
         DrawModel(model[i]);
     }
-}
-
-void Graphics::DrawIMGUI(WindowDimension windowDimension)
-{
-    // int fb_width = (int)(draw_data->DisplaySize.x * draw_data->FramebufferScale.x);
-    // int fb_height = (int)(draw_data->DisplaySize.y * draw_data->FramebufferScale.y);
-    // if (fb_width <= 0 || fb_height <= 0)
-
-    ImDrawData *draw_data = ImGui::GetDrawData();
-
-    // // glEnable(GL_BLEND);
-    // // glBlendEquation(GL_FUNC_ADD);
-    // // glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    // // glDisable(GL_CULL_FACE);
-    // // glDisable(GL_DEPTH_TEST);
-    // // glDisable(GL_STENCIL_TEST);
-    // // glEnable(GL_SCISSOR_TEST);
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    // glViewport(0, 0, windowDimension.width, windowDimension.height);
-    RedFoxMaths::Mat4 ortho = RedFoxMaths::Mat4::GetOrthographicMatrix(0, 0, windowDimension.width, windowDimension.height, 0.01, 100);
-
-    glBindProgramPipeline(m_imguiPipeline);
-    glProgramUniformMatrix4fv(m_imguivshader, 0, 1,GL_TRUE, ortho.AsPtr());
-//    glBindTextureUnit(0, );//TODO get imgui font 
 }
 
 void Graphics::DrawModel(Model model)
@@ -310,7 +229,7 @@ void Graphics::DrawModel(Model model)
                               model.obj.materials.material[model.obj.meshes[i].materialIndex].diffuseMap.index0);
         else
             glBindTextureUnit(diffuseMap, 0); // TODO: create a default 'missing' texture
-        glDrawArrays(GL_TRIANGLES, model.obj.meshes[i].indexStart, model.obj.meshes[i].indexCount);
+        glDrawElements(GL_TRIANGLES, model.obj.meshes[i].indexCount ,GL_UNSIGNED_INT, (void *)(model.obj.meshes[i].indexStart * sizeof(u32)));
     }
 }
 } // namespace RedFoxEngine
