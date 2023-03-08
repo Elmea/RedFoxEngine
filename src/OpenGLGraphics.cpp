@@ -31,13 +31,12 @@ void Graphics::InitModel(Model *model)
     unsigned int vbo;
     {
         glCreateBuffers(1, &vbo);
-        glNamedBufferStorage(vbo, model->obj.vertexCount * sizeof(ObjVertex), model->obj.vertices,
-                             GL_DYNAMIC_STORAGE_BIT);
+        glNamedBufferStorage(vbo, model->obj.vertexCount * sizeof(ObjVertex), model->obj.vertices, 0);
     }
     unsigned int ebo;
     {
         glCreateBuffers(1, &ebo);
-        glNamedBufferStorage(ebo, sizeof(u32) * model->obj.indexCount, model->obj.indices, GL_DYNAMIC_STORAGE_BIT);
+        glNamedBufferStorage(ebo, sizeof(u32) * model->obj.indexCount, model->obj.indices, 0);
     }
     // vertex input
     {
@@ -311,8 +310,7 @@ void Graphics::DrawModel(Model model)
                               model.obj.materials.material[model.obj.meshes[i].materialIndex].diffuseMap.index0);
         else
             glBindTextureUnit(diffuseMap, 0); // TODO: create a default 'missing' texture
-        glDrawElements(GL_TRIANGLES, model.obj.meshes[i].indexCount, GL_UNSIGNED_INT,
-                       (void *)(model.obj.meshes[i].indexStart * sizeof(u32)));
+        glDrawArrays(GL_TRIANGLES, model.obj.meshes[i].indexStart, model.obj.meshes[i].indexCount);
     }
 }
 } // namespace RedFoxEngine
