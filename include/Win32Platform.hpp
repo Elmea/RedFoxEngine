@@ -9,6 +9,7 @@
 
 #include "OpenGLFunctions.hpp"
 #include <GL/gl.h>
+#include "Model.hpp"
 
 typedef int8_t s8;
 typedef uint8_t u8;
@@ -100,6 +101,7 @@ class Platform
     void GetWglFunctions();
     static u64 GetTimerFrequency();
     static u64 GetTimer();
+    void LoadGameLibrary(char *functionName, char *libraryPath, HINSTANCE &gameLibrary, LPFILETIME LastWriteTime, void **functionPointer);
 };
 } // namespace RedFoxEngine
 
@@ -112,3 +114,7 @@ class Platform
         if (!(cond))                                                                                                   \
             __debugbreak();                                                                                            \
     } while (0)
+
+#ifndef UPDATEGAME
+#define UPDATEGAME(name) void name(float deltaTime, RedFoxEngine::Input input, RedFoxEngine::Model *models, u32 modelCount, f32 time, RedFoxMaths::Float3 cameraRotation, RedFoxMaths::Float3 *cameraPosition)
+#endif

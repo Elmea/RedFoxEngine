@@ -5,14 +5,13 @@ namespace RedFoxEngine
 {
     struct Model
     {
-//        int parentId;
         Model* parent;
         u32 vao;
         ObjModel obj;
         RedFoxMaths::Float3 position;
         RedFoxMaths::Quaternion orientation;
         f32 scale;
-        
+
         RedFoxMaths::Mat4 GetWorldMatrix()
         {
             RedFoxMaths::Mat4 local = RedFoxMaths::Mat4::CreateTransformMatrix(position, orientation, {scale, scale, scale});
@@ -22,5 +21,33 @@ namespace RedFoxEngine
 
             return local;
         }
+
+        Model **GetChildren(Model *models, int modelCount, Memory *temp)
+        {
+            Model **result = (Model**)MyMalloc(temp, sizeof(Model**));
+            int count = 0;
+            for (int i = 0; i < modelCount; i++)
+            {
+                if (models[i].parent == this)
+                {
+                    result[count] = (Model *)MyMalloc(temp, sizeof(Model*));
+                    result[count] = models[i].parent;
+                    count++;
+                }
+            }
+            result[count] = nullptr;
+            return(result);
+        }
+        //TODO do we need this?
+        Model *GetParent()
+        {
+            return(parent);
+        }
+
+        void SetParent(Model *model)
+        {
+            parent = model;
+        }
+
     };
 }

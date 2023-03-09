@@ -1,14 +1,12 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #define REDFOXMATHS_IMPLEMENTATION
-#include "Model.hpp"
 #include "Win32Platform.hpp"
 using namespace RedFoxMaths;
 
-BOOL APIENTRY DllMain( HMODULE hModule,
+BOOL APIENTRY DllMain(HMODULE hModule,
                       DWORD  ul_reason_for_call,
-                      LPVOID lpReserved
-                      )
+                      LPVOID lpReserved)
 {
     switch (ul_reason_for_call)
     {
@@ -21,7 +19,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     return TRUE;
 }
 
-__declspec(dllexport) void UpdateGame(float deltaTime, RedFoxEngine::Input input, RedFoxEngine::Model *models, u32 modelCount, f32 time, Float3 cameraRotation, Float3 *cameraPosition)
+__declspec(dllexport) UPDATEGAME(UpdateGame)
 {
     #pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
     static Float3 modelPosition(0, 0, 0);
@@ -45,7 +43,6 @@ __declspec(dllexport) void UpdateGame(float deltaTime, RedFoxEngine::Input input
         inputDirection.x += 1;
     if (input.D)
         inputDirection.x += -1;
-
     inputDirection =
         (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
     inputDirection.Normalize();
@@ -58,8 +55,8 @@ __declspec(dllexport) void UpdateGame(float deltaTime, RedFoxEngine::Input input
     {
         if (models[i].parent == nullptr)
         {
-            models[i].position = Float3(sinf(time * i), cosf(time), 0);
-            models[i].orientation =  Quaternion::SLerp({ 1,0.2f,0.2f,0.2f }, { 1,0.8f,0.8f,0.8f }, time);
+            models[i].position += Float3(sinf(time), cosf(time), 0) * 0.001f;
+            models[i].orientation =  Quaternion::SLerp({ 1,0.2f,0.2f,0.2f }, { -1,0.8f,0.8f,0.8f }, time);
             models[i].scale = 1;
         }
     }

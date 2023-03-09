@@ -373,6 +373,31 @@ u64 Platform::GetTimer(void)
     return Result.QuadPart;
 }
 
+UPDATEGAME(updateGame)
+{
+//NOTE We use an empty function in case our library loading fails, so we don't crash
+}
+
+void Platform::LoadGameLibrary(char *functionName, char *libraryPath, HINSTANCE &gameLibrary, LPFILETIME LastWriteTime, void **functionPointer)
+{
+    FILETIME temp = *LastWriteTime;
+
+    HANDLE File = CreateFileA("game.dll", GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    GetFileTime(File, NULL, NULL, LastWriteTime);
+    CloseHandle(File);
+    if (CompareFileTime(&temp, LastWriteTime) != 0)
+    {
+        if (gameLibrary)
+            FreeLibrary(gameLibrary);
+        CopyFileA(libraryPath, "gameCopy.dll", false);
+        gameLibrary = LoadLibraryA("gameCopy.dll");
+        if (gameLibrary)
+            *functionPointer = GetProcAddress(gameLibrary, functionName);
+        if (*functionPointer == NULL)
+            *functionPointer = &updateGame;
+    }
+}
+
 Window Platform::CreateRedFoxWindow(int Width, int Height)
 {
     Window window = NULL;

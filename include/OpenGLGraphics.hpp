@@ -5,7 +5,6 @@
 #include "Win32Platform.hpp"
 #endif
 
-#include "Model.hpp"
 #include "ObjParser.hpp"
 #include "OpenGLFunctions.hpp"
 #include <GL/gl.h>

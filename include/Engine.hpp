@@ -14,11 +14,14 @@
 namespace RedFoxEngine
 {
 
+typedef UPDATEGAME(_updategame);
+
 class Engine
 {
   private:
     u64 m_startingTime;
     Memory m_arenaAllocator;
+    Memory m_tempAllocator;
     Model *m_models;
     u64 m_modelCount;
     u64 m_frequency;
@@ -31,6 +34,7 @@ class Engine
     Graphics m_graphics;
     u64 m_time;
     f64 m_deltaTime;
+    _updategame *UpdateGame;
 
   private:
   public:
@@ -40,7 +44,10 @@ class Engine
     Input GetInputs();
     void Update();
     void Draw();
+    void DrawIMGUI();
     void ObjModelPush(const char *objPath);
+
+    void InitIMGUI();
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 viewProjection);
 };
 } // namespace RedFoxEngine
