@@ -14,10 +14,9 @@ void Graphics::InitGraphics()
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_GREATER); // TODO(V. Caraulan): if I'm misusing the matrices, we have to remove this
+        glDepthFunc(GL_GREATER);
         glEnable(GL_CULL_FACE);
     }
-    //	TODO:resize in case of window resize
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // set to FALSE to disable vsync
@@ -88,7 +87,7 @@ void Graphics::InitTexture(ObjModel *model)
         model->materials.material[i].diffuseMap.index0 = texture[temp];
     }
 
-    //WaitForSingleObject(model->images.thread, INFINITE); // TODO(V. Caraulan): Wrap in waiting for thread function
+    WaitForSingleObject(model->images.thread, INFINITE); // TODO(V. Caraulan): Wrap in waiting for thread function
     for (int i = 0; i < (int)model->images.count; i++)
     {
         glTextureParameteri(texture[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -102,7 +101,7 @@ void Graphics::InitTexture(ObjModel *model)
     }
 }
 
-void Graphics::InitShaders() // TODO(V. Caraulan):
+void Graphics::InitShaders()
 {
     // fragment & vertex shaders for drawing triangle
     {
@@ -196,7 +195,7 @@ void Graphics::Draw(Model *model, int modelCount)
 {
     // clear screen
     glClearColor(0.392f, 0.584f, 0.929f, 1.f);
-    glClearDepth(0); // TODO(V. Caraulan): Is this correct ?
+    glClearDepth(0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     // activate shaders for next draw call

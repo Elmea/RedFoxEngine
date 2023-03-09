@@ -179,8 +179,6 @@ void Platform::MessageProcessing(Input *input)
     MSG Message;
     while (PeekMessageA(&Message, NULL, 0, 0, PM_REMOVE))
     {
-        TranslateMessage(&Message);
-        DispatchMessage(&Message);
         switch (Message.message)
         {
 
@@ -196,20 +194,25 @@ void Platform::MessageProcessing(Input *input)
         }
         break;
         case WM_MOUSEWHEEL: {
+            TranslateMessage(&Message);
+            DispatchMessage(&Message);
         }
         break;
 
-        case WM_LBUTTONUP: {
-            //				ReleaseCapture();
-        }
-        break;
+        case WM_LBUTTONUP:
+            //				ReleaseCapture(m_window);
         case WM_LBUTTONDOWN: {
             //				SetCapture(m_window);
+            TranslateMessage(&Message);
+            DispatchMessage(&Message);
         }
         break;
 
         case WM_KEYUP:
         case WM_KEYDOWN: {
+            TranslateMessage(&Message);
+            DispatchMessage(&Message);
+
             int VKCode = (int)Message.wParam;
             // NOTE: variable names explain the bit shift
             // int WasDown = ((Message.lParam & (1 << 30)) != 0);

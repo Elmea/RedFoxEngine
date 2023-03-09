@@ -348,7 +348,6 @@ void initImage(ObjImageData *result, Memory *memory)
     }
     else
     {
-        // TODO(V. Caraulan): check if texture loaded before
         stbi_set_flip_vertically_on_load(1);
         result->data = stbi_load_from_memory((u8 *)file.data, file.size, &result->width, &result->height,
                                              &result->nrChannels, STBI_rgb_alpha);
@@ -467,7 +466,7 @@ ObjMaterials ParseMTL(const char *objPath, MyString objBuffer, ObjImages *Images
     }
     result.material = (ObjMaterial *)MyMalloc(meshMem, sizeof(ObjMaterial) * result.count);
     ImagesOut->data = (ObjImageData *)MyMalloc(imageMem, sizeof(ObjImageData) * result.count);
-    //ParameterImageThread *para = (ParameterImageThread *)MyMalloc(imageMem, sizeof(ParameterImageThread));
+    ParameterImageThread *para = (ParameterImageThread *)MyMalloc(imageMem, sizeof(ParameterImageThread));
 
     current = (char *)mtlLibData.data;
     endOfLine = (char *)mtlLibData.data;
@@ -510,11 +509,9 @@ ObjMaterials ParseMTL(const char *objPath, MyString objBuffer, ObjImages *Images
             }
             if (!found)
             {
-                //				initImage(&ImagesOut->data[ImagesOut->count], imageMem);
                 result.material[i].diffuseMap.index0 = ImagesOut->count;
                 ImagesOut->count++;
             }
-            // TODO else remove the path allocation from ImagesOut
             endOfLine = get_next_line(mtlLibData.file, current) + 1;
         }
         else if (StringsAreEqual_C({3, 3, "Kd "}, current, NULL))
@@ -542,9 +539,17 @@ ObjMaterials ParseMTL(const char *objPath, MyString objBuffer, ObjImages *Images
             endOfLine = get_next_line(mtlLibData.file, current) + 1;
         }
     }
-    //para[0] = {ImagesOut->data, ImagesOut->count, imageMem};
-    for (int i = 0; i < (int)ImagesOut->count;i++)
-        initImage(&ImagesOut->data[i], imageMem);
+    para[0] = {ImagesOut->data, ImagesOut->count, imageMem};
+    ImagesOut->thread =
+        CreateThread(NULL,                                    //[in, optional]  LPSECURITY_ATTRIBUTES   lpThreadAttributes,
+                     sizeof(ParameterImageThread),            //[in]            SIZE_T                  dwStackSize,
+                     (LPTHREAD_START_ROUTINE)initImageThread, //[in]            LPTHREAD_START_ROUTINE  lpStartAddress,
+                     &para[0],                                //[in, optional]  __drv_aliasesMem LPVOID lpParameter,
+                     0,                                       //[in]            DWORD                   dwCreationFlags,
+                     NULL);                                   //[out, optional] LPDWORD                 lpThreadId
+
+    // for (int i = 0; i < (int)ImagesOut->count;i++)
+    //     initImage(&ImagesOut->data[i], imageMem);
     return result;
 }
 

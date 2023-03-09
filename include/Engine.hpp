@@ -23,7 +23,9 @@ class Engine
     u64 m_modelCount;
     u64 m_frequency;
     Input m_input;
-
+    HDC m_dc;
+    HINSTANCE m_gameLibrary;
+    FILETIME m_lastTime;
   public:
     Platform m_platform; // TODO(V. Caraulan): make private
     Graphics m_graphics;
