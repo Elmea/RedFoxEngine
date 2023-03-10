@@ -31,23 +31,12 @@ namespace RedFoxEngine
                 if (models[i].parent == this)
                 {
                     result[count] = (Model *)MyMalloc(temp, sizeof(Model*));
-                    result[count] = models[i].parent;
+                    result[count] = &models[i];//models[i].parent;
                     count++;
                 }
             }
             result[count] = nullptr;
             return(result);
         }
-        //TODO do we need this?
-        Model *GetParent()
-        {
-            return(parent);
-        }
-
-        void SetParent(Model *model)
-        {
-            parent = model;
-        }
-
     };
 }

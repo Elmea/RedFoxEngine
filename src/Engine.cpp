@@ -53,10 +53,15 @@ Engine::Engine(int width, int height)
         m_graphics.InitModel(&m_models[i]);
         m_models[i].parent = nullptr;
     }
+
     m_models[1] = m_models[0];
-    m_models[1].SetParent(&m_models[0]);
+    m_models[1].parent = &m_models[0];
     m_models[1].position = {};
     m_models[1].scale = 0.5;
+    m_modelCount++;
+    m_models[2] = m_models[0];
+    m_models[2].position = {};
+    m_models[2].scale = 0.5;
     m_modelCount++;
     QueryPerformanceFrequency((LARGE_INTEGER *)&m_frequency);
     QueryPerformanceCounter((LARGE_INTEGER *)&m_startingTime);
@@ -112,13 +117,48 @@ void Engine::Update()
     m_models[0].GetChildren(m_models, m_modelCount, &m_tempAllocator);
 }
 
+void Engine::DrawSceneNodes(int index, bool is_child, Model* model)
+{
+    //ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet;
+    if (ImGui::TreeNodeEx((void*)(intptr_t)index, is_child ? ImGuiTreeNodeFlags_Bullet : ImGuiTreeNodeFlags_None, "Model %d", index))
+    {
+        if (ImGui::BeginDragDropSource())
+        {
+            ImGui::SetDragDropPayload("_TREENODE", model, sizeof(Model));
+            ImGui::Text("This is a drag and drop source");
+            ImGui::EndDragDropSource();
+        }
+
+        Model** children = model->GetChildren(m_models, m_modelCount, &m_tempAllocator);
+        if (children)
+        {
+            for (int i = 0; sizeof(children) / sizeof(Model) || children[i] != nullptr; i++)
+            {
+                DrawSceneNodes(index + i + 1, true, children[i]);
+            }
+        }
+        else if (m_models[index + 1].parent == nullptr)
+        {
+            DrawSceneNodes(index + 1, false, &m_models[index + 1]);
+        }
+
+        ImGui::TreePop();
+    }
+}
+
+
 void Engine::DrawIMGUI()
 {
     ImGui_ImplWin32_NewFrame();
     ImGui_ImplOpenGL3_NewFrame();
     ImGui::NewFrame();
-    ImGui::Begin("Test window");
-    ImGui::Text("Hello, world!");
+    ImGui::Begin("Scene Graph");
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNodeEx("_TREENODE", ImGuiTreeNodeFlags_Leaf, "Root")) // TODO: Name of the scene here
+    {
+        DrawSceneNodes(0, (m_models[0].parent != nullptr), &m_models[0]);
+    }
+    ImGui::TreePop();
     ImGui::End();
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

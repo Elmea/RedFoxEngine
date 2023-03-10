@@ -43,6 +43,7 @@ class Engine
     void Update();
     void Draw();
     void DrawIMGUI();
+    void DrawSceneNodes(int index, bool is_child, Model* model);
     void ObjModelPush(const char *objPath);
 
     void InitIMGUI();
