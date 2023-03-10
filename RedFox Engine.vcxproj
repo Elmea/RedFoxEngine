@@ -159,7 +159,9 @@
     <ClInclude Include="include\OpenGLFunctions.hpp" />
     <ClInclude Include="include\OpenGLGraphics.hpp" />
     <ClInclude Include="include\RedfoxMaths.hpp" />
-    <ClInclude Include="include\ThreadManager.h" />
+    <ClInclude Include="include\ResourceManager.hpp" />
+    <ClInclude Include="include\ResourceManager.inl" />
+    <ClInclude Include="include\ThreadManager.hpp" />
     <ClInclude Include="include\Win32Platform.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
