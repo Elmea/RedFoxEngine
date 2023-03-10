@@ -378,7 +378,7 @@ UPDATEGAME(updateGame)
 //NOTE We use an empty function in case our library loading fails, so we don't crash
 }
 
-void Platform::LoadGameLibrary(char *functionName, char *libraryPath, HINSTANCE &gameLibrary, LPFILETIME LastWriteTime, void **functionPointer)
+_updategame *Platform::LoadGameLibrary(const char *functionName, const char *libraryPath, HINSTANCE &gameLibrary, LPFILETIME LastWriteTime, _updategame *functionPointer)
 {
     FILETIME temp = *LastWriteTime;
 
@@ -392,10 +392,11 @@ void Platform::LoadGameLibrary(char *functionName, char *libraryPath, HINSTANCE 
         CopyFileA(libraryPath, "gameCopy.dll", false);
         gameLibrary = LoadLibraryA("gameCopy.dll");
         if (gameLibrary)
-            *functionPointer = GetProcAddress(gameLibrary, functionName);
-        if (*functionPointer == NULL)
-            *functionPointer = &updateGame;
+            functionPointer = (_updategame *)GetProcAddress(gameLibrary, functionName);
+        if (functionPointer == NULL)
+            functionPointer = updateGame;
     }
+    return ((_updategame*)functionPointer);
 }
 
 Window Platform::CreateRedFoxWindow(int Width, int Height)

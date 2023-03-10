@@ -78,6 +78,11 @@ struct Input
     u8 Slash : 1;
 };
 
+#ifndef UPDATEGAME
+#define UPDATEGAME(name) void name(float deltaTime, RedFoxEngine::Input input, RedFoxEngine::Model *models, u32 modelCount, f32 time, RedFoxMaths::Float3 cameraRotation, RedFoxMaths::Float3 *cameraPosition)
+#endif
+typedef UPDATEGAME(_updategame);
+
 class Platform
 {
 
@@ -101,7 +106,7 @@ class Platform
     void GetWglFunctions();
     static u64 GetTimerFrequency();
     static u64 GetTimer();
-    void LoadGameLibrary(char *functionName, char *libraryPath, HINSTANCE &gameLibrary, LPFILETIME LastWriteTime, void **functionPointer);
+    _updategame *LoadGameLibrary(const char *functionName, const char *libraryPath, HINSTANCE &gameLibrary, LPFILETIME LastWriteTime, _updategame *functionPointer);
 };
 } // namespace RedFoxEngine
 
@@ -114,7 +119,3 @@ class Platform
         if (!(cond))                                                                                                   \
             __debugbreak();                                                                                            \
     } while (0)
-
-#ifndef UPDATEGAME
-#define UPDATEGAME(name) void name(float deltaTime, RedFoxEngine::Input input, RedFoxEngine::Model *models, u32 modelCount, f32 time, RedFoxMaths::Float3 cameraRotation, RedFoxMaths::Float3 *cameraPosition)
-#endif

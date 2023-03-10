@@ -62,8 +62,7 @@ Engine::Engine(int width, int height)
     QueryPerformanceCounter((LARGE_INTEGER *)&m_startingTime);
     m_input = {};
     m_dc = GetDC(m_platform.m_window);
-    UpdateGame = updateStub;
-    m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_gameLibrary, &m_lastTime, (void **)&UpdateGame);
+    UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_gameLibrary, &m_lastTime, updateStub);
 }
 
 void Engine::ProcessInputs()
@@ -93,7 +92,7 @@ Input Engine::GetInputs()
 
 void Engine::Update()
 {
-    m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_gameLibrary, &m_lastTime, (void **)&UpdateGame);
+    UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_gameLibrary, &m_lastTime, UpdateGame);
     static Float3 cameraPosition(0, 0, -4);
     static Float3 cameraRotation(0, 0, 0);
     Float3 inputDirection(0, 0, 0);

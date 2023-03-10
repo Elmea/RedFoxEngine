@@ -14,8 +14,6 @@
 namespace RedFoxEngine
 {
 
-typedef UPDATEGAME(_updategame);
-
 class Engine
 {
   private:
