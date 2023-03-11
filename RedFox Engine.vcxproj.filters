@@ -57,6 +57,9 @@
     <ClCompile Include="external\imgui_impl_opengl3.cpp">
       <Filter>Source Files\External Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\GameObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Engine.hpp">
@@ -116,7 +119,13 @@
     <ClInclude Include="include\OpenGLFunctions.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\ThreadManager.h">
+    <ClInclude Include="include\ResourceManager.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ResourceManager.inl">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ThreadManager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,4 +1,5 @@
 #include "Engine.hpp"
+#include "GameObject.hpp"
 
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
@@ -45,24 +46,28 @@ Engine::Engine(int width, int height)
     m_platform.GetWindowDimension();
     m_graphics.InitGraphics();
     InitIMGUI();
-    m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 100);
+    m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 1000);
     ObjModelPush("ts_bot912.obj");
-   
+    m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator, sizeof(GameObject) * 1000);
+
     for (int i = 0; i < (int)m_modelCount; i++)
     {
         m_graphics.InitModel(&m_models[i]);
-        m_models[i].parent = nullptr;
+    }
+    m_gameObjectCount = 3;
+    for (int i = 0; i < (int)m_gameObjectCount; i++)
+    {
+        m_gameObjects[i].parent = nullptr;
+        m_gameObjects[i].model = m_models;
     }
 
-    m_models[1] = m_models[0];
-    m_models[1].parent = &m_models[0];
-    m_models[1].position = {};
-    m_models[1].scale = 0.5;
-    m_modelCount++;
-    m_models[2] = m_models[0];
-    m_models[2].position = {};
-    m_models[2].scale = 0.5;
-    m_modelCount++;
+    m_gameObjects[1] = m_gameObjects[0];
+    m_gameObjects[1].parent = &m_gameObjects[0];
+    m_gameObjects[1].position = {};
+    m_gameObjects[1].scale = 0.5;
+    m_gameObjects[2] = m_gameObjects[0];
+    m_gameObjects[2].position = {};
+    m_gameObjects[2].scale = 0.5;
     QueryPerformanceFrequency((LARGE_INTEGER *)&m_frequency);
     QueryPerformanceCounter((LARGE_INTEGER *)&m_startingTime);
     m_input = {};
@@ -112,12 +117,12 @@ void Engine::Update()
     static f32 time;
     time += m_deltaTime * 0.1f;
     //TODO well need to think how we pass the resources, and gameplay structures and objects to this update function
-    UpdateGame(m_deltaTime, m_input, m_models, m_modelCount, time, cameraRotation, &cameraPosition);
+    UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount, time, cameraRotation, &cameraPosition);
     m_graphics.SetViewProjectionMatrix(projection * view);
-    m_models[0].GetChildren(m_models, m_modelCount, &m_tempAllocator);
+    m_gameObjects[0].GetChildren(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
 }
 
-void Engine::DrawSceneNodes(int index, bool is_child, Model* model)
+void Engine::DrawSceneNodes(int index, bool is_child, GameObject* model)
 {
     //ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet;
     if (ImGui::TreeNodeEx((void*)(intptr_t)index, is_child ? ImGuiTreeNodeFlags_Bullet : ImGuiTreeNodeFlags_None, "Model %d", index))
@@ -129,18 +134,11 @@ void Engine::DrawSceneNodes(int index, bool is_child, Model* model)
             ImGui::EndDragDropSource();
         }
 
-        Model** children = model->GetChildren(m_models, m_modelCount, &m_tempAllocator);
-        if (children)
-        {
-            for (int i = 0; sizeof(children) / sizeof(Model) || children[i] != nullptr; i++)
-            {
-                DrawSceneNodes(index + i + 1, true, children[i]);
-            }
-        }
-        else if (m_models[index + 1].parent == nullptr)
-        {
-            DrawSceneNodes(index + 1, false, &m_models[index + 1]);
-        }
+        GameObject** children = model->GetChildren(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
+        for (int i = 0; children && children[i] != nullptr; i++)
+            DrawSceneNodes(index + i + 1, true, children[i]);
+        if (children == nullptr && m_gameObjects[index + 1].parent == nullptr)
+            DrawSceneNodes(index + 1, false, &m_gameObjects[index + 1]);
 
         ImGui::TreePop();
     }
@@ -155,9 +153,8 @@ void Engine::DrawIMGUI()
     ImGui::Begin("Scene Graph");
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNodeEx("_TREENODE", ImGuiTreeNodeFlags_Leaf, "Root")) // TODO: Name of the scene here
-    {
-        DrawSceneNodes(0, (m_models[0].parent != nullptr), &m_models[0]);
-    }
+        DrawSceneNodes(0, (m_gameObjects[0].parent != nullptr), &m_gameObjects[0]);
+
     ImGui::TreePop();
     ImGui::End();
     ImGui::Render();
@@ -166,7 +163,7 @@ void Engine::DrawIMGUI()
 
 void Engine::Draw()
 {
-    m_graphics.Draw(m_models, m_modelCount);
+    m_graphics.Draw(m_gameObjects, m_gameObjectCount);
     // swap the buffers to show output
     DrawIMGUI();
     if (!SwapBuffers(m_dc))

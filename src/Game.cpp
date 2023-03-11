@@ -1,7 +1,11 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#define REDFOXMATHS_IMPLEMENTATION
 #include "Win32Platform.hpp"
+
+
+#define REDFOXMATHS_IMPLEMENTATION
+#include "RedfoxMaths.hpp"
+
 using namespace RedFoxMaths;
 
 BOOL APIENTRY DllMain(HMODULE hModule,
@@ -51,13 +55,13 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     speed += inputDirection * (f32)deltaTime * 0.5f;
     speed *= 0.9f; // drag
 
-    for (int i = 0; i < (int)modelCount; i++) // TODO physics code here ?
+    for (int i = 0; i < (int)gameObjectCount; i++) // TODO physics code here ?
     {
-        if (models[i].parent == nullptr)
+        if (gameObjects[i].parent == nullptr)
         {
-            models[i].position += Float3(sinf(time), cosf(time), 0) * 0.001f;
-            models[i].orientation =  Quaternion::SLerp({ 1,0.2f,0.2f,0.2f }, { -1,0.8f,0.8f,0.8f }, time);
-            models[i].scale = 1;
+            gameObjects[i].position += Float3(sinf(time), cosf(time), 0) * 0.001f;
+            gameObjects[i].orientation =  Quaternion::SLerp({ 1,0.2f,0.2f,0.2f }, { -1,0.8f,0.8f,0.8f }, time);
+            gameObjects[i].scale = 1;
         }
     }
 }

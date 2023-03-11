@@ -10,6 +10,7 @@
 
 #include "ObjParser.hpp"
 #include "OpenGLGraphics.hpp"
+#include "GameObject.hpp"
 
 namespace RedFoxEngine
 {
@@ -22,6 +23,8 @@ class Engine
     Memory m_tempAllocator;
     Model *m_models;
     u64 m_modelCount;
+    GameObject *m_gameObjects;
+    u64 m_gameObjectCount;
     u64 m_frequency;
     Input m_input;
     HDC m_dc;
@@ -43,7 +46,7 @@ class Engine
     void Update();
     void Draw();
     void DrawIMGUI();
-    void DrawSceneNodes(int index, bool is_child, Model* model);
+    void DrawSceneNodes(int index, bool is_child, GameObject* model);
     void ObjModelPush(const char *objPath);
 
     void InitIMGUI();

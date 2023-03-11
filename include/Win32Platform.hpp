@@ -10,6 +10,7 @@
 #include "OpenGLFunctions.hpp"
 #include <GL/gl.h>
 #include "Model.hpp"
+#include "GameObject.hpp"
 
 typedef int8_t s8;
 typedef uint8_t u8;
@@ -79,7 +80,7 @@ struct Input
 };
 
 #ifndef UPDATEGAME
-#define UPDATEGAME(name) void name(float deltaTime, RedFoxEngine::Input input, RedFoxEngine::Model *models, u32 modelCount, f32 time, RedFoxMaths::Float3 cameraRotation, RedFoxMaths::Float3 *cameraPosition)
+#define UPDATEGAME(name) void name(float deltaTime, RedFoxEngine::Input input, RedFoxEngine::GameObject *gameObjects, u32 gameObjectCount, f32 time, RedFoxMaths::Float3 cameraRotation, RedFoxMaths::Float3 *cameraPosition)
 #endif
 typedef UPDATEGAME(_updategame);
 

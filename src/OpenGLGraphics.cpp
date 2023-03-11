@@ -191,7 +191,7 @@ void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
     m_viewProjection = vp;
 }
 
-void Graphics::Draw(Model *model, int modelCount)
+void Graphics::Draw(GameObject *gameObjects, int gameObjectCount)
 {
     // clear screen
     glClearColor(0.392f, 0.584f, 0.929f, 1.f);
@@ -200,21 +200,24 @@ void Graphics::Draw(Model *model, int modelCount)
 
     // activate shaders for next draw call
     glBindProgramPipeline(m_pipeline);
-    for (int i = 0; i < modelCount; i++)
+
+    GLint u_matrix = 0;
+    glProgramUniformMatrix4fv(m_vshader, u_matrix, 1, GL_TRUE, m_viewProjection.AsPtr());
+
+    u_matrix = 1;
+    for (int i = 0; i < gameObjectCount; i++)
     {
-        DrawModel(model[i]);
+        if (gameObjects[i].model)
+        {
+            RedFoxMaths::Mat4 modelMatrix = gameObjects[i].GetWorldMatrix();
+            glProgramUniformMatrix4fv(m_vshader, u_matrix, 1, GL_TRUE, modelMatrix.AsPtr());
+            DrawModel(*gameObjects[i].model);
+        }
     }
 }
 
 void Graphics::DrawModel(Model model)
 {
-    GLint u_matrix = 0;
-    glProgramUniformMatrix4fv(m_vshader, u_matrix, 1, GL_TRUE, m_viewProjection.AsPtr());
-
-    u_matrix = 1;
-    RedFoxMaths::Mat4 modelMatrix = model.GetWorldMatrix();
-    glProgramUniformMatrix4fv(m_vshader, u_matrix, 1, GL_TRUE, modelMatrix.AsPtr());
-
     // provide vertex input
     glBindVertexArray(model.vao);
 
