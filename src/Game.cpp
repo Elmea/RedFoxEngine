@@ -53,5 +53,6 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
           gameObjects[i].position += Float3(sinf(time), cosf(time), 0) * 0.001f;
           gameObjects[i].orientation = Quaternion::SLerp(beta, alpha, time);
           gameObjects[i].scale = Misc::Lerp(0.1, 2, Misc::Abs(cosf(time)));
+          gameObjects[i].scale = 1;
     }
 }
