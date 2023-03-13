@@ -7,7 +7,7 @@ int main()
 {
     RedFoxEngine::Engine engine(1920, 1080);
 
-    while (engine.m_platform.m_running)
+    while (engine.isRunning())
     {
         engine.ProcessInputs();
         engine.Update();

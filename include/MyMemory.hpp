@@ -66,7 +66,6 @@ void MyFree(Memory *mem, size_t size);
 void DeInitMemory(Memory *memory);
 
 fileResource FileResourceInit(const char *fileName, Memory *m);
-MyString OpenAndReadEntireFile(const char *filePath, Memory *memory);
 fileResource *LoadFile(fileResource *result, Memory *memory);
 MyString initStringChar(const char *str, u64 n, Memory *memory);
 int StringsAreEqual_C(MyString a, const char *str, const char *delimiter);
@@ -216,11 +215,12 @@ static MyString OpenAndReadEntireFile(const char *filePath, Memory *memory)
 
     if (File)
     {
-        GetFileSizeEx(File, (LARGE_INTEGER *)&result.size);
-        result = initString(result.size, memory);
-        DWORD test = 0;
-        ReadFile(File, (void *)result.data, result.size, &test, NULL);
-        //        assert(test == result.size);
+        u64 fileSize;
+        GetFileSizeEx(File, (LARGE_INTEGER *)&fileSize);
+        result = initString(fileSize, memory);
+        ReadFile(File, (void *)result.data, fileSize, (DWORD *)&result.size, NULL);
+        if (fileSize != result.size)
+            __debugbreak();
         char *temp = (char *)result.data;
         temp[result.size] = '\0';
         CloseHandle(File);

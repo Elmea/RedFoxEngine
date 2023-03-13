@@ -17,7 +17,7 @@ namespace RedFoxEngine
 
 class Engine
 {
-  private:
+private:
     u64 m_startingTime;
     Memory m_arenaAllocator;
     Memory m_tempAllocator;
@@ -25,31 +25,31 @@ class Engine
     u64 m_modelCount;
     GameObject *m_gameObjects;
     u64 m_gameObjectCount;
-    u64 m_frequency;
     Input m_input;
     HDC m_dc;
     HINSTANCE m_gameLibrary;
     FILETIME m_lastTime;
-  public:
     Platform m_platform; // TODO(V. Caraulan): make private
     Graphics m_graphics;
     u64 m_time;
     f64 m_deltaTime;
     _updategame *UpdateGame;
-
-  private:
-  public:
+  
+private:
+ 
+    void DrawIMGUI();
+    void DrawSceneNodes(int index, bool is_child, GameObject* model);
+    Input GetInputs();
+    void ObjModelPush(const char *objPath);
+    void InitIMGUI();
+    void SetViewProjectionMatrix(RedFoxMaths::Mat4 viewProjection);
+    void StartTime();
+public:
     Engine(int width, int height);
     ~Engine();
     void ProcessInputs();
-    Input GetInputs();
     void Update();
     void Draw();
-    void DrawIMGUI();
-    void DrawSceneNodes(int index, bool is_child, GameObject* model);
-    void ObjModelPush(const char *objPath);
-
-    void InitIMGUI();
-    void SetViewProjectionMatrix(RedFoxMaths::Mat4 viewProjection);
+    bool isRunning();
 };
 } // namespace RedFoxEngine

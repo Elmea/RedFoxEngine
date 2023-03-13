@@ -41,6 +41,8 @@ struct Input
     int mouseYPosition;
     int mouseXDelta;
     int mouseYDelta;
+    u8  mouseLClick : 1;
+    u8  mouseRClick : 1;
 
     u8 Q : 1;
     u8 W : 1;
@@ -87,24 +89,23 @@ typedef UPDATEGAME(_updategame);
 class Platform
 {
 
-  private:
+private:
     ApplicationContext m_applicationContext;
 
-  public:
-    WindowDimension windowDimension;
+public:
+    WindowDimension m_windowDimension;
     Window m_window;
     static int m_running;
 
-  private:
+private:
     Window CreateRedFoxWindow(int width, int height);
-
-  public:
+    void GetWglFunctions();
+public:
     Platform() = default;
     Platform(int width, int height);
     void FatalError(const char *message);
     void MessageProcessing(Input *input);
     WindowDimension GetWindowDimension();
-    void GetWglFunctions();
     static u64 GetTimerFrequency();
     static u64 GetTimer();
     _updategame *LoadGameLibrary(const char *functionName, const char *libraryPath, HINSTANCE &gameLibrary, LPFILETIME LastWriteTime, _updategame *functionPointer);

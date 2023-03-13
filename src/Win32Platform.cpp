@@ -85,7 +85,6 @@ static HGLRC Win32InitOpenGL(HWND window)
     };
 
     HDC WindowDC = GetDC(window);
-    PIXELFORMATDESCRIPTOR DesiredPixelFormat = {};
 
     int format;
     unsigned int formats;
@@ -169,9 +168,9 @@ WindowDimension Platform::GetWindowDimension()
 {
     RECT ClientRect;
     GetClientRect(m_window, &ClientRect);
-    windowDimension.width = ClientRect.right - ClientRect.left;
-    windowDimension.height = ClientRect.bottom - ClientRect.top;
-    return (windowDimension);
+    m_windowDimension.width = ClientRect.right - ClientRect.left;
+    m_windowDimension.height = ClientRect.bottom - ClientRect.top;
+    return (m_windowDimension);
 }
 
 void Platform::MessageProcessing(Input *input)
@@ -185,7 +184,7 @@ void Platform::MessageProcessing(Input *input)
         // NOTE This message gets called on window resize
         case WM_SIZE: {
             GetWindowDimension();
-            glViewport(0, 0, windowDimension.width, windowDimension.height);
+            glViewport(0, 0, m_windowDimension.width, m_windowDimension.height);
         }
         break;
         case WM_MOUSEMOVE: {
@@ -199,14 +198,20 @@ void Platform::MessageProcessing(Input *input)
         }
         break;
 
-        case WM_LBUTTONUP:
-            //				ReleaseCapture(m_window);
         case WM_LBUTTONDOWN: {
-            //				SetCapture(m_window);
+            input->mouseLClick = true;
+            SetCapture(m_window);
             TranslateMessage(&Message);
             DispatchMessage(&Message);
         }
         break;
+        case WM_LBUTTONUP:
+        {
+            input->mouseLClick = false;
+            ReleaseCapture();
+            TranslateMessage(&Message);
+            DispatchMessage(&Message);
+        }
 
         case WM_KEYUP:
         case WM_KEYDOWN: {
@@ -373,7 +378,8 @@ u64 Platform::GetTimer(void)
     return Result.QuadPart;
 }
 
-UPDATEGAME(updateGame)
+
+UPDATEGAME(updateStub)
 {
 //NOTE We use an empty function in case our library loading fails, so we don't crash
 }
@@ -394,7 +400,7 @@ _updategame *Platform::LoadGameLibrary(const char *functionName, const char *lib
         if (gameLibrary)
             functionPointer = (_updategame *)GetProcAddress(gameLibrary, functionName);
         if (functionPointer == NULL)
-            functionPointer = updateGame;
+            functionPointer = &updateStub;
     }
     return ((_updategame*)functionPointer);
 }

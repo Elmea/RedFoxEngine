@@ -1,13 +1,14 @@
 #include "OpenGLGraphics.hpp"
 #include "ObjParser.hpp"
-#include "glcorearb.h"
 #include "imgui.h"
+#define MEMORY_IMPLEMENTATION
+#include "MyMemory.hpp"
 
 namespace RedFoxEngine
 {
-void Graphics::InitGraphics()
+void Graphics::InitGraphics(Memory *tempArena)
 {
-    InitShaders();
+    InitShaders(tempArena);
 
     // setup global GL state
     {
@@ -101,64 +102,15 @@ void Graphics::InitTexture(ObjModel *model)
     }
 }
 
-void Graphics::InitShaders()
+void Graphics::InitShaders(Memory *tempArena)
 {
     // fragment & vertex shaders for drawing triangle
     {
-        const char *glslVshader =
-            "#version 450 core\n"
-            "#line " STR(__LINE__) "                     \n\n"
-            "layout(location = 0) in vec3 aPos;\n"
-            "layout(location = 1) in vec3 aNormal;\n"
-            "layout(location = 2) in vec2 aTexCoord;\n"
-            "\n"
-            "out VS_OUT\n"
-            "{\n"
-            "    vec3 FragPosition;\n"
-            "    vec3 Normal;\n"
-            "    vec2 TexCoord;\n"
-            "} vs_out;\n"
-            "\n"
-            "out gl_PerVertex { vec4 gl_Position; };       \n" // required because of
-                                                               // ARB_separate_shader_objects
-            "layout (location=0)                           \n"
-            "uniform mat4 vp;\n"
-            "layout (location=1)                           \n"
-            "uniform mat4 model;\n"
-            "\n"
-            "void main()\n"
-            "{\n"
-            "    gl_Position            = (vp * model) * vec4(aPos, 1);\n"
-            "    vs_out.FragPosition    = (model * vec4(aPos, 1)).rgb;\n"
-            "    vs_out.Normal          = (transpose(inverse(mat4(model))) * vec4(aNormal, 1)).rgb;\n"
-            "    vs_out.TexCoord        = aTexCoord;\n"
-            "}\n"
-            "\n";
+        MyString vertexShaderSource = OpenAndReadEntireFile("src\\Shaders\\vertex.vert", tempArena);
+        MyString fragmentShaderSource = OpenAndReadEntireFile("src\\Shaders\\fragment.frag", tempArena);
 
-        const char *glslFshader =
-            "#version 450 core                             \n"
-            "#line " STR(__LINE__) "                     \n\n" // actual line number in this file for nicer error messages
-            "                                              \n"
-            "in VS_IN                                      \n"
-            "{                                             \n"
-            "    vec3 FragPosition;                        \n"
-            "    vec3 Normal;                              \n"
-            "    vec2 TexCoord;                            \n"
-            "} vs_in;                                      \n"
-            "                                              \n"
-            "layout (binding=0)                            \n" // (from ARB_shading_language_420pack)
-            "uniform sampler2D diffuseMap;                 \n" // texture unit binding 0
-            "                                              \n"
-            "layout (location=0)                           \n"
-            "out vec4 o_color;                             \n" // output fragment data location 0
-            "                                              \n"
-            "void main()                                   \n"
-            "{                                             \n"
-            "    o_color = texture(diffuseMap, vs_in.TexCoord); \n"
-            "}                                             \n";
-
-        m_vshader = glCreateShaderProgramv(GL_VERTEX_SHADER, 1, &glslVshader);
-        m_fshader = glCreateShaderProgramv(GL_FRAGMENT_SHADER, 1, &glslFshader);
+        m_vshader = glCreateShaderProgramv(GL_VERTEX_SHADER, 1, &vertexShaderSource.data);
+        m_fshader = glCreateShaderProgramv(GL_FRAGMENT_SHADER, 1, &fragmentShaderSource.data);
 
         GLint linked;
         glGetProgramiv(m_vshader, GL_LINK_STATUS, &linked);

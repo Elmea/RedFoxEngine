@@ -30,18 +30,18 @@ struct Light
 
 class Graphics
 {
-  private:
+private:
     RedFoxMaths::Mat4 m_viewProjection;
     GLuint m_pipeline;
     GLuint m_vshader, m_fshader;
-  public:
+public:
     void Draw(GameObject *gameObjects, int gameObjectCount);
     void DrawModel(Model model);
     void InitModel(Model *model);
     void InitTexture(ObjModel *model);
     void InitTexture(void *data,int height, int width, GLuint &texture);
-    void InitShaders();
-    void InitGraphics();
+    void InitShaders(Memory *tempArena);
+    void InitGraphics(Memory *tempArena);
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
 };
 } // namespace RedFoxEngine
