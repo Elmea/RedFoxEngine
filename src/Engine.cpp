@@ -40,9 +40,11 @@ void Engine::StartTime()
     m_startingTime = m_platform.GetTimer();
 }
 
-Engine::Engine(int width, int height)
+Engine::Engine(int width, int height) :
+m_editorCamera(projectionType::PERSPECTIVE, width / height)
 {
     memset(this, 0, sizeof(Engine)); // TODO formalize this in a C++ way
+
     new (&m_platform) Platform(width, height);
 
     m_arenaAllocator = InitVirtualMemory(1 * GigaByte);
@@ -51,6 +53,9 @@ Engine::Engine(int width, int height)
     m_platform.GetWindowDimension();
     m_graphics.InitGraphics(&m_tempAllocator);
     InitIMGUI();
+
+    m_editorCamera = Camera(projectionType::PERSPECTIVE, width / height);
+    m_editorCamera.position = Float3(0.0f, 0.0f, -4.0f);
     
     {//TODO save/load scene graph after creating this data inside the engine editor
             m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 1000);
@@ -112,7 +117,6 @@ Input Engine::GetInputs()
 void Engine::Update()
 {
     UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_gameLibrary, &m_lastTime, UpdateGame);
-    static Float3 cameraPosition(0, 0, -4);
     static Float3 cameraRotation(0, 0, 0);
     Float3 inputDirection(0, 0, 0);
 
@@ -120,15 +124,13 @@ void Engine::Update()
         cameraRotation += {(f32)m_input.mouseYDelta * (f32)m_deltaTime, (f32)m_input.mouseXDelta * (f32)m_deltaTime, 0};
     float aspect = (float)m_platform.m_windowDimension.width / (float)m_platform.m_windowDimension.height;
 
-    Mat4 projection = Mat4::GetPerspectiveMatrix(aspect, 90, 0.01f, 100);
-    Mat4 view = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x)).GetTransposedMatrix() *
-                Mat4::GetTranslation(cameraPosition);
+        m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, -cameraRotation.z);
 
     static f32 time;
     time += m_deltaTime * 0.1f;
     //TODO well need to think how we pass the resources, and gameplay structures and objects to this update function
-    UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount, time, cameraRotation, &cameraPosition);
-    m_graphics.SetViewProjectionMatrix(projection * view);
+    UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount, time, cameraRotation, &m_editorCamera.position);
+    m_graphics.SetViewProjectionMatrix(m_editorCamera.GetVP());
     m_gameObjects[0].GetChildren(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
 }
 
