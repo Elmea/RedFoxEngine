@@ -15,7 +15,6 @@ void Graphics::InitGraphics(Memory *tempArena)
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_GREATER);
         glEnable(GL_CULL_FACE);
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -147,7 +146,6 @@ void Graphics::Draw(GameObject *gameObjects, int gameObjectCount)
 {
     // clear screen
     glClearColor(0.392f, 0.584f, 0.929f, 1.f);
-    glClearDepth(0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     // activate shaders for next draw call

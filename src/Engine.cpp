@@ -41,7 +41,7 @@ void Engine::StartTime()
 }
 
 Engine::Engine(int width, int height) :
-m_editorCamera(projectionType::PERSPECTIVE, width / height)
+    m_editorCamera(projectionType::PERSPECTIVE, width / (f32)height)
 {
     memset(this, 0, sizeof(Engine)); // TODO formalize this in a C++ way
 
@@ -54,8 +54,8 @@ m_editorCamera(projectionType::PERSPECTIVE, width / height)
     m_graphics.InitGraphics(&m_tempAllocator);
     InitIMGUI();
 
-    m_editorCamera = Camera(projectionType::PERSPECTIVE, width / height);
-    m_editorCamera.position = Float3(0.0f, 0.0f, -4.0f);
+    m_editorCamera = Camera(projectionType::PERSPECTIVE, width / (f32)height);
+    m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
     
     {//TODO save/load scene graph after creating this data inside the engine editor
             m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 1000);
@@ -95,8 +95,9 @@ void Engine::ProcessInputs()
     int mouseX = m_input.mouseXPosition;
     int mouseY = m_input.mouseYPosition;
     m_platform.MessageProcessing(&m_input); // TODO(V. Caraulan): make a Input struct that handles all the inputs
-    m_platform.GetWindowDimension();        // TODO(V. Caraulan): do this in message processing
+    m_platform.GetWindowDimension();
     glViewport(0, 0, m_platform.m_windowDimension.width, m_platform.m_windowDimension.height);
+    m_editorCamera.SetProjection(projectionType::PERSPECTIVE);
     if (GetFocus() != m_platform.m_window)
     {
         m_input.mouseXDelta = m_input.mouseXPosition = 0;
@@ -122,9 +123,10 @@ void Engine::Update()
 
     if (m_input.mouseLClick)
         cameraRotation += {(f32)m_input.mouseYDelta * (f32)m_deltaTime, (f32)m_input.mouseXDelta * (f32)m_deltaTime, 0};
-    float aspect = (float)m_platform.m_windowDimension.width / (float)m_platform.m_windowDimension.height;
+    m_editorCamera.m_parameters.aspect = (float)m_platform.m_windowDimension.width / (float)m_platform.m_windowDimension.height;
+    
 
-        m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, -cameraRotation.z);
+    m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
 
     static f32 time;
     time += m_deltaTime * 0.1f;

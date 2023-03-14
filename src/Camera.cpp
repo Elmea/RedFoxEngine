@@ -1,4 +1,4 @@
-﻿#include "Camera.hpp"
+#include "Camera.hpp"
 
 using namespace RedFoxEngine;
 using namespace RedFoxMaths;

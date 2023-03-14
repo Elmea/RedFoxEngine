@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "GameObject.hpp"
 
@@ -20,10 +20,10 @@ namespace RedFoxEngine
     
     class Camera : public GameObject
     {
-        CameraParameters m_parameters;
-
         RedFoxMaths::Mat4 m_projection;
-        
+
+    public:
+        CameraParameters m_parameters;
     public:
         Camera(projectionType projection, float aspect);
         

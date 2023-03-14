@@ -31,15 +31,14 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     static Float3 speed;
 
     if (input.W)
-        inputDirection.z += 1;
-    if (input.S)
         inputDirection.z += -1;
+    if (input.S)
+        inputDirection.z += 1;
     if (input.A)
-        inputDirection.x += 1;
-    if (input.D)
         inputDirection.x += -1;
-    inputDirection =
-        (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
+    if (input.D)
+        inputDirection.x += 1;
+    inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
     inputDirection.Normalize();
     inputDirection = inputDirection * 20.f;
     *cameraPosition += speed * (f32)deltaTime + inputDirection * ((f32)deltaTime * (f32)deltaTime * 0.5f);
