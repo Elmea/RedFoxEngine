@@ -11,6 +11,7 @@
 #include "ObjParser.hpp"
 #include "OpenGLGraphics.hpp"
 #include "GameObject.hpp"
+#include "Camera.hpp"
 
 namespace RedFoxEngine
 {
@@ -34,7 +35,8 @@ private:
     u64 m_time;
     f64 m_deltaTime;
     _updategame *UpdateGame;
-  
+    Camera m_editorCamera;
+
 private:
  
     void DrawIMGUI();
