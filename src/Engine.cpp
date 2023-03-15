@@ -7,10 +7,6 @@
 #define REDFOXMATHS_IMPLEMENTATION
 #include "RedfoxMaths.hpp"
 
-#include <imgui.h>
-#include "imgui_impl_opengl3.h"
-#include "imgui_impl_win32.h"
-
 using namespace RedFoxEngine;
 
 void Engine::ObjModelPush(const char *path)
@@ -26,6 +22,12 @@ void Engine::InitIMGUI()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
+
+    m_ImGuiIO = &ImGui::GetIO(); (void)m_ImGuiIO;
+    m_ImGuiIO->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    m_ImGuiIO->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    // TODO: Necessary backend to support multi-viewport
+    // m_ImGuiIO->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
     ImGui_ImplWin32_Init(m_platform.m_window);
     ImGui_ImplOpenGL3_Init("#version 450");
 }
@@ -48,7 +50,7 @@ Engine::Engine(int width, int height) :
     new (&m_platform) Platform(width, height);
 
     m_arenaAllocator = InitVirtualMemory(1 * GigaByte);
-    m_tempAllocator  = InitVirtualMemory(1 * GigaByte);
+    m_tempAllocator = InitVirtualMemory(1 * GigaByte);
     IncreaseTotalCapacity(&m_arenaAllocator, 1 * MegaByte);
     m_platform.GetWindowDimension();
     m_graphics.InitGraphics(&m_tempAllocator);
@@ -56,31 +58,34 @@ Engine::Engine(int width, int height) :
 
     m_editorCamera = Camera(projectionType::PERSPECTIVE, width / (f32)height);
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
-    
+
     {//TODO save/load scene graph after creating this data inside the engine editor
-            m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 1000);
-            ObjModelPush("ts_bot912.obj");
-            m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator, sizeof(GameObject) * 1000);
+        m_models = (Model*)MyMalloc(&m_arenaAllocator, sizeof(Model) * 1000);
+        ObjModelPush("ts_bot912.obj");
+        m_gameObjects = (GameObject*)MyMalloc(&m_arenaAllocator, sizeof(GameObject) * 1000);
 
-            for (int i = 0; i < (int)m_modelCount; i++)
-            {
-                m_graphics.InitModel(&m_models[i]);
-            }
-            m_gameObjectCount = 3;
-            for (int i = 0; i < (int)m_gameObjectCount; i++)
-            {
-                m_gameObjects[i].parent = nullptr;
-                m_gameObjects[i].model = m_models;
-            }
+        for (int i = 0; i < (int)m_modelCount; i++)
+        {
+            m_graphics.InitModel(&m_models[i]);
+        }
+        m_gameObjectCount = 3;
+        for (int i = 0; i < (int)m_gameObjectCount; i++)
+        {
+            m_gameObjects[i].parent = nullptr;
+            m_gameObjects[i].model = m_models;
+        }
 
-            m_gameObjects[1] = m_gameObjects[0];
-            m_gameObjects[1].parent = &m_gameObjects[0];
-            m_gameObjects[1].position = {};
-            m_gameObjects[1].scale = 0.5;
-            m_gameObjects[2] = m_gameObjects[0];
-            m_gameObjects[2].position = {2, 1, 0};
-            m_gameObjects[2].scale = 0.5;
+        m_gameObjects[1].parent = &m_gameObjects[0];
+        m_gameObjects[1].position = {};
+        m_gameObjects[1].scale = 0.5;
+        m_gameObjects[2].parent = nullptr;
+        m_gameObjects[2].position = { 2, 1, 0 };
+        m_gameObjects[2].scale = 0.5;
         
+        m_gameObjects[0].name = "Entity";
+        m_gameObjects[1].name = "Another entity";
+        m_gameObjects[2].name = "Perfect entity";
+
     }
     m_input = {};
     m_dc = GetDC(m_platform.m_window);
@@ -122,9 +127,9 @@ void Engine::Update()
     Float3 inputDirection(0, 0, 0);
 
     if (m_input.mouseLClick)
-        cameraRotation += {(f32)m_input.mouseYDelta * (f32)m_deltaTime, (f32)m_input.mouseXDelta * (f32)m_deltaTime, 0};
+        cameraRotation += {(f32)m_input.mouseYDelta* (f32)m_deltaTime, (f32)m_input.mouseXDelta* (f32)m_deltaTime, 0};
     m_editorCamera.m_parameters.aspect = (float)m_platform.m_windowDimension.width / (float)m_platform.m_windowDimension.height;
-    
+
 
     m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
 
@@ -136,24 +141,44 @@ void Engine::Update()
     m_gameObjects[0].GetChildren(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
 }
 
-void Engine::DrawSceneNodes(int index, bool is_child, GameObject* model)
+inline void Engine::DrawSceneNodes(int* id, bool is_child, GameObject* gameObj)
 {
-    //ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet;
-    if (ImGui::TreeNodeEx((void*)(intptr_t)index, is_child ? ImGuiTreeNodeFlags_Bullet : ImGuiTreeNodeFlags_None, "Model %d", index))
+    int childrenCount = 0;
+    GameObject** children = gameObj->GetChildren(m_gameObjects, m_gameObjectCount, &m_tempAllocator, &childrenCount);
+    ImGuiTreeNodeFlags flags;
+    if (is_child)
     {
+        flags = ImGuiTreeNodeFlags_Bullet;
+    }
+    else
+    {
+        flags = ImGuiTreeNodeFlags_DefaultOpen;
+        if (childrenCount == 0)
+        {
+            flags |= ImGuiTreeNodeFlags_Leaf;
+        }
+    }
+    flags |= ImGuiTreeNodeFlags_SpanFullWidth;
+
+    if (ImGui::TreeNodeEx(gameObj->name, flags, gameObj->name))
+    {
+        /* TODO: Drag and drop
         if (ImGui::BeginDragDropSource())
         {
-            ImGui::SetDragDropPayload("_TREENODE", model, sizeof(Model));
+            ImGui::SetDragDropPayload("_TREENODE", gameObj, sizeof(GameObject));
             ImGui::Text("This is a drag and drop source");
             ImGui::EndDragDropSource();
         }
+        */
 
-        GameObject** children = model->GetChildren(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
-        for (int i = 0; children && children[i] != nullptr; i++)
-            DrawSceneNodes(index + i + 1, true, children[i]);
-        if (children == nullptr && m_gameObjects[index + 1].parent == nullptr)
-            DrawSceneNodes(index + 1, false, &m_gameObjects[index + 1]);
-
+        if (children != nullptr)
+        {
+            for (int i = 0; children[i] != nullptr; i++)
+            {
+                *id += i + 1;
+                DrawSceneNodes(id, true, children[i]);
+            }
+        }
         ImGui::TreePop();
     }
 }
@@ -164,18 +189,27 @@ void Engine::DrawIMGUI()
     ImGui_ImplWin32_NewFrame();
     ImGui_ImplOpenGL3_NewFrame();
     ImGui::NewFrame();
+    ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoDockingInCentralNode);
     if (ImGui::Begin("Scene Graph"))
     {
-        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        if (ImGui::TreeNodeEx("_TREENODE", ImGuiTreeNodeFlags_Leaf, "Root")) // TODO: Name of the scene here
+        if (ImGui::TreeNodeEx("_TREENODE", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanFullWidth, "Scene Name Here"))
         {
-            DrawSceneNodes(0, (m_gameObjects[0].parent != nullptr), &m_gameObjects[0]);
+            for (int i=0; i < m_gameObjectCount; i++)
+                if (m_gameObjects[i].parent == 0x0)
+                    DrawSceneNodes(&i, false, &m_gameObjects[i]);
             ImGui::TreePop();
         }
     }
     ImGui::End();
+    
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    
+    if (m_ImGuiIO->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+    }
 }
 
 void Engine::Draw()

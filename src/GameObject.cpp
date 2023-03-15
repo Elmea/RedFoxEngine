@@ -14,7 +14,7 @@ namespace RedFoxEngine
             return local;
         }
 
-        GameObject **GameObject::GetChildren(GameObject *models, int modelCount, Memory *temp)
+        GameObject **GameObject::GetChildren(GameObject *models, int modelCount, Memory *temp, int* childrenCount)
         {
             GameObject **result = (GameObject **)MyMalloc(temp, sizeof(GameObject **));
             int count = 0;
@@ -23,10 +23,11 @@ namespace RedFoxEngine
                 if (models[i].parent == this)
                 {
                     result[count] = (GameObject *)MyMalloc(temp, sizeof(GameObject*));
-                    result[count] = &models[i];//models[i].parent;
+                    result[count] = &models[i];
                     count++;
                 }
             }
+            if (childrenCount) *childrenCount = count;
             result[count] = nullptr;
             return(result);
         }
