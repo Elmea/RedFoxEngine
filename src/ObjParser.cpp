@@ -22,7 +22,7 @@
     until it finds the newline character  - '\n' or the end of string ('\0')
     and advances the str pointer to that character.
 */
-char *get_next_line(MyString buffer, char *str)
+static char *get_next_line(MyString buffer, char *str)
 {
     if (*str == '\n' || *str == '\r') /* If we are on the newline character we try to find the next one. */
         str = str + 1;
@@ -81,7 +81,7 @@ char *get_next_line(MyString buffer, char *str)
     but instead of looking for a character, it looks for the lack of a character.
     */
 
-char *get_next_word(char *str)
+static char *get_next_word(char *str)
 {
     __m256i Space = _mm256_set1_epi8(' ');
     __m256i Tab = _mm256_set1_epi8('\t');
@@ -114,7 +114,7 @@ char *get_next_word(char *str)
     return (str);
 }
 
-s32 _digit_value(char c)
+static s32 _digit_value(char c)
 {
     s32 ri = c;
     s32 v = 16;
@@ -128,7 +128,7 @@ s32 _digit_value(char c)
     return v;
 }
 
-s32 parse_i32(char *str)
+static s32 parse_i32(char *str)
 {
     const __m256i zeroCharacter = _mm256_set1_epi8('0');
 
@@ -173,7 +173,7 @@ s32 parse_i32(char *str)
     return value;
 }
 
-f64 parse_f64(char *str, s32 size)
+static f64 parse_f64(char *str, s32 size)
 {
     f64 value = 0;
     char *s = str;
@@ -290,7 +290,7 @@ f64 parse_f64(char *str, s32 size)
     return (value);
 }
 
-vec3 getvec3(char *__restrict *str)
+static vec3 getvec3(char *__restrict *str)
 {
     vec3 result;
 
@@ -302,7 +302,7 @@ vec3 getvec3(char *__restrict *str)
     return (result);
 }
 
-vec2 getvec2(char *__restrict *str)
+static vec2 getvec2(char *__restrict *str)
 {
     vec2 result;
 
@@ -312,7 +312,7 @@ vec2 getvec2(char *__restrict *str)
     return (result);
 }
 
-void initImage(ObjImageData *result, Memory *memory)
+static void initImage(ObjImageData *result, Memory *memory)
 {
     fileResource file = FileResourceInit((char *)result->path.data, memory);
     LoadFile(&file, memory);
@@ -367,7 +367,7 @@ void initImage(ObjImageData *result, Memory *memory)
     }
 }
 
-ObjMaterial initMaterial()
+static ObjMaterial initMaterial()
 {
     ObjMaterial result = {};
 
@@ -387,7 +387,7 @@ typedef struct ParameterImageThread
     Memory *memory;
 } ParameterImageThread;
 
-void initImageThread(void *parameter)
+static void initImageThread(void *parameter)
 {
     ParameterImageThread *p = (ParameterImageThread *)parameter;
     for (int i = 0; i < (int)p->count; i++)
@@ -553,7 +553,7 @@ ObjMaterials ParseMTL(const char *objPath, MyString objBuffer, ObjImages *Images
     return result;
 }
 
-void Countvector2(char *__restrict current, s64 *__restrict Count, vec2 **__restrict v, Memory *__restrict temp,
+static void Countvector2(char *__restrict current, s64 *__restrict Count, vec2 **__restrict v, Memory *__restrict temp,
                   u32 *__restrict size)
 {
     if (*Count >= *size)
@@ -566,7 +566,7 @@ void Countvector2(char *__restrict current, s64 *__restrict Count, vec2 **__rest
     *Count = *Count + 1;
 }
 
-void Countvector3(char *__restrict current, s64 *__restrict Count, vec3 **__restrict v, Memory *__restrict temp,
+static void Countvector3(char *__restrict current, s64 *__restrict Count, vec3 **__restrict v, Memory *__restrict temp,
                   u32 *__restrict size)
 {
     if (*Count >= *size)
@@ -938,7 +938,7 @@ void DeInitObj(ObjModel *obj)
         DeInitMemory(&obj->meshMem);
 }
 
-ObjModel CreateCube(Memory *memory)
+static ObjModel CreateCube(Memory *memory)
 {
     ObjModel result = {};
 
@@ -1005,11 +1005,10 @@ ObjModel CreateCube(Memory *memory)
     // tmp->material.diffuse = (vec3){1, 1, 1};
     // tmp->material.Opaqueness = 1.f;
 
-    //	GenerateBuffers(&result.VAO, vertexCount, tmp->indexCount, vrtx, indices);
     return (result);
 }
 
-ObjModel CreateSphere(int latitudeCount, int longitudeCount, Memory *memory)
+static ObjModel CreateSphere(int latitudeCount, int longitudeCount, Memory *memory)
 {
     ObjModel result = {};
 
@@ -1076,6 +1075,5 @@ ObjModel CreateSphere(int latitudeCount, int longitudeCount, Memory *memory)
     // mesh->material.ambient    = (vec3){1, 1, 1};
     // mesh->material.diffuse    = (vec3){1, 1, 1};
     // mesh->material.Opaqueness = 1.f;
-    // GenerateBuffers(&result.VAO, vertexCount, indexCount, vertices, indices);
     return result;
 }

@@ -60,6 +60,7 @@ void Graphics::InitModel(Model *model)
         glEnableVertexArrayAttrib(model->vao, a_uv);
     }
     InitTexture(&model->obj);
+    DeInitGraphicsObj(&model->obj);
 }
 
 void Graphics::InitTexture(void *data,int height, int width, GLuint &texture)

@@ -12,6 +12,9 @@
 #include "OpenGLGraphics.hpp"
 #include "GameObject.hpp"
 #include "Camera.hpp"
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_opengl3.h"
 
 namespace RedFoxEngine
 {
@@ -30,7 +33,7 @@ private:
     HDC m_dc;
     HINSTANCE m_gameLibrary;
     FILETIME m_lastTime;
-    Platform m_platform; // TODO(V. Caraulan): make private
+    Platform m_platform;
     Graphics m_graphics;
     u64 m_time;
     f64 m_deltaTime;

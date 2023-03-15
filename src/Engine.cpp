@@ -7,10 +7,6 @@
 #define REDFOXMATHS_IMPLEMENTATION
 #include "RedfoxMaths.hpp"
 
-#include <imgui.h>
-#include "imgui_impl_opengl3.h"
-#include "imgui_impl_win32.h"
-
 using namespace RedFoxEngine;
 
 void Engine::ObjModelPush(const char *path)
@@ -94,12 +90,13 @@ void Engine::ProcessInputs()
 
     int mouseX = m_input.mouseXPosition;
     int mouseY = m_input.mouseYPosition;
-    m_platform.MessageProcessing(&m_input); // TODO(V. Caraulan): make a Input struct that handles all the inputs
+    m_platform.MessageProcessing(&m_input);
     m_platform.GetWindowDimension();
-    glViewport(0, 0, m_platform.m_windowDimension.width, m_platform.m_windowDimension.height);
+    glViewport(0, 0, m_platform.m_windowDimension.width, m_platform.m_windowDimension.height); //TODO wrap around
     m_editorCamera.SetProjection(projectionType::PERSPECTIVE);
     if (GetFocus() != m_platform.m_window)
     {
+        //TODO?: maybe don't reset mouse position on out of focus
         m_input.mouseXDelta = m_input.mouseXPosition = 0;
         m_input.mouseYDelta = m_input.mouseYPosition = 0;
     }
@@ -130,7 +127,7 @@ void Engine::Update()
 
     static f32 time;
     time += m_deltaTime * 0.1f;
-    //TODO well need to think how we pass the resources, and gameplay structures and objects to this update function
+    //TODO we'll need to think how we pass the resources, and gameplay structures and objects to this update function
     UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount, time, cameraRotation, &m_editorCamera.position);
     m_graphics.SetViewProjectionMatrix(m_editorCamera.GetVP());
     m_gameObjects[0].GetChildren(m_gameObjects, m_gameObjectCount, &m_tempAllocator);

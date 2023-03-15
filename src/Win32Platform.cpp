@@ -170,6 +170,7 @@ WindowDimension Platform::GetWindowDimension()
     GetClientRect(m_window, &ClientRect);
     m_windowDimension.width = ClientRect.right - ClientRect.left;
     m_windowDimension.height = ClientRect.bottom - ClientRect.top;
+    glViewport(0, 0, m_windowDimension.width, m_windowDimension.height);
     return (m_windowDimension);
 }
 
@@ -184,7 +185,6 @@ void Platform::MessageProcessing(Input *input)
         // NOTE This message gets called on window resize
         case WM_SIZE: {
             GetWindowDimension();
-            glViewport(0, 0, m_windowDimension.width, m_windowDimension.height);
         }
         break;
         case WM_MOUSEMOVE: {
@@ -291,7 +291,7 @@ void Platform::MessageProcessing(Input *input)
             case 0x26: {
                 input->L = IsDown;
             }
-            break;     // L
+            break;
             case 0x27: // ;
             case 0x28: // '
             case 0x29: // `~
@@ -384,11 +384,27 @@ UPDATEGAME(updateStub)
 //NOTE We use an empty function in case our library loading fails, so we don't crash
 }
 
-_updategame *Platform::LoadGameLibrary(const char *functionName, const char *libraryPath, HINSTANCE &gameLibrary, LPFILETIME LastWriteTime, _updategame *functionPointer)
+_updategame *Platform::LoadGameLibrary(const char *functionName, const char *libraryPath, HINSTANCE &gameLibrary,
+    LPFILETIME LastWriteTime, _updategame *functionPointer)
 {
     FILETIME temp = *LastWriteTime;
-
-    HANDLE File = CreateFileA("game.dll", GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    /*
+     * NOTE: On Windows the lowest overhead function to open a file handle
+     * is the misnamed function CreateFile.
+     * We get a file handle, check the last write time, and if the library
+     * on disk is newer, we free ours and load the newest one.
+     *
+     * Another complication of this function is the fact that when a library is loaded,
+     * it cannot be overwritten (by compiling). So we always copy the library, and load the
+     * copy, that way the original can always be overwritten, which is what we want to hot reload.
+    */ 
+    HANDLE File = CreateFileA("game.dll",                         // PATH 
+                              GENERIC_READ,                       // Desired access
+                              FILE_SHARE_WRITE | FILE_SHARE_READ, // Share Mode
+                              NULL,                               // Security Attributes
+                              OPEN_EXISTING,                      // Creation Disposition
+                              FILE_ATTRIBUTE_NORMAL,              // Flags and attributes
+                              NULL);                              // Template file
     GetFileTime(File, NULL, NULL, LastWriteTime);
     CloseHandle(File);
     if (CompareFileTime(&temp, LastWriteTime) != 0)
