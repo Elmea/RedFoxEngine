@@ -62,7 +62,10 @@ void Engine::DrawIMGUI()
     ImGui::NewFrame();
 
     ImGuiDockNodeFlags dockingFlags = ImGuiDockNodeFlags_PassthruCentralNode |
-        ImGuiDockNodeFlags_NoDockingInCentralNode;
+                                      ImGuiDockNodeFlags_NoWindowMenuButton |
+                                      ImGuiDockNodeFlags_NoCloseButton |
+                                      ImGuiDockNodeFlags_NoDockingInCentralNode;
+
     ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockingFlags);
 
     if (ImGui::Begin("Scene Graph"))
@@ -80,8 +83,9 @@ void Engine::DrawIMGUI()
                     DrawSceneNodes(&i, false, &m_gameObjects[i]);
             ImGui::TreePop();
         }
+
+        ImGui::End();
     }
-    ImGui::End();
 
     if (ImGui::Begin("Properties"))
     {
