@@ -1,6 +1,5 @@
 #include "OpenGLGraphics.hpp"
-#include "ObjParser.hpp"
-#include "imgui.h"
+
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
 
@@ -117,7 +116,7 @@ void Graphics::InitShaders(Memory *tempArena)
         if (!linked)
         {
             char message[1024];
-            glGetProgramInfoLog(m_vshader, sizeof(message), NULL, message);
+            glGetProgramInfoLog(m_vshader, sizeof(message), nullptr, message);
             OutputDebugStringA(message);
             Assert(!"Failed to create vertex shader!");
         }
@@ -126,7 +125,7 @@ void Graphics::InitShaders(Memory *tempArena)
         if (!linked)
         {
             char message[1024];
-            glGetProgramInfoLog(m_fshader, sizeof(message), NULL, message);
+            glGetProgramInfoLog(m_fshader, sizeof(message), nullptr, message);
             OutputDebugStringA(message);
             Assert(!"Failed to create fragment shader!");
         }

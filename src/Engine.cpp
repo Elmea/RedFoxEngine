@@ -1,5 +1,6 @@
 #include "Engine.hpp"
 #include "GameObject.hpp"
+#include "imgui.h"
 
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
@@ -21,9 +22,13 @@ void Engine::InitIMGUI()
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+//    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
     ImGui::StyleColorsDark();
     ImGui_ImplWin32_Init(m_platform.m_window);
     ImGui_ImplOpenGL3_Init("#version 450");
+
 }
 
 bool Engine::isRunning()
@@ -39,8 +44,6 @@ void Engine::StartTime()
 Engine::Engine(int width, int height) :
     m_editorCamera(projectionType::PERSPECTIVE, width / (f32)height)
 {
-    memset(this, 0, sizeof(Engine)); // TODO formalize this in a C++ way
-
     new (&m_platform) Platform(width, height);
 
     m_arenaAllocator = InitVirtualMemory(1 * GigaByte);
@@ -49,20 +52,18 @@ Engine::Engine(int width, int height) :
     m_platform.GetWindowDimension();
     m_graphics.InitGraphics(&m_tempAllocator);
     InitIMGUI();
-
-    m_editorCamera = Camera(projectionType::PERSPECTIVE, width / (f32)height);
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
     
     {//TODO save/load scene graph after creating this data inside the engine editor
             m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 1000);
             ObjModelPush("ts_bot912.obj");
-            m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator, sizeof(GameObject) * 1000);
+            m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator, sizeof(GameObject) * 10000);
 
             for (int i = 0; i < (int)m_modelCount; i++)
             {
                 m_graphics.InitModel(&m_models[i]);
             }
-            m_gameObjectCount = 3;
+            m_gameObjectCount = 10000;
             for (int i = 0; i < (int)m_gameObjectCount; i++)
             {
                 m_gameObjects[i].parent = nullptr;
@@ -76,7 +77,22 @@ Engine::Engine(int width, int height) :
             m_gameObjects[2] = m_gameObjects[0];
             m_gameObjects[2].position = {2, 1, 0};
             m_gameObjects[2].scale = 0.5;
-        
+    
+            float longitudeStep = M_PI * 2 / 500;
+            float latitudeStep = M_PI / 20;
+
+            int index = 0;
+            float scale = 10;
+            for (int i = 0; i < 500; i++)
+            {
+                for(int j = 0; j < 20; j++)
+                {
+                    m_gameObjects[index++].position = {cosf(longitudeStep * j) * sinf(i * latitudeStep), 
+                        sinf(longitudeStep * j) * sinf(i * latitudeStep), cosf(i * latitudeStep - M_PI)};
+                    m_gameObjects[index - 1].position = m_gameObjects[index - 1].position * scale;
+                    m_gameObjects[index - 1].position.y *= scale * 2;
+                }
+            }
     }
     m_input = {};
     m_dc = GetDC(m_platform.m_window);
@@ -155,7 +171,6 @@ void Engine::DrawSceneNodes(int index, bool is_child, GameObject* model)
     }
 }
 
-
 void Engine::DrawIMGUI()
 {
     ImGui_ImplWin32_NewFrame();
@@ -170,9 +185,20 @@ void Engine::DrawIMGUI()
             ImGui::TreePop();
         }
     }
+    ImGui::Text("%f", m_deltaTime * 1000);
     ImGui::End();
     ImGui::Render();
+
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+//        HDC backup_current_context = GetDC(m_platform.m_window);
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+//        wglMakeCurrent(backup_current_context, m_platform.m_glContext);
+    }
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 }
 
 void Engine::Draw()

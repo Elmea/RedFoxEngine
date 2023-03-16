@@ -1008,7 +1008,8 @@ static ObjModel CreateCube(Memory *memory)
     return (result);
 }
 
-static ObjModel CreateSphere(int latitudeCount, int longitudeCount, Memory *memory)
+#if 0
+static ObjModel CreateSphere(int latitudeCount, int longitudeCount, ArenaAllocator *memory)
 {
     ObjModel result = {};
 
@@ -1077,3 +1078,4 @@ static ObjModel CreateSphere(int latitudeCount, int longitudeCount, Memory *memo
     // mesh->material.Opaqueness = 1.f;
     return result;
 }
+#endif

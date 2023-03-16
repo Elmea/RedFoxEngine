@@ -22,22 +22,22 @@ namespace RedFoxEngine
 class Engine
 {
 private:
-    u64 m_startingTime;
-    Memory m_arenaAllocator;
-    Memory m_tempAllocator;
-    Model *m_models;
-    u64 m_modelCount;
-    GameObject *m_gameObjects;
-    u64 m_gameObjectCount;
-    Input m_input;
-    HDC m_dc;
-    HINSTANCE m_gameLibrary;
-    FILETIME m_lastTime;
-    Platform m_platform;
-    Graphics m_graphics;
-    u64 m_time;
-    f64 m_deltaTime;
-    _updategame *UpdateGame;
+    u64 m_startingTime = 0;
+    Memory m_arenaAllocator = {};
+    Memory m_tempAllocator = {};
+    Model *m_models = nullptr;
+    u64 m_modelCount = 0;
+    GameObject *m_gameObjects = nullptr;
+    u64 m_gameObjectCount = 0;
+    Input m_input = {};
+    HDC m_dc = 0;
+    HINSTANCE m_gameLibrary = 0;
+    FILETIME m_lastTime = {};
+    Platform m_platform = {};
+    Graphics m_graphics = {};
+    u64 m_time = 0;
+    f64 m_deltaTime = 0;
+    _updategame *UpdateGame = nullptr;
     Camera m_editorCamera;
 
 private:

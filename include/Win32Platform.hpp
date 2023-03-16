@@ -93,6 +93,7 @@ private:
     ApplicationContext m_applicationContext;
 
 public:
+    HGLRC m_glContext;
     WindowDimension m_windowDimension;
     Window m_window;
     static int m_running;

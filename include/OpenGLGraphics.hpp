@@ -5,9 +5,10 @@
 #include "Win32Platform.hpp"
 #endif
 
-#include "ObjParser.hpp"
-#include "OpenGLFunctions.hpp"
 #include <GL/gl.h>
+#include "OpenGLFunctions.hpp"
+#include "ObjParser.hpp"
+#include "imgui.h"
 
 namespace RedFoxEngine
 {

@@ -6,7 +6,7 @@ int Platform::m_running;
 
 static void FatalError(const char *message)
 {
-    MessageBoxA(NULL, message, "Error", MB_ICONEXCLAMATION);
+    MessageBoxA(nullptr, message, "Error", MB_ICONEXCLAMATION);
     ExitProcess(0);
 }
 
@@ -89,7 +89,7 @@ static HGLRC Win32InitOpenGL(HWND window)
     int format;
     unsigned int formats;
 
-    if (!wglChoosePixelFormatARB(WindowDC, Attrib, NULL, 1, &format, &formats) || formats == 0)
+    if (!wglChoosePixelFormatARB(WindowDC, Attrib, nullptr, 1, &format, &formats) || formats == 0)
     {
         FatalError("OpenGL does not support required pixel format!");
     }
@@ -121,7 +121,7 @@ static HGLRC Win32InitOpenGL(HWND window)
             0,
         };
 
-        OpenGLRC = wglCreateContextAttribsARB(WindowDC, NULL, attrib);
+        OpenGLRC = wglCreateContextAttribsARB(WindowDC, nullptr, attrib);
         if (!OpenGLRC)
         {
             FatalError("Cannot create modern OpenGL context! OpenGL version 4.5 not supported?");
@@ -139,7 +139,7 @@ static HGLRC Win32InitOpenGL(HWND window)
 
 #ifndef NDEBUG
         // enable debug callback
-        glDebugMessageCallback(&DebugCallback, NULL);
+        glDebugMessageCallback(&DebugCallback, nullptr);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 #endif
     }
@@ -156,11 +156,11 @@ Platform::Platform(int width, int height)
     GetModuleHandleExA(0, nullptr, &m_applicationContext);
     // Create Window
     m_window = CreateRedFoxWindow(width, height);
-    HGLRC glContext = Win32InitOpenGL(m_window);
+    m_glContext = Win32InitOpenGL(m_window);
     ShowWindow(m_window, 5);
     HCURSOR hCurs1;
 
-    hCurs1 = LoadCursor(NULL, IDC_ARROW);
+    hCurs1 = LoadCursor(nullptr, IDC_ARROW);
     SetCursor(hCurs1);
 }
 
@@ -177,7 +177,7 @@ WindowDimension Platform::GetWindowDimension()
 void Platform::MessageProcessing(Input *input)
 {
     MSG Message;
-    while (PeekMessageA(&Message, NULL, 0, 0, PM_REMOVE))
+    while (PeekMessageA(&Message, nullptr, 0, 0, PM_REMOVE))
     {
         switch (Message.message)
         {
@@ -401,11 +401,11 @@ _updategame *Platform::LoadGameLibrary(const char *functionName, const char *lib
     HANDLE File = CreateFileA("game.dll",                         // PATH 
                               GENERIC_READ,                       // Desired access
                               FILE_SHARE_WRITE | FILE_SHARE_READ, // Share Mode
-                              NULL,                               // Security Attributes
+                              nullptr,                               // Security Attributes
                               OPEN_EXISTING,                      // Creation Disposition
                               FILE_ATTRIBUTE_NORMAL,              // Flags and attributes
-                              NULL);                              // Template file
-    GetFileTime(File, NULL, NULL, LastWriteTime);
+                              nullptr);                              // Template file
+    GetFileTime(File, nullptr, nullptr, LastWriteTime);
     CloseHandle(File);
     if (CompareFileTime(&temp, LastWriteTime) != 0)
     {
@@ -415,7 +415,7 @@ _updategame *Platform::LoadGameLibrary(const char *functionName, const char *lib
         gameLibrary = LoadLibraryA("gameCopy.dll");
         if (gameLibrary)
             functionPointer = (_updategame *)GetProcAddress(gameLibrary, functionName);
-        if (functionPointer == NULL)
+        if (functionPointer == nullptr)
             functionPointer = &updateStub;
     }
     return ((_updategame*)functionPointer);
@@ -423,7 +423,7 @@ _updategame *Platform::LoadGameLibrary(const char *functionName, const char *lib
 
 Window Platform::CreateRedFoxWindow(int Width, int Height)
 {
-    Window window = NULL;
+    Window window = nullptr;
     WNDCLASS WindowClass = {};
     WindowClass.style = CS_HREDRAW | CS_VREDRAW;
     WindowClass.lpfnWndProc = MainWindowCallback;
@@ -438,17 +438,17 @@ Window Platform::CreateRedFoxWindow(int Width, int Height)
                                  WS_OVERLAPPEDWINDOW,          // Window style
                                  CW_USEDEFAULT, CW_USEDEFAULT, // Position and Size
                                  Width, Height,
-                                 NULL,                  // Parent window
-                                 NULL,                  // Menu
+                                 nullptr,                  // Parent window
+                                 nullptr,                  // Menu
                                  WindowClass.hInstance, // Instance handle
-                                 NULL);                 // Additional application data
+                                 nullptr);                 // Additional application data
     }
     return (window);
 }
 
 void Platform::FatalError(const char *message)
 {
-    MessageBoxA(NULL, message, "Error", MB_ICONEXCLAMATION);
+    MessageBoxA(nullptr, message, "Error", MB_ICONEXCLAMATION);
     ExitProcess(0);
 }
 
@@ -456,7 +456,7 @@ void Platform::GetWglFunctions(void)
 {
     // to get WGL funcs we need valid GL context, so create dummy window for dummy GL contetx
     HWND dummy = CreateWindowExW(0, L"STATIC", L"DummyWindow", WS_OVERLAPPED, CW_USEDEFAULT, CW_USEDEFAULT,
-                                 CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, NULL);
+                                 CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, nullptr, nullptr);
 
     if (!dummy && "Failed to create dummy window")
     {
@@ -570,7 +570,7 @@ void Platform::GetWglFunctions(void)
         FatalError("OpenGL does not support required WGL extensions for modern context!");
     }
 
-    wglMakeCurrent(NULL, NULL);
+    wglMakeCurrent(nullptr, nullptr);
     wglDeleteContext(rc);
     ReleaseDC(dummy, dc);
     DestroyWindow(dummy);
