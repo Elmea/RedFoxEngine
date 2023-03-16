@@ -82,15 +82,15 @@ Engine::Engine(int width, int height) :
             float latitudeStep = M_PI / 20;
 
             int index = 0;
-            float scale = 10;
-            for (int i = 0; i < 500; i++)
+            float scale = 30;
+            for (int i = 0; i < 20; i++)
             {
-                for(int j = 0; j < 20; j++)
+                for(int j = 0; j < 500; j++)
                 {
                     m_gameObjects[index++].position = {cosf(longitudeStep * j) * sinf(i * latitudeStep), 
                         sinf(longitudeStep * j) * sinf(i * latitudeStep), cosf(i * latitudeStep - M_PI)};
                     m_gameObjects[index - 1].position = m_gameObjects[index - 1].position * scale;
-                    m_gameObjects[index - 1].position.y *= scale * 2;
+                    //m_gameObjects[index - 1].position.y *= 2;
                 }
             }
     }
