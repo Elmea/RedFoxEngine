@@ -28,7 +28,8 @@ private:
     Memory m_tempAllocator;
     Model *m_models;
     u64 m_modelCount;
-    GameObject *m_gameObjects;
+    GameObject* m_gameObjects;
+    GameObject* m_selectedObject;
     u64 m_gameObjectCount;
     Input m_input;
     HDC m_dc;

@@ -1,5 +1,4 @@
 #include "Engine.hpp"
-#include "GameObject.hpp"
 
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
@@ -139,77 +138,6 @@ void Engine::Update()
     UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount, time, cameraRotation, &m_editorCamera.position);
     m_graphics.SetViewProjectionMatrix(m_editorCamera.GetVP());
     m_gameObjects[0].GetChildren(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
-}
-
-inline void Engine::DrawSceneNodes(int* id, bool is_child, GameObject* gameObj)
-{
-    int childrenCount = 0;
-    GameObject** children = gameObj->GetChildren(m_gameObjects, m_gameObjectCount, &m_tempAllocator, &childrenCount);
-    ImGuiTreeNodeFlags flags;
-    if (is_child)
-    {
-        flags = ImGuiTreeNodeFlags_Bullet;
-    }
-    else
-    {
-        flags = ImGuiTreeNodeFlags_DefaultOpen;
-        if (childrenCount == 0)
-        {
-            flags |= ImGuiTreeNodeFlags_Leaf;
-        }
-    }
-    flags |= ImGuiTreeNodeFlags_SpanFullWidth;
-
-    if (ImGui::TreeNodeEx(gameObj->name, flags, gameObj->name))
-    {
-        /* TODO: Drag and drop
-        if (ImGui::BeginDragDropSource())
-        {
-            ImGui::SetDragDropPayload("_TREENODE", gameObj, sizeof(GameObject));
-            ImGui::Text("This is a drag and drop source");
-            ImGui::EndDragDropSource();
-        }
-        */
-
-        if (children != nullptr)
-        {
-            for (int i = 0; children[i] != nullptr; i++)
-            {
-                *id += i + 1;
-                DrawSceneNodes(id, true, children[i]);
-            }
-        }
-        ImGui::TreePop();
-    }
-}
-
-
-void Engine::DrawIMGUI()
-{
-    ImGui_ImplWin32_NewFrame();
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui::NewFrame();
-    ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoDockingInCentralNode);
-    if (ImGui::Begin("Scene Graph"))
-    {
-        if (ImGui::TreeNodeEx("_TREENODE", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanFullWidth, "Scene Name Here"))
-        {
-            for (int i=0; i < m_gameObjectCount; i++)
-                if (m_gameObjects[i].parent == 0x0)
-                    DrawSceneNodes(&i, false, &m_gameObjects[i]);
-            ImGui::TreePop();
-        }
-    }
-    ImGui::End();
-    
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    
-    if (m_ImGuiIO->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault();
-    }
 }
 
 void Engine::Draw()
