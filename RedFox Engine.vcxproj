@@ -111,7 +111,8 @@
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);opengl32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>del imgui.ini</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
     <ClCompile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -125,7 +126,8 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <PreBuildEvent>
-      <Command>del imgui.ini</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

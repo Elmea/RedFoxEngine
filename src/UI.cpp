@@ -23,7 +23,7 @@ void Engine::DrawSceneNodes(int* id, bool is_child, GameObject* gameObj)
         flags |= ImGuiTreeNodeFlags_Selected;
 
     flags |= ImGuiTreeNodeFlags_SpanFullWidth |
-        ImGuiTreeNodeFlags_OpenOnDoubleClick;
+             ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
     bool nodeOpen = ImGui::TreeNodeEx(gameObj->name, flags, gameObj->name);
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
@@ -35,11 +35,24 @@ void Engine::DrawSceneNodes(int* id, bool is_child, GameObject* gameObj)
     {
         if (ImGui::BeginDragDropSource())
         {
-            ImGui::SetDragDropPayload("_TREENODE", gameObj, sizeof(GameObject));
-            ImGui::Text("This is a drag and drop source");
+            ImGui::SetDragDropPayload("_SCENENODE", gameObj, sizeof(gameObj));
             ImGui::EndDragDropSource();
         }
         
+        if (ImGui::BeginDragDropTarget())
+        {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_SCENENODE"))
+            {
+                if (payload->IsDelivery())
+                {
+                    GameObject* movedGameobject = (GameObject*)payload->Data;
+                    printf("%s is move into %s\n", movedGameobject->name, gameObj->name);
+                    movedGameobject->parent = gameObj;
+                    children = gameObj->GetChildren(m_gameObjects, m_gameObjectCount, &m_tempAllocator, &childrenCount);
+                }
+                ImGui::EndDragDropTarget();
+            }
+        }
 
         if (children != nullptr)
         {
@@ -65,9 +78,10 @@ void Engine::DrawIMGUI()
                                       ImGuiDockNodeFlags_NoCloseButton |
                                       ImGuiDockNodeFlags_NoDockingInCentralNode;
 
+    // TODO(a.perche) : Bind widgets to dockspace
     ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockingFlags);
 
-    if (ImGui::Begin("Scene Graph"))
+    if (ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
         ImGuiTreeNodeFlags rootNodeFlags = ImGuiTreeNodeFlags_Framed |
             ImGuiTreeNodeFlags_Leaf |
@@ -86,7 +100,7 @@ void Engine::DrawIMGUI()
         ImGui::End();
     }
 
-    if (ImGui::Begin("Properties"))
+    if (ImGui::Begin("Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
         if (m_selectedObject != nullptr)
         {
@@ -122,7 +136,7 @@ void Engine::DrawIMGUI()
                     ImGui::DragFloat4("TransformRotation", &m_selectedObject->orientation.a, 0.001f, -32767.f, 32767.f);
 
                     ImGui::TableNextRow();
-
+                    
                     ImGui::TableSetColumnIndex(0);
                     ImGui::Text("Scale");
 
