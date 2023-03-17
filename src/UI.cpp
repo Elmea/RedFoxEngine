@@ -33,14 +33,13 @@ void Engine::DrawSceneNodes(int* id, bool is_child, GameObject* gameObj)
 
     if (nodeOpen)
     {
-        /* TODO: Drag and drop
         if (ImGui::BeginDragDropSource())
         {
             ImGui::SetDragDropPayload("_TREENODE", gameObj, sizeof(GameObject));
             ImGui::Text("This is a drag and drop source");
             ImGui::EndDragDropSource();
         }
-        */
+        
 
         if (children != nullptr)
         {
@@ -111,7 +110,7 @@ void Engine::DrawIMGUI()
 
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::DragFloat3("", &m_selectedObject->position.x, 0.001f, -32767.f, 32767.f);
+                    ImGui::DragFloat3("TransformPosition", &m_selectedObject->position.x, 0.001f, -32767.f, 32767.f);
 
                     ImGui::TableNextRow();
 
@@ -120,7 +119,7 @@ void Engine::DrawIMGUI()
 
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::DragFloat4("", &m_selectedObject->orientation.a, 0.001f, -32767.f, 32767.f);
+                    ImGui::DragFloat4("TransformRotation", &m_selectedObject->orientation.a, 0.001f, -32767.f, 32767.f);
 
                     ImGui::TableNextRow();
 
@@ -129,7 +128,7 @@ void Engine::DrawIMGUI()
 
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::DragFloat("", &m_selectedObject->scale, 0.001f, -32767.f, 32767.f);
+                    ImGui::DragFloat("TransformScale", &m_selectedObject->scale, 0.001f, -32767.f, 32767.f);
 
                     ImGui::EndTable();
                 }
