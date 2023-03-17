@@ -1,0 +1,3 @@
+[submodule "RedFoxMaths"]
+	path = RedFoxMaths
+	url = https://github.com/Elmea/ElmeasMaths.git
