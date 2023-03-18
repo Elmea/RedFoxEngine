@@ -125,6 +125,10 @@
     <ClCompile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="external\imgui.cpp" />
@@ -140,6 +144,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\ObjParser.cpp" />
     <ClCompile Include="src\OpenGLGraphics.cpp" />
+    <ClCompile Include="src\UI.cpp" />
     <ClCompile Include="src\Win32Platform.cpp" />
   </ItemGroup>
   <ItemGroup>

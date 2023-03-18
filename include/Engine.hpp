@@ -12,9 +12,10 @@
 #include "OpenGLGraphics.hpp"
 #include "GameObject.hpp"
 #include "Camera.hpp"
-#include "imgui.h"
-#include "imgui_impl_win32.h"
+#include <imgui.h>
+#include <imgui_internal.h>
 #include "imgui_impl_opengl3.h"
+#include "imgui_impl_win32.h"
 
 namespace RedFoxEngine
 {
@@ -28,7 +29,8 @@ private:
     Model *m_models = nullptr;
     u64 m_modelCount = 0;
     GameObject *m_gameObjects = nullptr;
-    u64 m_gameObjectCount = 0;
+    u32 m_gameObjectCount = 0;
+    GameObject *m_selectedObject = nullptr;
     Input m_input = {};
     HDC m_dc = 0;
     HINSTANCE m_gameLibrary = 0;
@@ -39,11 +41,11 @@ private:
     f64 m_deltaTime = 0;
     _updategame *UpdateGame = nullptr;
     Camera m_editorCamera;
-
+    ImGuiIO* m_ImGuiIO = nullptr;
 private:
  
     void DrawIMGUI();
-    void DrawSceneNodes(int index, bool is_child, GameObject* model);
+    void DrawSceneNodes(bool is_child, GameObject* model);
     Input GetInputs();
     void ObjModelPush(const char *objPath);
     void InitIMGUI();

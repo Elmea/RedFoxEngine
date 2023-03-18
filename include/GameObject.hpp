@@ -7,6 +7,7 @@ namespace RedFoxEngine
 {
     struct GameObject
     {
+        char* name;
         GameObject* parent;
         Model *model;
         RedFoxMaths::Float3 position;
@@ -15,5 +16,6 @@ namespace RedFoxEngine
 
         RedFoxMaths::Mat4 GetWorldMatrix();
         GameObject **GetChildren(GameObject *gameObjects, int modelCount, Memory *temp);
+        int GetChildrenCount(GameObject *objects, int objectCount);
     };
 }
