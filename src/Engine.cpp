@@ -45,28 +45,25 @@ void Engine::StartTime()
 }
 
 Engine::Engine(int width, int height) :
+    m_platform(width, height),
     m_editorCamera(projectionType::PERSPECTIVE, width / (f32)height)
 {
-    new (&m_platform) Platform(width, height);
 
     m_arenaAllocator = InitVirtualMemory(1 * GigaByte);
     m_tempAllocator = InitVirtualMemory(1 * GigaByte);
     IncreaseTotalCapacity(&m_arenaAllocator, 1 * MegaByte);
-    m_platform.GetWindowDimension();
     m_graphics.InitGraphics(&m_tempAllocator);
     InitIMGUI();
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
 
     {//TODO save/load scene graph after creating this data inside the engine editor
-            m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 1000);
+            m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 10);
             ObjModelPush("ts_bot912.obj");
             m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator, sizeof(GameObject) * 10000);
 
             for (int i = 0; i < (int)m_modelCount; i++)
-            {
-                m_graphics.InitModel(&m_models[i]);
-            }
-            m_gameObjectCount = 1000;
+                m_graphics.InitModel(&m_models[i], &m_tempAllocator);
+            m_gameObjectCount = 1;
             for (int i = 0; i < (int)m_gameObjectCount; i++)
             {
                 m_gameObjects[i].parent = nullptr;

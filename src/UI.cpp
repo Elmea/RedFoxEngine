@@ -70,6 +70,7 @@ void Engine::DrawIMGUI()
 
     if (ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
+        ImGui::Text("%f", m_deltaTime);
         ImGuiTreeNodeFlags rootNodeFlags = 
             ImGuiTreeNodeFlags_Framed |
             ImGuiTreeNodeFlags_Leaf |

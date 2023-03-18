@@ -1,4 +1,5 @@
 #include "Win32Platform.hpp"
+#include "glcorearb.h"
 #include "imgui_impl_win32.h"
 using namespace RedFoxEngine;
 
@@ -31,8 +32,11 @@ static int StringisEqual(const char *src, const char *dst, size_t dstlen)
 static void APIENTRY DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
                                    const GLchar *message, const void *user)
 {
-    OutputDebugStringA(message);
-    OutputDebugStringA("\n");
+    if (severity != GL_DEBUG_SEVERITY_NOTIFICATION && severity != GL_DEBUG_SEVERITY_LOW)
+    {
+        OutputDebugStringA(message);
+        OutputDebugStringA("\n");
+    }
     if (severity == GL_DEBUG_SEVERITY_HIGH || severity == GL_DEBUG_SEVERITY_MEDIUM)
     {
         if (IsDebuggerPresent())
@@ -162,6 +166,7 @@ Platform::Platform(int width, int height)
 
     hCurs1 = LoadCursor(nullptr, IDC_ARROW);
     SetCursor(hCurs1);
+    GetWindowDimension();
 }
 
 WindowDimension Platform::GetWindowDimension()

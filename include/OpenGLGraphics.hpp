@@ -38,7 +38,7 @@ private:
 public:
     void Draw(GameObject *gameObjects, int gameObjectCount);
     void DrawModel(Model *model);
-    void InitModel(Model *model);
+    void InitModel(Model *model, Memory *temp);
     void InitTexture(ObjModel *model);
     void InitTexture(void *data,int height, int width, GLuint &texture);
     void InitShaders(Memory *tempArena);

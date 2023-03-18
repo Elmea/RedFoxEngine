@@ -22,9 +22,30 @@ void Graphics::InitGraphics(Memory *tempArena)
     wglSwapIntervalEXT(1);
 }
 
-void Graphics::InitModel(Model *model)
+void Graphics::InitModel(Model *model, Memory *temp)
 {
     // vertex buffer containing triangle vertices
+
+    RedFoxMaths::Mat4 *matrices = (RedFoxMaths::Mat4*)MyMalloc(temp, sizeof(RedFoxMaths::Mat4) * 20000);
+    {
+        float longitudeStep = M_PI * 2 / 1000;
+        float latitudeStep = M_PI / 20;
+
+        int index = 0;
+        float scale = 10;
+
+        for (int i = 0; i < 20; i++)
+        {
+            for(int j = 0; j < 1000; j++)
+            {
+                RedFoxMaths::Float3 position =  {cosf(longitudeStep * j) * sinf(i * latitudeStep), 
+                        sinf(longitudeStep * j) * sinf(i * latitudeStep), cosf(i * latitudeStep - M_PI)};
+                position *= scale;
+                RedFoxMaths::Mat4 currentMatrix = RedFoxMaths::Mat4::CreateTransformMatrix(position, RedFoxMaths::Float3(0, 0, 0), RedFoxMaths::Float3(1, 1, 1));
+                matrices[index++] = currentMatrix.GetTransposedMatrix();
+            }
+        }
+    }
     unsigned int vbo;
     {
         glCreateBuffers(1, &vbo);
@@ -33,30 +54,60 @@ void Graphics::InitModel(Model *model)
     unsigned int ebo;
     {
         glCreateBuffers(1, &ebo);
-        glNamedBufferStorage(ebo, sizeof(u32) * model->obj.indexCount, model->obj.indices, 0);
+        glNamedBufferStorage(ebo, model->obj.indexCount * sizeof(u32) , model->obj.indices, 0);
+    }
+    unsigned int vbm;
+    {
+        glCreateBuffers(1, &vbm);
+        glNamedBufferStorage(vbm, 20000 * sizeof(RedFoxMaths::Mat4), matrices, 0);
     }
     // vertex input
     {
         glCreateVertexArrays(1, &model->vao);
 
         int vbuf_index = 0;
-        glVertexArrayVertexBuffer(model->vao, vbuf_index, vbo, 0, sizeof(struct ObjVertex));
+        glVertexArrayVertexBuffer(model->vao, vbuf_index, vbo, 0, sizeof(ObjVertex));
+
+        int vbuf_matrix = 3;
+        glVertexArrayVertexBuffer(model->vao, vbuf_matrix, vbm, 0, sizeof(RedFoxMaths::Mat4));
+
         glVertexArrayElementBuffer(model->vao, ebo);
 
         int a_pos = 0;
-        glVertexArrayAttribFormat(model->vao, a_pos, 3, GL_FLOAT, GL_FALSE, offsetof(struct ObjVertex, position));
+        glEnableVertexArrayAttrib (model->vao, a_pos);
+        glVertexArrayAttribFormat (model->vao, a_pos, 3, GL_FLOAT, GL_FALSE, offsetof(struct ObjVertex, position));
         glVertexArrayAttribBinding(model->vao, a_pos, vbuf_index);
-        glEnableVertexArrayAttrib(model->vao, a_pos);
 
         int a_normal = 1;
-        glVertexArrayAttribFormat(model->vao, a_normal, 3, GL_FLOAT, GL_FALSE, offsetof(struct ObjVertex, normal));
+        glEnableVertexArrayAttrib (model->vao, a_normal);
+        glVertexArrayAttribFormat (model->vao, a_normal, 3, GL_FLOAT, GL_FALSE, offsetof(struct ObjVertex, normal));
         glVertexArrayAttribBinding(model->vao, a_normal, vbuf_index);
-        glEnableVertexArrayAttrib(model->vao, a_normal);
 
         int a_uv = 2;
-        glVertexArrayAttribFormat(model->vao, a_uv, 2, GL_FLOAT, GL_FALSE, offsetof(struct ObjVertex, textureUV));
+        glEnableVertexArrayAttrib (model->vao, a_uv);
+        glVertexArrayAttribFormat (model->vao, a_uv, 2, GL_FLOAT, GL_FALSE, offsetof(struct ObjVertex, textureUV));
         glVertexArrayAttribBinding(model->vao, a_uv, vbuf_index);
-        glEnableVertexArrayAttrib(model->vao, a_uv);
+
+        glEnableVertexArrayAttrib (model->vao, 3);
+        glVertexArrayAttribFormat (model->vao, 3, 4, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(model->vao, 3, vbm);
+
+        glEnableVertexArrayAttrib (model->vao, 4);
+        glVertexArrayAttribFormat (model->vao, 4, 4, GL_FLOAT, GL_FALSE, (sizeof(float) * 4));
+        glVertexArrayAttribBinding(model->vao, 4, vbm);
+
+        glEnableVertexArrayAttrib (model->vao, 5);
+        glVertexArrayAttribFormat (model->vao, 5, 4, GL_FLOAT, GL_FALSE, (2 * sizeof(float) * 4));
+        glVertexArrayAttribBinding(model->vao, 5, vbm);
+
+        glEnableVertexArrayAttrib (model->vao, 6);
+        glVertexArrayAttribFormat (model->vao, 6, 4, GL_FLOAT, GL_FALSE, (3 * sizeof(float) * 4));
+        glVertexArrayAttribBinding(model->vao, 6, vbm);
+
+        glVertexArrayBindingDivisor(model->vao, 3, 1);
+        glVertexArrayBindingDivisor(model->vao, 4, 1);
+        glVertexArrayBindingDivisor(model->vao, 5, 1);
+        glVertexArrayBindingDivisor(model->vao, 6, 1);
     }
     InitTexture(&model->obj);
     DeInitGraphicsObj(&model->obj);
@@ -181,7 +232,8 @@ void Graphics::DrawModel(Model *model)
                               model->obj.materials.material[model->obj.meshes[i].materialIndex].diffuseMap.index0);
         else
             glBindTextureUnit(diffuseMap, 0); // TODO: create a default 'missing' texture
-        glDrawElements(GL_TRIANGLES, model->obj.meshes[i].indexCount ,GL_UNSIGNED_INT, (void *)(model->obj.meshes[i].indexStart * sizeof(u32)));
+       //glDrawElements(GL_TRIANGLES, model->obj.meshes[i].indexCount ,GL_UNSIGNED_INT, (void *)(model->obj.meshes[i].indexStart * sizeof(u32)));
+        glDrawElementsInstanced(GL_TRIANGLES, model->obj.meshes[i].indexCount ,GL_UNSIGNED_INT, (void *)((model->obj.meshes[i].indexStart) * sizeof(u32)), 20000);
     }
 }
 } // namespace RedFoxEngine
