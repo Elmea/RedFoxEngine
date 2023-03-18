@@ -10,13 +10,6 @@
 #define STBI_NO_STDIO
 #include <STB_Image/stb_image.h>
 
-#ifdef __llvm__
-#include <avx2intrin.h>
-#include <avxintrin.h>
-#include <intrin.h>
-#include <x86intrin.h>
-#endif
-
 /*
     Function that uses intrinsics to read 32 bytes by 32 bytes
     until it finds the newline character  - '\n' or the end of string ('\0')
