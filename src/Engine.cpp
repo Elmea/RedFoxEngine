@@ -8,6 +8,8 @@
 #define REDFOXMATHS_IMPLEMENTATION
 #include "RedfoxMaths.hpp"
 
+#include <vector>
+
 using namespace RedFoxEngine;
 
 void Engine::ObjModelPush(const char *path)
@@ -82,7 +84,7 @@ Engine::Engine(int width, int height) :
             float latitudeStep = M_PI / 20;
 
             int index = 0;
-            float scale = 30;
+            float scale = 10;
             for (int i = 0; i < 20; i++)
             {
                 for(int j = 0; j < 500; j++)

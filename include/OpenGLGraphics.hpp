@@ -37,7 +37,7 @@ private:
     GLuint m_vshader, m_fshader;
 public:
     void Draw(GameObject *gameObjects, int gameObjectCount);
-    void DrawModel(Model model);
+    void DrawModel(Model *model);
     void InitModel(Model *model);
     void InitTexture(ObjModel *model);
     void InitTexture(void *data,int height, int width, GLuint &texture);

@@ -142,7 +142,7 @@ void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
     m_viewProjection = vp;
 }
 
-void Graphics::Draw(GameObject *gameObjects, int gameObjectCount)
+void Graphics::Draw(GameObject *objects, int gameObjectCount)
 {
     // clear screen
     glClearColor(0.392f, 0.584f, 0.929f, 1.f);
@@ -157,31 +157,31 @@ void Graphics::Draw(GameObject *gameObjects, int gameObjectCount)
     u_matrix = 1;
     for (int i = 0; i < gameObjectCount; i++)
     {
-        if (gameObjects[i].model)
+        if (objects[i].model)
         {
-            RedFoxMaths::Mat4 modelMatrix = gameObjects[i].GetWorldMatrix();
+            RedFoxMaths::Mat4 modelMatrix = objects[i].GetWorldMatrix();
             glProgramUniformMatrix4fv(m_vshader, u_matrix, 1, GL_TRUE, modelMatrix.AsPtr());
-            DrawModel(*gameObjects[i].model);
+            DrawModel(objects[i].model);
         }
     }
 }
 
-void Graphics::DrawModel(Model model)
+void Graphics::DrawModel(Model *model)
 {
     // provide vertex input
-    glBindVertexArray(model.vao);
+    glBindVertexArray(model->vao);
 
     GLint diffuseMap = 0;
     glBindTextureUnit(diffuseMap, 0);
 
-    for (int i = 0; i < (int)model.obj.meshCount; i++)
+    for (int i = 0; i < (int)model->obj.meshCount; i++)
     {
-        if (model.obj.materials.count && model.obj.materials.material[model.obj.meshes[i].materialIndex].hasTexture)
+        if (model->obj.materials.count && model->obj.materials.material[model->obj.meshes[i].materialIndex].hasTexture)
             glBindTextureUnit(diffuseMap,
-                              model.obj.materials.material[model.obj.meshes[i].materialIndex].diffuseMap.index0);
+                              model->obj.materials.material[model->obj.meshes[i].materialIndex].diffuseMap.index0);
         else
             glBindTextureUnit(diffuseMap, 0); // TODO: create a default 'missing' texture
-        glDrawElements(GL_TRIANGLES, model.obj.meshes[i].indexCount ,GL_UNSIGNED_INT, (void *)(model.obj.meshes[i].indexStart * sizeof(u32)));
+        glDrawElements(GL_TRIANGLES, model->obj.meshes[i].indexCount ,GL_UNSIGNED_INT, (void *)(model->obj.meshes[i].indexStart * sizeof(u32)));
     }
 }
 } // namespace RedFoxEngine
