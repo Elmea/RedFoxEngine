@@ -68,9 +68,8 @@ void Engine::DrawIMGUI()
     // TODO(a.perche) : Bind widgets to dockspace
     ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockingFlags);
 
-    if (ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
+    if (0 && ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
-        ImGui::Text("%f", m_deltaTime);
         ImGuiTreeNodeFlags rootNodeFlags = 
             ImGuiTreeNodeFlags_Framed |
             ImGuiTreeNodeFlags_Leaf |
@@ -104,6 +103,7 @@ void Engine::DrawIMGUI()
 
     if (ImGui::Begin("Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
+        ImGui::Text("%f", m_deltaTime);
         if (m_selectedObject != nullptr)
         {
             if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow))

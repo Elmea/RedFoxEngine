@@ -42,4 +42,5 @@
     X(PFNGLBLENDEQUATIONPROC, glBlendEquation)                                                                         \
     X(PFNGLBLENDFUNCSEPARATEPROC, glBlendFuncSeparate)                                                                 \
     X(PFNGLDRAWELEMENTSINSTANCEDPROC, glDrawElementsInstanced)                                                         \
-    X(PFNGLVERTEXARRAYBINDINGDIVISORPROC, glVertexArrayBindingDivisor)                                                 
+    X(PFNGLVERTEXARRAYBINDINGDIVISORPROC, glVertexArrayBindingDivisor)                                                 \
+    X(PFNGLNAMEDBUFFERSUBDATAPROC, glNamedBufferSubData)
