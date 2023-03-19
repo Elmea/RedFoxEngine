@@ -163,10 +163,11 @@ void Engine::DrawIMGUI()
     ImGui_ImplWin32_NewFrame();
     ImGui_ImplOpenGL3_NewFrame();
     ImGui::NewFrame();
-
+    
     // TODO(a.perche) : Build dockspace at runtime
     ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockingFlags);
 
+    ImGui::PushFont(defaultFont);
     if (ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
         ImGuiTreeNodeFlags rootNodeFlags = 
@@ -175,7 +176,6 @@ void Engine::DrawIMGUI()
             ImGuiTreeNodeFlags_DefaultOpen |
             ImGuiTreeNodeFlags_SpanFullWidth;
 
-        ImGui::PushFont(defaultFont);
         if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "Sample Scene"))
         {
             if (ImGui::BeginDragDropTarget())
@@ -197,10 +197,11 @@ void Engine::DrawIMGUI()
                     DrawSceneNodes(false, &m_gameObjects[i]);
             ImGui::TreePop();
         }
-        ImGui::PopFont();
     }
     ImGui::End();
+    ImGui::PopFont();
 
+    ImGui::PushFont(defaultFont);
     if (ImGui::Begin("Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
         ImGui::Text("%f", m_deltaTime);
@@ -209,7 +210,6 @@ void Engine::DrawIMGUI()
             ImGuiTreeNodeFlags_OpenOnArrow | 
             ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
-        ImGui::PushFont(defaultFont);
         if (m_selectedObject != nullptr)
         {
             if (ImGui::CollapsingHeader("Transform", propertiesFlags))
@@ -247,10 +247,10 @@ void Engine::DrawIMGUI()
                 }
             }
         }
-        ImGui::PopFont();
     }
     ImGui::End();
-
+    ImGui::PopFont();
+    
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

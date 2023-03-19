@@ -35,7 +35,9 @@ Engine::Engine(int width, int height) :
     m_tempAllocator = InitVirtualMemory(1 * GigaByte);
     IncreaseTotalCapacity(&m_arenaAllocator, 1 * MegaByte);
     m_graphics.InitGraphics(&m_tempAllocator);
+#if IMGUI_CONTEXT
     InitIMGUI();
+#endif
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
 
     {//TODO save/load scene graph after creating this data inside the engine editor
@@ -142,7 +144,9 @@ void Engine::Draw()
 {
     m_graphics.Draw(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
     // swap the buffers to show output
+#if IMGUI_CONTEXT
     DrawIMGUI();
+#endif
     if (!SwapBuffers(m_dc))
         m_platform.FatalError("Failed to swap OpenGL buffers!");
     u64 endTime = RedFoxEngine::Platform::GetTimer();
@@ -154,5 +158,8 @@ Engine::~Engine()
 {
     for (int i = 0; i < (int)m_modelCount; i++)
         DeInitObj(&m_models[i].obj);
+#if IMGUI_CONTEXT
+    defaultFont->ContainerAtlas->Clear();
     ImGui::DestroyContext();
+#endif
 }

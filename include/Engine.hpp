@@ -17,6 +17,8 @@
 #include "GameObject.hpp"
 #include "Camera.hpp"
 
+#define IMGUI_CONTEXT 0
+
 namespace RedFoxEngine
 {
 
