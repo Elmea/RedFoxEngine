@@ -16,24 +16,6 @@ void Engine::ObjModelPush(const char *path)
 
 using namespace RedFoxMaths;
 
-void Engine::InitIMGUI()
-{
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
-//    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
-    ImGui::StyleColorsDark();
-
-    m_ImGuiIO = &ImGui::GetIO(); (void)m_ImGuiIO;
-    m_ImGuiIO->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    m_ImGuiIO->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    // TODO: Necessary backend to support multi-viewport
-    // m_ImGuiIO->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-    ImGui_ImplWin32_Init(m_platform.m_window);
-    ImGui_ImplOpenGL3_Init("#version 450");
-}
-
 bool Engine::isRunning()
 {
     return(m_platform.m_running);

@@ -42,6 +42,7 @@ private:
     _updategame *UpdateGame = nullptr;
     Camera m_editorCamera;
     ImGuiIO* m_ImGuiIO = nullptr;
+    ImFont* defaultFont = nullptr;
 private:
  
     void DrawIMGUI();
