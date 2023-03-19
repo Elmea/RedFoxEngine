@@ -934,6 +934,28 @@ namespace RedFoxMaths
     Mat4 Mat4::operator*(const Mat4& pOther) const
     {
         Mat4 res;
+        
+        res.mat16[0] = mat16[0] * pOther.mat16[0] + mat16[1] * pOther.mat16[4] + mat16[2] * pOther.mat16[8]  + mat16[3] * pOther.mat16[12];
+        res.mat16[1] = mat16[0] * pOther.mat16[1] + mat16[1] * pOther.mat16[5] + mat16[2] * pOther.mat16[9]  + mat16[3] * pOther.mat16[13];
+        res.mat16[2] = mat16[0] * pOther.mat16[2] + mat16[1] * pOther.mat16[6] + mat16[2] * pOther.mat16[10] + mat16[3] * pOther.mat16[14];
+        res.mat16[3] = mat16[0] * pOther.mat16[3] + mat16[1] * pOther.mat16[7] + mat16[2] * pOther.mat16[11] + mat16[3] * pOther.mat16[15];
+        
+        res.mat16[4] = mat16[4] * pOther.mat16[0] + mat16[5] * pOther.mat16[4] + mat16[6] * pOther.mat16[8]  + mat16[7] * pOther.mat16[12];
+        res.mat16[5] = mat16[4] * pOther.mat16[1] + mat16[5] * pOther.mat16[5] + mat16[6] * pOther.mat16[9]  + mat16[7] * pOther.mat16[13];
+        res.mat16[6] = mat16[4] * pOther.mat16[2] + mat16[5] * pOther.mat16[6] + mat16[6] * pOther.mat16[10] + mat16[7] * pOther.mat16[14];
+        res.mat16[7] = mat16[4] * pOther.mat16[3] + mat16[5] * pOther.mat16[7] + mat16[6] * pOther.mat16[11] + mat16[7] * pOther.mat16[15];
+
+        res.mat16[8]  = mat16[8] * pOther.mat16[0] + mat16[9] * pOther.mat16[4] + mat16[10] * pOther.mat16[8]  + mat16[11] * pOther.mat16[12];
+        res.mat16[9]  = mat16[8] * pOther.mat16[1] + mat16[9] * pOther.mat16[5] + mat16[10] * pOther.mat16[9]  + mat16[11] * pOther.mat16[13];
+        res.mat16[10] = mat16[8] * pOther.mat16[2] + mat16[9] * pOther.mat16[6] + mat16[10] * pOther.mat16[10] + mat16[11] * pOther.mat16[14];
+        res.mat16[11] = mat16[8] * pOther.mat16[3] + mat16[9] * pOther.mat16[7] + mat16[10] * pOther.mat16[11] + mat16[11] * pOther.mat16[15];
+
+        res.mat16[12] = mat16[12] * pOther.mat16[0] + mat16[13] * pOther.mat16[4] + mat16[14] * pOther.mat16[8]  + mat16[15] * pOther.mat16[12];
+        res.mat16[13] = mat16[12] * pOther.mat16[1] + mat16[13] * pOther.mat16[5] + mat16[14] * pOther.mat16[9]  + mat16[15] * pOther.mat16[13];
+        res.mat16[14] = mat16[12] * pOther.mat16[2] + mat16[13] * pOther.mat16[6] + mat16[14] * pOther.mat16[10] + mat16[15] * pOther.mat16[14];
+        res.mat16[15] = mat16[12] * pOther.mat16[3] + mat16[13] * pOther.mat16[7] + mat16[14] * pOther.mat16[11] + mat16[15] * pOther.mat16[15];
+
+        /*
         for (int i = 0; i < 4; i++)
         {
             for (int j = 0; j < 4; j++)
@@ -941,7 +963,7 @@ namespace RedFoxMaths
                 res.mat[i][j] = mat[i][0] * pOther.mat[0][j] + mat[i][1] * pOther.mat[1][j] + mat[i][2] * pOther.mat[2][j]
                     + mat[i][3] * pOther.mat[3][j];
             }
-        }
+        }*/
         return res;
     }
     

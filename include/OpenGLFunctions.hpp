@@ -40,6 +40,7 @@
     X(PFNGLTEXTURESUBIMAGE2DPROC, glTextureSubImage2D)                                                                 \
     X(PFNGLDEBUGMESSAGECALLBACKPROC, glDebugMessageCallback)                                                           \
     X(PFNGLBLENDEQUATIONPROC, glBlendEquation)                                                                         \
-    X(PFNGLBLENDFUNCSEPARATEPROC, glBlendFuncSeparate) \
-    X(PFNGLDRAWELEMENTSINSTANCEDPROC, glDrawElementsInstanced) 
-//    X(PFNGLGETPROGRAMUNIFORMMATRIXPROC, glGetProgramUniformMatrix(
+    X(PFNGLBLENDFUNCSEPARATEPROC, glBlendFuncSeparate)                                                                 \
+    X(PFNGLDRAWELEMENTSINSTANCEDPROC, glDrawElementsInstanced)                                                         \
+    X(PFNGLVERTEXARRAYBINDINGDIVISORPROC, glVertexArrayBindingDivisor)                                                 \
+    X(PFNGLNAMEDBUFFERSUBDATAPROC, glNamedBufferSubData)

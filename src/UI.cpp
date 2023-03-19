@@ -203,6 +203,7 @@ void Engine::DrawIMGUI()
 
     if (ImGui::Begin("Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
+        ImGui::Text("%f", m_deltaTime);
         ImGuiTreeNodeFlags propertiesFlags = 
             ImGuiTreeNodeFlags_DefaultOpen |
             ImGuiTreeNodeFlags_OpenOnArrow | 

@@ -36,9 +36,10 @@ private:
     GLuint m_pipeline;
     GLuint m_vshader, m_fshader;
 public:
-    void Draw(GameObject *gameObjects, int gameObjectCount);
+    void Draw(GameObject *gameObjects, int gameObjectCount, Memory *tempArena);
     void DrawModel(Model *model);
-    void InitModel(Model *model);
+    void DrawModelInstances(Model *model, int instanceCount);
+    void InitModel(Model *model, Memory *temp);
     void InitTexture(ObjModel *model);
     void InitTexture(void *data,int height, int width, GLuint &texture);
     void InitShaders(Memory *tempArena);
