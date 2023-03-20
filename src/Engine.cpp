@@ -125,7 +125,7 @@ void Engine::Update()
     static Float3 cameraRotation(0, 0, 0);
     Float3 inputDirection(0, 0, 0);
 
-    if (m_input.mouseLClick)
+    if (m_input.mouseRClick)
         cameraRotation += {(f32)m_input.mouseYDelta* (f32)m_deltaTime, (f32)m_input.mouseXDelta* (f32)m_deltaTime, 0};
     m_editorCamera.m_parameters.aspect = (float)m_platform.m_windowDimension.width / (float)m_platform.m_windowDimension.height;
 

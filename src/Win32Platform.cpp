@@ -211,7 +211,22 @@ void Platform::MessageProcessing(Input *input)
             ReleaseCapture();
             TranslateMessage(&Message);
             DispatchMessage(&Message);
+        }break;
+        case WM_RBUTTONDOWN: {
+            input->mouseRClick = true;
+            SetCapture(m_window);
+            TranslateMessage(&Message);
+            DispatchMessage(&Message);
         }
+        break;
+        case WM_RBUTTONUP:
+        {
+            input->mouseRClick = false;
+            ReleaseCapture();
+            TranslateMessage(&Message);
+            DispatchMessage(&Message);
+        }
+        break;
 
         case WM_KEYUP:
         case WM_KEYDOWN: {
