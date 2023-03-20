@@ -1,4 +1,5 @@
 #include "Engine.hpp"
+#include "imgui.h"
 
 using namespace RedFoxEngine;
 
@@ -94,7 +95,7 @@ void Engine::InitIMGUI()
     style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
     style.Colors[ImGuiCol_DragDropTarget] = RF_ORANGE;
     style.Colors[ImGuiCol_NavHighlight] = ImVec4(0.26f, 0.59f, 0.98f, 1.f);
-    defaultFont = m_ImGuiIO->Fonts->AddFontFromFileTTF("D-DIN.otf", 14);
+    m_defaultFont = m_ImGuiIO->Fonts->AddFontFromFileTTF("D-DIN.otf", 14);
 #pragma endregion
 
     ImGui_ImplWin32_Init(m_platform.m_window);
@@ -167,9 +168,11 @@ void Engine::DrawIMGUI()
     // TODO(a.perche) : Build dockspace at runtime
     ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockingFlags);
 
-    ImGui::PushFont(defaultFont);
-    if (0 && ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
+    ImGui::PushFont(m_defaultFont);
+    static int index = 0;
+    if (ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
+
         ImGuiTreeNodeFlags rootNodeFlags = 
             ImGuiTreeNodeFlags_Framed |
             ImGuiTreeNodeFlags_Leaf |
@@ -178,6 +181,7 @@ void Engine::DrawIMGUI()
 
         if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "Sample Scene"))
         {
+
             if (ImGui::BeginDragDropTarget())
             {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_SCENENODE"))
@@ -192,16 +196,32 @@ void Engine::DrawIMGUI()
             }
 
             ImGui::Unindent();
-            for (int i = 0; i < (int)m_gameObjectCount; i++)
-                if (m_gameObjects[i].parent == nullptr)
-                    DrawSceneNodes(false, &m_gameObjects[i]);
+            for (int i = 0; i + index < (int)m_gameObjectCount && i < 100; i++)
+            {
+                if (m_gameObjects[i + index].parent == nullptr)
+                {
+                    if (i == 0 && index + i > 99 && ImGui::GetScrollY() == 0)
+                    {
+                        ImGui::SetScrollY(1);
+                        index -= 100;
+                    }
+                    float a = 0;
+                    float b = 0;
+                    if (i == 99 && index + i < (int)m_gameObjectCount - 1 && (a = ImGui::GetScrollMaxY()) == (b = ImGui::GetScrollY()) && a != 0)
+                    {
+                        ImGui::SetScrollY(ImGui::GetScrollMaxY() - 1);
+                        index += 100;
+                    }
+                    DrawSceneNodes(false, &m_gameObjects[i + index]);
+                }
+            }
             ImGui::TreePop();
         }
     ImGui::End();
     }
     ImGui::PopFont();
 
-    ImGui::PushFont(defaultFont);
+    ImGui::PushFont(m_defaultFont);
     if (ImGui::Begin("Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
         ImGui::Text("%f", m_deltaTime);
