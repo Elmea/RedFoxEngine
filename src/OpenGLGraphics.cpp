@@ -22,65 +22,81 @@ void Graphics::InitGraphics(Memory *tempArena)
     wglSwapIntervalEXT(1);
 }
 
-void Graphics::InitModel(Model *model, Memory *temp)
+void Graphics::InitModel(Model *model)
 {
     // vertex buffer containing triangle vertices
 
     unsigned int vbo;
     {
         glCreateBuffers(1, &vbo);
-        glNamedBufferStorage(vbo, model->obj.vertexCount * sizeof(ObjVertex), model->obj.vertices, 0);
+        glNamedBufferStorage(vbo,
+            model->obj.vertexCount * sizeof(ObjVertex),
+            model->obj.vertices, 0);
     }
     unsigned int ebo;
     {
         glCreateBuffers(1, &ebo);
-        glNamedBufferStorage(ebo, model->obj.indexCount * sizeof(u32) , model->obj.indices, 0);
+        glNamedBufferStorage(ebo, model->obj.indexCount * sizeof(u32),
+            model->obj.indices, 0);
     }
     {
+        const int bufferBatchSize = 768; //TODO: test this number on different
+                                         // GPUs   
         glCreateBuffers(1, &model->vbm);
-        glNamedBufferStorage(model->vbm, 768 * sizeof(RedFoxMaths::Mat4), nullptr, GL_DYNAMIC_STORAGE_BIT);
+        glNamedBufferStorage(model->vbm,
+            bufferBatchSize * sizeof(RedFoxMaths::Mat4),
+            nullptr, GL_DYNAMIC_STORAGE_BIT);
     }
     // vertex input
     {
         glCreateVertexArrays(1, &model->vao);
 
         int vbuf_index = 0;
-        glVertexArrayVertexBuffer(model->vao, vbuf_index, vbo, 0, sizeof(ObjVertex));
+        glVertexArrayVertexBuffer(model->vao, vbuf_index, vbo, 0,
+            sizeof(ObjVertex));
 
         int vbuf_matrix = 3;
-        glVertexArrayVertexBuffer(model->vao, vbuf_matrix, model->vbm, 0, sizeof(RedFoxMaths::Mat4));
+        glVertexArrayVertexBuffer(model->vao, vbuf_matrix, model->vbm, 0,
+            sizeof(RedFoxMaths::Mat4));
 
         glVertexArrayElementBuffer(model->vao, ebo);
 
         int a_pos = 0;
         glEnableVertexArrayAttrib (model->vao, a_pos);
-        glVertexArrayAttribFormat (model->vao, a_pos, 3, GL_FLOAT, GL_FALSE, offsetof(struct ObjVertex, position));
+        glVertexArrayAttribFormat (model->vao, a_pos, 3, GL_FLOAT, GL_FALSE,
+            offsetof(struct ObjVertex, position));
         glVertexArrayAttribBinding(model->vao, a_pos, vbuf_index);
 
         int a_normal = 1;
         glEnableVertexArrayAttrib (model->vao, a_normal);
-        glVertexArrayAttribFormat (model->vao, a_normal, 3, GL_FLOAT, GL_FALSE, offsetof(struct ObjVertex, normal));
+        glVertexArrayAttribFormat (model->vao, a_normal, 3, GL_FLOAT, GL_FALSE,
+            offsetof(struct ObjVertex, normal));
         glVertexArrayAttribBinding(model->vao, a_normal, vbuf_index);
 
         int a_uv = 2;
         glEnableVertexArrayAttrib (model->vao, a_uv);
-        glVertexArrayAttribFormat (model->vao, a_uv, 2, GL_FLOAT, GL_FALSE, offsetof(struct ObjVertex, textureUV));
+        glVertexArrayAttribFormat (model->vao, a_uv, 2, GL_FLOAT, GL_FALSE,
+            offsetof(struct ObjVertex, textureUV));
         glVertexArrayAttribBinding(model->vao, a_uv, vbuf_index);
 
+        // This is the matrix we're going to use for instanced models
         glEnableVertexArrayAttrib (model->vao, 3);
         glVertexArrayAttribFormat (model->vao, 3, 4, GL_FLOAT, GL_FALSE, 0);
         glVertexArrayAttribBinding(model->vao, 3, model->vbm);
 
         glEnableVertexArrayAttrib (model->vao, 4);
-        glVertexArrayAttribFormat (model->vao, 4, 4, GL_FLOAT, GL_FALSE, (sizeof(float) * 4));
+        glVertexArrayAttribFormat (model->vao, 4, 4, GL_FLOAT, GL_FALSE,
+            (sizeof(float) * 4));
         glVertexArrayAttribBinding(model->vao, 4, model->vbm);
 
         glEnableVertexArrayAttrib (model->vao, 5);
-        glVertexArrayAttribFormat (model->vao, 5, 4, GL_FLOAT, GL_FALSE, (2 * sizeof(float) * 4));
+        glVertexArrayAttribFormat (model->vao, 5, 4, GL_FLOAT, GL_FALSE,
+            (2 * sizeof(float) * 4));
         glVertexArrayAttribBinding(model->vao, 5, model->vbm);
 
         glEnableVertexArrayAttrib (model->vao, 6);
-        glVertexArrayAttribFormat (model->vao, 6, 4, GL_FLOAT, GL_FALSE, (3 * sizeof(float) * 4));
+        glVertexArrayAttribFormat (model->vao, 6, 4, GL_FLOAT, GL_FALSE,
+            (3 * sizeof(float) * 4));
         glVertexArrayAttribBinding(model->vao, 6, model->vbm);
 
         glVertexArrayBindingDivisor(model->vao, 3, 1);
@@ -98,12 +114,14 @@ void Graphics::InitTexture(void *data,int height, int width, GLuint &texture)
     glCreateTextures(GL_TEXTURE_2D, 1, &texture);
 
     glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER,
+        GL_LINEAR_MIPMAP_LINEAR);
     glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     glTextureStorage2D(texture, 1, GL_RGBA32F, width, height);
-    glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RGBA,
+         GL_UNSIGNED_BYTE, data);
 }
 
 void Graphics::InitTexture(ObjModel *model)
@@ -117,17 +135,21 @@ void Graphics::InitTexture(ObjModel *model)
         model->materials.material[i].diffuseMap.index0 = texture[temp];
     }
 
+    
     WaitForSingleObject(model->images.thread, INFINITE); // TODO(V. Caraulan): Wrap in waiting for thread function
     for (int i = 0; i < (int)model->images.count; i++)
     {
         glTextureParameteri(texture[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTextureParameteri(texture[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTextureParameteri(texture[i], GL_TEXTURE_MIN_FILTER,
+            GL_LINEAR_MIPMAP_LINEAR);
         glTextureParameteri(texture[i], GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTextureParameteri(texture[i], GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-        glTextureStorage2D(texture[i], 1, GL_RGBA8, model->images.data[i].width, model->images.data[i].height);
-        glTextureSubImage2D(texture[i], 0, 0, 0, model->images.data[i].width, model->images.data[i].height, GL_RGBA,
-                            GL_UNSIGNED_BYTE, model->images.data[i].data);
+        glTextureStorage2D(texture[i], 1, GL_RGBA8, 
+            model->images.data[i].width, model->images.data[i].height);
+        glTextureSubImage2D(texture[i], 0, 0, 0, model->images.data[i].width,
+            model->images.data[i].height, GL_RGBA, GL_UNSIGNED_BYTE, 
+            model->images.data[i].data);
     }
 }
 
@@ -135,11 +157,15 @@ void Graphics::InitShaders(Memory *tempArena)
 {
     // fragment & vertex shaders for drawing triangle
     {
-        MyString vertexShaderSource = OpenAndReadEntireFile("src\\Shaders\\vertex.vert", tempArena);
-        MyString fragmentShaderSource = OpenAndReadEntireFile("src\\Shaders\\fragment.frag", tempArena);
+        MyString vertexShaderSource = OpenAndReadEntireFile(
+            "src\\Shaders\\vertex.vert", tempArena);
+        MyString fragmentShaderSource = OpenAndReadEntireFile(
+            "src\\Shaders\\fragment.frag", tempArena);
 
-        m_vshader = glCreateShaderProgramv(GL_VERTEX_SHADER, 1, &vertexShaderSource.data);
-        m_fshader = glCreateShaderProgramv(GL_FRAGMENT_SHADER, 1, &fragmentShaderSource.data);
+        m_vshader = glCreateShaderProgramv(GL_VERTEX_SHADER, 1,
+            &vertexShaderSource.data);
+        m_fshader = glCreateShaderProgramv(GL_FRAGMENT_SHADER, 1,
+            &fragmentShaderSource.data);
 
         GLint linked;
         glGetProgramiv(m_vshader, GL_LINK_STATUS, &linked);

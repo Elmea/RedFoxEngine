@@ -17,8 +17,6 @@
 #include "GameObject.hpp"
 #include "Camera.hpp"
 
-#define IMGUI_CONTEXT 0
-
 namespace RedFoxEngine
 {
 
@@ -54,6 +52,8 @@ private:
     void InitIMGUI();
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 viewProjection);
     void StartTime();
+    void LoadScene(const char *fileName);
+    void SaveScene(const char *fileName);
 public:
     Engine(int width, int height);
     ~Engine();

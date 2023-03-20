@@ -29,21 +29,27 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     Float3 inputDirection(0, 0, 0);
 
     static Float3 speed;
-
-    if (input.W)
-        inputDirection.z += -1;
-    if (input.S)
-        inputDirection.z += 1;
-    if (input.A)
-        inputDirection.x += -1;
-    if (input.D)
-        inputDirection.x += 1;
-    inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
-    inputDirection.Normalize();
-    inputDirection = inputDirection * 20.f;
-    *cameraPosition += speed * (f32)deltaTime + inputDirection * ((f32)deltaTime * (f32)deltaTime * 0.5f);
+    if (input.mouseRClick)
+    {
+        if (input.W)
+            inputDirection.z += -1;
+        if (input.S)
+            inputDirection.z += 1;
+        if (input.A)
+            inputDirection.x += -1;
+        if (input.D)
+            inputDirection.x += 1;
+        inputDirection = (Mat4::GetRotationY(-cameraRotation.y) *
+            Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
+        inputDirection.Normalize();
+        inputDirection = inputDirection * 20.f;
+    }
+    *cameraPosition += speed * (f32)deltaTime + inputDirection *
+        ((f32)deltaTime * (f32)deltaTime * 0.5f);
     speed += inputDirection * (f32)deltaTime * 0.5f;
-    speed *= 0.9f; // drag
+
+    const float k = 2.f;// drag constant
+    speed *= exp(deltaTime * -k); // drag
 
     Quaternion alpha = Quaternion::FromEuler(Float3(0, 90, 0));
     Quaternion beta = Quaternion::FromEuler(Float3(0, 0, 90));
@@ -52,6 +58,5 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
           gameObjects[i].position += Float3(sinf(time), cosf(time), 0) * 0.001f;
           gameObjects[i].orientation = Quaternion::SLerp(beta, alpha, time);
           gameObjects[i].scale = Misc::Lerp(0.1, 2, Misc::Abs(cosf(time)));
-//          gameObjects[i].scale = 1;
     }
 }

@@ -1,4 +1,5 @@
 #include "Engine.hpp"
+#include "meow_hash_x64_aesni.h"
 
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
@@ -12,6 +13,11 @@ void Engine::ObjModelPush(const char *path)
 {
     if (ParseModel(&m_models[m_modelCount++].obj, path))
         __debugbreak();
+    u32 length = 0;
+    while (path[length] != '\0')
+        length++;
+    m_models[m_modelCount - 1].hash = MeowU64From(MeowHash(MeowDefaultSeed,
+        (u64)length, (void *)path), 0);
 }
 
 using namespace RedFoxMaths;
@@ -26,68 +32,99 @@ void Engine::StartTime()
     m_startingTime = m_platform.GetTimer();
 }
 
+void Engine::LoadScene(const char *fileName)
+{
+
+    HANDLE file = CreateFile(fileName, GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL, nullptr);
+    ReadFile(file, &m_gameObjectCount, sizeof(u32), nullptr, nullptr);
+    for(int i = 0; i < (int)m_gameObjectCount; i++)
+    {
+        GameObject *current = &m_gameObjects[i];
+        int length = 0;
+        ReadFile(file, &length, sizeof(int), nullptr, nullptr);
+        current->name = (char *)MyMalloc(&m_arenaAllocator, length);
+        current->name[length] = '\0';
+        ReadFile(file, current->name, length, nullptr, nullptr);
+        int parent;
+        ReadFile(file, &parent, sizeof(int), nullptr, nullptr);
+        if (parent == -1)
+            current->parent = nullptr;
+        else
+            current->parent = &m_gameObjects[parent];
+        u64 hash = 0;
+        ReadFile(file, &hash, sizeof(u64), nullptr, nullptr);
+        current->model = nullptr;
+        if (hash != 0)
+        {
+            for (int modelIndex = 0;
+            modelIndex < (int)m_modelCount;
+            modelIndex++)
+            {
+                if (m_models[modelIndex].hash == hash)
+                {
+                    current->model = &m_models[modelIndex];
+                    break;
+                }
+            }
+        }
+        ReadFile(file, &current->position, sizeof(float)*8, nullptr, nullptr);
+    }
+    CloseHandle(file);
+}
+
+void Engine::SaveScene(const char *fileName)
+{
+    HANDLE file = CreateFile(fileName, GENERIC_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, CREATE_NEW,
+        FILE_ATTRIBUTE_NORMAL, nullptr);
+
+    WriteFile(file, &m_gameObjectCount, sizeof(u32), nullptr, nullptr);
+    for(int i = 0; i < (int)m_gameObjectCount; i++)
+    {
+        GameObject *current = &m_gameObjects[i];
+        int length = 0;
+        while (current->name[length] != '\0')
+            length++;
+        WriteFile(file, &length, sizeof(int), nullptr, nullptr);
+        WriteFile(file, current->name, length, nullptr, nullptr);
+        int parent = (int)(current->parent - m_gameObjects);
+        if (current->parent == nullptr)
+            parent = -1;
+        WriteFile(file, &parent, sizeof(int), nullptr, nullptr);
+        WriteFile(file, &current->model->hash, sizeof(u64), nullptr, nullptr);
+        WriteFile(file, &current->position, sizeof(float)*8, nullptr, nullptr);
+    }
+    CloseHandle(file);
+}
+
 Engine::Engine(int width, int height) :
     m_platform(width, height),
     m_editorCamera(projectionType::PERSPECTIVE, width / (f32)height)
 {
-
     m_arenaAllocator = InitVirtualMemory(1 * GigaByte);
     m_tempAllocator = InitVirtualMemory(1 * GigaByte);
     IncreaseTotalCapacity(&m_arenaAllocator, 1 * MegaByte);
     m_graphics.InitGraphics(&m_tempAllocator);
-#if IMGUI_CONTEXT
     InitIMGUI();
-#endif
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
 
-    {//TODO save/load scene graph after creating this data inside the engine editor
-            m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 10);
-            ObjModelPush("ts_bot912.obj");
-            m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator, sizeof(GameObject) * 100000);
+    m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 10);
+    ObjModelPush("ts_bot912.obj");
+    m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator,
+        sizeof(GameObject) * 100000);
 
 
-            //TODO transition to an instance based model 'model'
+    //TODO transition to an instance based model 'model'
 
-            for (int i = 0; i < (int)m_modelCount; i++)
-                m_graphics.InitModel(&m_models[i], &m_tempAllocator);
-            m_gameObjectCount = 50000;
-            for (int i = 0; i < (int)m_gameObjectCount; i++)
-            {
-                m_gameObjects[i].parent = nullptr;
-                m_gameObjects[i].model = m_models;
-                m_gameObjects[i].name = (char *)MyMalloc(&m_arenaAllocator, sizeof(char) * 13);
-                snprintf(m_gameObjects[i].name, 13, "Entity%d", i);
-               if (i < 3 && i != 0)
-                   m_gameObjects[i].parent = &m_gameObjects[0];
-            }
-
-//            m_gameObjects[1] = m_gameObjects[0];
-            m_gameObjects[1].parent = &m_gameObjects[0];
-            m_gameObjects[1].position = {};
-            m_gameObjects[1].scale = 0.5;
-//            m_gameObjects[2] = m_gameObjects[0];
-            m_gameObjects[2].position = {2, 1, 0};
-            m_gameObjects[2].scale = 0.5;
-    
-            float longitudeStep = M_PI * 2 / 500;
-            float latitudeStep = M_PI / 200;
-
-            int index = 0;
-            float scale = 10;
-            for (int i = 0; i < 200; i++)
-            {
-                for(int j = 0; j < 500; j++)
-                {
-                    m_gameObjects[index++].position = {cosf(longitudeStep * j) * sinf(i * latitudeStep), 
-                        sinf(longitudeStep * j) * sinf(i * latitudeStep), cosf(i * latitudeStep - M_PI)};
-                    m_gameObjects[index - 1].position = m_gameObjects[index - 1].position * scale;
-                    //m_gameObjects[index - 1].position.y *= 2;
-                }
-            }
-    }
+    for (int i = 0; i < (int)m_modelCount; i++)
+        m_graphics.InitModel(&m_models[i]);
+    LoadScene("test.scene");
     m_input = {};
     m_dc = GetDC(m_platform.m_window);
-    UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_gameLibrary, &m_lastTime, nullptr);
+    UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll",
+        m_gameLibrary, &m_lastTime, nullptr);
     StartTime();
 }
 
@@ -99,7 +136,8 @@ void Engine::ProcessInputs()
     int mouseY = m_input.mouseYPosition;
     m_platform.MessageProcessing(&m_input);
     m_platform.GetWindowDimension();
-    glViewport(0, 0, m_platform.m_windowDimension.width, m_platform.m_windowDimension.height); //TODO wrap around
+    glViewport(0, 0, m_platform.m_windowDimension.width,
+        m_platform.m_windowDimension.height); //TODO wrap around
     m_editorCamera.SetProjection(projectionType::PERSPECTIVE);
     if (GetFocus() != m_platform.m_window)
     {
@@ -121,32 +159,39 @@ Input Engine::GetInputs()
 
 void Engine::Update()
 {
-    UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_gameLibrary, &m_lastTime, UpdateGame);
+    UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll",
+        m_gameLibrary, &m_lastTime, UpdateGame);
     static Float3 cameraRotation(0, 0, 0);
     Float3 inputDirection(0, 0, 0);
 
-    if (m_input.mouseLClick)
-        cameraRotation += {(f32)m_input.mouseYDelta* (f32)m_deltaTime, (f32)m_input.mouseXDelta* (f32)m_deltaTime, 0};
-    m_editorCamera.m_parameters.aspect = (float)m_platform.m_windowDimension.width / (float)m_platform.m_windowDimension.height;
+    if (m_input.mouseRClick)
+        cameraRotation += {(f32)m_input.mouseYDelta* (f32)m_deltaTime,
+                           (f32)m_input.mouseXDelta* (f32)m_deltaTime, 0};
+    m_editorCamera.m_parameters.aspect = 
+        m_platform.m_windowDimension.width / 
+        (f32)m_platform.m_windowDimension.height;
 
 
-    m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
+    m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x,
+                                                       -cameraRotation.y,
+                                                        cameraRotation.z);
 
     static f32 time;
     time += m_deltaTime * 0.1f;
-    //TODO we'll need to think how we pass the resources, and gameplay structures and objects to this update function
-    UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount, time, cameraRotation, &m_editorCamera.position);
+    //TODO we'll need to think how we pass the resources,
+    // and gameplay structures and objects to this update function
+    UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount,
+        time, cameraRotation, &m_editorCamera.position);
     m_graphics.SetViewProjectionMatrix(m_editorCamera.GetVP());
-    m_gameObjects[0].GetChildren(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
+    m_gameObjects[0].GetChildren(m_gameObjects, m_gameObjectCount,
+        &m_tempAllocator);
 }
 
 void Engine::Draw()
 {
     m_graphics.Draw(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
     // swap the buffers to show output
-#if IMGUI_CONTEXT
     DrawIMGUI();
-#endif
     if (!SwapBuffers(m_dc))
         m_platform.FatalError("Failed to swap OpenGL buffers!");
     u64 endTime = RedFoxEngine::Platform::GetTimer();
@@ -158,8 +203,6 @@ Engine::~Engine()
 {
     for (int i = 0; i < (int)m_modelCount; i++)
         DeInitObj(&m_models[i].obj);
-#if IMGUI_CONTEXT
     defaultFont->ContainerAtlas->Clear();
     ImGui::DestroyContext();
-#endif
 }

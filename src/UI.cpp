@@ -168,7 +168,7 @@ void Engine::DrawIMGUI()
     ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockingFlags);
 
     ImGui::PushFont(defaultFont);
-    if (ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
+    if (0 && ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
         ImGuiTreeNodeFlags rootNodeFlags = 
             ImGuiTreeNodeFlags_Framed |
@@ -197,8 +197,8 @@ void Engine::DrawIMGUI()
                     DrawSceneNodes(false, &m_gameObjects[i]);
             ImGui::TreePop();
         }
-    }
     ImGui::End();
+    }
     ImGui::PopFont();
 
     ImGui::PushFont(defaultFont);
