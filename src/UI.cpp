@@ -182,27 +182,7 @@ void Engine::DrawIMGUI()
                 ImVec2(content.x, content.y), ImVec2(0, 1), ImVec2(1, 0));
             if (content.x != dimension.width || content.y != dimension.height)
             {
-                glDeleteTextures(1, &m_graphics.m_imguiTexture);
-                glDeleteFramebuffers(1, &m_graphics.m_imguiFramebuffer);
-                glCreateFramebuffers(1, &m_graphics.m_imguiFramebuffer);
-                glCreateTextures(GL_TEXTURE_2D, 1, &m_graphics.m_imguiTexture);
-                glNamedFramebufferTexture(m_graphics.m_imguiFramebuffer, 
-                    GL_COLOR_ATTACHMENT0, m_graphics.m_imguiTexture , 0);
-                unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0};
-                glNamedFramebufferDrawBuffers(m_graphics.m_imguiFramebuffer, 1,
-                    attachments);
-                glTextureParameteri(m_graphics.m_imguiTexture,
-                    GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-                glTextureParameteri(m_graphics.m_imguiTexture,
-                    GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                glTextureStorage2D(m_graphics.m_imguiTexture , 1, GL_RGBA8, 
-                    content.x, content.y);
-                glNamedRenderbufferStorage(1, GL_DEPTH_COMPONENT,
-                    content.x, content.y);
-                glNamedFramebufferRenderbuffer(m_graphics.m_imguiFramebuffer,
-                    GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 1);
-                dimension.width = content.x;
-                dimension.height = content.y;
+                m_graphics.UpdateImGUIFrameBuffer(dimension, {(int)content.x, (int)content.y});
             }
             glBlitNamedFramebuffer(0, 1, 0, 0, content.x, content.y, 
                                          0, 0, content.x, content.y,

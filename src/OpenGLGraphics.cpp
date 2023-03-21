@@ -6,6 +6,53 @@
 
 namespace RedFoxEngine
 {
+
+void Graphics::UpdateImGUIFrameBuffer(WindowDimension &dimension, WindowDimension content)
+{
+    glDeleteTextures(1, &m_imguiTexture);
+    glDeleteFramebuffers(1, &m_imguiFramebuffer);
+    glCreateFramebuffers(1, &m_imguiFramebuffer);
+    glCreateTextures(GL_TEXTURE_2D, 1, &m_imguiTexture);
+    glNamedFramebufferTexture(m_imguiFramebuffer,
+        GL_COLOR_ATTACHMENT0, m_imguiTexture , 0);
+    unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0};
+    glNamedFramebufferDrawBuffers(m_imguiFramebuffer, 1,
+        attachments);
+    glTextureParameteri(m_imguiTexture,
+        GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureParameteri(m_imguiTexture,
+        GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureStorage2D(m_imguiTexture , 1, GL_RGBA8,
+        content.width, content.height);
+    glNamedRenderbufferStorage(m_rboIMGUI, GL_DEPTH_COMPONENT,
+        content.width, content.height);
+    glNamedFramebufferRenderbuffer(m_imguiFramebuffer,
+        GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 1);
+    dimension = content;
+}
+
+void Graphics::InitImGUIFrameBuffer(WindowDimension dimension)
+{
+    glCreateFramebuffers(1, &m_imguiFramebuffer);
+
+    glCreateTextures(GL_TEXTURE_2D, 1, &m_imguiTexture);
+    glTextureParameteri(m_imguiTexture  , GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureParameteri(m_imguiTexture  , GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureStorage2D(m_imguiTexture  , 1, GL_RGBA8, dimension.width,
+        dimension.height);
+    glNamedFramebufferTexture(m_imguiFramebuffer, GL_COLOR_ATTACHMENT0,
+         m_imguiTexture, 0);
+    unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0};
+    glNamedFramebufferDrawBuffers(m_imguiFramebuffer, 1, attachments);
+    glCreateRenderbuffers(1, &m_rboIMGUI);
+    glNamedRenderbufferStorage(m_rboIMGUI, GL_DEPTH_COMPONENT, dimension.width, dimension.height);
+    glNamedFramebufferRenderbuffer(m_imguiFramebuffer, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_rboIMGUI);
+
+    int error = 0;
+    if ((error = glCheckNamedFramebufferStatus(m_imguiFramebuffer, GL_FRAMEBUFFER)) != GL_FRAMEBUFFER_COMPLETE)
+        __debugbreak();
+}
+
 void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
 {
     InitShaders(tempArena);
@@ -17,6 +64,8 @@ void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
     }
+    InitImGUIFrameBuffer(dimension);
+#if 0
     glCreateFramebuffers(1, &m_imguiFramebuffer);
 
     glCreateTextures(GL_TEXTURE_2D, 1, &m_imguiTexture);
@@ -53,7 +102,6 @@ void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
     
     // tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
 //    unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-    unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
     glNamedFramebufferDrawBuffers(m_imguiFramebuffer, 1, attachments);
     // create and attach depth buffer (renderbuffer)
     unsigned int rboDepth;
@@ -65,6 +113,7 @@ void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
     int error = 0;
     if ((error = glCheckNamedFramebufferStatus(m_imguiFramebuffer, GL_FRAMEBUFFER)) != GL_FRAMEBUFFER_COMPLETE)
         __debugbreak();
+#endif
     // set to FALSE to disable vsync
     wglSwapIntervalEXT(1);
 }

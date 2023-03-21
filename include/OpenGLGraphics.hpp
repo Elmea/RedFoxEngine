@@ -39,9 +39,10 @@ private:
     GLuint m_gvshader, m_gfshader;
     GLuint m_gBuffer;
     GLuint m_gPosition, m_gNormal, m_gAlbedoSpec;
-public:
+    GLuint m_rboIMGUI;
     GLuint m_imguiFramebuffer;
     GLuint m_imguiTexture;
+public:
     void Draw(GameObject *gameObjects, int gameObjectCount, Memory *tempArena);
     void DrawModel(Model *model);
     void DrawModelInstances(Model *model, int instanceCount);
@@ -50,6 +51,8 @@ public:
     void InitTexture(void *data,int height, int width, GLuint &texture);
     void InitShaders(Memory *tempArena);
     void InitGraphics(Memory *tempArena, WindowDimension dimension);
+    void InitImGUIFrameBuffer(WindowDimension dimension);
+    void UpdateImGUIFrameBuffer(WindowDimension &dimension, WindowDimension content);
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
 };
 } // namespace RedFoxEngine
