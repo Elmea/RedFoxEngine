@@ -1,5 +1,6 @@
 #include "Engine.hpp"
 #include "imgui.h"
+#include <string>
 
 using namespace RedFoxEngine;
 
@@ -170,18 +171,20 @@ void Engine::DrawIMGUI()
 
     ImGui::PushFont(m_defaultFont);
     static int index = 0;
+
+    ImGui::SameLine();
     if (ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
-
         ImGuiTreeNodeFlags rootNodeFlags = 
             ImGuiTreeNodeFlags_Framed |
-            ImGuiTreeNodeFlags_Leaf |
+            ImGuiTreeNodeFlags_Leaf | 
+            ImGuiTreeNodeFlags_AllowItemOverlap |
             ImGuiTreeNodeFlags_DefaultOpen |
             ImGuiTreeNodeFlags_SpanFullWidth;
+        
 
-        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "Sample Scene"))
+        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "Root"))
         {
-
             if (ImGui::BeginDragDropTarget())
             {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_SCENENODE"))
@@ -195,29 +198,57 @@ void Engine::DrawIMGUI()
                 }
             }
 
-            ImGui::Unindent();
-            for (int i = 0; i + index < (int)m_gameObjectCount && i < 100; i++)
+            const int buttonWidth = 50;
+            const int scrollStrengthMax = 1000;
+            static int scrollStrength = 1;
+            if (buttonWidth < ImGui::GetContentRegionAvail().x)
             {
+                ImGui::SameLine(ImGui::GetContentRegionAvail().x - buttonWidth / 2);
+                if (ImGui::Button(std::to_string(scrollStrength).c_str(), ImVec2(buttonWidth, 0)))
+                {
+                    scrollStrength *= 10;
+                    if (scrollStrength > scrollStrengthMax)
+                        scrollStrength = 1;
+                }
+            }
+
+            ImGui::Unindent();
+            int maxItem = 100;
+
+            if (index < 0)
+                index = 0;
+            else if (index > (int)m_gameObjectCount - 1)
+                index = m_gameObjectCount - 1;
+
+            for (int i = 0; i + index < (int)m_gameObjectCount && i < maxItem; i++)
+            {
+                if (i == 0 && index > 0 && ImGui::GetScrollY() == 0)
+                {
+                    ImGui::SetScrollY(1);
+                    index -= scrollStrength;
+                }
+                float scrollMax = 0;
+                if (i == maxItem - 1 && index + i < (int)m_gameObjectCount - 1 &&
+                    (scrollMax = ImGui::GetScrollMaxY()) == ImGui::GetScrollY() && scrollMax != 0)
+                {
+                    ImGui::SetScrollY(scrollMax - 1);
+                    index += scrollStrength;
+                }
+
+                if (index + i < 0)
+                    index = i;
+                else if (index + i > (int)m_gameObjectCount - 1)
+                    index = m_gameObjectCount - i  - 1;
+
                 if (m_gameObjects[i + index].parent == nullptr)
                 {
-                    if (i == 0 && index + i > 99 && ImGui::GetScrollY() == 0)
-                    {
-                        ImGui::SetScrollY(1);
-                        index -= 100;
-                    }
-                    float a = 0;
-                    float b = 0;
-                    if (i == 99 && index + i < (int)m_gameObjectCount - 1 && (a = ImGui::GetScrollMaxY()) == (b = ImGui::GetScrollY()) && a != 0)
-                    {
-                        ImGui::SetScrollY(ImGui::GetScrollMaxY() - 1);
-                        index += 100;
-                    }
                     DrawSceneNodes(false, &m_gameObjects[i + index]);
                 }
             }
             ImGui::TreePop();
         }
-    ImGui::End();
+
+        ImGui::End();
     }
     ImGui::PopFont();
 
