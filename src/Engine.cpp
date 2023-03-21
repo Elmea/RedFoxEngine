@@ -69,7 +69,9 @@ void Engine::LoadScene(const char *fileName)
                 }
             }
         }
-        ReadFile(file, &current->position, sizeof(float)*8, nullptr, nullptr);
+        ReadFile(file, &current->position, sizeof(current->position), nullptr, nullptr);
+        ReadFile(file, &current->scale, sizeof(current->scale), nullptr, nullptr);
+        ReadFile(file, &current->orientation, sizeof(current->orientation), nullptr, nullptr);
     }
     CloseHandle(file);
 }
@@ -94,7 +96,10 @@ void Engine::SaveScene(const char *fileName)
             parent = -1;
         WriteFile(file, &parent, sizeof(int), nullptr, nullptr);
         WriteFile(file, &current->model->hash, sizeof(u64), nullptr, nullptr);
-        WriteFile(file, &current->position, sizeof(float)*8, nullptr, nullptr);
+
+        WriteFile(file, &current->position, sizeof(current->position), nullptr, nullptr);
+        WriteFile(file, &current->scale, sizeof(current->scale), nullptr, nullptr);
+        WriteFile(file, &current->orientation, sizeof(current->orientation), nullptr, nullptr);
     }
     CloseHandle(file);
 }
@@ -106,7 +111,7 @@ Engine::Engine(int width, int height) :
     m_arenaAllocator = InitVirtualMemory(1 * GigaByte);
     m_tempAllocator = InitVirtualMemory(1 * GigaByte);
     IncreaseTotalCapacity(&m_arenaAllocator, 1 * MegaByte);
-    m_graphics.InitGraphics(&m_tempAllocator);
+    m_graphics.InitGraphics(&m_tempAllocator, m_platform.m_windowDimension);
     InitIMGUI();
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
 
@@ -117,9 +122,9 @@ Engine::Engine(int width, int height) :
 
 
     //TODO transition to an instance based model 'model'
-
     for (int i = 0; i < (int)m_modelCount; i++)
         m_graphics.InitModel(&m_models[i]);
+    
     LoadScene("test.scene");
     m_input = {};
     m_dc = GetDC(m_platform.m_window);
@@ -135,9 +140,8 @@ void Engine::ProcessInputs()
     int mouseX = m_input.mouseXPosition;
     int mouseY = m_input.mouseYPosition;
     m_platform.MessageProcessing(&m_input);
-    m_platform.GetWindowDimension();
-    glViewport(0, 0, m_platform.m_windowDimension.width,
-        m_platform.m_windowDimension.height); //TODO wrap around
+//    m_platform.GetWindowDimension();
+    glViewport(0, 0, m_platform.m_windowDimension.width, m_platform.m_windowDimension.height);
     m_editorCamera.SetProjection(projectionType::PERSPECTIVE);
     if (GetFocus() != m_platform.m_window)
     {

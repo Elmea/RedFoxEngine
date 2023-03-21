@@ -1,7 +1,6 @@
 /* date = February 22nd 2023 2:44 pm */
 
 #pragma once
-
 #ifdef _WIN32
 #include "Win32Platform.hpp"
 #else

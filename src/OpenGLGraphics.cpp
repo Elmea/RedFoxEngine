@@ -1,11 +1,12 @@
 #include "OpenGLGraphics.hpp"
+#include "glcorearb.h"
 
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
 
 namespace RedFoxEngine
 {
-void Graphics::InitGraphics(Memory *tempArena)
+void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
 {
     InitShaders(tempArena);
 
@@ -16,8 +17,54 @@ void Graphics::InitGraphics(Memory *tempArena)
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
     }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glCreateFramebuffers(1, &m_imguiFramebuffer);
 
+    glCreateTextures(GL_TEXTURE_2D, 1, &m_imguiTexture);
+    glCreateTextures(GL_TEXTURE_2D, 1, &m_gNormal);
+    glCreateTextures(GL_TEXTURE_2D, 1, &m_gAlbedoSpec);
+    
+    glTextureParameteri(m_imguiTexture  , GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureParameteri(m_imguiTexture  , GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureParameteri(m_gNormal    , GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureParameteri(m_gNormal    , GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureParameteri(m_gAlbedoSpec, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureParameteri(m_gAlbedoSpec, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    
+    glTextureStorage2D(m_imguiTexture  , 1, GL_RGBA8, dimension.width,
+        dimension.height);
+    glNamedFramebufferTexture(m_imguiFramebuffer, GL_COLOR_ATTACHMENT0,
+         m_imguiTexture, 0);
+    
+    glTextureStorage2D(m_gNormal    , 1, GL_RGBA16F, dimension.width,
+        dimension.height);
+    glTextureStorage2D(m_gAlbedoSpec, 1, GL_RGBA8UI, dimension.width,
+        dimension.height);
+    
+    glNamedFramebufferTexture(m_imguiFramebuffer, GL_COLOR_ATTACHMENT1,
+         m_gNormal    , 0);
+    glNamedFramebufferTexture(m_imguiFramebuffer, GL_COLOR_ATTACHMENT2,
+         m_gAlbedoSpec, 0);
+
+    
+    // glCreateTextures(GL_TEXTURE_2D, 1, &m_tFramebuffer);
+    // glTextureParameteri(m_tFramebuffer  , GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    // glTextureParameteri(m_tFramebuffer  , GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    // glTextureStorage2D(m_tFramebuffer, 1, GL_RGBA8, dimension.width, dimension.height);
+    
+    // tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
+//    unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+    unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+    glNamedFramebufferDrawBuffers(m_imguiFramebuffer, 1, attachments);
+    // create and attach depth buffer (renderbuffer)
+    unsigned int rboDepth;
+    glCreateRenderbuffers(1, &rboDepth);
+    glNamedRenderbufferStorage(rboDepth, GL_DEPTH_COMPONENT, dimension.width, dimension.height);
+    glNamedFramebufferRenderbuffer(m_imguiFramebuffer, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+
+    // finally check if framebuffer is complete
+    int error = 0;
+    if ((error = glCheckNamedFramebufferStatus(m_imguiFramebuffer, GL_FRAMEBUFFER)) != GL_FRAMEBUFFER_COMPLETE)
+        __debugbreak();
     // set to FALSE to disable vsync
     wglSwapIntervalEXT(1);
 }
@@ -208,7 +255,8 @@ void Graphics::Draw(GameObject *objects, int gameObjectCount, Memory *temp)
     glBindProgramPipeline(m_pipeline);
 
     GLint u_matrix = 0;
-    glProgramUniformMatrix4fv(m_vshader, u_matrix, 1, GL_TRUE, m_viewProjection.AsPtr());
+    glProgramUniformMatrix4fv(m_vshader, u_matrix, 1, GL_TRUE, 
+        m_viewProjection.AsPtr());
 
     u_matrix = 1;
 

@@ -145,7 +145,8 @@ void Engine::DrawSceneNodes(bool is_child, GameObject* gameObj)
     {
         if (childrenCount)
         {
-            GameObject **children = gameObj->GetChildren(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
+            GameObject **children = gameObj->GetChildren(m_gameObjects, 
+                m_gameObjectCount, &m_tempAllocator);
             for (int i = 0; i < childrenCount; i++)
                 DrawSceneNodes(true, children[i]);
         }
@@ -170,6 +171,46 @@ void Engine::DrawIMGUI()
 
     ImGui::PushFont(m_defaultFont);
     static int index = 0;
+
+    if (ImGui::Begin("Editor"))
+    {
+        WindowDimension &dimension = m_platform.m_windowDimension;
+        ImVec2 content = ImGui::GetContentRegionAvail();
+        if (content.x != 0 && content.y != 0)
+        {
+            ImGui::Image((GLuint*)1, 
+                ImVec2(content.x, content.y), ImVec2(0, 1), ImVec2(1, 0));
+            if (content.x != dimension.width || content.y != dimension.height)
+            {
+                glDeleteTextures(1, &m_graphics.m_imguiTexture);
+                glDeleteFramebuffers(1, &m_graphics.m_imguiFramebuffer);
+                glCreateFramebuffers(1, &m_graphics.m_imguiFramebuffer);
+                glCreateTextures(GL_TEXTURE_2D, 1, &m_graphics.m_imguiTexture);
+                glNamedFramebufferTexture(m_graphics.m_imguiFramebuffer, 
+                    GL_COLOR_ATTACHMENT0, m_graphics.m_imguiTexture , 0);
+                unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0};
+                glNamedFramebufferDrawBuffers(m_graphics.m_imguiFramebuffer, 1,
+                    attachments);
+                glTextureParameteri(m_graphics.m_imguiTexture,
+                    GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                glTextureParameteri(m_graphics.m_imguiTexture,
+                    GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glTextureStorage2D(m_graphics.m_imguiTexture , 1, GL_RGBA8, 
+                    content.x, content.y);
+                glNamedRenderbufferStorage(1, GL_DEPTH_COMPONENT,
+                    content.x, content.y);
+                glNamedFramebufferRenderbuffer(m_graphics.m_imguiFramebuffer,
+                    GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 1);
+                dimension.width = content.x;
+                dimension.height = content.y;
+            }
+            glBlitNamedFramebuffer(0, 1, 0, 0, content.x, content.y, 
+                                         0, 0, content.x, content.y,
+                                    GL_COLOR_BUFFER_BIT, GL_LINEAR);            
+        }
+        ImGui::End();
+    }
+    
     if (ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
 
@@ -217,8 +258,8 @@ void Engine::DrawIMGUI()
             }
             ImGui::TreePop();
         }
-    ImGui::End();
     }
+    ImGui::End();
     ImGui::PopFont();
 
     ImGui::PushFont(m_defaultFont);
@@ -256,7 +297,18 @@ void Engine::DrawIMGUI()
                     ImGui::Text("Rotation");
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::DragFloat4("TransformRotation", &m_selectedObject->orientation.a, 0.001f, -32767.f, 32767.f);
+                    RedFoxMaths::Float3 rotation = m_selectedObject->orientation.ToEuler();
+                    rotation.x *= RAD2DEG;
+                    rotation.y *= RAD2DEG;
+                    rotation.z *= RAD2DEG;
+                    if (ImGui::DragFloat3("TransformRotation", &rotation.x, 1.0f, -360.f, 360.f))
+                    {
+                        rotation.x *= DEG2RAD;
+                        rotation.y *= DEG2RAD;
+                        rotation.z *= DEG2RAD;
+                        m_selectedObject->orientation = RedFoxMaths::Quaternion::FromEuler(rotation);
+                        m_selectedObject->orientation.Normalize();
+                    }
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
                     ImGui::Text("Scale");
