@@ -159,8 +159,7 @@ void Engine::DrawIMGUI()
     ImGuiDockNodeFlags dockingFlags =
         ImGuiDockNodeFlags_PassthruCentralNode |
         ImGuiDockNodeFlags_NoWindowMenuButton |
-        ImGuiDockNodeFlags_NoCloseButton |
-        ImGuiDockNodeFlags_NoDockingInCentralNode;
+        ImGuiDockNodeFlags_NoCloseButton;
 
     ImGui_ImplWin32_NewFrame();
     ImGui_ImplOpenGL3_NewFrame();
@@ -181,7 +180,6 @@ void Engine::DrawIMGUI()
             ImGuiTreeNodeFlags_AllowItemOverlap |
             ImGuiTreeNodeFlags_DefaultOpen |
             ImGuiTreeNodeFlags_SpanFullWidth;
-        
 
         if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "Root"))
         {
@@ -199,7 +197,6 @@ void Engine::DrawIMGUI()
             }
 
             const int buttonWidth = 50;
-            const int scrollStrengthMax = 1000;
             static int scrollStrength = 1;
             if (buttonWidth < ImGui::GetContentRegionAvail().x)
             {
@@ -207,20 +204,20 @@ void Engine::DrawIMGUI()
                 if (ImGui::Button(std::to_string(scrollStrength).c_str(), ImVec2(buttonWidth, 0)))
                 {
                     scrollStrength *= 10;
-                    if (scrollStrength > scrollStrengthMax)
+                    if (scrollStrength > 1000)
                         scrollStrength = 1;
                 }
             }
 
             ImGui::Unindent();
-            int maxItem = 100;
 
             if (index < 0)
                 index = 0;
             else if (index > (int)m_gameObjectCount - 1)
                 index = m_gameObjectCount - 1;
 
-            for (int i = 0; i + index < (int)m_gameObjectCount && i < maxItem; i++)
+            int maxItems = (int)ImGui::GetMainViewport()->Size.y / 16;
+            for (int i = 0; i + index < (int)m_gameObjectCount && i < maxItems; i++)
             {
                 if (i == 0 && index > 0 && ImGui::GetScrollY() == 0)
                 {
@@ -228,7 +225,7 @@ void Engine::DrawIMGUI()
                     index -= scrollStrength;
                 }
                 float scrollMax = 0;
-                if (i == maxItem - 1 && index + i < (int)m_gameObjectCount - 1 &&
+                if (i == maxItems - 1 && index + i < (int)m_gameObjectCount - 1 &&
                     (scrollMax = ImGui::GetScrollMaxY()) == ImGui::GetScrollY() && scrollMax != 0)
                 {
                     ImGui::SetScrollY(scrollMax - 1);
@@ -245,6 +242,7 @@ void Engine::DrawIMGUI()
                     DrawSceneNodes(false, &m_gameObjects[i + index]);
                 }
             }
+            
             ImGui::TreePop();
         }
 
