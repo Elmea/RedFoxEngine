@@ -1,5 +1,6 @@
 #include "Engine.hpp"
 #include "imgui.h"
+#include <string>
 
 using namespace RedFoxEngine;
 
@@ -159,8 +160,7 @@ void Engine::DrawIMGUI()
     ImGuiDockNodeFlags dockingFlags =
         ImGuiDockNodeFlags_PassthruCentralNode |
         ImGuiDockNodeFlags_NoWindowMenuButton |
-        ImGuiDockNodeFlags_NoCloseButton |
-        ImGuiDockNodeFlags_NoDockingInCentralNode;
+        ImGuiDockNodeFlags_NoCloseButton;
 
     ImGui_ImplWin32_NewFrame();
     ImGui_ImplOpenGL3_NewFrame();
@@ -178,31 +178,29 @@ void Engine::DrawIMGUI()
         ImVec2 content = ImGui::GetContentRegionAvail();
         if (content.x != 0 && content.y != 0)
         {
-            ImGui::Image((GLuint*)1, 
-                ImVec2(content.x, content.y), ImVec2(0, 1), ImVec2(1, 0));
             if (content.x != dimension.width || content.y != dimension.height)
-            {
                 m_graphics.UpdateImGUIFrameBuffer(dimension, {(int)content.x, (int)content.y});
-            }
             glBlitNamedFramebuffer(0, 1, 0, 0, content.x, content.y, 
                                          0, 0, content.x, content.y,
                                     GL_COLOR_BUFFER_BIT, GL_LINEAR);            
+            ImGui::Image((void *)m_graphics.m_imguiTexture, 
+                ImVec2(content.x, content.y), ImVec2(0, 1), ImVec2(1, 0));
         }
-        ImGui::End();
     }
+    ImGui::End();
     
+    ImGui::SameLine();
     if (ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
-
         ImGuiTreeNodeFlags rootNodeFlags = 
             ImGuiTreeNodeFlags_Framed |
-            ImGuiTreeNodeFlags_Leaf |
+            ImGuiTreeNodeFlags_Leaf | 
+            ImGuiTreeNodeFlags_AllowItemOverlap |
             ImGuiTreeNodeFlags_DefaultOpen |
             ImGuiTreeNodeFlags_SpanFullWidth;
 
-        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "Sample Scene"))
+        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "Root"))
         {
-
             if (ImGui::BeginDragDropTarget())
             {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_SCENENODE"))
@@ -216,26 +214,53 @@ void Engine::DrawIMGUI()
                 }
             }
 
-            ImGui::Unindent();
-            for (int i = 0; i + index < (int)m_gameObjectCount && i < 100; i++)
+            const int buttonWidth = 50;
+            static int scrollStrength = 1;
+            if (buttonWidth < ImGui::GetContentRegionAvail().x)
             {
+                ImGui::SameLine(ImGui::GetContentRegionAvail().x - buttonWidth / 2);
+                if (ImGui::Button(std::to_string(scrollStrength).c_str(), ImVec2(buttonWidth, 0)))
+                {
+                    scrollStrength *= 10;
+                    if (scrollStrength > 1000)
+                        scrollStrength = 1;
+                }
+            }
+
+            ImGui::Unindent();
+
+            if (index < 0)
+                index = 0;
+            else if (index > (int)m_gameObjectCount - 1)
+                index = m_gameObjectCount - 1;
+
+            int maxItems = (int)ImGui::GetMainViewport()->Size.y / 16;
+            for (int i = 0; i + index < (int)m_gameObjectCount && i < maxItems; i++)
+            {
+                if (i == 0 && index > 0 && ImGui::GetScrollY() == 0)
+                {
+                    ImGui::SetScrollY(1);
+                    index -= scrollStrength;
+                }
+                float scrollMax = 0;
+                if (i == maxItems - 1 && index + i < (int)m_gameObjectCount - 1 &&
+                    (scrollMax = ImGui::GetScrollMaxY()) == ImGui::GetScrollY() && scrollMax != 0)
+                {
+                    ImGui::SetScrollY(scrollMax - 1);
+                    index += scrollStrength;
+                }
+
+                if (index + i < 0)
+                    index = i;
+                else if (index + i > (int)m_gameObjectCount - 1)
+                    index = m_gameObjectCount - i  - 1;
+
                 if (m_gameObjects[i + index].parent == nullptr)
                 {
-                    if (i == 0 && index + i > 99 && ImGui::GetScrollY() == 0)
-                    {
-                        ImGui::SetScrollY(1);
-                        index -= 100;
-                    }
-                    float a = 0;
-                    float b = 0;
-                    if (i == 99 && index + i < (int)m_gameObjectCount - 1 && (a = ImGui::GetScrollMaxY()) == (b = ImGui::GetScrollY()) && a != 0)
-                    {
-                        ImGui::SetScrollY(ImGui::GetScrollMaxY() - 1);
-                        index += 100;
-                    }
                     DrawSceneNodes(false, &m_gameObjects[i + index]);
                 }
             }
+            
             ImGui::TreePop();
         }
     }

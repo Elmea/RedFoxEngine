@@ -41,8 +41,8 @@ private:
     GLuint m_gPosition, m_gNormal, m_gAlbedoSpec;
     GLuint m_rboIMGUI;
     GLuint m_imguiFramebuffer;
-    GLuint m_imguiTexture;
 public:
+    GLuint m_imguiTexture;
     void Draw(GameObject *gameObjects, int gameObjectCount, Memory *tempArena);
     void DrawModel(Model *model);
     void DrawModelInstances(Model *model, int instanceCount);

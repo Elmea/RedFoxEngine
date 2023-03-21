@@ -126,6 +126,7 @@ Engine::Engine(int width, int height) :
         m_graphics.InitModel(&m_models[i]);
     
     LoadScene("test.scene");
+    //m_gameObjectCount = 100;
     m_input = {};
     m_dc = GetDC(m_platform.m_window);
     UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll",
