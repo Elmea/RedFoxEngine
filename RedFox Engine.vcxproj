@@ -90,18 +90,18 @@
       <SubSystem>Windows</SubSystem>
     </Link>
     <PreBuildEvent>
-      <Command>
-      </Command>
+      <Command>git submodule update --init --recursive</Command>
     </PreBuildEvent>
     <PreBuildEvent>
-      <Message>
-      </Message>
+      <Message>Update submodules</Message>
     </PreBuildEvent>
     <PreLinkEvent>
-      <Command>git submodule update --init --recursive</Command>
+      <Command>
+      </Command>
     </PreLinkEvent>
     <PreLinkEvent>
-      <Message>Update submodules</Message>
+      <Message>
+      </Message>
     </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -120,18 +120,18 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PreBuildEvent>
-      <Command>
-      </Command>
+      <Command>git submodule update --init --recursive</Command>
     </PreBuildEvent>
     <PreBuildEvent>
-      <Message>
-      </Message>
+      <Message>Update submodules</Message>
     </PreBuildEvent>
     <PreLinkEvent>
-      <Command>git submodule update --init --recursive</Command>
+      <Command>
+      </Command>
     </PreLinkEvent>
     <PreLinkEvent>
-      <Message>Update submodules</Message>
+      <Message>
+      </Message>
     </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -139,20 +139,20 @@
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);opengl32.lib;user32.lib;gdi32.lib</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>
-      </Command>
-      <Message>
-      </Message>
+      <Command>git submodule update --init --recursive</Command>
+      <Message>Update submodules</Message>
     </PreBuildEvent>
     <ClCompile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>include;RedFoxMaths;external;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreLinkEvent>
-      <Command>git submodule update --init --recursive</Command>
+      <Command>
+      </Command>
     </PreLinkEvent>
     <PreLinkEvent>
-      <Message>Update submodules</Message>
+      <Message>
+      </Message>
     </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -164,16 +164,16 @@
       <AdditionalIncludeDirectories>include;RedFoxMaths;external;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
-      <Command>
-      </Command>
-      <Message>
-      </Message>
+      <Command>git submodule update --init --recursive</Command>
+      <Message>Update submodules</Message>
     </PreBuildEvent>
     <PreLinkEvent>
-      <Command>git submodule update --init --recursive</Command>
+      <Command>
+      </Command>
     </PreLinkEvent>
     <PreLinkEvent>
-      <Message>Update submodules</Message>
+      <Message>
+      </Message>
     </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

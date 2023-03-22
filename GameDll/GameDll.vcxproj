@@ -102,11 +102,19 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PreLinkEvent>
-      <Command>git submodule update --init --recursive</Command>
+      <Command>
+      </Command>
     </PreLinkEvent>
     <PreLinkEvent>
-      <Message>Update submodules</Message>
+      <Message>
+      </Message>
     </PreLinkEvent>
+    <PreBuildEvent>
+      <Command>git submodule update --init --recursive</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Update submodules</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -128,11 +136,19 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PreLinkEvent>
-      <Command>git submodule update --init --recursive</Command>
+      <Command>
+      </Command>
     </PreLinkEvent>
     <PreLinkEvent>
-      <Message>Update submodules</Message>
+      <Message>
+      </Message>
     </PreLinkEvent>
+    <PreBuildEvent>
+      <Command>git submodule update --init --recursive</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Update submodules</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -151,11 +167,19 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PreLinkEvent>
-      <Command>git submodule update --init --recursive</Command>
+      <Command>
+      </Command>
     </PreLinkEvent>
     <PreLinkEvent>
-      <Message>Update submodules</Message>
+      <Message>
+      </Message>
     </PreLinkEvent>
+    <PreBuildEvent>
+      <Command>git submodule update --init --recursive</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Update submodules</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -179,11 +203,19 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PreLinkEvent>
-      <Command>git submodule update --init --recursive</Command>
+      <Command>
+      </Command>
     </PreLinkEvent>
     <PreLinkEvent>
-      <Message>Update submodules</Message>
+      <Message>
+      </Message>
     </PreLinkEvent>
+    <PreBuildEvent>
+      <Command>git submodule update --init --recursive</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Update submodules</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Game.cpp" />
