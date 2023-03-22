@@ -101,6 +101,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <PreLinkEvent>
+      <Command>git submodule update --init --recursive</Command>
+    </PreLinkEvent>
+    <PreLinkEvent>
+      <Message>Update submodules</Message>
+    </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -121,6 +127,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <PreLinkEvent>
+      <Command>git submodule update --init --recursive</Command>
+    </PreLinkEvent>
+    <PreLinkEvent>
+      <Message>Update submodules</Message>
+    </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -138,6 +150,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <PreLinkEvent>
+      <Command>git submodule update --init --recursive</Command>
+    </PreLinkEvent>
+    <PreLinkEvent>
+      <Message>Update submodules</Message>
+    </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -160,6 +178,12 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <PreLinkEvent>
+      <Command>git submodule update --init --recursive</Command>
+    </PreLinkEvent>
+    <PreLinkEvent>
+      <Message>Update submodules</Message>
+    </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Game.cpp" />
