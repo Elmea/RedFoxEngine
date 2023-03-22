@@ -230,7 +230,8 @@ void Platform::MessageProcessing(Input *input)
             ReleaseCapture();
             TranslateMessage(&Message);
             DispatchMessage(&Message);
-        }break;
+        }
+        break;
 
         case WM_KEYUP:
         case WM_KEYDOWN: {

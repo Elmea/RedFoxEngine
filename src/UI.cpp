@@ -47,7 +47,7 @@ void Engine::InitIMGUI()
     style.Colors[ImGuiCol_Text] = RF_WHITE;
     style.Colors[ImGuiCol_TextDisabled] = RF_GRAY;
     style.Colors[ImGuiCol_WindowBg] = RF_DARKGRAY;
-    style.Colors[ImGuiCol_ChildBg] = RF_BLACK;
+    style.Colors[ImGuiCol_ChildBg] = RF_DARKGRAY;
     style.Colors[ImGuiCol_PopupBg] = RF_BLACK;
     style.Colors[ImGuiCol_Border] = RF_BLACK;
     style.Colors[ImGuiCol_BorderShadow] = ImVec4();
@@ -158,7 +158,6 @@ void Engine::DrawSceneNodes(bool is_child, GameObject* gameObj)
 void Engine::DrawIMGUI()
 {
     ImGuiDockNodeFlags dockingFlags =
-        ImGuiDockNodeFlags_PassthruCentralNode |
         ImGuiDockNodeFlags_NoWindowMenuButton |
         ImGuiDockNodeFlags_NoCloseButton;
 
@@ -172,7 +171,7 @@ void Engine::DrawIMGUI()
     ImGui::PushFont(m_defaultFont);
     static int index = 0;
 
-    if (ImGui::Begin("Editor"))
+    if (ImGui::Begin("Editor", (bool*)0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
     {
         WindowDimension &dimension = m_platform.m_windowDimension;
         ImVec2 content = ImGui::GetContentRegionAvail();
@@ -189,14 +188,17 @@ void Engine::DrawIMGUI()
     ImGui::SameLine();
     if (ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
+        
         ImGuiTreeNodeFlags rootNodeFlags = 
             ImGuiTreeNodeFlags_Framed |
             ImGuiTreeNodeFlags_Leaf | 
             ImGuiTreeNodeFlags_AllowItemOverlap |
             ImGuiTreeNodeFlags_DefaultOpen |
             ImGuiTreeNodeFlags_SpanFullWidth;
+        
 
-        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "Root"))
+        static int scrollStrength = 1;
+        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, " Scene Name (%.4f)", m_deltaTime))
         {
             if (ImGui::BeginDragDropTarget())
             {
@@ -209,10 +211,8 @@ void Engine::DrawIMGUI()
                     }
                     ImGui::EndDragDropTarget();
                 }
-            }
-
+            }            
             const int buttonWidth = 50;
-            static int scrollStrength = 1;
             if (buttonWidth < ImGui::GetContentRegionAvail().x)
             {
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - buttonWidth / 2);
@@ -223,43 +223,46 @@ void Engine::DrawIMGUI()
                         scrollStrength = 1;
                 }
             }
-
-            ImGui::Unindent();
-
-            if (index < 0)
-                index = 0;
-            else if (index > (int)m_gameObjectCount - 1)
-                index = m_gameObjectCount - 1;
-
-            int maxItems = (int)ImGui::GetMainViewport()->Size.y / 16;
-            for (int i = 0; i + index < (int)m_gameObjectCount && i < maxItems; i++)
-            {
-                if (i == 0 && index > 0 && ImGui::GetScrollY() == 0)
-                {
-                    ImGui::SetScrollY(1);
-                    index -= scrollStrength;
-                }
-                float scrollMax = 0;
-                if (i == maxItems - 1 && index + i < (int)m_gameObjectCount - 1 &&
-                    (scrollMax = ImGui::GetScrollMaxY()) == ImGui::GetScrollY() && scrollMax != 0)
-                {
-                    ImGui::SetScrollY(scrollMax - 1);
-                    index += scrollStrength;
-                }
-
-                if (index + i < 0)
-                    index = i;
-                else if (index + i > (int)m_gameObjectCount - 1)
-                    index = m_gameObjectCount - i  - 1;
-
-                if (m_gameObjects[i + index].parent == nullptr)
-                {
-                    DrawSceneNodes(false, &m_gameObjects[i + index]);
-                }
-            }
-            
-            ImGui::TreePop();
         }
+        ImGui::TreePop();
+
+        ImGuiWindowFlags sceneGraphFlags =
+            ImGuiWindowFlags_AlwaysHorizontalScrollbar | 
+            ImGuiWindowFlags_AlwaysVerticalScrollbar |
+            ImGuiWindowFlags_NoMove;
+
+        ImGui::BeginChild("SceneGraphNodes", ImVec2(0, 0), true, sceneGraphFlags);
+        if (index < 0)
+            index = 0;
+        else if (index > (int)m_gameObjectCount - 1)
+            index = m_gameObjectCount - 1;
+
+        int maxItems = (int)ImGui::GetMainViewport()->Size.y / 16;
+        for (int i = 0; i + index < (int)m_gameObjectCount && i < maxItems; i++)
+        {
+            if (i == 0 && index > 0 && ImGui::GetScrollY() == 0)
+            {
+                ImGui::SetScrollY(1);
+                index -= scrollStrength;
+            }
+
+            float scrollMax = 0;
+            if (i == maxItems - 1 && index + i < (int)m_gameObjectCount - 1 &&
+                (scrollMax = ImGui::GetScrollMaxY()) == ImGui::GetScrollY() && scrollMax != 0)
+            {
+                ImGui::SetScrollY(scrollMax - 1);
+                index += scrollStrength;
+            }
+
+            if (index + i < 0)
+                index = i;
+            else if (index + i > (int)m_gameObjectCount - 1)
+                index = m_gameObjectCount - i - 1;
+
+            if (m_gameObjects[i + index].parent == nullptr)
+                DrawSceneNodes(false, &m_gameObjects[i + index]);
+        }
+        ImGui::EndChild();
     }
     ImGui::End();
     ImGui::PopFont();
@@ -267,7 +270,6 @@ void Engine::DrawIMGUI()
     ImGui::PushFont(m_defaultFont);
     if (ImGui::Begin("Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
-        ImGui::Text("%f", m_deltaTime);
         ImGuiTreeNodeFlags propertiesFlags = 
             ImGuiTreeNodeFlags_DefaultOpen |
             ImGuiTreeNodeFlags_OpenOnArrow | 
