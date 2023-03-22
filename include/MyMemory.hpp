@@ -205,7 +205,10 @@ static MyString initStringChar(const char *str, u64 n, Memory *memory)
     char *temp = (char *)result.data;
 
     while (i < result.size)
-        temp[i] = str[i++];
+    {
+        temp[i] = str[i];
+        i++;
+    }
     return (result);
 }
 
