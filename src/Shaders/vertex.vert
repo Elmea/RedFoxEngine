@@ -17,15 +17,13 @@ out gl_PerVertex { vec4 gl_Position; };
 out vec3 lightPos;
 layout (location=0)
 uniform mat4 vp;
-layout (location=1)
-uniform mat4 model;
 
 void main()
 {
     lightPos = vec3(0, 4, 0);
-    gl_Position            = (vp * model * worldMatrix) * vec4(aPos, 1);
-    vs_out.FragPosition    = (model * worldMatrix * vec4(aPos, 1)).rgb;
-    vs_out.Normal          = (transpose(inverse(mat4(model * worldMatrix))) *
+    gl_Position            = (vp * worldMatrix) * vec4(aPos, 1);
+    vs_out.FragPosition    = (worldMatrix * vec4(aPos, 1)).rgb;
+    vs_out.Normal          = (transpose(inverse(mat4(worldMatrix))) *
                                  vec4(aNormal, 1)).rgb;
     vs_out.TexCoord        = aTexCoord;
 }

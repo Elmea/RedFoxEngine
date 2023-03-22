@@ -79,7 +79,7 @@ void Engine::LoadScene(const char *fileName)
 void Engine::SaveScene(const char *fileName)
 {
     HANDLE file = CreateFile(fileName, GENERIC_WRITE,
-        FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, CREATE_NEW,
+        FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS,
         FILE_ATTRIBUTE_NORMAL, nullptr);
 
     WriteFile(file, &m_gameObjectCount, sizeof(u32), nullptr, nullptr);
@@ -126,7 +126,6 @@ Engine::Engine(int width, int height) :
         m_graphics.InitModel(&m_models[i]);
     
     LoadScene("test.scene");
-    //m_gameObjectCount = 100;
     m_input = {};
     m_dc = GetDC(m_platform.m_window);
     UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll",
@@ -194,8 +193,11 @@ void Engine::Update()
 
 void Engine::Draw()
 {
+    glClearColor(0, 0, 0, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     m_graphics.Draw(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
     // swap the buffers to show output
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     DrawIMGUI();
     if (!SwapBuffers(m_dc))
         m_platform.FatalError("Failed to swap OpenGL buffers!");

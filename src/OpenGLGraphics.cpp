@@ -7,7 +7,8 @@
 namespace RedFoxEngine
 {
 
-void Graphics::UpdateImGUIFrameBuffer(WindowDimension &dimension, WindowDimension content)
+void Graphics::UpdateImGUIFrameBuffer(WindowDimension &dimension,
+    WindowDimension content)
 {
     glDeleteTextures(1, &m_imguiTexture);
     glDeleteFramebuffers(1, &m_imguiFramebuffer);
@@ -45,8 +46,10 @@ void Graphics::InitImGUIFrameBuffer(WindowDimension dimension)
     unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0};
     glNamedFramebufferDrawBuffers(m_imguiFramebuffer, 1, attachments);
     glCreateRenderbuffers(1, &m_rboIMGUI);
-    glNamedRenderbufferStorage(m_rboIMGUI, GL_DEPTH_COMPONENT, dimension.width, dimension.height);
-    glNamedFramebufferRenderbuffer(m_imguiFramebuffer, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_rboIMGUI);
+    glNamedRenderbufferStorage(m_rboIMGUI, GL_DEPTH24_STENCIL8,
+        dimension.width, dimension.height);
+    glNamedFramebufferRenderbuffer(m_imguiFramebuffer, GL_DEPTH_ATTACHMENT,
+        GL_RENDERBUFFER, m_rboIMGUI);
 
     int error = 0;
     if ((error = glCheckNamedFramebufferStatus(m_imguiFramebuffer, GL_FRAMEBUFFER)) != GL_FRAMEBUFFER_COMPLETE)
@@ -204,9 +207,9 @@ void Graphics::InitModel(Model *model)
     DeInitGraphicsObj(&model->obj);
 }
 
-void Graphics::InitTexture(void *data,int height, int width, GLuint &texture)
+GLuint Graphics::InitTexture(void *data,int height, int width)
 {
-
+    GLuint texture;
     glCreateTextures(GL_TEXTURE_2D, 1, &texture);
 
     glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -218,34 +221,24 @@ void Graphics::InitTexture(void *data,int height, int width, GLuint &texture)
     glTextureStorage2D(texture, 1, GL_RGBA32F, width, height);
     glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RGBA,
          GL_UNSIGNED_BYTE, data);
+    return (texture);
 }
 
 void Graphics::InitTexture(ObjModel *model)
 {
-    GLuint texture[10];
+    GLuint texture[128];
 
-    glCreateTextures(GL_TEXTURE_2D, model->images.count, texture);
+    WaitForSingleObject(model->images.thread, INFINITE); // TODO(V. Caraulan): Wrap in waiting for thread function
+    for (int i = 0; i < (int)model->images.count; i++)
+    {
+        texture[i] = InitTexture(model->images.data[i].data,
+            model->images.data[i].height, model->images.data[i].width);
+    }
+    
     for (int i = 0; i < (int)model->materials.count; i++)
     {
         int temp = model->materials.material[i].diffuseMap.index0;
         model->materials.material[i].diffuseMap.index0 = texture[temp];
-    }
-
-    
-    WaitForSingleObject(model->images.thread, INFINITE); // TODO(V. Caraulan): Wrap in waiting for thread function
-    for (int i = 0; i < (int)model->images.count; i++)
-    {
-        glTextureParameteri(texture[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTextureParameteri(texture[i], GL_TEXTURE_MIN_FILTER,
-            GL_LINEAR_MIPMAP_LINEAR);
-        glTextureParameteri(texture[i], GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTextureParameteri(texture[i], GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        glTextureStorage2D(texture[i], 1, GL_RGBA8, 
-            model->images.data[i].width, model->images.data[i].height);
-        glTextureSubImage2D(texture[i], 0, 0, 0, model->images.data[i].width,
-            model->images.data[i].height, GL_RGBA, GL_UNSIGNED_BYTE, 
-            model->images.data[i].data);
     }
 }
 
@@ -297,12 +290,12 @@ void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
 void Graphics::Draw(GameObject *objects, int gameObjectCount, Memory *temp)
 {
     // clear screen
+    glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
     glClearColor(0.392f, 0.584f, 0.929f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     // activate shaders for next draw call
     glBindProgramPipeline(m_pipeline);
-
     GLint u_matrix = 0;
     glProgramUniformMatrix4fv(m_vshader, u_matrix, 1, GL_TRUE, 
         m_viewProjection.AsPtr());
@@ -321,7 +314,6 @@ void Graphics::Draw(GameObject *objects, int gameObjectCount, Memory *temp)
 
     
     RedFoxMaths::Mat4 *mem = (RedFoxMaths::Mat4 *)MyMalloc(temp, sizeof(RedFoxMaths::Mat4) * gameObjectCount);
-    RedFoxMaths::Mat4 modelMatrix = RedFoxMaths::Mat4::GetIdentityMatrix();
     int batchCount = 768; //TODO figure out a good value for this
     int batchInstancedCount = gameObjectCount / batchCount;
     for(int index = 0;index < batchInstancedCount; index++)
@@ -329,7 +321,6 @@ void Graphics::Draw(GameObject *objects, int gameObjectCount, Memory *temp)
         for (int i = 0; i < batchCount; i++)
             mem[i] = objects[i + (index * batchCount)].GetWorldMatrix().GetTransposedMatrix();
         glNamedBufferSubData(objects->model->vbm,	0,	sizeof(RedFoxMaths::Mat4) * batchCount, mem);
-        glProgramUniformMatrix4fv(m_vshader, u_matrix, 1, GL_TRUE, modelMatrix.AsPtr());
         DrawModelInstances(objects->model, batchCount);
     }
     batchCount = gameObjectCount % batchCount;
@@ -338,7 +329,6 @@ void Graphics::Draw(GameObject *objects, int gameObjectCount, Memory *temp)
         for (int i = 0; i < batchCount; i++)
             mem[i] = objects[(gameObjectCount - batchCount) + i].GetWorldMatrix().GetTransposedMatrix();
         glNamedBufferSubData(objects->model->vbm,	0,	sizeof(RedFoxMaths::Mat4) * batchCount, mem);
-        glProgramUniformMatrix4fv(m_vshader, u_matrix, 1, GL_TRUE, modelMatrix.AsPtr());
         DrawModelInstances(objects->model, batchCount);
     }
 }

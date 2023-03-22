@@ -48,7 +48,8 @@ public:
     void DrawModelInstances(Model *model, int instanceCount);
     void InitModel(Model *model);
     void InitTexture(ObjModel *model);
-    void InitTexture(void *data,int height, int width, GLuint &texture);
+    GLuint InitTexture(void *data,int height, int width);
+    void InitFramebuffer();
     void InitShaders(Memory *tempArena);
     void InitGraphics(Memory *tempArena, WindowDimension dimension);
     void InitImGUIFrameBuffer(WindowDimension dimension);

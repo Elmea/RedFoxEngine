@@ -180,9 +180,6 @@ void Engine::DrawIMGUI()
         {
             if (content.x != dimension.width || content.y != dimension.height)
                 m_graphics.UpdateImGUIFrameBuffer(dimension, {(int)content.x, (int)content.y});
-            glBlitNamedFramebuffer(0, 1, 0, 0, content.x, content.y, 
-                                         0, 0, content.x, content.y,
-                                    GL_COLOR_BUFFER_BIT, GL_LINEAR);            
             ImGui::Image((void *)m_graphics.m_imguiTexture, 
                 ImVec2(content.x, content.y), ImVec2(0, 1), ImVec2(1, 0));
         }
