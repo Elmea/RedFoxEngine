@@ -21,16 +21,16 @@ void Camera::SetProjection(projectionType projectionType)
 {
     switch (projectionType)
     {
-    case (projectionType::PERSPECTIVE):
-        m_projection = Mat4::GetPerspectiveMatrix(m_parameters.aspect, m_parameters.FOV, m_parameters._far, m_parameters._near);
-        break;
+        case (projectionType::PERSPECTIVE):
+            m_projection = Mat4::GetPerspectiveMatrix(m_parameters.aspect, m_parameters.FOV, m_parameters._far, m_parameters._near);
+            break;
 
-    case (projectionType::ORTHOGRAPHIC):
-        m_projection = Mat4::GetOrthographicMatrix(m_parameters.right, m_parameters.left, m_parameters.top, m_parameters.bottom, m_parameters._far, m_parameters._near);
-        break;
+        case (projectionType::ORTHOGRAPHIC):
+            m_projection = Mat4::GetOrthographicMatrix(m_parameters.right, m_parameters.left, m_parameters.top, m_parameters.bottom, m_parameters._far, m_parameters._near);
+            break;
 
-    default:
-        break;
+        default:
+            break;
     }
 }
 

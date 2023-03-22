@@ -1,2 +1,0 @@
-﻿  pch.cpp
-C:\Users\a.perche\Documents\RedFoxEngine\test\pch.h(9,10): fatal error C1083: Impossible d'ouvrir le fichier include : 'cglm/cglm.h' : No such file or directory

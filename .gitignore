@@ -2,6 +2,8 @@
 x64/
 Temp/
 Debug/
+Release/
+packages/
 .idea/
 imgui.ini
 RedFox Engine.sln.DotSettings.user

@@ -8,6 +8,8 @@ namespace RedFoxEngine
     struct Model
     {
         u32 vao;
+        u32 vbm;
         ObjModel obj;
+        u64 hash;
     };
 }

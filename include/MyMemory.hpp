@@ -88,7 +88,8 @@ static void IncreaseTotalCapacity(Memory *memory, size_t AmountIncrease)
     if (memory->totalCapacity + AmountIncrease > memory->virtualSize)
         __debugbreak();
 #endif
-    VirtualAlloc((void *)((u8 *)memory->data + memory->usedSize), AmountIncrease, MEM_COMMIT, PAGE_READWRITE);
+    VirtualAlloc((void *)((u8 *)memory->data + memory->usedSize),
+        AmountIncrease, MEM_COMMIT, PAGE_READWRITE);
     memory->totalCapacity += AmountIncrease;
 }
 
@@ -105,7 +106,8 @@ static int StringsAreEqual(MyString a, MyString b)
     return (0);
 }
 
-static int StringsAreEqual_C(MyString a, const char *str, const char *delimiter)
+static int StringsAreEqual_C(MyString a, 
+                             const char *str, const char *delimiter)
 {
     int i = 0;
 
@@ -158,7 +160,8 @@ static void *MyMalloc(Memory *memory, size_t size)
     if (memory->usedSize + size >= memory->totalCapacity)
         IncreaseTotalCapacity(memory, memory->totalCapacity);
 #endif
-    VirtualAlloc((void *)((size_t)memory->data + memory->usedSize), size, MEM_COMMIT, PAGE_READWRITE);
+    VirtualAlloc((void *)((size_t)memory->data + memory->usedSize), size,
+        MEM_COMMIT, PAGE_READWRITE);
     size_t memoryAlgebra = (size_t)memory->data + memory->usedSize;
     memory->usedSize += size + (64 - size % 64);
     return ((void *)memoryAlgebra);
@@ -210,15 +213,17 @@ static MyString OpenAndReadEntireFile(const char *filePath, Memory *memory)
 {
     MyString result = {0};
 
-    HANDLE File = CreateFileA(filePath, GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING,
-                              FILE_ATTRIBUTE_NORMAL, NULL);
+    HANDLE File = CreateFileA(filePath, GENERIC_READ,
+        FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL, NULL);
 
     if (File)
     {
         u64 fileSize;
         GetFileSizeEx(File, (LARGE_INTEGER *)&fileSize);
         result = initString(fileSize, memory);
-        ReadFile(File, (void *)result.data, fileSize, (DWORD *)&result.size, NULL);
+        ReadFile(File, (void *)result.data, fileSize,
+            (DWORD *)&result.size, NULL);
         if (fileSize != result.size)
             __debugbreak();
         char *temp = (char *)result.data;
@@ -266,7 +271,8 @@ static u32 my_strnlen(char *src, u64 n)
     return (i);
 }
 
-static char *my_strncpy_s(char *dest, u64 dest_size, const char *src, u64 src_size)
+static char *my_strncpy_s(char *dest, u64 dest_size, const char *src,
+    u64 src_size)
 {
     int i = 0;
     while (i < dest_size && i < src_size)

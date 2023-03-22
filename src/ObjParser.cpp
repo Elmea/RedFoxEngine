@@ -10,48 +10,45 @@
 #define STBI_NO_STDIO
 #include <STB_Image/stb_image.h>
 
-#ifdef __llvm__
-#include <avx2intrin.h>
-#include <avxintrin.h>
-#include <intrin.h>
-#include <x86intrin.h>
-#endif
-
 /*
     Function that uses intrinsics to read 32 bytes by 32 bytes
     until it finds the newline character  - '\n' or the end of string ('\0')
     and advances the str pointer to that character.
 */
-char *get_next_line(MyString buffer, char *str)
+static char *get_next_line(MyString buffer, char *str)
 {
-    if (*str == '\n' || *str == '\r') /* If we are on the newline character we try to find the next one. */
+    /* If we are on the newline character we try to find the next one. */
+    if (*str == '\n' || *str == '\r')
         str = str + 1;
-    __m256i Carriage =
-        _mm256_set1_epi8('\n'); /* We first load 32 bytes of newline characters into the Carriage 256 bits register. */
+    /* We first load 32 bytes of newline characters into the Carriage
+     * 256 bits register. */
+    __m256i Carriage = _mm256_set1_epi8('\n'); 
     __m256i Zero = _mm256_set1_epi8(0);
 
     /* If the string is smaller than 32 bytes, we can't use the intrinsics,
         and load 32 bytes at a time. That's why we go byte by byte.       */
     while (buffer.size - (str - (char *)buffer.data) >= 32)
     {
-        __m256i Batch =
-            _mm256_loadu_si256((__m256i *)str); /* We then load 32 bytes from string into the Batch 256 bits register */
+        /* We then load 32 bytes from string into the Batch 256 bits register*/
+        __m256i Batch = _mm256_loadu_si256((__m256i *)str); 
 
-        /* We then check if there are any newline characters in the first string
-            by comparing 32 bytes at a time. The result*/
+        /* We then check if there are any newline characters in the first
+         * string by comparing 32 bytes at a time. The result */
         __m256i TestC = _mm256_cmpeq_epi8(Batch, Carriage);
         __m256i TestZ = _mm256_cmpeq_epi8(Batch, Zero);
-
-        __m256i Test =
-            _mm256_or_si256(TestC, TestZ); /* We check if either the '\n' character or '\0' character were found*/
+        /* We check if either the '\n' character or '\0' character were found*/
+        __m256i Test = _mm256_or_si256(TestC, TestZ); 
 
         /* We store the results of the check into a int,
-            transforming the mask from 256 bits, into a 1bit mask*/
+            transforming the mask from 256 bits, into a 1bit mask */
         s32 Check = _mm256_movemask_epi8(Test);
         if (Check)
         {
-            /* The _tzcnt_u32 func counts the numbers of zeros inside the parameter.
-            In our case it's going to count how many characters different than '\n' there are*/
+            /* The _tzcnt_u32 func counts 
+             * the numbers of zeros inside the parameter.
+             * In our case it's going to count 
+             * how many characters different than '\n' there are
+             */
 
             s32 Advance = _tzcnt_u32(Check);
             str += Advance;
@@ -81,7 +78,7 @@ char *get_next_line(MyString buffer, char *str)
     but instead of looking for a character, it looks for the lack of a character.
     */
 
-char *get_next_word(char *str)
+static char *get_next_word(char *str)
 {
     __m256i Space = _mm256_set1_epi8(' ');
     __m256i Tab = _mm256_set1_epi8('\t');
@@ -114,7 +111,7 @@ char *get_next_word(char *str)
     return (str);
 }
 
-s32 _digit_value(char c)
+static s32 _digit_value(char c)
 {
     s32 ri = c;
     s32 v = 16;
@@ -128,7 +125,7 @@ s32 _digit_value(char c)
     return v;
 }
 
-s32 parse_i32(char *str)
+static s32 parse_i32(char *str)
 {
     const __m256i zeroCharacter = _mm256_set1_epi8('0');
 
@@ -173,7 +170,7 @@ s32 parse_i32(char *str)
     return value;
 }
 
-f64 parse_f64(char *str, s32 size)
+static f64 parse_f64(char *str, s32 size)
 {
     f64 value = 0;
     char *s = str;
@@ -290,7 +287,7 @@ f64 parse_f64(char *str, s32 size)
     return (value);
 }
 
-vec3 getvec3(char *__restrict *str)
+static vec3 getvec3(char *__restrict *str)
 {
     vec3 result;
 
@@ -302,7 +299,7 @@ vec3 getvec3(char *__restrict *str)
     return (result);
 }
 
-vec2 getvec2(char *__restrict *str)
+static vec2 getvec2(char *__restrict *str)
 {
     vec2 result;
 
@@ -312,7 +309,7 @@ vec2 getvec2(char *__restrict *str)
     return (result);
 }
 
-void initImage(ObjImageData *result, Memory *memory)
+static void initImage(ObjImageData *result, Memory *memory)
 {
     fileResource file = FileResourceInit((char *)result->path.data, memory);
     LoadFile(&file, memory);
@@ -367,7 +364,7 @@ void initImage(ObjImageData *result, Memory *memory)
     }
 }
 
-ObjMaterial initMaterial()
+static ObjMaterial initMaterial()
 {
     ObjMaterial result = {};
 
@@ -387,7 +384,7 @@ typedef struct ParameterImageThread
     Memory *memory;
 } ParameterImageThread;
 
-void initImageThread(void *parameter)
+static void initImageThread(void *parameter)
 {
     ParameterImageThread *p = (ParameterImageThread *)parameter;
     for (int i = 0; i < (int)p->count; i++)
@@ -553,7 +550,7 @@ ObjMaterials ParseMTL(const char *objPath, MyString objBuffer, ObjImages *Images
     return result;
 }
 
-void Countvector2(char *__restrict current, s64 *__restrict Count, vec2 **__restrict v, Memory *__restrict temp,
+static void Countvector2(char *__restrict current, s64 *__restrict Count, vec2 **__restrict v, Memory *__restrict temp,
                   u32 *__restrict size)
 {
     if (*Count >= *size)
@@ -566,7 +563,7 @@ void Countvector2(char *__restrict current, s64 *__restrict Count, vec2 **__rest
     *Count = *Count + 1;
 }
 
-void Countvector3(char *__restrict current, s64 *__restrict Count, vec3 **__restrict v, Memory *__restrict temp,
+static void Countvector3(char *__restrict current, s64 *__restrict Count, vec3 **__restrict v, Memory *__restrict temp,
                   u32 *__restrict size)
 {
     if (*Count >= *size)
@@ -938,7 +935,7 @@ void DeInitObj(ObjModel *obj)
         DeInitMemory(&obj->meshMem);
 }
 
-ObjModel CreateCube(Memory *memory)
+static ObjModel CreateCube(Memory *memory)
 {
     ObjModel result = {};
 
@@ -1005,11 +1002,11 @@ ObjModel CreateCube(Memory *memory)
     // tmp->material.diffuse = (vec3){1, 1, 1};
     // tmp->material.Opaqueness = 1.f;
 
-    //	GenerateBuffers(&result.VAO, vertexCount, tmp->indexCount, vrtx, indices);
     return (result);
 }
 
-ObjModel CreateSphere(int latitudeCount, int longitudeCount, Memory *memory)
+#if 0
+static ObjModel CreateSphere(int latitudeCount, int longitudeCount, ArenaAllocator *memory)
 {
     ObjModel result = {};
 
@@ -1076,6 +1073,6 @@ ObjModel CreateSphere(int latitudeCount, int longitudeCount, Memory *memory)
     // mesh->material.ambient    = (vec3){1, 1, 1};
     // mesh->material.diffuse    = (vec3){1, 1, 1};
     // mesh->material.Opaqueness = 1.f;
-    // GenerateBuffers(&result.VAO, vertexCount, indexCount, vertices, indices);
     return result;
 }
+#endif

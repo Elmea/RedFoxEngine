@@ -82,7 +82,13 @@ struct Input
 };
 
 #ifndef UPDATEGAME
-#define UPDATEGAME(name) void name(float deltaTime, RedFoxEngine::Input input, RedFoxEngine::GameObject *gameObjects, u32 gameObjectCount, f32 time, RedFoxMaths::Float3 cameraRotation, RedFoxMaths::Float3 *cameraPosition)
+#define UPDATEGAME(name) void name(float deltaTime, \
+                                   RedFoxEngine::Input input, \
+                                   RedFoxEngine::GameObject *gameObjects, \
+                                   u32 gameObjectCount, \
+                                   f32 time, \
+                                   RedFoxMaths::Float3 cameraRotation, \
+                                   RedFoxMaths::Float3 *cameraPosition)
 #endif
 typedef UPDATEGAME(_updategame);
 
@@ -93,6 +99,7 @@ private:
     ApplicationContext m_applicationContext;
 
 public:
+    HGLRC m_glContext;
     WindowDimension m_windowDimension;
     Window m_window;
     static int m_running;

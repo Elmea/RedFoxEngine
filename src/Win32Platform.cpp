@@ -1,4 +1,5 @@
 #include "Win32Platform.hpp"
+#include "glcorearb.h"
 #include "imgui_impl_win32.h"
 using namespace RedFoxEngine;
 
@@ -6,7 +7,7 @@ int Platform::m_running;
 
 static void FatalError(const char *message)
 {
-    MessageBoxA(NULL, message, "Error", MB_ICONEXCLAMATION);
+    MessageBoxA(nullptr, message, "Error", MB_ICONEXCLAMATION);
     ExitProcess(0);
 }
 
@@ -31,8 +32,11 @@ static int StringisEqual(const char *src, const char *dst, size_t dstlen)
 static void APIENTRY DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
                                    const GLchar *message, const void *user)
 {
-    OutputDebugStringA(message);
-    OutputDebugStringA("\n");
+    if (severity != GL_DEBUG_SEVERITY_NOTIFICATION && severity != GL_DEBUG_SEVERITY_LOW)
+    {
+        OutputDebugStringA(message);
+        OutputDebugStringA("\n");
+    }
     if (severity == GL_DEBUG_SEVERITY_HIGH || severity == GL_DEBUG_SEVERITY_MEDIUM)
     {
         if (IsDebuggerPresent())
@@ -89,7 +93,7 @@ static HGLRC Win32InitOpenGL(HWND window)
     int format;
     unsigned int formats;
 
-    if (!wglChoosePixelFormatARB(WindowDC, Attrib, NULL, 1, &format, &formats) || formats == 0)
+    if (!wglChoosePixelFormatARB(WindowDC, Attrib, nullptr, 1, &format, &formats) || formats == 0)
     {
         FatalError("OpenGL does not support required pixel format!");
     }
@@ -121,7 +125,7 @@ static HGLRC Win32InitOpenGL(HWND window)
             0,
         };
 
-        OpenGLRC = wglCreateContextAttribsARB(WindowDC, NULL, attrib);
+        OpenGLRC = wglCreateContextAttribsARB(WindowDC, nullptr, attrib);
         if (!OpenGLRC)
         {
             FatalError("Cannot create modern OpenGL context! OpenGL version 4.5 not supported?");
@@ -139,7 +143,7 @@ static HGLRC Win32InitOpenGL(HWND window)
 
 #ifndef NDEBUG
         // enable debug callback
-        glDebugMessageCallback(&DebugCallback, NULL);
+        glDebugMessageCallback(&DebugCallback, nullptr);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 #endif
     }
@@ -156,12 +160,13 @@ Platform::Platform(int width, int height)
     GetModuleHandleExA(0, nullptr, &m_applicationContext);
     // Create Window
     m_window = CreateRedFoxWindow(width, height);
-    HGLRC glContext = Win32InitOpenGL(m_window);
+    m_glContext = Win32InitOpenGL(m_window);
     ShowWindow(m_window, 5);
     HCURSOR hCurs1;
 
-    hCurs1 = LoadCursor(NULL, IDC_ARROW);
+    hCurs1 = LoadCursor(nullptr, IDC_ARROW);
     SetCursor(hCurs1);
+    GetWindowDimension();
 }
 
 WindowDimension Platform::GetWindowDimension()
@@ -170,13 +175,14 @@ WindowDimension Platform::GetWindowDimension()
     GetClientRect(m_window, &ClientRect);
     m_windowDimension.width = ClientRect.right - ClientRect.left;
     m_windowDimension.height = ClientRect.bottom - ClientRect.top;
+    glViewport(0, 0, m_windowDimension.width, m_windowDimension.height);
     return (m_windowDimension);
 }
 
 void Platform::MessageProcessing(Input *input)
 {
     MSG Message;
-    while (PeekMessageA(&Message, NULL, 0, 0, PM_REMOVE))
+    while (PeekMessageA(&Message, nullptr, 0, 0, PM_REMOVE))
     {
         switch (Message.message)
         {
@@ -184,7 +190,6 @@ void Platform::MessageProcessing(Input *input)
         // NOTE This message gets called on window resize
         case WM_SIZE: {
             GetWindowDimension();
-            glViewport(0, 0, m_windowDimension.width, m_windowDimension.height);
         }
         break;
         case WM_MOUSEMOVE: {
@@ -306,7 +311,7 @@ void Platform::MessageProcessing(Input *input)
             case 0x26: {
                 input->L = IsDown;
             }
-            break;     // L
+            break;
             case 0x27: // ;
             case 0x28: // '
             case 0x29: // `~
@@ -399,12 +404,28 @@ UPDATEGAME(updateStub)
 //NOTE We use an empty function in case our library loading fails, so we don't crash
 }
 
-_updategame *Platform::LoadGameLibrary(const char *functionName, const char *libraryPath, HINSTANCE &gameLibrary, LPFILETIME LastWriteTime, _updategame *functionPointer)
+_updategame *Platform::LoadGameLibrary(const char *functionName, const char *libraryPath, HINSTANCE &gameLibrary,
+    LPFILETIME LastWriteTime, _updategame *functionPointer)
 {
     FILETIME temp = *LastWriteTime;
-
-    HANDLE File = CreateFileA("game.dll", GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    GetFileTime(File, NULL, NULL, LastWriteTime);
+    /*
+     * NOTE: On Windows the lowest overhead function to open a file handle
+     * is the misnamed function CreateFile.
+     * We get a file handle, check the last write time, and if the library
+     * on disk is newer, we free ours and load the newest one.
+     *
+     * Another complication of this function is the fact that when a library is loaded,
+     * it cannot be overwritten (by compiling). So we always copy the library, and load the
+     * copy, that way the original can always be overwritten, which is what we want to hot reload.
+    */ 
+    HANDLE File = CreateFileA("game.dll",                         // PATH 
+                              GENERIC_READ,                       // Desired access
+                              FILE_SHARE_WRITE | FILE_SHARE_READ, // Share Mode
+                              nullptr,                               // Security Attributes
+                              OPEN_EXISTING,                      // Creation Disposition
+                              FILE_ATTRIBUTE_NORMAL,              // Flags and attributes
+                              nullptr);                              // Template file
+    GetFileTime(File, nullptr, nullptr, LastWriteTime);
     CloseHandle(File);
     if (CompareFileTime(&temp, LastWriteTime) != 0)
     {
@@ -414,7 +435,7 @@ _updategame *Platform::LoadGameLibrary(const char *functionName, const char *lib
         gameLibrary = LoadLibraryA("gameCopy.dll");
         if (gameLibrary)
             functionPointer = (_updategame *)GetProcAddress(gameLibrary, functionName);
-        if (functionPointer == NULL)
+        if (functionPointer == nullptr)
             functionPointer = &updateStub;
     }
     return ((_updategame*)functionPointer);
@@ -422,7 +443,7 @@ _updategame *Platform::LoadGameLibrary(const char *functionName, const char *lib
 
 Window Platform::CreateRedFoxWindow(int Width, int Height)
 {
-    Window window = NULL;
+    Window window = nullptr;
     WNDCLASS WindowClass = {};
     WindowClass.style = CS_HREDRAW | CS_VREDRAW;
     WindowClass.lpfnWndProc = MainWindowCallback;
@@ -437,17 +458,17 @@ Window Platform::CreateRedFoxWindow(int Width, int Height)
                                  WS_OVERLAPPEDWINDOW,          // Window style
                                  CW_USEDEFAULT, CW_USEDEFAULT, // Position and Size
                                  Width, Height,
-                                 NULL,                  // Parent window
-                                 NULL,                  // Menu
+                                 nullptr,                  // Parent window
+                                 nullptr,                  // Menu
                                  WindowClass.hInstance, // Instance handle
-                                 NULL);                 // Additional application data
+                                 nullptr);                 // Additional application data
     }
     return (window);
 }
 
 void Platform::FatalError(const char *message)
 {
-    MessageBoxA(NULL, message, "Error", MB_ICONEXCLAMATION);
+    MessageBoxA(nullptr, message, "Error", MB_ICONEXCLAMATION);
     ExitProcess(0);
 }
 
@@ -455,7 +476,7 @@ void Platform::GetWglFunctions(void)
 {
     // to get WGL funcs we need valid GL context, so create dummy window for dummy GL contetx
     HWND dummy = CreateWindowExW(0, L"STATIC", L"DummyWindow", WS_OVERLAPPED, CW_USEDEFAULT, CW_USEDEFAULT,
-                                 CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, NULL);
+                                 CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, nullptr, nullptr);
 
     if (!dummy && "Failed to create dummy window")
     {
@@ -569,7 +590,7 @@ void Platform::GetWglFunctions(void)
         FatalError("OpenGL does not support required WGL extensions for modern context!");
     }
 
-    wglMakeCurrent(NULL, NULL);
+    wglMakeCurrent(nullptr, nullptr);
     wglDeleteContext(rc);
     ReleaseDC(dummy, dc);
     DestroyWindow(dummy);
