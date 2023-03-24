@@ -33,26 +33,30 @@ class Graphics
 {
 private:
     RedFoxMaths::Mat4 m_viewProjection;
-    GLuint m_pipeline;
     GLuint m_vshader, m_fshader;
-    GLuint m_gpipeline;
     GLuint m_gvshader, m_gfshader;
-    GLuint m_gBuffer;
-    GLuint m_gPosition, m_gNormal, m_gAlbedoSpec;
     GLuint m_rboIMGUI;
+    GLuint m_quadVAO;
+    GLuint m_gpipeline;
+    GLuint m_pipeline;
+    GLuint m_gBuffer;
     GLuint m_imguiFramebuffer;
 public:
     GLuint m_imguiTexture;
-    void Draw(GameObject *gameObjects, int gameObjectCount, Memory *tempArena);
+    GLuint m_gPosition, m_gNormal, m_gAlbedoSpec;
+    void DrawGBuffer(GameObject *objects, int gameObjectCount, Memory *temp);
+    void DrawQuad();
     void DrawModel(Model *model);
     void DrawModelInstances(Model *model, int instanceCount);
+    void InitQuad();
     void InitModel(Model *model);
     void InitTexture(ObjModel *model);
-    GLuint InitTexture(void *data,int height, int width);
+    u32 InitTexture(void *data,int height, int width);
     void InitFramebuffer();
     void InitShaders(Memory *tempArena);
     void InitGraphics(Memory *tempArena, WindowDimension dimension);
-    void InitImGUIFrameBuffer(WindowDimension dimension);
+    void InitGeometryFramebuffer(WindowDimension dimension);
+    void InitImGUIFramebuffer(WindowDimension dimension);
     void UpdateImGUIFrameBuffer(WindowDimension &dimension, WindowDimension content);
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
 };

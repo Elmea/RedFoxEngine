@@ -69,9 +69,12 @@ void Engine::LoadScene(const char *fileName)
                 }
             }
         }
-        ReadFile(file, &current->position, sizeof(current->position), nullptr, nullptr);
-        ReadFile(file, &current->scale, sizeof(current->scale), nullptr, nullptr);
-        ReadFile(file, &current->orientation, sizeof(current->orientation), nullptr, nullptr);
+        ReadFile(file, &current->position,
+            sizeof(current->position), nullptr, nullptr);
+        ReadFile(file, &current->scale,
+            sizeof(current->scale), nullptr, nullptr);
+        ReadFile(file, &current->orientation,
+            sizeof(current->orientation), nullptr, nullptr);
     }
     CloseHandle(file);
 }
@@ -97,9 +100,12 @@ void Engine::SaveScene(const char *fileName)
         WriteFile(file, &parent, sizeof(int), nullptr, nullptr);
         WriteFile(file, &current->model->hash, sizeof(u64), nullptr, nullptr);
 
-        WriteFile(file, &current->position, sizeof(current->position), nullptr, nullptr);
-        WriteFile(file, &current->scale, sizeof(current->scale), nullptr, nullptr);
-        WriteFile(file, &current->orientation, sizeof(current->orientation), nullptr, nullptr);
+        WriteFile(file, &current->position,
+            sizeof(current->position), nullptr, nullptr);
+        WriteFile(file, &current->scale,
+            sizeof(current->scale), nullptr, nullptr);
+        WriteFile(file, &current->orientation,
+            sizeof(current->orientation), nullptr, nullptr);
     }
     CloseHandle(file);
 }
@@ -120,7 +126,6 @@ Engine::Engine(int width, int height) :
     m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator,
         sizeof(GameObject) * 100000);
 
-
     //TODO transition to an instance based model 'model'
     for (int i = 0; i < (int)m_modelCount; i++)
         m_graphics.InitModel(&m_models[i]);
@@ -130,6 +135,7 @@ Engine::Engine(int width, int height) :
     m_dc = GetDC(m_platform.m_window);
     UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll",
         m_gameLibrary, &m_lastTime, nullptr);
+    m_graphics.InitQuad();
     StartTime();
 }
 
@@ -141,7 +147,8 @@ void Engine::ProcessInputs()
     int mouseY = m_input.mouseYPosition;
     m_platform.MessageProcessing(&m_input);
 //    m_platform.GetWindowDimension();
-    glViewport(0, 0, m_platform.m_windowDimension.width, m_platform.m_windowDimension.height);
+    glViewport(0, 0, m_platform.m_windowDimension.width,
+                     m_platform.m_windowDimension.height);
     m_editorCamera.SetProjection(projectionType::PERSPECTIVE);
     if (GetFocus() != m_platform.m_window)
     {
@@ -195,10 +202,13 @@ void Engine::Draw()
 {
     glClearColor(0, 0, 0, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    m_graphics.Draw(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
-    // swap the buffers to show output
+    m_graphics.DrawGBuffer(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
+    // m_graphics.DrawGBuffer(m_gameObjects, 1, &m_tempAllocator);
+    m_graphics.DrawQuad();
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     DrawIMGUI();
+    // swap the buffers to show output
     if (!SwapBuffers(m_dc))
         m_platform.FatalError("Failed to swap OpenGL buffers!");
     u64 endTime = RedFoxEngine::Platform::GetTimer();

@@ -179,11 +179,42 @@ void Engine::DrawIMGUI()
         {
             if (content.x != dimension.width || content.y != dimension.height)
                 m_graphics.UpdateImGUIFrameBuffer(dimension, {(int)content.x, (int)content.y});
-            ImGui::Image((void *)m_graphics.m_imguiTexture, 
+            void *temp = (void*)((u64)m_graphics.m_imguiTexture);
+            ImGui::Image(temp,
+                ImVec2(dimension.width, dimension.height), ImVec2(0, 1), ImVec2(1, 0));
+        }
+    }ImGui::End();
+    if (ImGui::Begin("Position", (bool*)0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
+    {
+        ImVec2 content = ImGui::GetContentRegionAvail();
+        if (content.x != 0 && content.y != 0)
+        {
+            void *temp = (void*)((u64)m_graphics.m_gPosition);
+            ImGui::Image(temp,
                 ImVec2(content.x, content.y), ImVec2(0, 1), ImVec2(1, 0));
         }
-    }
-    ImGui::End();
+    }ImGui::End();
+    if (ImGui::Begin("Normal", (bool*)0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
+    {
+        ImVec2 content = ImGui::GetContentRegionAvail();
+        if (content.x != 0 && content.y != 0)
+        {
+            void *temp = (void*)((u64)m_graphics.m_gNormal);
+            ImGui::Image(temp,
+                ImVec2(content.x, content.y), ImVec2(0, 1), ImVec2(1, 0));
+        }
+    }ImGui::End();
+    if (ImGui::Begin("UV", (bool*)0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
+    {
+        ImVec2 content = ImGui::GetContentRegionAvail();
+        if (content.x != 0 && content.y != 0)
+        {
+            void *temp = (void*)((u64)m_graphics.m_gAlbedoSpec);
+            ImGui::Image(temp,
+                ImVec2(content.x, content.y), ImVec2(0, 1), ImVec2(1, 0));
+        }
+    }ImGui::End();
+
     
     ImGui::SameLine();
     if (ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
@@ -215,7 +246,7 @@ void Engine::DrawIMGUI()
             const int buttonWidth = 50;
             if (buttonWidth < ImGui::GetContentRegionAvail().x)
             {
-                ImGui::SameLine(ImGui::GetContentRegionAvail().x - buttonWidth / 2);
+                ImGui::SameLine(ImGui::GetContentRegionAvail().x - (f32)buttonWidth / 2);
                 if (ImGui::Button(std::to_string(scrollStrength).c_str(), ImVec2(buttonWidth, 0)))
                 {
                     scrollStrength *= 10;
