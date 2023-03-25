@@ -155,6 +155,82 @@ void Engine::DrawSceneNodes(bool is_child, GameObject* gameObj)
     }
 }
 
+int Engine::SetupDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class)
+{
+    if (viewport == NULL)
+        viewport = ImGui::GetMainViewport();
+
+    const float menuBarHeight = ImGui::GetCurrentWindow()->MenuBarHeight();
+    const float buttonHeight = 32.f;
+    const float toolbarSize = 40.f;
+    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + menuBarHeight));
+    ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, toolbarSize));
+    ImGui::SetNextWindowViewport(viewport->ID);
+
+    ImGuiWindowFlags window_flags = 0
+        | ImGuiWindowFlags_NoDocking
+        | ImGuiWindowFlags_NoTitleBar
+        | ImGuiWindowFlags_NoResize
+        | ImGuiWindowFlags_NoMove
+        | ImGuiWindowFlags_NoScrollbar
+        | ImGuiWindowFlags_NoSavedSettings;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.f);
+    ImGui::Begin("TOOLBAR", NULL, window_flags);
+    
+    ImGui::PopStyleVar();
+
+    if (ImGui::BeginPopupContextItem("MainMenu"))
+    {
+        if (ImGui::Selectable("Save scene"))
+            SaveScene(m_sceneName);
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !ImGui::IsItemHovered())
+            ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+    
+    if (ImGui::Button("LOGO HERE", ImVec2(0, buttonHeight)))
+    {
+        ImGui::OpenPopup("MainMenu");
+    }
+    /*ImGui::SameLine();
+    
+    if (ImGui::Button("Save scene", ImVec2(0, buttonHeight)))
+        SaveScene(m_sceneName);
+        */
+    ImGui::SameLine();
+    ImGui::Button("PLAY", ImVec2(0, buttonHeight));
+    ImGui::SameLine();
+    ImGui::Button("BUILD", ImVec2(0, buttonHeight));
+
+    ImGui::End();
+
+    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + toolbarSize));
+    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, viewport->WorkSize.y - toolbarSize));
+    ImGui::SetNextWindowViewport(viewport->ID);
+
+    ImGuiWindowFlags host_window_flags = 0;
+    host_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking;
+    host_window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+        host_window_flags |= ImGuiWindowFlags_NoBackground;
+
+    char label[32];
+    ImFormatString(label, IM_ARRAYSIZE(label), "DockSpaceViewport_%08X", viewport->ID);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::Begin(label, NULL, host_window_flags);
+    ImGui::PopStyleVar(3);
+
+    ImGuiID dockspace_id = ImGui::GetID("DockSpace");
+    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags, window_class);
+    ImGui::End();
+
+    return dockspace_id;
+}
+
 void Engine::DrawIMGUI()
 {
     ImGuiDockNodeFlags dockingFlags =
@@ -166,7 +242,7 @@ void Engine::DrawIMGUI()
     ImGui::NewFrame();
     
     // TODO(a.perche) : Build dockspace at runtime
-    ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockingFlags);
+    SetupDockSpace(ImGui::GetMainViewport(), dockingFlags, (const ImGuiWindowClass*)0);
 
     ImGui::PushFont(m_defaultFont);
     static int index = 0;
@@ -215,7 +291,6 @@ void Engine::DrawIMGUI()
         }
     }ImGui::End();
 
-    
     ImGui::SameLine();
     if (ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
@@ -229,7 +304,7 @@ void Engine::DrawIMGUI()
         
 
         static int scrollStrength = 1;
-        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, " Scene Name (%.4f)", m_deltaTime))
+        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "%s (%.4f)", m_sceneName, m_deltaTime))
         {
             if (ImGui::BeginDragDropTarget())
             {
@@ -296,9 +371,7 @@ void Engine::DrawIMGUI()
         ImGui::EndChild();
     }
     ImGui::End();
-    ImGui::PopFont();
 
-    ImGui::PushFont(m_defaultFont);
     if (ImGui::Begin("Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
         ImGuiTreeNodeFlags propertiesFlags = 

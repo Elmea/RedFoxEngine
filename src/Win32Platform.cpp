@@ -360,6 +360,15 @@ static LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WPa
     LRESULT Result = 0;
     switch (Message)
     {
+    case WM_NCCALCSIZE:
+    {
+        const float pixelSize = 2.f;
+        NCCALCSIZE_PARAMS* params = (NCCALCSIZE_PARAMS*)LParam;
+        params->rgrc[0].top = (params->rgrc[0].top + 1.f);
+        params->rgrc[0].bottom = (params->rgrc[0].bottom - pixelSize);
+        params->rgrc[0].left = (params->rgrc[0].left + pixelSize);
+        params->rgrc[0].right = (params->rgrc[0].right - pixelSize);
+    }break;
     case WM_DESTROY: {
         Platform::m_running = 0;
         PostQuitMessage(0);
@@ -455,7 +464,7 @@ Window Platform::CreateRedFoxWindow(int Width, int Height)
         window = CreateWindowExA(WindowClass.style,            // Optional window styles.
                                  WindowClass.lpszClassName,    // Window class
                                  "RedFox Engine",              // Window text
-                                 WS_OVERLAPPEDWINDOW,          // Window style
+                                 (WS_POPUP | WS_EX_APPWINDOW), // Window style
                                  CW_USEDEFAULT, CW_USEDEFAULT, // Position and Size
                                  Width, Height,
                                  nullptr,                  // Parent window

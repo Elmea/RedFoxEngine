@@ -34,10 +34,14 @@ void Engine::StartTime()
 
 void Engine::LoadScene(const char *fileName)
 {
-
     HANDLE file = CreateFile(fileName, GENERIC_READ,
         FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL, nullptr);
+    
+    size_t fileNameLen = strlen(fileName);
+    m_sceneName = (char*)MyMalloc(&m_arenaAllocator, fileNameLen);
+    memcpy((char*)m_sceneName, fileName, fileNameLen);
+
     ReadFile(file, &m_gameObjectCount, sizeof(u32), nullptr, nullptr);
     for(int i = 0; i < (int)m_gameObjectCount; i++)
     {

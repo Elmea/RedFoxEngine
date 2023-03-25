@@ -3,7 +3,7 @@
 
 int main()
 {
-    RedFoxEngine::Engine engine(1920, 1080);
+    RedFoxEngine::Engine engine(1920, 1040);
 
     while (engine.isRunning())
     {
