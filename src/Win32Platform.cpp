@@ -193,8 +193,12 @@ void Platform::MessageProcessing(Input *input)
         }
         break;
         case WM_MOUSEMOVE: {
+            int mouseX = input->mouseXPosition;
+            int mouseY = input->mouseYPosition;
             input->mouseXPosition = LOWORD(Message.lParam);
             input->mouseYPosition = HIWORD(Message.lParam);
+            input->mouseXDelta = input->mouseXPosition - mouseX;
+            input->mouseYDelta = input->mouseYPosition - mouseY;
         }
         break;
         case WM_MOUSEWHEEL: {

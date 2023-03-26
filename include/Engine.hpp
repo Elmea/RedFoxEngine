@@ -45,6 +45,7 @@ private:
     char* m_sceneName;
 private:
     int SetupDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
+    void DragWindow();
     void DrawIMGUI();
     void DrawSceneNodes(bool is_child, GameObject* model);
     Input GetInputs();

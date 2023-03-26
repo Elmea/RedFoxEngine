@@ -147,8 +147,6 @@ void Engine::ProcessInputs()
 {
     m_time = Platform::GetTimer();
 
-    int mouseX = m_input.mouseXPosition;
-    int mouseY = m_input.mouseYPosition;
     m_platform.MessageProcessing(&m_input);
 //    m_platform.GetWindowDimension();
     glViewport(0, 0, m_platform.m_windowDimension.width,
@@ -160,11 +158,6 @@ void Engine::ProcessInputs()
         m_input.mouseXDelta = m_input.mouseXPosition = 0;
         m_input.mouseYDelta = m_input.mouseYPosition = 0;
     }
-    else
-    {
-        m_input.mouseXDelta = m_input.mouseXPosition - mouseX;
-        m_input.mouseYDelta = m_input.mouseYPosition - mouseY;
-    }
 }
 
 Input Engine::GetInputs()
@@ -174,6 +167,7 @@ Input Engine::GetInputs()
 
 void Engine::Update()
 {
+    DragWindow();
     UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll",
         m_gameLibrary, &m_lastTime, UpdateGame);
     static Float3 cameraRotation(0, 0, 0);
@@ -200,6 +194,7 @@ void Engine::Update()
     m_graphics.SetViewProjectionMatrix(m_editorCamera.GetVP());
     m_gameObjects[0].GetChildren(m_gameObjects, m_gameObjectCount,
         &m_tempAllocator);
+    m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 
 void Engine::Draw()
