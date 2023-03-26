@@ -55,9 +55,9 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     Quaternion beta = Quaternion::FromEuler(Float3(0, 0, 90));
     for (int i = 0; i < (int)gameObjectCount; i++) // TODO physics code here ?
     {
-//          gameObjects[i].position += Float3(sinf(time), cosf(time), 0) * 0.001f;
-//          gameObjects[i].orientation = Quaternion::SLerp(beta, alpha, time);
-//          gameObjects[i].scale = Misc::Lerp(0.1, 2, Misc::Abs(cosf(time)));
+         gameObjects[i].position += Float3(sinf(time), cosf(time), 0) * 0.001f;
+         gameObjects[i].orientation = Quaternion::SLerp(beta, alpha, time);
+         gameObjects[i].scale = Misc::Lerp(0.1, 2, Misc::Abs(cosf(time)));
 
     }
 }

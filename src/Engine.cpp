@@ -9,6 +9,41 @@
 
 using namespace RedFoxEngine;
 
+using namespace RedFoxMaths;
+
+Engine::Engine(int width, int height) :
+    m_platform(width, height),
+    m_editorCamera(projectionType::PERSPECTIVE, width / (f32)height)
+{
+    m_arenaAllocator = InitVirtualMemory(1 * GigaByte);
+    m_tempAllocator = InitVirtualMemory(1 * GigaByte);
+    IncreaseTotalCapacity(&m_arenaAllocator, 1 * MegaByte);
+    m_graphics.InitGraphics(&m_tempAllocator, m_platform.m_windowDimension);
+    InitIMGUI();
+    m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
+
+    m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 10);
+    ObjModelPush("ts_bot912.obj");
+    m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator,
+        sizeof(GameObject) * 100000);
+
+    //TODO transition to an instance based model 'model'
+    for (int i = 0; i < (int)m_modelCount; i++)
+        m_graphics.InitModel(&m_models[i]);
+#if 1
+    LoadScene("test.scene");
+#else
+    initSphericalManyGameObjects(50000);
+#endif
+    m_input = {};
+    m_dc = GetDC(m_platform.m_window);
+    UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll",
+        m_gameLibrary, &m_lastTime, nullptr);
+    m_graphics.InitQuad();
+    m_graphics.InitLights();
+    StartTime();
+}
+
 void Engine::ObjModelPush(const char *path)
 {
     if (ParseModel(&m_models[m_modelCount++].obj, path))
@@ -20,7 +55,6 @@ void Engine::ObjModelPush(const char *path)
         (u64)length, (void *)path), 0);
 }
 
-using namespace RedFoxMaths;
 
 bool Engine::isRunning()
 {
@@ -114,33 +148,45 @@ void Engine::SaveScene(const char *fileName)
     CloseHandle(file);
 }
 
-Engine::Engine(int width, int height) :
-    m_platform(width, height),
-    m_editorCamera(projectionType::PERSPECTIVE, width / (f32)height)
+void Engine::initSphericalManyGameObjects(int count) //TODO: remove
 {
-    m_arenaAllocator = InitVirtualMemory(1 * GigaByte);
-    m_tempAllocator = InitVirtualMemory(1 * GigaByte);
-    IncreaseTotalCapacity(&m_arenaAllocator, 1 * MegaByte);
-    m_graphics.InitGraphics(&m_tempAllocator, m_platform.m_windowDimension);
-    InitIMGUI();
-    m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
-
-    m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 10);
-    ObjModelPush("ts_bot912.obj");
-    m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator,
-        sizeof(GameObject) * 100000);
-
+    m_gameObjectCount = count;
+    for (int i = 0; i < (int)m_gameObjectCount; i++)
+    {
+        m_gameObjects[i].parent = nullptr;
+        m_gameObjects[i].model = m_models;
+        m_gameObjects[i].scale = 1;
+        m_gameObjects[i].orientation.a = 1;
+        m_gameObjects[i].name = (char *)MyMalloc(&m_arenaAllocator, sizeof(char) * 13);
+        snprintf(m_gameObjects[i].name, 13, "Entity%d", i);
+        if (i < 3 && i != 0)
+        m_gameObjects[i].parent = &m_gameObjects[0];
+    }
     //TODO transition to an instance based model 'model'
-    for (int i = 0; i < (int)m_modelCount; i++)
-        m_graphics.InitModel(&m_models[i]);
-    
-    LoadScene("test.scene");
-    m_input = {};
-    m_dc = GetDC(m_platform.m_window);
-    UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll",
-        m_gameLibrary, &m_lastTime, nullptr);
-    m_graphics.InitQuad();
-    StartTime();
+
+    m_gameObjects[1].parent = &m_gameObjects[0];
+    m_gameObjects[1].position = {};
+    m_gameObjects[1].scale = 0.5;
+    m_gameObjects[2].position = {2, 1, 0};
+    m_gameObjects[2].scale = 0.5;
+
+    int countX = (int)sqrtf(count);
+    int countY = count / countX;
+    float longitudeStep = M_PI * 2 / countX;
+    float latitudeStep = M_PI / countY;
+
+    int index = 0;
+    float scale = 10;
+    for (int i = 0; i < countX; i++)
+    {
+        for(int j = 0; j < countY; j++)
+        {
+            m_gameObjects[index++].position = {cosf(longitudeStep * j) * sinf(i * latitudeStep),
+            sinf(longitudeStep * j) * sinf(i * latitudeStep), cosf(i * latitudeStep - M_PI)};
+            m_gameObjects[index - 1].position = m_gameObjects[index - 1].position * scale;
+            //m_gameObjects[index - 1].position.y *= 2;
+        }
+    }
 }
 
 void Engine::ProcessInputs()
@@ -193,13 +239,8 @@ void Engine::Update()
 
 void Engine::Draw()
 {
-    glClearColor(0, 0, 0, 1.f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     m_graphics.DrawGBuffer(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
-    // m_graphics.DrawGBuffer(m_gameObjects, 1, &m_tempAllocator);
-    m_graphics.DrawQuad();
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    m_graphics.DrawQuad(m_platform.m_windowDimension);
     DrawIMGUI();
     // swap the buffers to show output
     if (!SwapBuffers(m_dc))

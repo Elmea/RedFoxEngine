@@ -41,15 +41,18 @@ private:
     GLuint m_pipeline;
     GLuint m_gBuffer;
     GLuint m_imguiFramebuffer;
+    GLuint m_lightBuffer;
+    u32    m_lightCount;
 public:
     GLuint m_imguiTexture;
     GLuint m_gPosition, m_gNormal, m_gAlbedoSpec;
     void DrawGBuffer(GameObject *objects, int gameObjectCount, Memory *temp);
-    void DrawQuad();
+    void DrawQuad(WindowDimension dimension);
     void DrawModel(Model *model);
     void DrawModelInstances(Model *model, int instanceCount);
     void InitQuad();
     void InitModel(Model *model);
+    void InitLights();
     void InitTexture(ObjModel *model);
     u32 InitTexture(void *data,int height, int width);
     void InitFramebuffer();

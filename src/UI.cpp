@@ -263,6 +263,8 @@ void Engine::DragWindow()
 
 void Engine::DrawIMGUI()
 {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     ImGuiDockNodeFlags dockingFlags =
         ImGuiDockNodeFlags_NoWindowMenuButton |
         ImGuiDockNodeFlags_NoCloseButton;
@@ -288,36 +290,6 @@ void Engine::DrawIMGUI()
             void *temp = (void*)((u64)m_graphics.m_imguiTexture);
             ImGui::Image(temp,
                 ImVec2(dimension.width, dimension.height), ImVec2(0, 1), ImVec2(1, 0));
-        }
-    }ImGui::End();
-    if (ImGui::Begin("Position", (bool*)0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
-    {
-        ImVec2 content = ImGui::GetContentRegionAvail();
-        if (content.x != 0 && content.y != 0)
-        {
-            void *temp = (void*)((u64)m_graphics.m_gPosition);
-            ImGui::Image(temp,
-                ImVec2(content.x, content.y), ImVec2(0, 1), ImVec2(1, 0));
-        }
-    }ImGui::End();
-    if (ImGui::Begin("Normal", (bool*)0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
-    {
-        ImVec2 content = ImGui::GetContentRegionAvail();
-        if (content.x != 0 && content.y != 0)
-        {
-            void *temp = (void*)((u64)m_graphics.m_gNormal);
-            ImGui::Image(temp,
-                ImVec2(content.x, content.y), ImVec2(0, 1), ImVec2(1, 0));
-        }
-    }ImGui::End();
-    if (ImGui::Begin("UV", (bool*)0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
-    {
-        ImVec2 content = ImGui::GetContentRegionAvail();
-        if (content.x != 0 && content.y != 0)
-        {
-            void *temp = (void*)((u64)m_graphics.m_gAlbedoSpec);
-            ImGui::Image(temp,
-                ImVec2(content.x, content.y), ImVec2(0, 1), ImVec2(1, 0));
         }
     }ImGui::End();
 

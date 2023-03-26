@@ -96,6 +96,30 @@ void Graphics::UpdateImGUIFrameBuffer(WindowDimension &dimension,
     InitGeometryFramebuffer(dimension);
 }
 
+void Graphics::InitLights()
+{
+    m_lightCount = 1000;
+    glCreateBuffers(1, &m_lightBuffer);
+    glNamedBufferStorage(m_lightBuffer, m_lightCount * sizeof(Light), nullptr,
+        GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
+
+    GLbitfield mapFlags = (GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+    Light *light = (Light *)glMapNamedBufferRange(m_lightBuffer, 0,
+        m_lightCount * sizeof(Light), mapFlags);
+
+    for(int i = 0; i < (int)m_lightCount; i++)
+    {
+        light[i].constant  = 1.0f;
+        light[i].linear    = 0.09f;
+        light[i].quadratic = 0.032f;
+
+        light[i].position = {{(f32)i * 0.01f , i * 0.01f, (f32)(i * 0.0l)}};
+        light[i].diffuse = {{(f32)(i * 0.00002),(f32)(i * 0.00002), (f32)(i * 0.00002)}};
+    }
+    glUnmapNamedBuffer(m_lightBuffer);
+}
+
+
 void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
 {
     InitShaders(tempArena);
@@ -327,10 +351,12 @@ void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
 void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
      Memory *temp)
 {
+    //NOTE: here we clear the 0 framebuffer
+    glClearColor(0, 0, 0, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // clear screen
     glBindFramebuffer(GL_FRAMEBUFFER, m_gBuffer);
-    glClearColor(1, 1, 1, 1.f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindProgramPipeline(m_gpipeline);
     glDisable(GL_BLEND);
 
@@ -364,21 +390,26 @@ void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
     }
 }
 
-void Graphics::DrawQuad()
+void Graphics::DrawQuad(WindowDimension dimension)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
     // clear screen
     glEnable(GL_BLEND);
     glBindProgramPipeline(m_pipeline);
-    glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-    // activate shaders for next draw call
+    // Bind the buffer to a binding point
+    GLuint bindingPoint = 0;
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_lightBuffer);
     glBindVertexArray(m_quadVAO);
     glBindTextureUnit(0, m_gPosition);
     glBindTextureUnit(1, m_gNormal);
     glBindTextureUnit(2, m_gAlbedoSpec);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+#if 0 //TODO this might be necesary if we want to draw objectts after defered shading
+    glBlitNamedFramebuffer(m_gBuffer, 0, 0, 0, dimension.width, dimension.height,
+                           0, 0, dimension.width, dimension.height,
+                           GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+#endif
 }
 
 void Graphics::DrawModelInstances(Model *model, int instanceCount)
