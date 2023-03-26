@@ -235,35 +235,30 @@ void Engine::DragWindow()
 {
     static bool clicked;
     if (m_input.mouseLClick &&
-       (m_input.mouseYPosition < 34 || clicked) &&
-       (m_input.mouseXDelta || m_input.mouseYDelta))
+       (m_input.mouseYPosition < 34 || clicked))
     {
         clicked = true;
-        RECT winPos;
-        GetWindowRect(m_platform.m_window, &winPos);
+        if (m_input.mouseXDelta || m_input.mouseYDelta)
+        {
+            RECT winPos;
+            GetWindowRect(m_platform.m_window, &winPos);
 
-        if (winPos.right + m_input.mouseXDelta > 0 &&
-            winPos.bottom + m_input.mouseYDelta > 0 &&
-            winPos.left + m_input.mouseXDelta < m_platform.m_windowDimension.width &&
-            winPos.top + m_input.mouseYDelta < m_platform.m_windowDimension.height)
-        {
-            SetWindowPos(m_platform.m_window, nullptr,
-                winPos.left + m_input.mouseXDelta,
-                winPos.top + m_input.mouseYDelta,
-                0, 0, SWP_NOSIZE);
+            if (winPos.right + m_input.mouseXDelta > 0 &&
+                winPos.bottom + m_input.mouseYDelta > 0 &&
+                winPos.left + m_input.mouseXDelta < m_platform.m_windowDimension.width &&
+                winPos.top + m_input.mouseYDelta < m_platform.m_windowDimension.height)
+            {
+                SetWindowPos(m_platform.m_window, nullptr,
+                    winPos.left + m_input.mouseXDelta,
+                    winPos.top + m_input.mouseYDelta,
+                    0, 0, SWP_NOSIZE);
+                m_input.mouseXPosition -= m_input.mouseXDelta;
+                m_input.mouseYPosition -= m_input.mouseYDelta;
+            }
         }
-        else
-        {
-            m_input.mouseXPosition = m_input.mouseXDelta = 0;
-            m_input.mouseYPosition = m_input.mouseYDelta = 0;
-        }
-        m_input.mouseXPosition -= m_input.mouseXDelta;
-        m_input.mouseYPosition -= m_input.mouseYDelta;
     }
     else
-    {
         clicked = false;
-    }
 }
 
 void Engine::DrawIMGUI()

@@ -152,12 +152,6 @@ void Engine::ProcessInputs()
     glViewport(0, 0, m_platform.m_windowDimension.width,
                      m_platform.m_windowDimension.height);
     m_editorCamera.SetProjection(projectionType::PERSPECTIVE);
-    if (GetFocus() != m_platform.m_window)
-    {
-        //TODO?: maybe don't reset mouse position on out of focus
-        m_input.mouseXDelta = m_input.mouseXPosition = 0;
-        m_input.mouseYDelta = m_input.mouseYPosition = 0;
-    }
 }
 
 Input Engine::GetInputs()
