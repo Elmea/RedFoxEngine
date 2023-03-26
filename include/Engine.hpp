@@ -42,9 +42,10 @@ private:
     Camera m_editorCamera;
     ImGuiIO* m_ImGuiIO = nullptr;
     ImFont* m_defaultFont = nullptr;
-    char* m_sceneName;
+    char* m_sceneName = "Sample Scene";
 private:
-    int SetupDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
+    int DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
+    void DrawMainTopBar(const ImGuiViewport* viewport);
     void DragWindow();
     void DrawIMGUI();
     void DrawSceneNodes(bool is_child, GameObject* model);

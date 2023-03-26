@@ -1,21 +1,25 @@
-#include "Engine.hpp"
 #include "imgui.h"
 #include <string>
+
+#define MEMORY_IMPLEMENTATION
+#include "MyMemory.hpp"
+
+#include "Engine.hpp"
 
 using namespace RedFoxEngine;
 
 #pragma region RedFox_Style_Color_Palette_Declaration
-#define RF_BLACK         ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
-#define RF_WHITE         ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
-#define RF_DARKGRAY      ImVec4(0.19f, 0.19f, 0.19f, 1.00f);
-#define RF_GRAY          ImVec4(0.31f, 0.31f, 0.31f, 1.00f);
-#define RF_LIGHTGRAY     ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
-#define RF_DARKGRAYBLUE  ImVec4(0.28f, 0.30f, 0.37f, 1.00f);
-#define RF_GRAYBLUE      ImVec4(0.35f, 0.39f, 0.49f, 1.00f);
-#define RF_LIGHTGRAYBLUE ImVec4(0.47f, 0.56f, 0.95f, 1.00f);
-#define RF_DARKORANGE    ImVec4(0.81f, 0.41f, 0.19f, 1.00f);
-#define RF_ORANGE        ImVec4(0.89f, 0.49f, 0.21f, 1.00f);
-#define RF_LIGHTORANGE   ImVec4(1.00f, 0.57f, 0.27f, 1.00f);
+#define RF_BLACK         ImVec4(0.00f, 0.00f, 0.00f, 1.00f)
+#define RF_WHITE         ImVec4(1.00f, 1.00f, 1.00f, 1.00f)
+#define RF_DARKGRAY      ImVec4(0.19f, 0.19f, 0.19f, 1.00f)
+#define RF_GRAY          ImVec4(0.31f, 0.31f, 0.31f, 1.00f)
+#define RF_LIGHTGRAY     ImVec4(0.51f, 0.51f, 0.51f, 1.00f)
+#define RF_DARKGRAYBLUE  ImVec4(0.28f, 0.30f, 0.37f, 1.00f)
+#define RF_GRAYBLUE      ImVec4(0.35f, 0.39f, 0.49f, 1.00f)
+#define RF_LIGHTGRAYBLUE ImVec4(0.47f, 0.56f, 0.95f, 1.00f)
+#define RF_DARKORANGE    ImVec4(0.81f, 0.41f, 0.19f, 1.00f)
+#define RF_ORANGE        ImVec4(0.89f, 0.49f, 0.21f, 1.00f)
+#define RF_LIGHTORANGE   ImVec4(1.00f, 0.57f, 0.27f, 1.00f)
 #pragma endregion
 
 void Engine::InitIMGUI()
@@ -103,6 +107,131 @@ void Engine::InitIMGUI()
     ImGui_ImplOpenGL3_Init("#version 450");
 }
 
+void Engine::DrawMainTopBar(const ImGuiViewport* viewport)
+{
+    const float menuBarHeight = ImGui::GetCurrentWindow()->MenuBarHeight();
+    const float buttonHeight = 40.f;
+    const float toolbarSize = buttonHeight + 8;
+
+    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + menuBarHeight));
+    ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, toolbarSize));
+    ImGui::SetNextWindowViewport(viewport->ID);
+
+
+    ImGuiWindowFlags window_flags = 0
+        | ImGuiWindowFlags_NoDocking
+        | ImGuiWindowFlags_NoTitleBar
+        | ImGuiWindowFlags_NoResize
+        | ImGuiWindowFlags_NoMove
+        | ImGuiWindowFlags_NoScrollbar
+        | ImGuiWindowFlags_NoSavedSettings;
+
+    ImGui::PushStyleColor(ImGuiCol_Border, (const ImVec4)RF_GRAY);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 4.f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.f);
+    ImGui::Begin("TOOLBAR", NULL, window_flags);
+    ImGui::PopStyleVar(2);
+    ImGui::PopStyleColor();
+    
+    if (ImGui::BeginPopupContextItem("MainMenu"))
+    {
+        if (ImGui::Selectable("Save scene"))
+            SaveScene(strcat(m_sceneName, ".scene"));
+        ImGui::EndPopup();
+    }
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
+    if (ImGui::Button("LOGO HERE", ImVec2(0, buttonHeight)))
+        ImGui::OpenPopup("MainMenu");
+
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 32.f);
+    ImGui::Button("PLAY", ImVec2(0, buttonHeight));
+
+    ImGui::SameLine();
+    ImGui::Button("BUILD", ImVec2(0, buttonHeight));
+    
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 64.f);
+    if (ImGui::Button("ADD ENTITY", ImVec2(0, buttonHeight)))
+    {
+        m_gameObjectCount++;
+        GameObject* newGameObject = &m_gameObjects[m_gameObjectCount - 1];
+        newGameObject->name = (char*)MyMalloc(&m_arenaAllocator, 20);
+        sprintf(newGameObject->name, "New entity #%d\0", m_gameObjectCount - 1);
+    }
+    
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetWindowWidth() - buttonHeight - 5.f);
+    if (ImGui::Button("X", ImVec2(buttonHeight, buttonHeight)))
+        m_platform.m_running = 0;
+
+    ImGui::PopStyleVar();
+    ImGui::End();
+
+    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + toolbarSize + 2.f));
+    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, viewport->WorkSize.y - toolbarSize - 2.f));
+    ImGui::SetNextWindowViewport(viewport->ID);
+}
+
+int Engine::DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class)
+{
+    if (viewport == NULL)
+        viewport = ImGui::GetMainViewport();
+
+    DrawMainTopBar(viewport);
+
+    ImGuiWindowFlags host_window_flags = 0;
+    host_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking;
+    host_window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+        host_window_flags |= ImGuiWindowFlags_NoBackground;
+
+    char label[32];
+    ImFormatString(label, IM_ARRAYSIZE(label), "DockSpaceViewport_%08X", viewport->ID);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::Begin(label, NULL, host_window_flags);
+    ImGui::PopStyleVar(3);
+
+    ImGuiID dockspace_id = ImGui::GetID("DockSpace");
+    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags, window_class);
+    ImGui::End();
+
+    return dockspace_id;
+}
+
+void Engine::DragWindow()
+{
+    static bool clicked;
+    if (m_input.mouseLClick && (m_input.mouseYPosition < 34 || clicked))
+    {
+        clicked = true;
+        if (m_input.mouseXDelta || m_input.mouseYDelta)
+        {
+            RECT winPos;
+            GetWindowRect(m_platform.m_window, &winPos);
+
+            if (winPos.right + m_input.mouseXDelta > 0 &&
+                winPos.bottom + m_input.mouseYDelta > 0 &&
+                winPos.left + m_input.mouseXDelta < m_platform.m_windowDimension.width &&
+                winPos.top + m_input.mouseYDelta < m_platform.m_windowDimension.height)
+            {
+                SetWindowPos(m_platform.m_window, nullptr,
+                    winPos.left + m_input.mouseXDelta,
+                    winPos.top + m_input.mouseYDelta,
+                    0, 0, SWP_NOSIZE);
+                m_input.mouseXPosition -= m_input.mouseXDelta;
+                m_input.mouseYPosition -= m_input.mouseYDelta;
+            }
+        }
+    }
+    else
+        clicked = false;
+}
+
 void Engine::DrawSceneNodes(bool is_child, GameObject* gameObj)
 {
     int childrenCount = gameObj->GetChildrenCount(m_gameObjects, m_gameObjectCount);
@@ -112,7 +241,7 @@ void Engine::DrawSceneNodes(bool is_child, GameObject* gameObj)
         flags = ImGuiTreeNodeFlags_Bullet;
     else
         flags = (childrenCount == 0) ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_OpenOnArrow;
-    if (gameObj == m_selectedObject) 
+    if (gameObj == m_selectedObject)
         flags |= ImGuiTreeNodeFlags_Selected;
     flags |= ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
@@ -141,124 +270,18 @@ void Engine::DrawSceneNodes(bool is_child, GameObject* gameObj)
             ImGui::EndDragDropTarget();
         }
     }
-    
+
     if (nodeOpen)
     {
         if (childrenCount)
         {
-            GameObject **children = gameObj->GetChildren(m_gameObjects, 
+            GameObject** children = gameObj->GetChildren(m_gameObjects,
                 m_gameObjectCount, &m_tempAllocator);
             for (int i = 0; i < childrenCount; i++)
                 DrawSceneNodes(true, children[i]);
         }
         ImGui::TreePop();
     }
-}
-
-int Engine::SetupDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class)
-{
-    if (viewport == NULL)
-        viewport = ImGui::GetMainViewport();
-
-    const float menuBarHeight = ImGui::GetCurrentWindow()->MenuBarHeight();
-    const float buttonHeight = 32.f;
-    const float toolbarSize = 40.f;
-    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + menuBarHeight));
-    ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, toolbarSize));
-    ImGui::SetNextWindowViewport(viewport->ID);
-
-    ImGuiWindowFlags window_flags = 0
-        | ImGuiWindowFlags_NoDocking
-        | ImGuiWindowFlags_NoTitleBar
-        | ImGuiWindowFlags_NoResize
-        | ImGuiWindowFlags_NoMove
-        | ImGuiWindowFlags_NoScrollbar
-        | ImGuiWindowFlags_NoSavedSettings;
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.f);
-    ImGui::Begin("TOOLBAR", NULL, window_flags);
-    
-    ImGui::PopStyleVar();
-
-    if (ImGui::BeginPopupContextItem("MainMenu"))
-    {
-        if (ImGui::Selectable("Save scene"))
-            SaveScene(m_sceneName);
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !ImGui::IsItemHovered())
-            ImGui::CloseCurrentPopup();
-        ImGui::EndPopup();
-    }
-    
-    if (ImGui::Button("LOGO HERE", ImVec2(0, buttonHeight)))
-    {
-        ImGui::OpenPopup("MainMenu");
-    }
-    /*ImGui::SameLine();
-    
-    if (ImGui::Button("Save scene", ImVec2(0, buttonHeight)))
-        SaveScene(m_sceneName);
-        */
-    ImGui::SameLine();
-    ImGui::Button("PLAY", ImVec2(0, buttonHeight));
-    ImGui::SameLine();
-    ImGui::Button("BUILD", ImVec2(0, buttonHeight));
-
-    ImGui::End();
-
-    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + toolbarSize));
-    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, viewport->WorkSize.y - toolbarSize));
-    ImGui::SetNextWindowViewport(viewport->ID);
-
-    ImGuiWindowFlags host_window_flags = 0;
-    host_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking;
-    host_window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-    if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
-        host_window_flags |= ImGuiWindowFlags_NoBackground;
-
-    char label[32];
-    ImFormatString(label, IM_ARRAYSIZE(label), "DockSpaceViewport_%08X", viewport->ID);
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-    ImGui::Begin(label, NULL, host_window_flags);
-    ImGui::PopStyleVar(3);
-
-    ImGuiID dockspace_id = ImGui::GetID("DockSpace");
-    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags, window_class);
-    ImGui::End();
-
-    return dockspace_id;
-}
-
-void Engine::DragWindow()
-{
-    static bool clicked;
-    if (m_input.mouseLClick &&
-       (m_input.mouseYPosition < 34 || clicked))
-    {
-        clicked = true;
-        if (m_input.mouseXDelta || m_input.mouseYDelta)
-        {
-            RECT winPos;
-            GetWindowRect(m_platform.m_window, &winPos);
-
-            if (winPos.right + m_input.mouseXDelta > 0 &&
-                winPos.bottom + m_input.mouseYDelta > 0 &&
-                winPos.left + m_input.mouseXDelta < m_platform.m_windowDimension.width &&
-                winPos.top + m_input.mouseYDelta < m_platform.m_windowDimension.height)
-            {
-                SetWindowPos(m_platform.m_window, nullptr,
-                    winPos.left + m_input.mouseXDelta,
-                    winPos.top + m_input.mouseYDelta,
-                    0, 0, SWP_NOSIZE);
-                m_input.mouseXPosition -= m_input.mouseXDelta;
-                m_input.mouseYPosition -= m_input.mouseYDelta;
-            }
-        }
-    }
-    else
-        clicked = false;
 }
 
 void Engine::DrawIMGUI()
@@ -274,11 +297,12 @@ void Engine::DrawIMGUI()
     ImGui::NewFrame();
     
     // TODO(a.perche) : Build dockspace at runtime
-    SetupDockSpace(ImGui::GetMainViewport(), dockingFlags, (const ImGuiWindowClass*)0);
+    DrawDockSpace(ImGui::GetMainViewport(), dockingFlags, (const ImGuiWindowClass*)0);
 
     ImGui::PushFont(m_defaultFont);
     static int index = 0;
 
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
     if (ImGui::Begin("Editor", (bool*)0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
     {
         WindowDimension &dimension = m_platform.m_windowDimension;
@@ -291,7 +315,9 @@ void Engine::DrawIMGUI()
             ImGui::Image(temp,
                 ImVec2(dimension.width, dimension.height), ImVec2(0, 1), ImVec2(1, 0));
         }
-    }ImGui::End();
+    }
+    ImGui::PopStyleVar();
+    ImGui::End();
 
     ImGui::SameLine();
     if (ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
@@ -308,6 +334,27 @@ void Engine::DrawIMGUI()
         static int scrollStrength = 1;
         if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "%s (%.4f)", m_sceneName, m_deltaTime))
         {
+            if (ImGui::BeginPopupContextItem("RenameScenePopup"))
+            {
+                static char buf[128] = "\0";
+                if (buf[0] == '\0')
+                    strncpy(buf, m_sceneName, strlen(m_sceneName));
+                if (ImGui::Button("Rename"))
+                {
+                    // TODO(a.perche): Fix crash after buffer copy
+                    strncpy(m_sceneName, buf, IM_ARRAYSIZE(buf));
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                ImGui::InputText(" ", buf, IM_ARRAYSIZE(buf));
+                ImGui::EndPopup();
+            }
+            
+            if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered())
+            {
+                ImGui::OpenPopup("RenameScenePopup");
+            }
+
             if (ImGui::BeginDragDropTarget())
             {
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_SCENENODE"))

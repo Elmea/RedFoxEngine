@@ -72,7 +72,7 @@ void Engine::LoadScene(const char *fileName)
         FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL, nullptr);
     
-    size_t fileNameLen = strlen(fileName);
+    size_t fileNameLen = strlen(fileName) - 6;
     m_sceneName = (char*)MyMalloc(&m_arenaAllocator, fileNameLen);
     memcpy((char*)m_sceneName, fileName, fileNameLen);
 
