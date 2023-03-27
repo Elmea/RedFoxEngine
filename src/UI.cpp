@@ -107,11 +107,10 @@ void Engine::InitIMGUI()
     ImGui_ImplOpenGL3_Init("#version 450");
 }
 
-void Engine::DrawMainTopBar(const ImGuiViewport* viewport)
+void Engine::DrawMainTopBar(const ImGuiViewport* viewport, float toolbarSize)
 {
     const float menuBarHeight = ImGui::GetCurrentWindow()->MenuBarHeight();
-    const float buttonHeight = 40.f;
-    const float toolbarSize = buttonHeight + 8;
+    const float buttonHeight = toolbarSize - 8.f;
 
     ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + menuBarHeight));
     ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, toolbarSize));
@@ -129,14 +128,14 @@ void Engine::DrawMainTopBar(const ImGuiViewport* viewport)
     ImGui::PushStyleColor(ImGuiCol_Border, (const ImVec4)RF_GRAY);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 4.f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.f);
-    ImGui::Begin("TOOLBAR", NULL, window_flags);
+    ImGui::Begin("TOOLBAR", (bool*)0, window_flags); 
     ImGui::PopStyleVar(2);
     ImGui::PopStyleColor();
     
     if (ImGui::BeginPopupContextItem("MainMenu"))
     {
         if (ImGui::Selectable("Save scene"))
-            SaveScene(strcat(m_sceneName, ".scene"));
+            SaveScene(strcat((char*)m_sceneName.data, ".scene"));
         ImGui::EndPopup();
     }
 
@@ -168,10 +167,6 @@ void Engine::DrawMainTopBar(const ImGuiViewport* viewport)
 
     ImGui::PopStyleVar();
     ImGui::End();
-
-    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + toolbarSize + 2.f));
-    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, viewport->WorkSize.y - toolbarSize - 2.f));
-    ImGui::SetNextWindowViewport(viewport->ID);
 }
 
 int Engine::DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class)
@@ -179,11 +174,18 @@ int Engine::DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dock
     if (viewport == NULL)
         viewport = ImGui::GetMainViewport();
 
-    DrawMainTopBar(viewport);
+    const float toolbarSize = 46.f;
+
+    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + toolbarSize + 2.f));
+    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, viewport->WorkSize.y - toolbarSize - 2.f));
+    ImGui::SetNextWindowViewport(viewport->ID);
 
     ImGuiWindowFlags host_window_flags = 0;
-    host_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking;
-    host_window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    host_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | 
+                         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
+                         ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBringToFrontOnFocus |
+                         ImGuiWindowFlags_NoNavFocus;
+
     if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
         host_window_flags |= ImGuiWindowFlags_NoBackground;
 
@@ -199,6 +201,8 @@ int Engine::DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dock
     ImGuiID dockspace_id = ImGui::GetID("DockSpace");
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags, window_class);
     ImGui::End();
+
+    DrawMainTopBar(viewport, toolbarSize);
 
     return dockspace_id;
 }
@@ -249,6 +253,12 @@ void Engine::DrawSceneNodes(bool is_child, GameObject* gameObj)
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
     {
         m_selectedObject = gameObj;
+    }
+    if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered())
+    {
+        m_editorCamera.position = gameObj->position;
+        const RedFoxMaths::Float3 up(0, 1, 0);
+        m_editorCamera.SetViewLookAt(gameObj->position, up);
     }
 
     if (ImGui::BeginDragDropSource())
@@ -332,21 +342,15 @@ void Engine::DrawIMGUI()
         
 
         static int scrollStrength = 1;
-        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "%s (%.4f)", m_sceneName, m_deltaTime))
+        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "%s (%.4f)", (char*)m_sceneName.data, m_deltaTime))
         {
             if (ImGui::BeginPopupContextItem("RenameScenePopup"))
             {
-                static char buf[128] = "\0";
-                if (buf[0] == '\0')
-                    strncpy(buf, m_sceneName, strlen(m_sceneName));
-                if (ImGui::Button("Rename"))
-                {
-                    // TODO(a.perche): Fix crash after buffer copy
-                    strncpy(m_sceneName, buf, IM_ARRAYSIZE(buf));
+                if (m_input.Enter)
                     ImGui::CloseCurrentPopup();
-                }
+
                 ImGui::SameLine();
-                ImGui::InputText(" ", buf, IM_ARRAYSIZE(buf));
+                ImGui::InputText(" ", (char*)m_sceneName.data, m_sceneName.capacity);
                 ImGui::EndPopup();
             }
             
@@ -427,6 +431,45 @@ void Engine::DrawIMGUI()
             ImGuiTreeNodeFlags_DefaultOpen |
             ImGuiTreeNodeFlags_OpenOnArrow | 
             ImGuiTreeNodeFlags_OpenOnDoubleClick;
+
+        if (ImGui::CollapsingHeader("Camera", propertiesFlags))
+        {
+            ImGuiTableFlags tableFlags =
+                ImGuiTableFlags_RowBg |
+                ImGuiTableFlags_SizingStretchSame |
+                ImGuiTableFlags_Resizable |
+                ImGuiTableFlags_BordersOuter;
+
+            if (ImGui::BeginTable("CameraTransformTable", 2, tableFlags))
+            {
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("Position");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                ImGui::DragFloat3("TransformPosition", &m_editorCamera.position.x, 0.001f, -32767.f, 32767.f);
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("Rotation");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                RedFoxMaths::Float3 rotation = m_editorCamera.orientation.ToEuler();
+                rotation.x *= RAD2DEG;
+                rotation.y *= RAD2DEG;
+                rotation.z *= RAD2DEG;
+                if (ImGui::DragFloat3("TransformRotation", &rotation.x, 1.0f, -360.f, 360.f))
+                {
+                    rotation.x *= DEG2RAD;
+                    rotation.y *= DEG2RAD;
+                    rotation.z *= DEG2RAD;
+                    m_editorCamera.orientation = RedFoxMaths::Quaternion::FromEuler(rotation);
+                    m_editorCamera.orientation.Normalize();
+                }
+                ImGui::EndTable();
+            }
+        }
 
         if (m_selectedObject != nullptr)
         {

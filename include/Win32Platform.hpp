@@ -69,6 +69,7 @@ struct Input
     u8 SemiColon : 1;
     u8 Apostrophe : 1;
     u8 Enter : 1;
+    u8 Escape : 1;
     u8 Z : 1;
     u8 X : 1;
     u8 C : 1;

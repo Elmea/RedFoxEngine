@@ -30,10 +30,11 @@ Engine::Engine(int width, int height) :
     //TODO transition to an instance based model 'model'
     for (int i = 0; i < (int)m_modelCount; i++)
         m_graphics.InitModel(&m_models[i]);
-#if 1
+#if 0
     LoadScene("test.scene");
 #else
-    initSphericalManyGameObjects(50000);
+    initSphericalManyGameObjects(1000);
+    m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);
 #endif
     m_input = {};
     m_dc = GetDC(m_platform.m_window);
@@ -72,9 +73,7 @@ void Engine::LoadScene(const char *fileName)
         FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL, nullptr);
     
-    size_t fileNameLen = strlen(fileName) - 6;
-    m_sceneName = (char*)MyMalloc(&m_arenaAllocator, fileNameLen);
-    memcpy((char*)m_sceneName, fileName, fileNameLen);
+    m_sceneName = initStringChar(fileName, 255, &m_arenaAllocator);
 
     ReadFile(file, &m_gameObjectCount, sizeof(u32), nullptr, nullptr);
     for(int i = 0; i < (int)m_gameObjectCount; i++)
@@ -214,16 +213,19 @@ void Engine::Update()
     Float3 inputDirection(0, 0, 0);
 
     if (m_input.mouseRClick)
+    {
         cameraRotation += {(f32)m_input.mouseYDelta* (f32)m_deltaTime,
-                           (f32)m_input.mouseXDelta* (f32)m_deltaTime, 0};
+            (f32)m_input.mouseXDelta* (f32)m_deltaTime, 0};
+        m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x,
+            -cameraRotation.y,
+            cameraRotation.z);
+    }
     m_editorCamera.m_parameters.aspect = 
         m_platform.m_windowDimension.width / 
         (f32)m_platform.m_windowDimension.height;
 
 
-    m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x,
-                                                       -cameraRotation.y,
-                                                        cameraRotation.z);
+    
 
     static f32 time;
     time += m_deltaTime * 0.1f;

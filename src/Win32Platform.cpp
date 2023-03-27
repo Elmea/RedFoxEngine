@@ -254,10 +254,9 @@ void Platform::MessageProcessing(Input *input)
             // https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
             switch (scanCode)
             {
-            case 0x01: // Escape
-            {
-            }
-            break;
+            case 0x01: {
+                input->Escape = IsDown;              
+            } break; // Escape
             case 0x10: {
                 input->Q = IsDown;
             }
@@ -284,7 +283,10 @@ void Platform::MessageProcessing(Input *input)
             case 0x19: // P
             case 0x1A: // [
             case 0x1B: // ]
-            case 0x1C: // Enter / Return
+            case 0x1C: {
+                input->Enter = IsDown;
+            }
+            break; // Enter / Return
             case 0x1D: // LCtrl
                 break;
 

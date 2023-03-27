@@ -98,7 +98,7 @@ void Graphics::UpdateImGUIFrameBuffer(WindowDimension &dimension,
 
 void Graphics::InitLights()
 {
-    m_lightCount = 1000;
+    m_lightCount = 100;
     glCreateBuffers(1, &m_lightBuffer);
     glNamedBufferStorage(m_lightBuffer, m_lightCount * sizeof(Light), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
@@ -114,7 +114,7 @@ void Graphics::InitLights()
         light[i].quadratic = 0.032f;
 
         light[i].position = {{(f32)i * 0.01f , i * 0.01f, (f32)(i * 0.0l)}};
-        light[i].diffuse = {{(f32)(i * 0.00002),(f32)(i * 0.00002), (f32)(i * 0.00002)}};
+        light[i].diffuse = {{(f32)(i * 0.002),(f32)(i * 0.002), (f32)(i * 0.002)}};
     }
     glUnmapNamedBuffer(m_lightBuffer);
 }
