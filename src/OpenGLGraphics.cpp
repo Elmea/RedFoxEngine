@@ -7,6 +7,22 @@
 namespace RedFoxEngine
 {
 
+void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
+{
+    InitShaders(tempArena);
+    // setup global GL state
+    {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+    }
+    InitImGUIFramebuffer(dimension);
+    InitGeometryFramebuffer(dimension);
+    // set to FALSE to disable vsync
+    wglSwapIntervalEXT(0);
+}
+
 void Graphics::InitGeometryFramebuffer(WindowDimension dimension)
 {
     glCreateFramebuffers(1, &m_gBuffer);
@@ -98,7 +114,7 @@ void Graphics::UpdateImGUIFrameBuffer(WindowDimension &dimension,
 
 void Graphics::InitLights()
 {
-    m_lightCount = 1000;
+    m_lightCount = 100;
     glCreateBuffers(1, &m_lightBuffer);
     glNamedBufferStorage(m_lightBuffer, m_lightCount * sizeof(Light), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
@@ -114,26 +130,9 @@ void Graphics::InitLights()
         light[i].quadratic = 0.032f;
 
         light[i].position = {{(f32)i * 0.01f , i * 0.01f, (f32)(i * 0.0l)}};
-        light[i].diffuse = {{(f32)(i * 0.00002),(f32)(i * 0.00002), (f32)(i * 0.00002)}};
+        light[i].diffuse = {{(f32)(i * 0.0002),(f32)(i * 0.0002), (f32)(i * 0.0002)}};
     }
     glUnmapNamedBuffer(m_lightBuffer);
-}
-
-
-void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
-{
-    InitShaders(tempArena);
-    // setup global GL state
-    {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
-    }
-    InitImGUIFramebuffer(dimension);
-    InitGeometryFramebuffer(dimension);
-    // set to FALSE to disable vsync
-    wglSwapIntervalEXT(1);
 }
 
 void Graphics::InitQuad()
@@ -194,7 +193,7 @@ void Graphics::InitModel(Model *model)
         glCreateBuffers(1, &model->vbm);
         glNamedBufferStorage(model->vbm,
             bufferBatchSize * sizeof(RedFoxMaths::Mat4),
-            nullptr, GL_DYNAMIC_STORAGE_BIT);
+            nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
     }
     // vertex input
     {
@@ -228,25 +227,26 @@ void Graphics::InitModel(Model *model)
             offsetof(struct ObjVertex, textureUV));
         glVertexArrayAttribBinding(model->vao, a_uv, vbuf_index);
 
+        int a_matrix = 3;
         // This is the matrix we're going to use for instanced models
-        glEnableVertexArrayAttrib (model->vao, 3);
-        glVertexArrayAttribFormat (model->vao, 3, 4, GL_FLOAT, GL_FALSE, 0);
-        glVertexArrayAttribBinding(model->vao, 3, model->vbm);
+        glEnableVertexArrayAttrib (model->vao, a_matrix);
+        glVertexArrayAttribFormat (model->vao, a_matrix, 4, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(model->vao, a_matrix, vbuf_matrix);
 
         glEnableVertexArrayAttrib (model->vao, 4);
         glVertexArrayAttribFormat (model->vao, 4, 4, GL_FLOAT, GL_FALSE,
             (sizeof(float) * 4));
-        glVertexArrayAttribBinding(model->vao, 4, model->vbm);
+        glVertexArrayAttribBinding(model->vao, 4, vbuf_matrix);
 
         glEnableVertexArrayAttrib (model->vao, 5);
         glVertexArrayAttribFormat (model->vao, 5, 4, GL_FLOAT, GL_FALSE,
             (2 * sizeof(float) * 4));
-        glVertexArrayAttribBinding(model->vao, 5, model->vbm);
+        glVertexArrayAttribBinding(model->vao, 5, vbuf_matrix);
 
         glEnableVertexArrayAttrib (model->vao, 6);
         glVertexArrayAttribFormat (model->vao, 6, 4, GL_FLOAT, GL_FALSE,
             (3 * sizeof(float) * 4));
-        glVertexArrayAttribBinding(model->vao, 6, model->vbm);
+        glVertexArrayAttribBinding(model->vao, 6, vbuf_matrix);
 
         glVertexArrayBindingDivisor(model->vao, 3, 1);
         glVertexArrayBindingDivisor(model->vao, 4, 1);
@@ -338,7 +338,7 @@ void Graphics::InitShaders(Memory *tempArena)
     vertexShaderSource = OpenAndReadEntireFile(
         "src\\Shaders\\vertex.vert", tempArena);
     fragmentShaderSource = OpenAndReadEntireFile(
-        "src\\Shaders\\fragment.frag", tempArena);
+        "src\\Shaders\\blin_phong.frag", tempArena);
     CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
         m_vshader, m_fshader, m_pipeline);
 }
@@ -349,7 +349,7 @@ void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
 }
 
 void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
-     Memory *temp)
+    Memory *temp, Model *models, int modelCount)
 {
     //NOTE: here we clear the 0 framebuffer
     glClearColor(0, 0, 0, 1.f);
@@ -361,32 +361,46 @@ void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
     glDisable(GL_BLEND);
 
     // activate shaders for next draw call
+
+    int *objectIndex = (int *)MyMalloc(temp, modelCount);
+    for(int i = 0; i < modelCount; i++)
+        objectIndex[i] = 0;
+
     GLint u_matrix = 0;
     glProgramUniformMatrix4fv(m_gvshader, u_matrix, 1, GL_TRUE,
         m_viewProjection.AsPtr());
 
-    RedFoxMaths::Mat4 *mem = (RedFoxMaths::Mat4 *)MyMalloc(temp,
-        sizeof(RedFoxMaths::Mat4) * gameObjectCount);
     int batchCount = 768; //TODO figure out a good value for this
-    int batchInstancedCount = gameObjectCount / batchCount;
-    for(int index = 0;index < batchInstancedCount; index++)
+    int batchIndex = 0;
+    RedFoxMaths::Mat4 *mem = (RedFoxMaths::Mat4 *)MyMalloc(temp,
+        sizeof(RedFoxMaths::Mat4) * 768);
+
+    for (int i = 0; i < modelCount; i++)
     {
-        for (int i = 0; i < batchCount; i++)
-            mem[i] = objects[i + (index * batchCount)]
-                .GetWorldMatrix().GetTransposedMatrix();
+        for(int index = 0;index < gameObjectCount; index++)
+        {
+            if (objects[index].model && objects[index].model == &models[i])
+            {
+                mem[batchIndex] = objects[index].
+                    GetWorldMatrix().GetTransposedMatrix();
+                batchIndex++;
+                if (batchIndex == batchCount)
+    {
         glNamedBufferSubData(objects->model->vbm,	0,
-            sizeof(RedFoxMaths::Mat4) * batchCount, mem);
-        DrawModelInstances(objects->model, batchCount);
+                        sizeof(RedFoxMaths::Mat4) * batchIndex, mem);
+                    DrawModelInstances(&models[i], batchCount);
+                    batchIndex = 0;
+                    break;
+                }
     }
-    batchCount = gameObjectCount % batchCount;
-    if (batchCount)
+        }
+        if (batchIndex && batchIndex < batchCount)
     {
-        for (int i = 0; i < batchCount; i++)
-            mem[i] = objects[(gameObjectCount - batchCount) + i]
-                .GetWorldMatrix().GetTransposedMatrix();
         glNamedBufferSubData(objects->model->vbm,	0,
-            sizeof(RedFoxMaths::Mat4) * batchCount, mem);
-        DrawModelInstances(objects->model, batchCount);
+              sizeof(RedFoxMaths::Mat4) * batchIndex, mem);
+          DrawModelInstances(&models[i], batchCount);
+          batchIndex = 0;
+        }
     }
 }
 

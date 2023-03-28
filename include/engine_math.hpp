@@ -802,12 +802,12 @@ static f32 barycentricInterpolation(vec3 barycentricCoordinates, f32 *value)
            barycentricCoordinates.z * (value[2] - value[0]));
 }
 
-static vec2 barycentricInterpolation(vec3 barycentricCoordinates,
-                              vec2 *value)
-{
-    return(value[0] + (barycentricCoordinates.y * (value[1] - value[0]) +
-                       barycentricCoordinates.z * (value[2] - value[0])));
-}
+// static vec2 barycentricInterpolation(vec3 barycentricCoordinates,
+//                               vec2 *value)
+// {
+//     return(value[0] + (barycentricCoordinates.y * (value[1] - value[0]) +
+//                        barycentricCoordinates.z * (value[2] - value[0])));
+// }
 
 static vec3 Minf(vec3 a, vec3 b)
 {

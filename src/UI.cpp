@@ -306,7 +306,21 @@ void Engine::DrawIMGUI()
         
 
         static int scrollStrength = 1;
-        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "%s (%.4f)", m_sceneName, m_deltaTime))
+
+        static int test = 0;
+        static float fps[255];
+        static float averageFps;
+        if (m_deltaTime)
+            fps[test++] = (1.0f / m_deltaTime);
+        if (test >= (int)(1 / m_deltaTime))
+        {
+            test = 0;
+            for (int i = 0; i < (int)(1 / m_deltaTime); i += 2)
+            {
+                averageFps = (fps[i] + averageFps) / 2.0f;
+            }
+        }
+        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "%s (%.f fps)(%.4f ms)", m_sceneName, averageFps, m_deltaTime))
         {
             if (ImGui::BeginDragDropTarget())
             {
