@@ -225,7 +225,6 @@ void Engine::UpdateEditorCamera()
 
 void Engine::Update()
 {
-    DragWindow();
     UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll",
     m_gameLibrary, &m_lastTime, UpdateGame);
     

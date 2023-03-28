@@ -405,35 +405,51 @@ static LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WPa
     LRESULT Result = 0;
     switch (Message)
     {
-    case WM_NCCALCSIZE:
-    {
-        const float pixelSize = 2.f;
-        NCCALCSIZE_PARAMS* params = (NCCALCSIZE_PARAMS*)LParam;
-        params->rgrc[0].top = (params->rgrc[0].top + 1.f);
-        params->rgrc[0].bottom = (params->rgrc[0].bottom - pixelSize);
-        params->rgrc[0].left = (params->rgrc[0].left + pixelSize);
-        params->rgrc[0].right = (params->rgrc[0].right - pixelSize);
-    }break;
-    case WM_DESTROY: {
-        Platform::m_running = 0;
-        PostQuitMessage(0);
-    }
-    break;
+        case WM_NCHITTEST: {
+            LRESULT hit = DefWindowProc(Window, Message, WParam, LParam);
+            if (hit == HTCLIENT)
+            {
+                RECT client;
+                POINT mouse;
+                GetCursorPos(&mouse);
+                ScreenToClient(Window, &mouse);
+                GetClientRect(Window, &client);
+                //NOTE: it would be nice to get the top button rectangles, and check all of
+                // them here;
+                if (mouse.x > 350 && mouse.x < client.right - 100 && mouse.y < 34)
+                    hit = HTCAPTION;
+            }
+            return hit;
+        }
+        case WM_NCCALCSIZE:
+        {
+            const float pixelSize = 2.f;
+            NCCALCSIZE_PARAMS* params = (NCCALCSIZE_PARAMS*)LParam;
+            params->rgrc[0].top = (params->rgrc[0].top);
+            params->rgrc[0].bottom = (params->rgrc[0].bottom - pixelSize);
+            params->rgrc[0].left = (params->rgrc[0].left + pixelSize);
+            params->rgrc[0].right = (params->rgrc[0].right - pixelSize);
+        }break;
+        case WM_DESTROY: {
+            Platform::m_running = 0;
+            PostQuitMessage(0);
+        }
+        break;
 
-    case WM_QUIT: {
-        Platform::m_running = 0;
-        DestroyWindow(Window);
-    }
-    break;
+        case WM_QUIT: {
+            Platform::m_running = 0;
+            DestroyWindow(Window);
+        }
+        break;
 
-    case WM_CLOSE: {
-        Platform::m_running = 0;
-    }
-    break;
+        case WM_CLOSE: {
+            Platform::m_running = 0;
+        }
+        break;
 
-    default: {
-        Result = DefWindowProc(Window, Message, WParam, LParam);
-    }
+        default: {
+            Result = DefWindowProc(Window, Message, WParam, LParam);
+        }
     }
     return (Result);
 }
