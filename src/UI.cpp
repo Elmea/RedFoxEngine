@@ -30,8 +30,6 @@ void Engine::InitIMGUI()
     m_ImGuiIO = &ImGui::GetIO(); (void)m_ImGuiIO;
     m_ImGuiIO->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     m_ImGuiIO->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    // TODO: Necessary backend for Win32 API windowing
-    //m_ImGuiIO.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
 #pragma region RedFox_Style_Definition
     ImGuiStyle& style = ImGui::GetStyle();
@@ -116,7 +114,6 @@ void Engine::DrawMainTopBar(const ImGuiViewport* viewport, float toolbarSize)
     ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, toolbarSize));
     ImGui::SetNextWindowViewport(viewport->ID);
 
-
     ImGuiWindowFlags window_flags = 0
         | ImGuiWindowFlags_NoDocking
         | ImGuiWindowFlags_NoTitleBar
@@ -160,6 +157,11 @@ void Engine::DrawMainTopBar(const ImGuiViewport* viewport, float toolbarSize)
         sprintf(newGameObject->name, "New entity #%d\0", m_gameObjectCount - 1);
     }
     
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetWindowWidth() - (buttonHeight * 2.f) - 10.f);
+    if (ImGui::Button("[__]", ImVec2(buttonHeight, buttonHeight)))
+        m_platform.Maximize();
+
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetWindowWidth() - buttonHeight - 5.f);
     if (ImGui::Button("X", ImVec2(buttonHeight, buttonHeight)))
@@ -508,10 +510,4 @@ void Engine::DrawIMGUI()
     
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    if (m_ImGuiIO->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault();
-    }
 }
