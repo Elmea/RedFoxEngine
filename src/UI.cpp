@@ -325,9 +325,19 @@ void Engine::DrawIMGUI()
             ImGui::Image(temp,
                 ImVec2(dimension.width, dimension.height), ImVec2(0, 1), ImVec2(1, 0));
         }
+
+        if (ImGui::IsMouseDown(ImGuiMouseButton_Right) && ImGui::IsItemHovered())
+        {
+            m_input.lockMouse = m_editorCameraEnabled = true;
+        }
+        else
+        {
+            m_editorCameraSpeed = { 0.f, 0.f, 0.f };
+            m_input.lockMouse = m_editorCameraEnabled = false;
+        }
     }
-    ImGui::PopStyleVar();
     ImGui::End();
+    ImGui::PopStyleVar();
 
     ImGui::SameLine();
     if (ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
@@ -344,6 +354,7 @@ void Engine::DrawIMGUI()
         static int scrollStrength = 1;
         if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "%s (%.4f)", (char*)m_sceneName.data, m_deltaTime))
         {
+            static bool scrollButtonHovered = false;
             if (ImGui::BeginPopupContextItem("RenameScenePopup"))
             {
                 if (m_input.Enter)
@@ -354,7 +365,7 @@ void Engine::DrawIMGUI()
                 ImGui::EndPopup();
             }
             
-            if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered())
+            if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered() && !scrollButtonHovered)
             {
                 ImGui::OpenPopup("RenameScenePopup");
             }
@@ -382,6 +393,7 @@ void Engine::DrawIMGUI()
                         scrollStrength = 1;
                 }
             }
+            scrollButtonHovered = ImGui::IsItemHovered();
         }
         ImGui::TreePop();
 

@@ -179,6 +179,11 @@ WindowDimension Platform::GetWindowDimension()
     return (m_windowDimension);
 }
 
+void Platform::SetMousePosition(int x, int y)
+{
+    SetCursorPos(x, y);
+}
+
 void Platform::MessageProcessing(Input *input)
 {
     MSG Message;
@@ -199,6 +204,21 @@ void Platform::MessageProcessing(Input *input)
             input->mouseYPosition = HIWORD(Message.lParam);
             input->mouseXDelta = input->mouseXPosition - mouseX;
             input->mouseYDelta = input->mouseYPosition - mouseY;
+            if (input->lockMouse)
+            {
+                POINT p;
+                p.x = mouseX; p.y = mouseY;
+                ClientToScreen(m_window, &p);
+                SetCursor(nullptr);
+                SetCursorPos(p.x, p.y);
+                input->mouseXPosition = mouseX;
+                input->mouseYPosition = mouseY;
+            }
+            else
+            {
+                HCURSOR cur = LoadCursor(nullptr, IDC_ARROW);
+                SetCursor(cur);
+            }
         }
         break;
         case WM_MOUSEWHEEL: {

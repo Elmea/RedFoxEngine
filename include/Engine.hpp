@@ -43,13 +43,16 @@ private:
     ImGuiIO* m_ImGuiIO = nullptr;
     ImFont* m_defaultFont = nullptr;
     MyString m_sceneName;
+
+    RedFoxMaths::Float3 m_editorCameraSpeed;
+    bool m_editorCameraEnabled;
 private:
     int DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
     void DrawMainTopBar(const ImGuiViewport* viewport, float toolbarSize);
     void DragWindow();
     void DrawIMGUI();
     void DrawSceneNodes(bool is_child, GameObject* model);
-    Input GetInputs();
+    void UpdateEditorCamera();
     void ObjModelPush(const char *objPath);
     void InitIMGUI();
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 viewProjection);

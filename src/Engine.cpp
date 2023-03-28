@@ -199,43 +199,45 @@ void Engine::ProcessInputs()
     m_editorCamera.SetProjection(projectionType::PERSPECTIVE);
 }
 
-Input Engine::GetInputs()
+void Engine::UpdateEditorCamera()
 {
-    return (m_input);
+    if (m_editorCameraEnabled)
+    {
+        const float dt32 = (f32)m_deltaTime;
+        static Float3 cameraRotation = (0, 0, 0);
+        cameraRotation += {(f32)m_input.mouseYDelta* dt32, (f32)m_input.mouseXDelta* dt32, 0};
+        m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
+
+        Float3 inputDirection(0, 0, 0);
+        if (m_input.W) inputDirection.z += -1;
+        if (m_input.S) inputDirection.z += 1;
+        if (m_input.A) inputDirection.x += -1;
+        if (m_input.D) inputDirection.x += 1;
+        inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
+        inputDirection.Normalize();
+        inputDirection = inputDirection * 20.f;
+        m_editorCamera.position += m_editorCameraSpeed * dt32 + inputDirection * (dt32 * dt32 * 0.5f);
+        m_editorCameraSpeed += inputDirection * dt32 * 0.5f;
+        m_editorCameraSpeed *= exp(dt32 * -2.f); // Drag
+    }
+    m_editorCamera.m_parameters.aspect = m_platform.m_windowDimension.width / (f32)m_platform.m_windowDimension.height;
 }
 
 void Engine::Update()
 {
     DragWindow();
     UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll",
-        m_gameLibrary, &m_lastTime, UpdateGame);
-    static Float3 cameraRotation(0, 0, 0);
-    Float3 inputDirection(0, 0, 0);
-
-    if (m_input.mouseRClick)
-    {
-        cameraRotation += {(f32)m_input.mouseYDelta* (f32)m_deltaTime,
-            (f32)m_input.mouseXDelta* (f32)m_deltaTime, 0};
-        m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x,
-            -cameraRotation.y,
-            cameraRotation.z);
-    }
-    m_editorCamera.m_parameters.aspect = 
-        m_platform.m_windowDimension.width / 
-        (f32)m_platform.m_windowDimension.height;
-
-
+    m_gameLibrary, &m_lastTime, UpdateGame);
     
+    UpdateEditorCamera();
 
     static f32 time;
     time += m_deltaTime * 0.1f;
     //TODO we'll need to think how we pass the resources,
     // and gameplay structures and objects to this update function
-    UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount,
-        time, cameraRotation, &m_editorCamera.position);
+    UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount, time);
     m_graphics.SetViewProjectionMatrix(m_editorCamera.GetVP());
-    m_gameObjects[0].GetChildren(m_gameObjects, m_gameObjectCount,
-        &m_tempAllocator);
+    m_gameObjects[0].GetChildren(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 

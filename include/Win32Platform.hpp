@@ -37,6 +37,7 @@ struct WindowDimension
 
 struct Input
 {
+    bool lockMouse = false;
     int mouseXPosition;
     int mouseYPosition;
     int mouseXDelta;
@@ -87,9 +88,7 @@ struct Input
                                    RedFoxEngine::Input input, \
                                    RedFoxEngine::GameObject *gameObjects, \
                                    u32 gameObjectCount, \
-                                   f32 time, \
-                                   RedFoxMaths::Float3 cameraRotation, \
-                                   RedFoxMaths::Float3 *cameraPosition)
+                                   f32 time)
 #endif
 typedef UPDATEGAME(_updategame);
 
@@ -114,6 +113,7 @@ public:
     void FatalError(const char *message);
     void MessageProcessing(Input *input);
     WindowDimension GetWindowDimension();
+    void SetMousePosition(int x, int y);
     static u64 GetTimerFrequency();
     static u64 GetTimer();
     _updategame *LoadGameLibrary(const char *functionName, const char *libraryPath, HINSTANCE &gameLibrary, LPFILETIME LastWriteTime, _updategame *functionPointer);
