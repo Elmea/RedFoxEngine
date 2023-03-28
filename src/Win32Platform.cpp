@@ -179,6 +179,25 @@ WindowDimension Platform::GetWindowDimension()
     return (m_windowDimension);
 }
 
+void Platform::Maximize()
+{
+    MONITORINFO monitorInfo = {};
+    HMONITOR monitor = MonitorFromWindow(m_window, MONITOR_DEFAULTTOPRIMARY);
+    RECT monitorRect = monitorInfo.rcMonitor;
+    if (GetMonitorInfo(monitor, &monitorInfo))
+    {
+        monitorRect = monitorInfo.rcMonitor;
+        SetWindowPos(m_window, nullptr, monitorRect.left, monitorRect.top,
+            monitorRect.right, monitorRect.bottom, SWP_SHOWWINDOW);
+    }
+    else
+    {
+        GetWindowRect(GetDesktopWindow(), &monitorRect);
+        SetWindowPos(m_window, nullptr, monitorRect.left, monitorRect.top,
+            monitorRect.right, monitorRect.bottom, SWP_SHOWWINDOW);
+    }
+}
+
 void Platform::SetMousePosition(int x, int y)
 {
     SetCursorPos(x, y);
