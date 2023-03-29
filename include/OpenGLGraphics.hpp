@@ -79,12 +79,12 @@ private:
     // GLuint m_lightBuffer;
     u32    m_lightCount;
 public:
+    Model *m_models = nullptr;
+    u32    m_modelCount;
     GLuint m_lightBuffer;
     GLuint m_imguiTexture;
     GLuint m_gPosition, m_gNormal, m_gAlbedoSpec;
-    // void DrawGBuffer(GameObject *objects, int gameObjectCount, Memory *temp);
-    void DrawGBuffer(GameObject *objects, int gameObjectCount,
-         Memory *temp, Model *models, int modelCount);
+    void DrawGBuffer(GameObject *objects, int gameObjectCount, Memory *temp);
     void DrawQuad(WindowDimension dimension);
     void DrawModel(Model *model);
     void DrawModelInstances(Model *model, int instanceCount);

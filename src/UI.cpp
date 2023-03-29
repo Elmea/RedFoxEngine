@@ -320,7 +320,7 @@ void Engine::DrawIMGUI()
                 averageFps = (fps[i] + averageFps) / 2.0f;
             }
         }
-        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "%s (%.f fps)(%.4f ms)", m_sceneName, averageFps, m_deltaTime))
+        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "%s (%.f fps)(%.4f ms)", m_sceneName, averageFps, m_deltaTime * 1000))
         {
             if (ImGui::BeginDragDropTarget())
             {

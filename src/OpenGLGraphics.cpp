@@ -114,7 +114,7 @@ void Graphics::UpdateImGUIFrameBuffer(WindowDimension &dimension,
 
 void Graphics::InitLights()
 {
-    m_lightCount = 100;
+    m_lightCount = 50;
     glCreateBuffers(1, &m_lightBuffer);
     glNamedBufferStorage(m_lightBuffer, m_lightCount * sizeof(Light), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
@@ -349,7 +349,7 @@ void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
 }
 
 void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
-    Memory *temp, Model *models, int modelCount)
+    Memory *temp)
 {
     //NOTE: here we clear the 0 framebuffer
     glClearColor(0, 0, 0, 1.f);
@@ -362,8 +362,8 @@ void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
 
     // activate shaders for next draw call
 
-    int *objectIndex = (int *)MyMalloc(temp, modelCount);
-    for(int i = 0; i < modelCount; i++)
+    int *objectIndex = (int *)MyMalloc(temp, m_modelCount);
+    for(int i = 0; i < (int)m_modelCount; i++)
         objectIndex[i] = 0;
 
     GLint u_matrix = 0;
@@ -375,32 +375,56 @@ void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
     RedFoxMaths::Mat4 *mem = (RedFoxMaths::Mat4 *)MyMalloc(temp,
         sizeof(RedFoxMaths::Mat4) * 768);
 
-    for (int i = 0; i < modelCount; i++)
+    for (int i = 0; i < (int)m_modelCount; i++)
     {
+        Model *currentModel = &m_models[i];
         for(int index = 0;index < gameObjectCount; index++)
         {
-            if (objects[index].model && objects[index].model == &models[i])
+            if (objects[index].model && objects[index].model == currentModel)
             {
                 mem[batchIndex] = objects[index].
                     GetWorldMatrix().GetTransposedMatrix();
                 batchIndex++;
                 if (batchIndex == batchCount)
-    {
-        glNamedBufferSubData(objects->model->vbm,	0,
+                {
+                    glNamedBufferSubData(currentModel->vbm,	0,
                         sizeof(RedFoxMaths::Mat4) * batchIndex, mem);
-                    DrawModelInstances(&models[i], batchCount);
+                    DrawModelInstances(currentModel, batchIndex);
                     batchIndex = 0;
-                    break;
+                    // break;
                 }
-    }
+            }
         }
         if (batchIndex && batchIndex < batchCount)
-    {
-        glNamedBufferSubData(objects->model->vbm,	0,
-              sizeof(RedFoxMaths::Mat4) * batchIndex, mem);
-          DrawModelInstances(&models[i], batchCount);
-          batchIndex = 0;
+        {
+            glNamedBufferSubData(currentModel->vbm,	0,
+                sizeof(RedFoxMaths::Mat4) * batchIndex, mem);
+            DrawModelInstances(currentModel, batchIndex);
+            batchIndex = 0;
         }
+    }
+}
+
+void Graphics::DrawModelInstances(Model *model, int instanceCount)
+{
+    // provide vertex input
+    glBindVertexArray(model->vao);
+
+    GLint diffuseMap = 0;
+    glBindTextureUnit(diffuseMap, 0);
+
+    for (int i = 0; i < (int)model->obj.meshCount; i++)
+    {
+        ObjMesh *mesh = &model->obj.meshes[i];
+        ObjMaterial *material = &model->obj.materials.material[mesh->materialIndex];
+        //TODO: make sure all objs have a default material.
+        if (material && material->hasTexture)
+            glBindTextureUnit(diffuseMap, material->diffuseMap.index0);
+        else
+            glBindTextureUnit(diffuseMap, 0);
+        // TODO: create a default 'missing' texture
+        glDrawElementsInstanced(GL_TRIANGLES, mesh->indexCount ,GL_UNSIGNED_INT,
+            (void *)((mesh->indexStart) * sizeof(u32)), instanceCount);
     }
 }
 
@@ -426,26 +450,4 @@ void Graphics::DrawQuad(WindowDimension dimension)
 #endif
 }
 
-void Graphics::DrawModelInstances(Model *model, int instanceCount)
-{
-    // provide vertex input
-    glBindVertexArray(model->vao);
-
-    GLint diffuseMap = 0;
-    glBindTextureUnit(diffuseMap, 0);
-
-    for (int i = 0; i < (int)model->obj.meshCount; i++)
-    {
-        ObjMesh *mesh = &model->obj.meshes[i];
-        ObjMaterial *material = &model->obj.materials.material[mesh->materialIndex];
-        //TODO: make sure all objs have a default material.
-        if (material && material->hasTexture)
-            glBindTextureUnit(diffuseMap, material->diffuseMap.index0);
-        else
-            glBindTextureUnit(diffuseMap, 0);
-        // TODO: create a default 'missing' texture
-        glDrawElementsInstanced(GL_TRIANGLES, mesh->indexCount ,GL_UNSIGNED_INT,
-            (void *)((mesh->indexStart) * sizeof(u32)), instanceCount);
-    }
-}
 } // namespace RedFoxEngine

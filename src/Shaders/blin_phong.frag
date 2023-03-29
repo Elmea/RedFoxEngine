@@ -77,7 +77,7 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
 layout(std430, binding = 0) buffer LightBlock {
     //TODO: split the lights in different types.    
-    Light light[100];
+    Light light[50];
 } u_lightBlock;
 
 void main()
@@ -88,7 +88,7 @@ void main()
     vec3 Normal       = texture(gNormal, TexCoord).xyz;
 
     vec3 result = vec3(0, 0, 0);
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 10; i++)
     {
         vec3 lightColor = u_lightBlock.light[i].diffuse;
         PointLight pl;
@@ -113,12 +113,7 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(viewDir, halfwayDir), 0.0), material.shininess * 4);
 
-    vec3 Color;
-    // if (isColor)
-    //     Color = material.diffuse;
-    // else
-        // Color = vec3(texture(diffuseMap, fs_in.TexCoord));
-    Color = texture(gAlbedo, TexCoord).rgb;
+    vec3 Color = texture(gAlbedo, TexCoord).rgb;
 
     vec3 ambient = light.ambient * Color;
     vec3 diffuse = light.diffuse * diff * Color;
@@ -129,13 +124,7 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
 
-    vec3 Color;
-    // if (isColor)
-    //     Color = material.diffuse;
-    // else
-        // Color = vec3(texture(diffuseMap, fs_in.TexCoord));
-    Color = texture(gAlbedo, TexCoord).rgb;
-
+    vec3 Color = vec3(texture(gAlbedo, TexCoord));
     vec3 lightDir = normalize(light.position - fragPos);
     float diff = max(dot(normal, lightDir), 0.0);
     vec3 halfwayDir = normalize(lightDir + viewDir);
@@ -155,12 +144,7 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 
 vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
-    vec3 Color;
-    // if (isColor)
-    //     Color = material.diffuse;
-    // else
-        // Color = vec3(texture(diffuseMap, fs_in.TexCoord));
-    Color = texture(gAlbedo, TexCoord).rgb;
+    vec3 Color = texture(gAlbedo, TexCoord).rgb;
 
     vec3 lightDir     = normalize(light.position - fragPos);
     float diff        = max(dot(normal, lightDir), 0.0);

@@ -442,14 +442,6 @@ ObjMaterials ParseMTL(const char *objPath, MyString objBuffer, ObjImages *Images
     }
     if (mtlLibFilePath[0] == '\0')
     {
-        result.count = 1;
-        result.material = (ObjMaterial *)MyMalloc(meshMem, sizeof(ObjMaterial) * result.count);
-        *result.material = {};
-        result.material->Opaqueness = 1;
-        result.material->Shininess = 32;
-        result.material->ambient = {0.1, 0.1, 0.1};
-        result.material->diffuse = {1, 1, 1};
-        result.material->specular = {0.1, 0.1, 0.1};
         return result;
     }
     fileResource mtlLibData = FileResourceInit(mtlLibFilePath, tempMem);
@@ -794,12 +786,11 @@ int ParseModel(ObjModel *result, const char *path)
 
         endOfLine = get_next_line(objFile.file, current) + 1;
     }
-    if (result->materials.count == 0)
-        result->materials.count = 1;
     result->indices = (u32 *)MyMalloc(&result->indexMem, result->indexCount * sizeof(u32));
 
     if (result->materials.count == 0)
     {
+        result->meshCount = 1;
         result->materials.count = 1;
         result->materials.material =
             (ObjMaterial *)MyMalloc(&result->meshMem, sizeof(ObjMaterials) + sizeof(ObjMaterial));

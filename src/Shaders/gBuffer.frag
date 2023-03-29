@@ -20,4 +20,6 @@ void main()
     gPosition = fs_in.Position;
     gNormal = normalize(fs_in.Normal);
     gAlbedoSpec = texture(diffuseMap, fs_in.TexCoords).xyz;
+    if (gAlbedoSpec == vec3(0, 0, 0))
+        gAlbedoSpec = vec3(1, 1, 1);
 }

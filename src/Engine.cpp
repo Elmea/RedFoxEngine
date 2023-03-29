@@ -22,9 +22,11 @@ Engine::Engine(int width, int height) :
     InitIMGUI();
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
 
-    m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 10);
+    m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 100);
     ObjModelPush("barbarian.obj");
-    ObjModelPush("ts_bot912.obj");
+    // ObjModelPush("bunny.obj");
+    m_graphics.m_models = m_models;
+    m_graphics.m_modelCount = m_modelCount;
     m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator,
         sizeof(GameObject) * 100000);
 
@@ -34,7 +36,7 @@ Engine::Engine(int width, int height) :
 #if 0
     LoadScene("test.scene");
 #else
-    initSphericalManyGameObjects(10000);
+    initSphericalManyGameObjects(100);
     m_sceneName = (char*)initStringChar("Scene", 5, &m_arenaAllocator).data;
 #endif
     m_input = {};
@@ -119,6 +121,28 @@ void Engine::LoadScene(const char *fileName)
     CloseHandle(file);
 }
 
+/*
+    Scene file reference (in progress)
+
+    struct GameObject
+    {
+        s32 nameOfGameObjectSize;
+        char nameOfGameObject[nameOfGameObjectSize];
+        int parent; - -l if no parent, >= 0 if parent exists
+        u64 modelHash; hash of the filename string of the model
+        float position[3];
+        float scale;
+        float orientation[4];
+    }
+
+    - Start Of File
+    struct
+    {
+        s32 gameObjectCount;
+        GameObject arrayOfGameObjects[gameObjectCount];
+    }
+*/
+
 void Engine::SaveScene(const char *fileName)
 {
     HANDLE file = CreateFile(fileName, GENERIC_WRITE,
@@ -159,8 +183,8 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
         if (i % 2 == 0)
             m_gameObjects[i].model = &m_models[0];
         else
-            // m_gameObjects[i].model = nullptr;
-            m_gameObjects[i].model = &m_models[1];
+            m_gameObjects[i].model = nullptr;
+            // m_gameObjects[i].model = &m_models[1];
         m_gameObjects[i].scale = 1;
         m_gameObjects[i].orientation.a = 1;
         m_gameObjects[i].name = (char *)MyMalloc(&m_arenaAllocator, sizeof(char) * 13);
@@ -245,26 +269,30 @@ void Engine::Update()
 
 void Engine::Draw()
 {
-    m_graphics.DrawGBuffer(m_gameObjects, m_gameObjectCount, &m_tempAllocator, m_models, m_modelCount);
+    m_graphics.DrawGBuffer(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
     GLuint lightBuffer = m_graphics.m_lightBuffer;
     GLbitfield mapFlags = (GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
 #if 1
     Light *light = (Light *)glMapNamedBufferRange(lightBuffer, 0,
-        100 * sizeof(Light), mapFlags);
+        10 * sizeof(Light), mapFlags);
 
     static float tempTime;
     tempTime += m_deltaTime;
-    for(int i = 0; i < (int)100; i++)
+    for(int i = 0; i < (int)50; i++)
     {
         light[i].constant  = 1.0f;
         light[i].linear    = 0.09f;
         light[i].quadratic = 0.032f;
         light[i].ambient = {{0.01, 0.01, 0.01}};
         light[i].specular = {{0.1, 0.1, 0.1}};
-        light[i].position = {{sinf(tempTime) * i * 2, sinf((tempTime / 3) * i * 3), cosf((tempTime / 6) * 2) * i * 3}};
+        light[i].position = {{sinf(tempTime) * i * 2,
+                              sinf((tempTime / 3) * i * 3),
+                              cosf((tempTime / 6) * 2) * i * 3}};
         float intensity = 2.f;
-        light[i].diffuse = {{sinf(tempTime * 0.5 * i) * intensity, sinf(tempTime * 0.6 * i) * intensity, cosf(tempTime * 0.3 * i) * intensity}};
+        light[i].diffuse = {{sinf(tempTime * 0.5 * i) * intensity,
+                             sinf(tempTime * 0.6 * i) * intensity,
+                             cosf(tempTime * 0.3 * i) * intensity}};
     }
     glUnmapNamedBuffer(lightBuffer);
 #endif
