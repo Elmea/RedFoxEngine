@@ -46,8 +46,8 @@ private:
     ImGuiIO* m_ImGuiIO = nullptr;
     ImFont* m_defaultFont = nullptr;
     MyString m_sceneName;
-    ImGuizmo::OPERATION m_curGizmoOperation;
-    ImGuizmo::MODE m_curGizmoMode;
+    ImGuizmo::OPERATION m_GizmoType;
+    ImGuizmo::MODE m_GizmoMode;
 
     RedFoxMaths::Float3 m_editorCameraSpeed;
     bool m_editorCameraEnabled;
@@ -56,7 +56,7 @@ private:
     int DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
     void DrawSceneNodes(bool is_child, GameObject* model);
     void DrawIMGUI();
-    void DrawGizmo(float* cameraView, float* cameraProjection, float* matrix, float camDistance, bool editTransformDecomposition);
+    //void DrawGizmo(float* cameraView, float* cameraProjection, float* matrix, float camDistance, bool editTransformDecomposition);
     void UpdateEditorCamera();
     void ObjModelPush(const char *objPath);
     void InitIMGUI();

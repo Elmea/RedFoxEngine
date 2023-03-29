@@ -26,7 +26,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 __declspec(dllexport) UPDATEGAME(UpdateGame)
 {
     #pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
-    
+    /*
     Quaternion alpha = Quaternion::FromEuler(Float3(0, 90, 0));
     Quaternion beta = Quaternion::FromEuler(Float3(0, 0, 90));
     for (int i = 0; i < (int)gameObjectCount; i++) // TODO physics code here ?
@@ -36,4 +36,5 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
          gameObjects[i].scale = Misc::Lerp(0.1, 2, Misc::Abs(cosf(time)));
 
     }
+    */
 }
