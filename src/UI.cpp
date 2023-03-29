@@ -120,7 +120,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     ImGui::SetNextWindowViewport(viewport->ID);
 
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.15f, 0.15, 0.15f, 1.f));
-    ImGui::Begin("TOPBAR", (bool*)0, window_flags);
+    ImGui::Begin("TOPBAR", (bool*)0, window_flags | ImGuiWindowFlags_NoBringToFrontOnFocus);
     ImGui::PopStyleColor();
 
     // TODO(a.perche): Project name here
@@ -139,7 +139,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
 
     ImGui::End();  
     
-    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + titleBarHeight + 16.f));
+    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + titleBarHeight + 8.f));
     ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, toolbarSize));
     ImGui::SetNextWindowViewport(viewport->ID);
 
@@ -194,8 +194,8 @@ int Engine::DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dock
     const float buttonHeight = toolbarSize - 8.f;
 
     
-    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + totalHeight + 16.f));
-    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, viewport->WorkSize.y - totalHeight - 16.f));
+    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + totalHeight + 8.f));
+    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, viewport->WorkSize.y - totalHeight - 8.f));
     ImGui::SetNextWindowViewport(viewport->ID);
     
     ImGuiWindowFlags host_window_flags = 0;

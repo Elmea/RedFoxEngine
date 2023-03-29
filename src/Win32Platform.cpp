@@ -429,7 +429,7 @@ static LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WPa
                 GetClientRect(Window, &client);
                 //NOTE: it would be nice to get the top button rectangles, and check all of
                 // them here;
-                if (mouse.x < client.right - 110 && mouse.y < 24)
+                if (mouse.x < client.right - 110 && mouse.y < 22)
                     hit = HTCAPTION;
             }
             return hit;
