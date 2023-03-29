@@ -20,8 +20,8 @@ namespace RedFoxEngine
     
     class Camera : public GameObject
     {
-        RedFoxMaths::Mat4 m_projection;
     public:
+        RedFoxMaths::Mat4 m_projection;
         CameraParameters m_parameters;
         
     public:
@@ -34,6 +34,7 @@ namespace RedFoxEngine
             m_parameters = parameters;
         }
         void SetViewLookAt(RedFoxMaths::Float3 target, RedFoxMaths::Float3 up);
+        RedFoxMaths::Mat4 GetViewMatrix();
         RedFoxMaths::Mat4 GetVP();
     };
 }

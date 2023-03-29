@@ -7,10 +7,13 @@
 // TODO(V. Caraulan): linux mac or whatever
 #endif
 
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 #include <imgui_internal.h>
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_win32.h"
+#include <ImGuizmo.h>
+
 #include "ObjParser.hpp"
 #include "OpenGLGraphics.hpp"
 #include "GameObject.hpp"
@@ -43,14 +46,17 @@ private:
     ImGuiIO* m_ImGuiIO = nullptr;
     ImFont* m_defaultFont = nullptr;
     MyString m_sceneName;
+    ImGuizmo::OPERATION m_curGizmoOperation;
+    ImGuizmo::MODE m_curGizmoMode;
 
     RedFoxMaths::Float3 m_editorCameraSpeed;
     bool m_editorCameraEnabled;
 private:
-    int DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
     void DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight);
-    void DrawIMGUI();
+    int DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
     void DrawSceneNodes(bool is_child, GameObject* model);
+    void DrawIMGUI();
+    void DrawGizmo(float* cameraView, float* cameraProjection, float* matrix, float camDistance, bool editTransformDecomposition);
     void UpdateEditorCamera();
     void ObjModelPush(const char *objPath);
     void InitIMGUI();

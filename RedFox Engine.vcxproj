@@ -204,6 +204,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="external\imgui.cpp" />
+    <ClCompile Include="external\ImGuizmo.cpp" />
     <ClCompile Include="external\imgui_demo.cpp" />
     <ClCompile Include="external\imgui_draw.cpp" />
     <ClCompile Include="external\imgui_impl_opengl3.cpp" />
@@ -223,6 +224,7 @@
     <ClInclude Include="external\include\glcorearb.h" />
     <ClInclude Include="external\include\imconfig.h" />
     <ClInclude Include="external\include\imgui.h" />
+    <ClInclude Include="external\include\ImGuizmo.h" />
     <ClInclude Include="external\include\imgui_impl_opengl3.h" />
     <ClInclude Include="external\include\imgui_internal.h" />
     <ClInclude Include="external\include\imstb_rectpack.h" />

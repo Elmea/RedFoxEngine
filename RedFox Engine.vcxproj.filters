@@ -66,6 +66,9 @@
     <ClCompile Include="src\UI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="external\ImGuizmo.cpp">
+      <Filter>Source Files\External Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Engine.hpp">
@@ -136,6 +139,9 @@
     </ClInclude>
     <ClInclude Include="include\Camera.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\include\ImGuizmo.h">
+      <Filter>Header Files\External Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

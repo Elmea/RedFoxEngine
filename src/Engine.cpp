@@ -33,7 +33,7 @@ Engine::Engine(int width, int height) :
 #if 0
     LoadScene("test.scene");
 #else
-    initSphericalManyGameObjects(1000);
+    initSphericalManyGameObjects(15000);
     m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);
 #endif
     m_input = {};

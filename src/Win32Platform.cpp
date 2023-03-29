@@ -246,10 +246,9 @@ void Platform::MessageProcessing(Input *input)
                 input->mouseXPosition = mouseX;
                 input->mouseYPosition = mouseY;
             }
-            else
+            else if (input->mouseXDelta == 0 && input->mouseYDelta == 0)
             {
-                HCURSOR cur = LoadCursor(nullptr, IDC_ARROW);
-                SetCursor(cur);
+                SetCursor(LoadCursor(nullptr, IDC_ARROW));
             }
         }
         break;

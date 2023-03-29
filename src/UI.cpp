@@ -1,4 +1,4 @@
-#include "imgui.h"
+//#include "imgui.h"
 #include <string>
 
 #define MEMORY_IMPLEMENTATION
@@ -103,6 +103,9 @@ void Engine::InitIMGUI()
 
     ImGui_ImplWin32_Init(m_platform.m_window);
     ImGui_ImplOpenGL3_Init("#version 450");
+
+    m_curGizmoOperation = ImGuizmo::OPERATION::TRANSLATE;
+    m_curGizmoMode = ImGuizmo::MODE::WORLD;
 }
 
 void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight)
@@ -236,7 +239,7 @@ void Engine::DrawSceneNodes(bool is_child, GameObject* gameObj)
         flags = (childrenCount == 0) ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_OpenOnArrow;
     if (gameObj == m_selectedObject)
         flags |= ImGuiTreeNodeFlags_Selected;
-    flags |= ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+    flags |= ImGuiTreeNodeFlags_SpanFullWidth;
 
     bool nodeOpen = ImGui::TreeNodeEx(gameObj->name, flags, "%s", gameObj->name);
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
@@ -313,6 +316,15 @@ void Engine::DrawIMGUI()
             void *temp = (void*)((u64)m_graphics.m_imguiTexture);
             ImGui::Image(temp,
                 ImVec2(dimension.width, dimension.height), ImVec2(0, 1), ImVec2(1, 0));
+        }
+
+        if (m_selectedObject != nullptr)
+        {
+            float camDist = (m_selectedObject->position - m_editorCamera.position).Magnitude();
+            DrawGizmo((float*)m_editorCamera.GetViewMatrix().AsPtr(),
+                (float*)m_editorCamera.m_projection.AsPtr(),
+                (float*)m_selectedObject->GetWorldMatrix().AsPtr(),
+                camDist, false);
         }
 
         if (ImGui::IsMouseDown(ImGuiMouseButton_Right) && ImGui::IsItemHovered())
@@ -524,4 +536,75 @@ void Engine::DrawIMGUI()
     
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void Engine::DrawGizmo(float* cameraView, float* cameraProjection, float* matrix, float camDistance, bool editTransformDecomposition)
+{
+    static bool useSnap = false;
+    static float snap[3] = { 1.f, 1.f, 1.f };
+    static float bounds[] = { -0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f };
+    static float boundsSnap[] = { 0.1f, 0.1f, 0.1f };
+    static bool boundSizing = false;
+    static bool boundSizingSnap = false;
+
+    if (editTransformDecomposition)
+    {
+        if (ImGui::IsKeyPressed(ImGuiKey_T))
+            m_curGizmoOperation = ImGuizmo::TRANSLATE;
+        if (ImGui::IsKeyPressed(ImGuiKey_E))
+            m_curGizmoOperation = ImGuizmo::ROTATE;
+        if (ImGui::IsKeyPressed(ImGuiKey_R)) // r Key
+            m_curGizmoOperation = ImGuizmo::SCALE;
+
+        if (m_curGizmoOperation != ImGuizmo::SCALE)
+        {
+            if (ImGui::RadioButton("Local", m_curGizmoMode == ImGuizmo::LOCAL))
+                m_curGizmoMode = ImGuizmo::LOCAL;
+            ImGui::SameLine();
+            if (ImGui::RadioButton("World", m_curGizmoMode == ImGuizmo::WORLD))
+                m_curGizmoMode = ImGuizmo::WORLD;
+        }
+
+
+        float viewManipulateRight = m_ImGuiIO->DisplaySize.x;
+        float viewManipulateTop = 0;
+        /*
+        static ImGuiWindowFlags gizmoWindowFlags = 0;
+
+        if (useWindow)
+        {
+            ImGui::Begin("Gizmo", 0, gizmoWindowFlags);
+            ImGuizmo::SetDrawlist();
+            float windowWidth = (float)ImGui::GetWindowWidth();
+            float windowHeight = (float)ImGui::GetWindowHeight();
+            ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+            viewManipulateRight = ImGui::GetWindowPos().x + windowWidth;
+            viewManipulateTop = ImGui::GetWindowPos().y;
+            ImGuiWindow* window = ImGui::GetCurrentWindow();
+            gizmoWindowFlags = ImGui::IsWindowHovered() && ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max) ? ImGuiWindowFlags_NoMove : 0;
+        }
+        else
+        {
+        */
+        ImGuizmo::SetDrawlist();
+        ImGuizmo::SetRect(0, 0, m_ImGuiIO->DisplaySize.x, m_ImGuiIO->DisplaySize.y);
+        /*
+        viewManipulateRight = ImGui::GetWindowPos().x + windowWidth;
+        viewManipulateTop = ImGui::GetWindowPos().y;
+        */
+        //}
+
+        //ImGuizmo::DrawGrid(cameraView, cameraProjection, RedFoxMaths::Mat4::GetIdentityMatrix().AsPtr(), 100.f);
+        //ImGuizmo::DrawCubes(cameraView, cameraProjection, &objectMatrix[0][0], gizmoCount);
+        ImGuizmo::Manipulate(cameraView, cameraProjection, m_curGizmoOperation, m_curGizmoMode, matrix, NULL, useSnap ? &snap[0] : NULL, boundSizing ? bounds : NULL, boundSizingSnap ? boundsSnap : NULL);
+
+        ImGuizmo::ViewManipulate(cameraView, camDistance, ImVec2(viewManipulateRight - 128, viewManipulateTop), ImVec2(128, 128), 0x10101010);
+    }
+
+
+    /*if (useWindow)
+    {
+        ImGui::End();
+        ImGui::PopStyleColor(1);
+    }*/
 }
