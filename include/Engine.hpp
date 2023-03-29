@@ -48,7 +48,7 @@ private:
     bool m_editorCameraEnabled;
 private:
     int DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
-    void DrawMainTopBar(const ImGuiViewport* viewport, float toolbarSize);
+    void DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight);
     void DrawIMGUI();
     void DrawSceneNodes(bool is_child, GameObject* model);
     void UpdateEditorCamera();

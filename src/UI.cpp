@@ -105,22 +105,43 @@ void Engine::InitIMGUI()
     ImGui_ImplOpenGL3_Init("#version 450");
 }
 
-void Engine::DrawMainTopBar(const ImGuiViewport* viewport, float toolbarSize)
+void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight)
 {
-    const float menuBarHeight = ImGui::GetCurrentWindow()->MenuBarHeight();
-    const float buttonHeight = toolbarSize - 8.f;
-
-    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + menuBarHeight));
-    ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, toolbarSize));
-    ImGui::SetNextWindowViewport(viewport->ID);
-
-    ImGuiWindowFlags window_flags = 0
+    const ImGuiWindowFlags window_flags = 0
         | ImGuiWindowFlags_NoDocking
         | ImGuiWindowFlags_NoTitleBar
         | ImGuiWindowFlags_NoResize
         | ImGuiWindowFlags_NoMove
         | ImGuiWindowFlags_NoScrollbar
         | ImGuiWindowFlags_NoSavedSettings;
+    
+    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y));
+    ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, titleBarHeight));
+    ImGui::SetNextWindowViewport(viewport->ID);
+
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.15f, 0.15, 0.15f, 1.f));
+    ImGui::Begin("TOPBAR", (bool*)0, window_flags);
+    ImGui::PopStyleColor();
+
+    // TODO(a.perche): Project name here
+    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Project Name").x) / 2.f);
+    ImGui::Text("Project Name");
+
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetWindowWidth() - buttonHeight - 5.f);
+    if (ImGui::Button("X", ImVec2(buttonHeight, titleBarHeight)))
+        m_platform.m_running = 0;
+
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetWindowWidth() - (buttonHeight * 2.f) - 10.f);
+    if (ImGui::Button("[__]", ImVec2(buttonHeight, titleBarHeight)))
+        m_platform.Maximize();
+
+    ImGui::End();  
+    
+    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + titleBarHeight + 16.f));
+    ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, toolbarSize));
+    ImGui::SetNextWindowViewport(viewport->ID);
 
     ImGui::PushStyleColor(ImGuiCol_Border, (const ImVec4)RF_GRAY);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 4.f);
@@ -156,16 +177,6 @@ void Engine::DrawMainTopBar(const ImGuiViewport* viewport, float toolbarSize)
         newGameObject->name = (char*)MyMalloc(&m_arenaAllocator, 20);
         sprintf(newGameObject->name, "New entity #%d\0", m_gameObjectCount - 1);
     }
-    
-    ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetWindowWidth() - (buttonHeight * 2.f) - 10.f);
-    if (ImGui::Button("[__]", ImVec2(buttonHeight, buttonHeight)))
-        m_platform.Maximize();
-
-    ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetWindowWidth() - buttonHeight - 5.f);
-    if (ImGui::Button("X", ImVec2(buttonHeight, buttonHeight)))
-        m_platform.m_running = 0;
 
     ImGui::PopStyleVar();
     ImGui::End();
@@ -175,13 +186,18 @@ int Engine::DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dock
 {
     if (viewport == NULL)
         viewport = ImGui::GetMainViewport();
-
+    
+    const ImGuiWindow* window = ImGui::GetCurrentWindow();
+    const float titleBarHeight = window->TitleBarHeight();
     const float toolbarSize = 46.f;
+    const float totalHeight = titleBarHeight + toolbarSize;
+    const float buttonHeight = toolbarSize - 8.f;
 
-    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + toolbarSize + 2.f));
-    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, viewport->WorkSize.y - toolbarSize - 2.f));
+    
+    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + totalHeight + 16.f));
+    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, viewport->WorkSize.y - totalHeight - 16.f));
     ImGui::SetNextWindowViewport(viewport->ID);
-
+    
     ImGuiWindowFlags host_window_flags = 0;
     host_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | 
                          ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
@@ -204,7 +220,7 @@ int Engine::DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dock
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags, window_class);
     ImGui::End();
 
-    DrawMainTopBar(viewport, toolbarSize);
+    DrawTopBar(viewport, titleBarHeight, toolbarSize, totalHeight, buttonHeight);
 
     return dockspace_id;
 }
@@ -315,14 +331,12 @@ void Engine::DrawIMGUI()
     ImGui::SameLine();
     if (ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
-        
         ImGuiTreeNodeFlags rootNodeFlags = 
             ImGuiTreeNodeFlags_Framed |
             ImGuiTreeNodeFlags_Leaf | 
             ImGuiTreeNodeFlags_AllowItemOverlap |
             ImGuiTreeNodeFlags_DefaultOpen |
             ImGuiTreeNodeFlags_SpanFullWidth;
-        
 
         static int scrollStrength = 1;
         if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "%s (%.4f)", (char*)m_sceneName.data, m_deltaTime))

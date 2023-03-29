@@ -100,6 +100,7 @@ private:
 
 public:
     HGLRC m_glContext;
+    RECT m_minimizedDimension;
     WindowDimension m_windowDimension;
     Window m_window;
     static int m_running;

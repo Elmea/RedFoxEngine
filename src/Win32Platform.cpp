@@ -181,20 +181,33 @@ WindowDimension Platform::GetWindowDimension()
 
 void Platform::Maximize()
 {
+    static bool maximized = false;
     MONITORINFO monitorInfo = {};
     HMONITOR monitor = MonitorFromWindow(m_window, MONITOR_DEFAULTTOPRIMARY);
     RECT monitorRect = monitorInfo.rcMonitor;
-    if (GetMonitorInfo(monitor, &monitorInfo))
+    if (!maximized)
     {
-        monitorRect = monitorInfo.rcMonitor;
-        SetWindowPos(m_window, nullptr, monitorRect.left, monitorRect.top,
-            monitorRect.right, monitorRect.bottom, SWP_SHOWWINDOW);
+        if (GetMonitorInfo(monitor, &monitorInfo))
+        {
+            monitorRect = monitorInfo.rcMonitor;
+            SetWindowPos(m_window, nullptr, monitorRect.left, monitorRect.top,
+                monitorRect.right, monitorRect.bottom, SWP_SHOWWINDOW);
+        }
+        else
+        {
+            GetWindowRect(m_window, &m_minimizedDimension);
+            GetWindowRect(GetDesktopWindow(), &monitorRect);
+            SetWindowPos(m_window, nullptr, monitorRect.left, monitorRect.top,
+                monitorRect.right, monitorRect.bottom, SWP_SHOWWINDOW);
+        }
+        maximized = true;
     }
     else
     {
-        GetWindowRect(GetDesktopWindow(), &monitorRect);
-        SetWindowPos(m_window, nullptr, monitorRect.left, monitorRect.top,
-            monitorRect.right, monitorRect.bottom, SWP_SHOWWINDOW);
+        SetWindowPos(m_window, nullptr, m_minimizedDimension.left, 
+            m_minimizedDimension.top, m_minimizedDimension.right,
+            m_minimizedDimension.bottom, SWP_SHOWWINDOW);
+        maximized = false;
     }
 }
 
@@ -416,7 +429,7 @@ static LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WPa
                 GetClientRect(Window, &client);
                 //NOTE: it would be nice to get the top button rectangles, and check all of
                 // them here;
-                if (mouse.x > 350 && mouse.x < client.right - 100 && mouse.y < 34)
+                if (mouse.x < client.right - 110 && mouse.y < 24)
                     hit = HTCAPTION;
             }
             return hit;
