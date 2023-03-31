@@ -77,7 +77,7 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
 layout(std430, binding = 0) buffer LightBlock {
     //TODO: split the lights in different types.    
-    Light light[50];
+    Light light[];
 } u_lightBlock;
 
 void main()
@@ -88,7 +88,7 @@ void main()
     vec3 Normal       = texture(gNormal, TexCoord).xyz;
 
     vec3 result = vec3(0, 0, 0);
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < u_lightBlock.light.length(); i++)
     {
         vec3 lightColor = u_lightBlock.light[i].diffuse;
         PointLight pl;

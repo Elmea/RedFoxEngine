@@ -91,6 +91,8 @@ public:
     void InitQuad();
     void InitModel(Model *model);
     void InitLights();
+    Light *GetLightBuffer(int *lightCount);
+    void ReleaseLightBuffer();
     void InitTexture(ObjModel *model);
     u32 InitTexture(void *data,int height, int width);
     void InitFramebuffer();

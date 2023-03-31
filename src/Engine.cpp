@@ -23,7 +23,7 @@ Engine::Engine(int width, int height) :
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
 
     m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 100);
-    ObjModelPush("barbarian.obj");
+    ObjModelPush("ts_bot912.obj");
     // ObjModelPush("bunny.obj");
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
@@ -36,7 +36,7 @@ Engine::Engine(int width, int height) :
 #if 0
     LoadScene("test.scene");
 #else
-    initSphericalManyGameObjects(100);
+    initSphericalManyGameObjects(1000);
     m_sceneName = (char*)initStringChar("Scene", 5, &m_arenaAllocator).data;
 #endif
     m_input = {};
@@ -249,16 +249,32 @@ void Engine::Update()
     m_editorCamera.m_parameters.aspect = 
         m_platform.m_windowDimension.width / 
         (f32)m_platform.m_windowDimension.height;
-
-
     m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x,
                                                        -cameraRotation.y,
                                                         cameraRotation.z);
-
     static f32 time;
     time += m_deltaTime * 0.1f;
     //TODO we'll need to think how we pass the resources,
     // and gameplay structures and objects to this update function
+    int lightCount = 0;
+    Light *light = (Light *)m_graphics.GetLightBuffer(&lightCount);
+
+    for(int i = 0; i < lightCount; i++)
+    {
+        light[i].constant  = 1.0f;
+        light[i].linear    = 0.09f;
+        light[i].quadratic = 0.032f;
+        light[i].ambient = {{0.01, 0.01, 0.01}};
+        light[i].specular = {{0.1, 0.1, 0.1}};
+        light[i].position = {{sinf(time) * i * 2,
+                              sinf((time / 3) * i * 3),
+                              cosf((time / 6) * 2) * i * 3}};
+        float intensity = 2.f;
+        light[i].diffuse = {{sinf(time * 0.5 * i) * intensity,
+                             sinf(time * 0.6 * i) * intensity,
+                             cosf(time * 0.3 * i) * intensity}};
+    }
+    m_graphics.ReleaseLightBuffer();
     UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount,
         time, cameraRotation, &m_editorCamera.position);
     m_graphics.SetViewProjectionMatrix(m_editorCamera.GetVP());
@@ -270,32 +286,6 @@ void Engine::Update()
 void Engine::Draw()
 {
     m_graphics.DrawGBuffer(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
-    GLuint lightBuffer = m_graphics.m_lightBuffer;
-    GLbitfield mapFlags = (GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-
-#if 1
-    Light *light = (Light *)glMapNamedBufferRange(lightBuffer, 0,
-        10 * sizeof(Light), mapFlags);
-
-    static float tempTime;
-    tempTime += m_deltaTime;
-    for(int i = 0; i < (int)50; i++)
-    {
-        light[i].constant  = 1.0f;
-        light[i].linear    = 0.09f;
-        light[i].quadratic = 0.032f;
-        light[i].ambient = {{0.01, 0.01, 0.01}};
-        light[i].specular = {{0.1, 0.1, 0.1}};
-        light[i].position = {{sinf(tempTime) * i * 2,
-                              sinf((tempTime / 3) * i * 3),
-                              cosf((tempTime / 6) * 2) * i * 3}};
-        float intensity = 2.f;
-        light[i].diffuse = {{sinf(tempTime * 0.5 * i) * intensity,
-                             sinf(tempTime * 0.6 * i) * intensity,
-                             cosf(tempTime * 0.3 * i) * intensity}};
-    }
-    glUnmapNamedBuffer(lightBuffer);
-#endif
     m_graphics.DrawQuad(m_platform.m_windowDimension);
     DrawIMGUI();
     // swap the buffers to show output

@@ -52,6 +52,7 @@
     X(PFNGLSHADERSTORAGEBLOCKBINDINGPROC, glShaderStorageBlockBinding)        \
     X(PFNGLGETPROGRAMINTERFACEIVPROC, glGetProgramInterfaceiv)                \
     X(PFNGLBINDBUFFERBASEPROC, glBindBufferBase)                              \
+    X(PFNGLBINDBUFFERRANGEPROC, glBindBufferRange)                            \
     X(PFNGLUNIFORMBLOCKBINDINGPROC, glUniformBlockBinding)                    \
     X(PFNGLNAMEDBUFFERSUBDATAPROC, glNamedBufferSubData)
 

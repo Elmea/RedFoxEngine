@@ -114,7 +114,7 @@ void Graphics::UpdateImGUIFrameBuffer(WindowDimension &dimension,
 
 void Graphics::InitLights()
 {
-    m_lightCount = 50;
+    m_lightCount = 100;
     glCreateBuffers(1, &m_lightBuffer);
     glNamedBufferStorage(m_lightBuffer, m_lightCount * sizeof(Light), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
@@ -132,6 +132,23 @@ void Graphics::InitLights()
         light[i].position = {{(f32)i * 0.01f , i * 0.01f, (f32)(i * 0.0l)}};
         light[i].diffuse = {{(f32)(i * 0.0002),(f32)(i * 0.0002), (f32)(i * 0.0002)}};
     }
+    glUnmapNamedBuffer(m_lightBuffer);
+}
+
+Light *Graphics::GetLightBuffer(int *lightCount)
+{
+    if (lightCount)
+        *lightCount = m_lightCount;
+    else
+        return (nullptr);
+    GLbitfield mapFlags = (GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+    return((Light *)glMapNamedBufferRange(m_lightBuffer, 0,
+        m_lightCount * sizeof(Light), mapFlags));
+
+}
+
+void Graphics::ReleaseLightBuffer()
+{
     glUnmapNamedBuffer(m_lightBuffer);
 }
 
@@ -371,36 +388,40 @@ void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
         m_viewProjection.AsPtr());
 
     int batchCount = 768; //TODO figure out a good value for this
-    int batchIndex = 0;
     RedFoxMaths::Mat4 *mem = (RedFoxMaths::Mat4 *)MyMalloc(temp,
-        sizeof(RedFoxMaths::Mat4) * 768);
-
-    for (int i = 0; i < (int)m_modelCount; i++)
+        sizeof(RedFoxMaths::Mat4) * gameObjectCount);
+    u64 *modelCountIndex = (u64 *)MyMalloc(temp,
+        sizeof(u64) * m_modelCount);
+    memset(modelCountIndex, 0, sizeof(u64) * m_modelCount);
+    memset(mem, 0, sizeof(RedFoxMaths::Mat4) * gameObjectCount);
+    for(int index = 0;index < gameObjectCount; index++)
     {
-        Model *currentModel = &m_models[i];
-        for(int index = 0;index < gameObjectCount; index++)
+        if (objects[index].model)
         {
-            if (objects[index].model && objects[index].model == currentModel)
+            u64 modelIndex = objects[index].model - m_models;
+            u64 countIndex = modelCountIndex[modelIndex];
+            mem[(countIndex) + (gameObjectCount / m_modelCount * modelIndex)] = 
+                objects[index].GetWorldMatrix().GetTransposedMatrix();
+            modelCountIndex[modelIndex]++;
+            if (modelCountIndex[modelIndex] == (u64)batchCount)
             {
-                mem[batchIndex] = objects[index].
-                    GetWorldMatrix().GetTransposedMatrix();
-                batchIndex++;
-                if (batchIndex == batchCount)
-                {
-                    glNamedBufferSubData(currentModel->vbm,	0,
-                        sizeof(RedFoxMaths::Mat4) * batchIndex, mem);
-                    DrawModelInstances(currentModel, batchIndex);
-                    batchIndex = 0;
-                    // break;
-                }
+                u64 countIndex = modelCountIndex[modelIndex];
+                glNamedBufferSubData(m_models[modelIndex].vbm,	0,
+                    sizeof(RedFoxMaths::Mat4) * countIndex, &mem[gameObjectCount / m_modelCount * modelIndex]);
+                DrawModelInstances(&m_models[modelIndex], countIndex);
+                modelCountIndex[modelIndex] = 0;
             }
         }
-        if (batchIndex && batchIndex < batchCount)
+    }
+    for (int i = 0; i < (int)m_modelCount; i++)
+    {
+        u64 countIndex = modelCountIndex[i];
+        if (countIndex)
         {
-            glNamedBufferSubData(currentModel->vbm,	0,
-                sizeof(RedFoxMaths::Mat4) * batchIndex, mem);
-            DrawModelInstances(currentModel, batchIndex);
-            batchIndex = 0;
+            glNamedBufferSubData(m_models[i].vbm,	0,
+                sizeof(RedFoxMaths::Mat4) * countIndex, &mem[gameObjectCount / m_modelCount * i]);
+            DrawModelInstances(&m_models[i], countIndex);
+            modelCountIndex[i] = 0;
         }
     }
 }
@@ -437,6 +458,7 @@ void Graphics::DrawQuad(WindowDimension dimension)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     // Bind the buffer to a binding point
     GLuint bindingPoint = 0;
+    glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_lightBuffer, 0, m_lightCount);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_lightBuffer);
     glBindVertexArray(m_quadVAO);
     glBindTextureUnit(0, m_gPosition);
