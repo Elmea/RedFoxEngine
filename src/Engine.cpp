@@ -37,7 +37,7 @@ Engine::Engine(int width, int height) :
     LoadScene("test.scene");
 #else
     initSphericalManyGameObjects(1000);
-    m_sceneName = (char*)initStringChar("Scene", 5, &m_arenaAllocator).data;
+    m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);
 #endif
     m_input = {};
     m_dc = GetDC(m_platform.m_window);
@@ -76,9 +76,7 @@ void Engine::LoadScene(const char *fileName)
         FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL, nullptr);
     
-    size_t fileNameLen = strlen(fileName);
-    m_sceneName = (char*)MyMalloc(&m_arenaAllocator, fileNameLen);
-    memcpy((char*)m_sceneName, fileName, fileNameLen);
+    m_sceneName = initStringChar(fileName, 255, &m_arenaAllocator);
 
     ReadFile(file, &m_gameObjectCount, sizeof(u32), nullptr, nullptr);
     for(int i = 0; i < (int)m_gameObjectCount; i++)
@@ -230,28 +228,37 @@ void Engine::ProcessInputs()
     m_editorCamera.SetProjection(projectionType::PERSPECTIVE);
 }
 
-Input Engine::GetInputs()
+void Engine::UpdateEditorCamera()
 {
-    return (m_input);
+    if (m_editorCameraEnabled)
+    {
+        const float dt32 = (f32)m_deltaTime;
+        static Float3 cameraRotation = (0, 0, 0);
+        cameraRotation += {(f32)m_input.mouseYDelta* dt32, (f32)m_input.mouseXDelta* dt32, 0};
+        m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
+
+        Float3 inputDirection(0, 0, 0);
+        if (m_input.W) inputDirection.z += -1;
+        if (m_input.S) inputDirection.z += 1;
+        if (m_input.A) inputDirection.x += -1;
+        if (m_input.D) inputDirection.x += 1;
+        inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
+        inputDirection.Normalize();
+        inputDirection = inputDirection * 20.f;
+        m_editorCamera.position += m_editorCameraSpeed * dt32 + inputDirection * (dt32 * dt32 * 0.5f);
+        m_editorCameraSpeed += inputDirection * dt32 * 0.5f;
+        m_editorCameraSpeed *= exp(dt32 * -2.f); // Drag
+    }
+    m_editorCamera.m_parameters.aspect = m_platform.m_windowDimension.width / (f32)m_platform.m_windowDimension.height;
 }
 
 void Engine::Update()
 {
-    DragWindow();
     UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll",
-        m_gameLibrary, &m_lastTime, UpdateGame);
-    static Float3 cameraRotation(0, 0, 0);
-    Float3 inputDirection(0, 0, 0);
+    m_gameLibrary, &m_lastTime, UpdateGame);
+    
+    UpdateEditorCamera();
 
-    if (m_input.mouseRClick)
-        cameraRotation += {(f32)m_input.mouseYDelta* (f32)m_deltaTime,
-                           (f32)m_input.mouseXDelta* (f32)m_deltaTime, 0};
-    m_editorCamera.m_parameters.aspect = 
-        m_platform.m_windowDimension.width / 
-        (f32)m_platform.m_windowDimension.height;
-    m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x,
-                                                       -cameraRotation.y,
-                                                        cameraRotation.z);
     static f32 time;
     time += m_deltaTime * 0.1f;
     //TODO we'll need to think how we pass the resources,
@@ -275,11 +282,9 @@ void Engine::Update()
                              cosf(time * 0.3 * i) * intensity}};
     }
     m_graphics.ReleaseLightBuffer();
-    UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount,
-        time, cameraRotation, &m_editorCamera.position);
+    UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount, time);
     m_graphics.SetViewProjectionMatrix(m_editorCamera.GetVP());
-    m_gameObjects[0].GetChildren(m_gameObjects, m_gameObjectCount,
-        &m_tempAllocator);
+    m_gameObjects[0].GetChildren(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 

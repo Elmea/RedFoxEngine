@@ -14,8 +14,7 @@ Camera::Camera(projectionType projection, float aspect)
     m_parameters._far = 100;
     m_parameters.aspect = aspect;
     SetProjection(projection);
-}    
-
+}
 
 void Camera::SetProjection(projectionType projectionType)
 {
@@ -34,8 +33,18 @@ void Camera::SetProjection(projectionType projectionType)
     }
 }
 
+void Camera::SetViewLookAt(Float3 target, Float3 up)
+{
+    orientation = Mat4::LookAt(position, target, up).ToQuaternion();
+}
+
+RedFoxMaths::Mat4 Camera::GetViewMatrix()
+{
+    return Mat4::CreateTransformMatrix(position, orientation, { 1.0f, 1.0f, 1.0f });
+}
+
 RedFoxMaths::Mat4 Camera::GetVP()
 {
-    return m_projection * Mat4::CreateTransformMatrix(position, orientation, {1.0f, 1.0f, 1.0f}).GetInverseMatrix();
+    return m_projection * GetViewMatrix().GetInverseMatrix();
 }
 

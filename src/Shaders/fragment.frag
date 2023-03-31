@@ -28,7 +28,7 @@ struct Light
 };
 
 layout(std430, binding = 0) buffer LightBlock {
-    Light light[1000];
+    Light light[100];
 } u_lightBlock;
 
 void main()
@@ -42,7 +42,7 @@ void main()
     vec3 objectColor = texture(gAlbedo, TexCoord).rgb;
 
     vec3 result = vec3(0, 0, 0);
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < 100; i++)
     {
         float lightConstant  = u_lightBlock.light[i].constant;
         float lightLinear    = u_lightBlock.light[i].linear;

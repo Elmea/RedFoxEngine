@@ -179,6 +179,43 @@ WindowDimension Platform::GetWindowDimension()
     return (m_windowDimension);
 }
 
+void Platform::Maximize()
+{
+    static bool maximized = false;
+    MONITORINFO monitorInfo = {};
+    HMONITOR monitor = MonitorFromWindow(m_window, MONITOR_DEFAULTTOPRIMARY);
+    RECT monitorRect = monitorInfo.rcMonitor;
+    if (!maximized)
+    {
+        if (GetMonitorInfo(monitor, &monitorInfo))
+        {
+            monitorRect = monitorInfo.rcMonitor;
+            SetWindowPos(m_window, nullptr, monitorRect.left, monitorRect.top,
+                monitorRect.right, monitorRect.bottom, SWP_SHOWWINDOW);
+        }
+        else
+        {
+            GetWindowRect(m_window, &m_minimizedDimension);
+            GetWindowRect(GetDesktopWindow(), &monitorRect);
+            SetWindowPos(m_window, nullptr, monitorRect.left, monitorRect.top,
+                monitorRect.right, monitorRect.bottom, SWP_SHOWWINDOW);
+        }
+        maximized = true;
+    }
+    else
+    {
+        SetWindowPos(m_window, nullptr, m_minimizedDimension.left, 
+            m_minimizedDimension.top, m_minimizedDimension.right,
+            m_minimizedDimension.bottom, SWP_SHOWWINDOW);
+        maximized = false;
+    }
+}
+
+void Platform::SetMousePosition(int x, int y)
+{
+    SetCursorPos(x, y);
+}
+
 void Platform::MessageProcessing(Input *input)
 {
     MSG Message;
@@ -199,6 +236,20 @@ void Platform::MessageProcessing(Input *input)
             input->mouseYPosition = HIWORD(Message.lParam);
             input->mouseXDelta = input->mouseXPosition - mouseX;
             input->mouseYDelta = input->mouseYPosition - mouseY;
+            if (input->lockMouse)
+            {
+                POINT p;
+                p.x = mouseX; p.y = mouseY;
+                ClientToScreen(m_window, &p);
+                SetCursor(nullptr);
+                SetCursorPos(p.x, p.y);
+                input->mouseXPosition = mouseX;
+                input->mouseYPosition = mouseY;
+            }
+            else if (input->mouseXDelta == 0 && input->mouseYDelta == 0)
+            {
+                SetCursor(LoadCursor(nullptr, IDC_ARROW));
+            }
         }
         break;
         case WM_MOUSEWHEEL: {
@@ -254,10 +305,9 @@ void Platform::MessageProcessing(Input *input)
             // https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
             switch (scanCode)
             {
-            case 0x01: // Escape
-            {
-            }
-            break;
+            case 0x01: {
+                input->Escape = IsDown;              
+            } break; // Escape
             case 0x10: {
                 input->Q = IsDown;
             }
@@ -284,7 +334,10 @@ void Platform::MessageProcessing(Input *input)
             case 0x19: // P
             case 0x1A: // [
             case 0x1B: // ]
-            case 0x1C: // Enter / Return
+            case 0x1C: {
+                input->Enter = IsDown;
+            }
+            break; // Enter / Return
             case 0x1D: // LCtrl
                 break;
 
@@ -364,35 +417,51 @@ static LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WPa
     LRESULT Result = 0;
     switch (Message)
     {
-    case WM_NCCALCSIZE:
-    {
-        const float pixelSize = 2.f;
-        NCCALCSIZE_PARAMS* params = (NCCALCSIZE_PARAMS*)LParam;
-        params->rgrc[0].top = (params->rgrc[0].top + 1.f);
-        params->rgrc[0].bottom = (params->rgrc[0].bottom - pixelSize);
-        params->rgrc[0].left = (params->rgrc[0].left + pixelSize);
-        params->rgrc[0].right = (params->rgrc[0].right - pixelSize);
-    }break;
-    case WM_DESTROY: {
-        Platform::m_running = 0;
-        PostQuitMessage(0);
-    }
-    break;
+        case WM_NCHITTEST: {
+            LRESULT hit = DefWindowProc(Window, Message, WParam, LParam);
+            if (hit == HTCLIENT)
+            {
+                RECT client;
+                POINT mouse;
+                GetCursorPos(&mouse);
+                ScreenToClient(Window, &mouse);
+                GetClientRect(Window, &client);
+                //NOTE: it would be nice to get the top button rectangles, and check all of
+                // them here;
+                if (mouse.x < client.right - 110 && mouse.y < 22)
+                    hit = HTCAPTION;
+            }
+            return hit;
+        }
+        case WM_NCCALCSIZE:
+        {
+            const float pixelSize = 2.f;
+            NCCALCSIZE_PARAMS* params = (NCCALCSIZE_PARAMS*)LParam;
+            params->rgrc[0].top = (params->rgrc[0].top);
+            params->rgrc[0].bottom = (params->rgrc[0].bottom - pixelSize);
+            params->rgrc[0].left = (params->rgrc[0].left + pixelSize);
+            params->rgrc[0].right = (params->rgrc[0].right - pixelSize);
+        }break;
+        case WM_DESTROY: {
+            Platform::m_running = 0;
+            PostQuitMessage(0);
+        }
+        break;
 
-    case WM_QUIT: {
-        Platform::m_running = 0;
-        DestroyWindow(Window);
-    }
-    break;
+        case WM_QUIT: {
+            Platform::m_running = 0;
+            DestroyWindow(Window);
+        }
+        break;
 
-    case WM_CLOSE: {
-        Platform::m_running = 0;
-    }
-    break;
+        case WM_CLOSE: {
+            Platform::m_running = 0;
+        }
+        break;
 
-    default: {
-        Result = DefWindowProc(Window, Message, WParam, LParam);
-    }
+        default: {
+            Result = DefWindowProc(Window, Message, WParam, LParam);
+        }
     }
     return (Result);
 }
