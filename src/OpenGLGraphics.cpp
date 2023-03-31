@@ -389,7 +389,7 @@ void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
 
     int batchCount = 768; //TODO figure out a good value for this
     RedFoxMaths::Mat4 *mem = (RedFoxMaths::Mat4 *)MyMalloc(temp,
-        sizeof(RedFoxMaths::Mat4) * gameObjectCount);
+        sizeof(RedFoxMaths::Mat4) * 768 * m_modelCount);
     u64 *modelCountIndex = (u64 *)MyMalloc(temp,
         sizeof(u64) * m_modelCount);
     memset(modelCountIndex, 0, sizeof(u64) * m_modelCount);

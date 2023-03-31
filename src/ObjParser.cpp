@@ -937,7 +937,7 @@ void DeInitObj(ObjModel *obj)
         DeInitMemory(&obj->meshMem);
 }
 
-static ObjModel CreateCube(Memory *memory)
+ObjModel CreateCube(Memory *memory)
 {
     ObjModel result = {};
 
@@ -1000,29 +1000,29 @@ static ObjModel CreateCube(Memory *memory)
 
     for (int i = 0; i < (int)tmp->indexCount; i++)
         result.indices[i] = triangleIndices[i];
-    // tmp->material.ambient = (vec3){1, 1, 1};
-    // tmp->material.diffuse = (vec3){1, 1, 1};
-    // tmp->material.Opaqueness = 1.f;
+    result.materials.count = 1;
+    result.materials.material = (ObjMaterial *)MyMalloc(memory, sizeof(ObjMaterial));
+    result.materials.material->ambient = {1, 1, 1};
+    result.materials.material->diffuse = {1, 1, 1};
+    result.materials.material->Opaqueness = 1.f;
 
     return (result);
 }
 
-#if 0
-static ObjModel CreateSphere(int latitudeCount, int longitudeCount, ArenaAllocator *memory)
+ObjModel CreateSphere(int latitudeCount, int longitudeCount, ArenaAllocator *memory)
 {
     ObjModel result = {};
-
     ObjMesh *mesh = (ObjMesh *)MyMalloc(memory, sizeof(ObjMesh));
 
     result.meshes = mesh;
     result.meshCount = 1;
 
-    u32 indexCount = 6 * longitudeCount * (latitudeCount - 1);
-    u32 vertexCount = (longitudeCount + 1) * (latitudeCount + 1);
-    mesh->indexCount = indexCount;
+    result.indexCount = 6 * longitudeCount * (latitudeCount - 1);
+    result.vertexCount = (longitudeCount + 1) * (latitudeCount + 1);
+    mesh->indexCount = result.indexCount;
 
-    u32 *indices = (u32 *)MyMalloc(memory, sizeof(u32) * mesh->indexCount);
-    ObjVertex *vertices = (ObjVertex *)MyMalloc(memory, sizeof(ObjVertex) * vertexCount);
+    result.indices = (u32 *)MyMalloc(memory, sizeof(u32) * mesh->indexCount);
+    result.vertices = (ObjVertex *)MyMalloc(memory, sizeof(ObjVertex) * result.vertexCount);
 
     float longitudeStep = M_PI * 2 / longitudeCount;
     float latitudeStep = M_PI / latitudeCount;
@@ -1032,13 +1032,13 @@ static ObjModel CreateSphere(int latitudeCount, int longitudeCount, ArenaAllocat
     {
         for (int j = 0; j <= longitudeCount; ++j, v++)
         {
-            vertices[v].position = {{cosf(longitudeStep * j) * sinf(i * latitudeStep), cosf(i * latitudeStep - M_PI),
+            result.vertices[v].position = {{cosf(longitudeStep * j) * sinf(i * latitudeStep), cosf(i * latitudeStep - M_PI),
                                      sinf(longitudeStep * j) * sinf(i * latitudeStep)}};
 
             vec3 zero = {};
-            vertices[v].normal = zero - vertices[v].position;
-            NormalizeV3(vertices[v].normal);
-            vertices[v].textureUV = {{(f32)j / longitudeCount, (f32)i / latitudeCount}};
+            result.vertices[v].normal = result.vertices[v].position;
+            NormalizeV3(result.vertices[v].normal);
+            result.vertices[v].textureUV = {{(f32)j / longitudeCount, (f32)i / latitudeCount}};
         }
     }
 
@@ -1046,9 +1046,9 @@ static ObjModel CreateSphere(int latitudeCount, int longitudeCount, ArenaAllocat
     v = longitudeCount + 1;
     for (int lon = 0; lon < longitudeCount; lon++, v++)
     {
-        indices[i++] = lon;
-        indices[i++] = v;
-        indices[i++] = v + 1;
+        result.indices[i++] = lon;
+        result.indices[i++] = v;
+        result.indices[i++] = v + 1;
     }
 
     v = longitudeCount + 1;
@@ -1056,25 +1056,26 @@ static ObjModel CreateSphere(int latitudeCount, int longitudeCount, ArenaAllocat
     {
         for (int lon = 0; lon < longitudeCount; lon++, v++)
         {
-            indices[i++] = v;
-            indices[i++] = v + longitudeCount + 1;
-            indices[i++] = v + 1;
+            result.indices[i++] = v;
+            result.indices[i++] = v + longitudeCount + 1;
+            result.indices[i++] = v + 1;
 
-            indices[i++] = v + 1;
-            indices[i++] = v + longitudeCount + 1;
-            indices[i++] = v + longitudeCount + 2;
+            result.indices[i++] = v + 1;
+            result.indices[i++] = v + longitudeCount + 1;
+            result.indices[i++] = v + longitudeCount + 2;
         }
     }
 
     for (int lon = 0; lon < longitudeCount; lon++, v++)
     {
-        indices[i++] = v;
-        indices[i++] = v + longitudeCount + 1;
-        indices[i++] = v + 1;
+        result.indices[i++] = v;
+        result.indices[i++] = v + longitudeCount + 1;
+        result.indices[i++] = v + 1;
     }
-    // mesh->material.ambient    = (vec3){1, 1, 1};
-    // mesh->material.diffuse    = (vec3){1, 1, 1};
-    // mesh->material.Opaqueness = 1.f;
+    result.materials.count = 1;
+    result.materials.material = (ObjMaterial *)MyMalloc(memory, sizeof(ObjMaterial));
+    result.materials.material->ambient = {1, 1, 1};
+    result.materials.material->diffuse = {1, 1, 1};
+    result.materials.material->Opaqueness = 1.f;
     return result;
 }
-#endif

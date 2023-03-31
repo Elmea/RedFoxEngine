@@ -1,4 +1,5 @@
 #include "Engine.hpp"
+#include "ObjParser.hpp"
 #include "meow_hash_x64_aesni.h"
 
 #define MEMORY_IMPLEMENTATION
@@ -24,6 +25,8 @@ Engine::Engine(int width, int height) :
 
     m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 100);
     ObjModelPush("ts_bot912.obj");
+    m_models[m_modelCount++].obj = CreateCube(&m_arenaAllocator);
+    m_models[m_modelCount++].obj = CreateSphere(30, 25, &m_arenaAllocator);
     // ObjModelPush("bunny.obj");
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
@@ -179,9 +182,9 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     {
         m_gameObjects[i].parent = nullptr;
         if (i % 2 == 0)
-            m_gameObjects[i].model = &m_models[0];
+            m_gameObjects[i].model = &m_models[1];
         else
-            m_gameObjects[i].model = nullptr;
+            m_gameObjects[i].model = &m_models[2];
             // m_gameObjects[i].model = &m_models[1];
         m_gameObjects[i].scale = 1;
         m_gameObjects[i].orientation.a = 1;
