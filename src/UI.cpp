@@ -102,7 +102,7 @@ void Engine::InitIMGUI()
     ImGui_ImplOpenGL3_Init("#version 450");
 
     m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
-    m_GizmoMode = ImGuizmo::MODE::WORLD;
+    m_GizmoMode = ImGuizmo::MODE::LOCAL;
 }
 
 void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight)
@@ -313,20 +313,22 @@ void Engine::DrawIMGUI()
     {
         WindowDimension &dimension = m_platform.m_windowDimension;
         ImVec2 content = ImGui::GetContentRegionAvail();
+        ImVec2 windowPos = ImGui::GetWindowPos();
+
         if (content.x != 0 && content.y != 0)
         {
             if (content.x != dimension.width || content.y != dimension.height)
                 m_graphics.UpdateImGUIFrameBuffer(dimension, {(int)content.x, (int)content.y});
-            void *temp = (void*)((u64)m_graphics.m_imguiTexture);
-            ImGui::Image(temp,
+            void *framebuffer = (void*)((u64)m_graphics.m_imguiTexture);
+            ImGui::Image(framebuffer,
                 ImVec2(dimension.width, dimension.height), ImVec2(0, 1), ImVec2(1, 0));
         }
 
         if (m_selectedObject != nullptr)
         {
             ImGuizmo::SetDrawlist();
-
-            ImGuizmo::SetRect(0, 0, dimension.width, dimension.height);
+            ImGui::GetCurrentWindow();
+            ImGuizmo::SetRect(windowPos.x, windowPos.y, content.x, content.y);
 
             RedFoxMaths::Mat4 cameraProjection = m_editorCamera.m_projection.GetTransposedMatrix();
             RedFoxMaths::Mat4 cameraView = m_editorCamera.GetViewMatrix().GetTransposedMatrix();

@@ -116,11 +116,11 @@ void Engine::LoadScene(const char *fileName)
             sizeof(current->position), nullptr, nullptr);
         ReadFile(file, &current->scale,
             sizeof(current->scale), nullptr, nullptr);
-        current->scale.y = current->scale.z = 1;
+        // current->scale.y = current->scale.z = 1;
         ReadFile(file, &current->orientation,
             sizeof(current->orientation), nullptr, nullptr);
-        current->orientation.a = 1;
-        current->orientation.b = current->orientation.c = current->orientation.d = 1;
+        // current->orientation.a = 1;
+        // current->orientation.b = current->orientation.c = current->orientation.d = 0;
     }
     CloseHandle(file);
 }
@@ -135,7 +135,7 @@ void Engine::LoadScene(const char *fileName)
         int parent; - -l if no parent, >= 0 if parent exists
         u64 modelHash; hash of the filename string of the model
         float position[3];
-        float scale;
+        float scale[3];
         float orientation[4];
     }
 
@@ -197,9 +197,9 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
 
     m_gameObjects[1].parent = &m_gameObjects[0];
     m_gameObjects[1].position = {};
-    m_gameObjects[1].scale = 0.5;
+    m_gameObjects[1].scale = {0.5, 0.5, 0.5};
     m_gameObjects[2].position = {2, 1, 0};
-    m_gameObjects[2].scale = 0.5;
+    m_gameObjects[2].scale = m_gameObjects[1].scale;
 
     int countX = (int)sqrtf(count);
     int countY = count / countX;
