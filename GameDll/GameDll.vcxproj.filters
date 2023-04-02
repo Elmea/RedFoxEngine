@@ -31,16 +31,19 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\src\Shaders\fragment.frag">
+    <None Include="..\data\Shaders\blin_phong.frag">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="..\src\Shaders\gBuffer.frag">
+    <None Include="..\data\Shaders\fragment.frag">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="..\src\Shaders\gBuffer.vert">
+    <None Include="..\data\Shaders\gBuffer.frag">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="..\src\Shaders\vertex.vert">
+    <None Include="..\data\Shaders\gBuffer.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="..\data\Shaders\vertex.vert">
       <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>

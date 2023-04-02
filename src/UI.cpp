@@ -1,6 +1,3 @@
-//#include "imgui.h"
-#include <string>
-
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
 
@@ -433,8 +430,10 @@ void Engine::DrawIMGUI()
             const int buttonWidth = 50;
             if (buttonWidth < ImGui::GetContentRegionAvail().x)
             {
+                char tempString[255] = {};
+                snprintf(tempString, 255, "%d", scrollStrength);
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - (f32)buttonWidth / 2);
-                if (ImGui::Button(std::to_string(scrollStrength).c_str(), ImVec2(buttonWidth, 0)))
+                if (ImGui::Button(tempString, ImVec2(buttonWidth, 0)))
                 {
                     scrollStrength *= 10;
                     if (scrollStrength > 1000)
