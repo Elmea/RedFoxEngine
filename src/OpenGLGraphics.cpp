@@ -112,46 +112,6 @@ void Graphics::UpdateImGUIFrameBuffer(WindowDimension &dimension,
     InitGeometryFramebuffer(dimension);
 }
 
-void Graphics::InitLights()
-{
-    m_lightCount = 100;
-    glCreateBuffers(1, &m_lightBuffer);
-    glNamedBufferStorage(m_lightBuffer, m_lightCount * sizeof(Light), nullptr,
-        GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
-
-    GLbitfield mapFlags = (GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-    Light *light = (Light *)glMapNamedBufferRange(m_lightBuffer, 0,
-        m_lightCount * sizeof(Light), mapFlags);
-
-    for(int i = 0; i < (int)m_lightCount; i++)
-    {
-        light[i].constant  = 1.0f;
-        light[i].linear    = 0.09f;
-        light[i].quadratic = 0.032f;
-
-        light[i].position = {{(f32)i * 0.01f , i * 0.01f, (f32)(i * 0.0l)}};
-        light[i].diffuse = {{(f32)(i * 0.0002),(f32)(i * 0.0002), (f32)(i * 0.0002)}};
-    }
-    glUnmapNamedBuffer(m_lightBuffer);
-}
-
-Light *Graphics::GetLightBuffer(int *lightCount)
-{
-    if (lightCount)
-        *lightCount = m_lightCount;
-    else
-        return (nullptr);
-    GLbitfield mapFlags = (GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-    return((Light *)glMapNamedBufferRange(m_lightBuffer, 0,
-        m_lightCount * sizeof(Light), mapFlags));
-
-}
-
-void Graphics::ReleaseLightBuffer()
-{
-    glUnmapNamedBuffer(m_lightBuffer);
-}
-
 void Graphics::InitQuad()
 {
     float vertices[] = {
@@ -346,16 +306,16 @@ void Graphics::InitShaders(Memory *tempArena)
 {
     // fragment & vertex shaders for drawing triangle
     MyString vertexShaderSource = OpenAndReadEntireFile(
-        "src\\Shaders\\gBuffer.vert", tempArena);
+        "Shaders\\gBuffer.vert", tempArena);
     MyString fragmentShaderSource = OpenAndReadEntireFile(
-        "src\\Shaders\\gBuffer.frag", tempArena);
+        "Shaders\\gBuffer.frag", tempArena);
     CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
         m_gvshader, m_gfshader, m_gpipeline);
 
     vertexShaderSource = OpenAndReadEntireFile(
-        "src\\Shaders\\vertex.vert", tempArena);
+        "Shaders\\vertex.vert", tempArena);
     fragmentShaderSource = OpenAndReadEntireFile(
-        "src\\Shaders\\blin_phong.frag", tempArena);
+        "Shaders\\blin_phong.frag", tempArena);
     CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
         m_vshader, m_fshader, m_pipeline);
 }
@@ -377,37 +337,29 @@ void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
     glBindProgramPipeline(m_gpipeline);
     glDisable(GL_BLEND);
 
-    // activate shaders for next draw call
-
-    int *objectIndex = (int *)MyMalloc(temp, m_modelCount);
-    for(int i = 0; i < (int)m_modelCount; i++)
-        objectIndex[i] = 0;
-
     GLint u_matrix = 0;
     glProgramUniformMatrix4fv(m_gvshader, u_matrix, 1, GL_TRUE,
         m_viewProjection.AsPtr());
 
     int batchCount = 768; //TODO figure out a good value for this
     RedFoxMaths::Mat4 *mem = (RedFoxMaths::Mat4 *)MyMalloc(temp,
-        sizeof(RedFoxMaths::Mat4) * 768 * m_modelCount);
+        sizeof(RedFoxMaths::Mat4) * batchCount * (m_modelCount + 1));
     u64 *modelCountIndex = (u64 *)MyMalloc(temp,
         sizeof(u64) * m_modelCount);
-    memset(modelCountIndex, 0, sizeof(u64) * m_modelCount);
-    memset(mem, 0, sizeof(RedFoxMaths::Mat4) * gameObjectCount);
     for(int index = 0;index < gameObjectCount; index++)
     {
         if (objects[index].model)
         {
             u64 modelIndex = objects[index].model - m_models;
             u64 countIndex = modelCountIndex[modelIndex];
-            mem[(countIndex) + (gameObjectCount / m_modelCount * modelIndex)] = 
+            mem[countIndex + (batchCount * modelIndex)] =
                 objects[index].GetWorldMatrix().GetTransposedMatrix();
             modelCountIndex[modelIndex]++;
             if (modelCountIndex[modelIndex] == (u64)batchCount)
             {
                 u64 countIndex = modelCountIndex[modelIndex];
                 glNamedBufferSubData(m_models[modelIndex].vbm,	0,
-                    sizeof(RedFoxMaths::Mat4) * countIndex, &mem[gameObjectCount / m_modelCount * modelIndex]);
+                    sizeof(RedFoxMaths::Mat4) * batchCount, &mem[batchCount * modelIndex]);
                 DrawModelInstances(&m_models[modelIndex], countIndex);
                 modelCountIndex[modelIndex] = 0;
             }
@@ -419,7 +371,7 @@ void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
         if (countIndex)
         {
             glNamedBufferSubData(m_models[i].vbm,	0,
-                sizeof(RedFoxMaths::Mat4) * countIndex, &mem[gameObjectCount / m_modelCount * i]);
+                sizeof(RedFoxMaths::Mat4) * countIndex, &mem[batchCount * i]);
             DrawModelInstances(&m_models[i], countIndex);
             modelCountIndex[i] = 0;
         }
@@ -457,10 +409,8 @@ void Graphics::DrawQuad(WindowDimension dimension)
     glBindProgramPipeline(m_pipeline);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     // Bind the buffer to a binding point
-    GLuint bindingPoint = 0;
-    glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_lightBuffer, 0, m_lightCount);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_lightBuffer);
     glBindVertexArray(m_quadVAO);
+    BindLights();
     glBindTextureUnit(0, m_gPosition);
     glBindTextureUnit(1, m_gNormal);
     glBindTextureUnit(2, m_gAlbedoSpec);

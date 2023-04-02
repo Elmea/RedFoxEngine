@@ -9,60 +9,10 @@
 #include "OpenGLFunctions.hpp"
 #include "ObjParser.hpp"
 #include "imgui.h"
+#include "Light.hpp"
 
 namespace RedFoxEngine
 {
-
-struct DirLight {
-    vec3 direction;
-
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-};
-
-struct PointLight {
-    vec3 position;
-
-    float constant;
-    float linear;
-    float quadratic;
-
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-};
-
-struct SpotLight {
-    vec3 position;
-    vec3 direction;
-    float cutOff;
-    float outerCutOff;
-
-    float constant;
-    float linear;
-    float quadratic;
-
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-};
-
-struct Light
-{
-    vec3 position;
-    float cutOff;
-    vec3 direction;
-    float outerCutOff;
-
-
-    vec3 ambient;
-    float constant;
-    vec3 diffuse;
-    float linear;
-    vec3 specular;
-    float quadratic;
-};
 
 class Graphics
 {
@@ -76,14 +26,17 @@ private:
     GLuint m_pipeline;
     GLuint m_gBuffer;
     GLuint m_imguiFramebuffer;
-    // GLuint m_lightBuffer;
-    u32    m_lightCount;
+    u32    m_spotLightCount;
+    GLuint m_spotLightBuffer;
+    u32    m_dirLightCount;
+    GLuint m_dirLightBuffer;
+    u32    m_pointLightCount;
+    GLuint m_pointLightBuffer;
+    GLuint m_gPosition, m_gNormal, m_gAlbedoSpec;
 public:
     Model *m_models = nullptr;
     u32    m_modelCount;
-    GLuint m_lightBuffer;
     GLuint m_imguiTexture;
-    GLuint m_gPosition, m_gNormal, m_gAlbedoSpec;
     void DrawGBuffer(GameObject *objects, int gameObjectCount, Memory *temp);
     void DrawQuad(WindowDimension dimension);
     void DrawModel(Model *model);
@@ -91,8 +44,11 @@ public:
     void InitQuad();
     void InitModel(Model *model);
     void InitLights();
-    Light *GetLightBuffer(int *lightCount);
-    void ReleaseLightBuffer();
+    void BindLights();
+    DirLight *GetDirLightBuffer(int *lightCount);
+    void ReleaseDirLightBuffer();
+    PointLight *GetPointLightBuffer(int *lightCount);
+    void ReleasePointLightBuffer();
     void InitTexture(ObjModel *model);
     u32 InitTexture(void *data,int height, int width);
     void InitFramebuffer();

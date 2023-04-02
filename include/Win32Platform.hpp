@@ -69,7 +69,10 @@ struct Input
     u8 L : 1;
     u8 SemiColon : 1;
     u8 Apostrophe : 1;
+    u8 Tilda : 1;
+    u8 LShift : 1;
     u8 Enter : 1;
+    u8 LControl : 1;
     u8 Escape : 1;
     u8 Z : 1;
     u8 X : 1;
@@ -81,6 +84,12 @@ struct Input
     u8 Comma : 1;
     u8 Period : 1;
     u8 Slash : 1;
+    u8 RShift : 1;
+    u8 Spacebar : 1;
+    u8 Up : 1;
+    u8 Down : 1;
+    u8 Left : 1;
+    u8 Right : 1;
 };
 
 #ifndef UPDATEGAME

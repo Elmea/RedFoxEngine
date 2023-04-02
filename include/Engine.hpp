@@ -64,6 +64,7 @@ private:
     void StartTime();
     void LoadScene(const char *fileName);
     void SaveScene(const char *fileName);
+    void UpdateLights(float time);
     void initSphericalManyGameObjects(int count); //TODO: remove
 public:
     Engine(int width, int height);

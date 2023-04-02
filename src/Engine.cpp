@@ -39,7 +39,7 @@ Engine::Engine(int width, int height) :
 #if 0
     LoadScene("test.scene");
 #else
-    initSphericalManyGameObjects(1000);
+    initSphericalManyGameObjects(5000);
     m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);
 #endif
     m_input = {};
@@ -181,14 +181,11 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     for (int i = 0; i < (int)m_gameObjectCount; i++)
     {
         m_gameObjects[i].parent = nullptr;
-        if (i % 2 == 0)
-            m_gameObjects[i].model = &m_models[1];
-        else
-            m_gameObjects[i].model = &m_models[2];
-            // m_gameObjects[i].model = &m_models[1];
+        m_gameObjects[i].model = &m_models[i % m_modelCount];
         m_gameObjects[i].scale = 1;
         m_gameObjects[i].orientation.a = 1;
-        m_gameObjects[i].name = (char *)MyMalloc(&m_arenaAllocator, sizeof(char) * 13);
+        m_gameObjects[i].name = (char *)MyMalloc(&m_arenaAllocator,
+            sizeof(char) * 13);
         snprintf(m_gameObjects[i].name, 13, "Entity%d", i);
         if (i < 3 && i != 0)
         m_gameObjects[i].parent = &m_gameObjects[0];
@@ -207,14 +204,19 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     float latitudeStep = M_PI / countY;
 
     int index = 0;
-    float scale = 10;
+    float scale = 50;
     for (int i = 0; i < countX; i++)
     {
         for(int j = 0; j < countY; j++)
         {
-            m_gameObjects[index++].position = {cosf(longitudeStep * j) * sinf(i * latitudeStep),
-            sinf(longitudeStep * j) * sinf(i * latitudeStep), cosf(i * latitudeStep - M_PI)};
-            m_gameObjects[index - 1].position = m_gameObjects[index - 1].position * scale;
+            m_gameObjects[index++].position =
+                {
+                    cosf(longitudeStep * j) * sinf(i * latitudeStep),
+                    sinf(longitudeStep * j) * sinf(i * latitudeStep),
+                    cosf(i * latitudeStep - M_PI)
+                };
+            m_gameObjects[index - 1].position =
+                m_gameObjects[index - 1].position * scale;
             //m_gameObjects[index - 1].position.y *= 2;
         }
     }
@@ -236,15 +238,15 @@ void Engine::UpdateEditorCamera()
     if (m_editorCameraEnabled)
     {
         const float dt32 = (f32)m_deltaTime;
-        static Float3 cameraRotation = (0, 0, 0);
+        static Float3 cameraRotation;
         cameraRotation += {(f32)m_input.mouseYDelta* dt32, (f32)m_input.mouseXDelta* dt32, 0};
         m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
 
         Float3 inputDirection(0, 0, 0);
-        if (m_input.W) inputDirection.z += -1;
-        if (m_input.S) inputDirection.z += 1;
-        if (m_input.A) inputDirection.x += -1;
-        if (m_input.D) inputDirection.x += 1;
+        if (m_input.W || m_input.Up)    inputDirection.z += -1;
+        if (m_input.S || m_input.Down)  inputDirection.z += 1;
+        if (m_input.A || m_input.Left)  inputDirection.x += -1;
+        if (m_input.D || m_input.Right) inputDirection.x += 1;
         inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
         inputDirection.Normalize();
         inputDirection = inputDirection * 20.f;
@@ -258,33 +260,15 @@ void Engine::UpdateEditorCamera()
 void Engine::Update()
 {
     UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll",
-    m_gameLibrary, &m_lastTime, UpdateGame);
+        m_gameLibrary, &m_lastTime, UpdateGame);
     
     UpdateEditorCamera();
 
     static f32 time;
     time += m_deltaTime * 0.1f;
+    UpdateLights(time);
     //TODO we'll need to think how we pass the resources,
     // and gameplay structures and objects to this update function
-    int lightCount = 0;
-    Light *light = (Light *)m_graphics.GetLightBuffer(&lightCount);
-
-    for(int i = 0; i < lightCount; i++)
-    {
-        light[i].constant  = 1.0f;
-        light[i].linear    = 0.09f;
-        light[i].quadratic = 0.032f;
-        light[i].ambient = {{0.01, 0.01, 0.01}};
-        light[i].specular = {{0.1, 0.1, 0.1}};
-        light[i].position = {{sinf(time) * i * 2,
-                              sinf((time / 3) * i * 3),
-                              cosf((time / 6) * 2) * i * 3}};
-        float intensity = 2.f;
-        light[i].diffuse = {{sinf(time * 0.5 * i) * intensity,
-                             sinf(time * 0.6 * i) * intensity,
-                             cosf(time * 0.3 * i) * intensity}};
-    }
-    m_graphics.ReleaseLightBuffer();
     UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount, time);
     m_graphics.SetViewProjectionMatrix(m_editorCamera.GetVP());
     m_gameObjects[0].GetChildren(m_gameObjects, m_gameObjectCount, &m_tempAllocator);

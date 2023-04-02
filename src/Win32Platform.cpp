@@ -74,7 +74,6 @@ static HGLRC Win32InitOpenGL(HWND window)
         WGL_STENCIL_BITS_ARB,
         8,
 
-        // uncomment for sRGB framebuffer, from WGL_ARB_framebuffer_sRGB extension
         // https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_framebuffer_sRGB.txt
         WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB,
         GL_TRUE,
@@ -167,6 +166,13 @@ Platform::Platform(int width, int height)
     hCurs1 = LoadCursor(nullptr, IDC_ARROW);
     SetCursor(hCurs1);
     GetWindowDimension();
+    char current[255] = {};
+    char dataFolder[] = "\\data";
+    int i = GetCurrentDirectory(sizeof(current) - 1, current);
+    int j = 0;
+    while(j < (int)sizeof(dataFolder))
+        current[i++] = dataFolder[j++];
+    SetCurrentDirectory(current);
 }
 
 WindowDimension Platform::GetWindowDimension()
@@ -298,105 +304,64 @@ void Platform::MessageProcessing(Input *input)
             // int WasDown = ((Message.lParam & (1 << 30)) != 0);
             int IsDown = ((Message.lParam & (1 << 31)) == 0);
 
-            // NOTE(V. Caraulan): This function maps the Virtual Keys of the keyboard, to physical keys
-            UINT scanCode = MapVirtualKeyEx(VKCode, MAPVK_VK_TO_VSC, GetKeyboardLayout(0));
+            // NOTE(V. Caraulan): This function maps the Virtual Keys of 
+            // the keyboard, to physical keys
+            UINT scanCode = MapVirtualKeyEx(VKCode, MAPVK_VK_TO_VSC,
+                    GetKeyboardLayout(0));
 
             // NOTE(V. Caraulan): the comments are for US/ISO international keys
             // https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
             switch (scanCode)
             {
-            case 0x01: {
-                input->Escape = IsDown;              
-            } break; // Escape
-            case 0x10: {
-                input->Q = IsDown;
-            }
-            break; // Q
-            case 0x11: {
-                input->W = IsDown;
-            }
-            break; // W
-            case 0x12: {
-                input->E = IsDown;
-            }
-            break;     // E
-            case 0x13: // R
-            case 0x14: // T
-            case 0x15: // Y
-
-            case 0x16: // U
-                break;
-            case 0x17: {
-                input->I = IsDown;
-            }
-            break;     // I
-            case 0x18: // O
-            case 0x19: // P
-            case 0x1A: // [
-            case 0x1B: // ]
-            case 0x1C: {
-                input->Enter = IsDown;
-            }
-            break; // Enter / Return
-            case 0x1D: // LCtrl
-                break;
-
-            case 0x1E: {
-                input->A = IsDown;
-            }
-            break; // A
-            case 0x1F: {
-                input->S = IsDown;
-            }
-            break; // S
-            case 0x20: {
-                input->D = IsDown;
-            }
-            break;     // D
-            case 0x21: // F
-            case 0x22: // G
-            case 0x23: // H
-                break;
-            case 0x24: {
-                input->J = IsDown;
-            }
-            break; // J
-            case 0x25: {
-                input->K = IsDown;
-            }
-            break; // K
-            case 0x26: {
-                input->L = IsDown;
-            }
-            break;
-            case 0x27: // ;
-            case 0x28: // '
-            case 0x29: // `~
-            case 0x2A: // LShift
-            case 0x2B: // \|
-
-            case 0x2C: // Z
-            case 0x2D: // X
-            case 0x2E: // C
-            case 0x2F: // V
-            case 0x30: // B
-            case 0x31: // N
-            case 0x32: // M
-            case 0x33: // <
-            case 0x34: // >
-            case 0x35: // /?
-            case 0x36: // RShift
-                break;
-            // 37 (Keypad-*) or (*/PrtScn) on a 83/84-key keyboard
-            // 38 (LAlt),
-            case 0x39: {
-            }
-            break; // Space bar
+                case 0x01: input->Escape = IsDown; break; // Escape
+                case 0x10: input->Q = IsDown; break; // Q
+                case 0x11: input->W = IsDown; break; // W
+                case 0x12: input->E = IsDown; break; // E
+                case 0x13: input->R = IsDown; break; // R
+                case 0x14: input->T = IsDown; break; // T
+                case 0x15: input->Y = IsDown; break; // Y
+                case 0x16: input->U = IsDown; break; // U
+                case 0x17: input->I = IsDown; break; // I
+                case 0x18: input->O = IsDown; break; // O
+                case 0x19: input->P = IsDown; break; // P
+                case 0x1A: input->OpenBracket = IsDown; break; // [
+                case 0x1B: input->CloseBracket = IsDown; break; // ]
+                case 0x1C: input->Enter = IsDown; break; // Enter / Return
+                case 0x1D: input->LControl = IsDown; break; // LCtrl
+                case 0x1E: input->A = IsDown; break; // A
+                case 0x1F: input->S = IsDown; break; // S
+                case 0x20: input->D = IsDown; break; // D
+                case 0x21: input->F = IsDown; break; // F
+                case 0x22: input->G = IsDown; break; // G
+                case 0x23: input->H = IsDown; break; // H
+                case 0x24: input->J = IsDown; break; // J
+                case 0x25: input->K = IsDown; break; // K
+                case 0x26: input->L = IsDown; break; // L
+                case 0x27: input->SemiColon = IsDown; break;// ;
+                case 0x28: input->Apostrophe = IsDown; break;// '
+                case 0x29: input->Tilda = IsDown; break;// `~
+                case 0x2A: input->LShift = IsDown; break;// LShift
+                case 0x2B: input->BackSlash = IsDown; break;// \|
+                case 0x2D: input->X = IsDown; break;// X
+                case 0x2E: input->C = IsDown; break;// C
+                case 0x2F: input->V = IsDown; break;// V
+                case 0x30: input->B = IsDown; break;// B
+                case 0x31: input->N = IsDown; break;// N
+                case 0x32: input->M = IsDown; break;// M
+                case 0x33: input->Comma = IsDown; break;// <
+                case 0x34: input->Period = IsDown; break;// >
+                case 0x35: input->Slash = IsDown; break;// /?
+                case 0x36: input->RShift = IsDown; break;// RShift
+                // 37 (Keypad-*) or (*/PrtScn) on a 83/84-key keyboard
+                // 38 (LAlt),
+                case 0x39: input->Spacebar = IsDown; break; // Space bar
                 // 3a (CapsLock)
                 // 3b (F1), 3c (F2), 3d (F3), 3e (F4), 3f (F5), 40 (F6), 41 (F7), 42 (F8), 43 (F9), 44 (F10)
-                break;
-            default: {
-            }
+                case 0x48: input->Up = IsDown; break; // Up
+                case 0x4b: input->Left = IsDown; break; // Left
+                case 0x4d: input->Right = IsDown; break; // Right
+                case 0x50: input->Down = IsDown; break; // Down
+                default: { }
             }
         }
         break;
