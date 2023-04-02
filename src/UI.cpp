@@ -1,6 +1,9 @@
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
 
+#define MATHS_HPP_IMPLEMENTATION
+#include "engine_math.hpp"
+
 #include "Engine.hpp"
 
 using namespace RedFoxEngine;
@@ -243,6 +246,8 @@ void Engine::DrawSceneNodes(bool is_child, GameObject* gameObj)
     {
         m_selectedObject = gameObj;
     }
+
+    //TODO(a.perche): Fix maths
     /*
     if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered())
     {
@@ -296,6 +301,8 @@ void Engine::DrawIMGUI()
     ImGui_ImplWin32_NewFrame();
     ImGui_ImplOpenGL3_NewFrame();
     ImGui::NewFrame();
+
+    ImGuizmo::SetOrthographic(true);
     ImGuizmo::BeginFrame();
     
     // TODO(a.perche) : Build dockspace at runtime
@@ -320,44 +327,42 @@ void Engine::DrawIMGUI()
 
         if (m_selectedObject != nullptr)
         {
-            ImGuizmo::SetOrthographic(false);
-            ImGuizmo::SetDrawlist(ImGui::GetWindowDrawList());
+            ImGuizmo::SetDrawlist();
 
-            ImGuizmo::SetRect(content.x, content.y, dimension.width, dimension.height);
+            ImGuizmo::SetRect(0, 0, dimension.width, dimension.height);
 
-            RedFoxMaths::Mat4 cameraProjection = m_editorCamera.m_projection.GetInverseMatrix().GetTransposedMatrix();
+            RedFoxMaths::Mat4 cameraProjection = m_editorCamera.m_projection.GetTransposedMatrix();
             RedFoxMaths::Mat4 cameraView = m_editorCamera.GetViewMatrix().GetInverseMatrix().GetTransposedMatrix();
-            RedFoxMaths::Mat4 transformMat = m_selectedObject->GetWorldMatrix().GetInverseMatrix().GetTransposedMatrix();
-
-            // Snapping
+            RedFoxMaths::Mat4 transformMat = m_selectedObject->GetWorldMatrix().GetTransposedMatrix();
+            RedFoxMaths::Mat4 deltaMat = { };
             
+            bool snap = m_input.LControl;
+            //TODO (a.perche): Fix maths
             /*
-            bool snap = Input::IsKeyPressed(Key::LeftControl);
-            float snapValue = 0.5f; // Snap to 0.5m for translation/scale
-            // Snap to 45 degrees for rotation
-            if (
             if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
                 snapValue = 45.0f;
-
-            float snapValues[3] = { snapValue, snapValue, snapValue };
             */
+            float snapValues[3] = { 0.5f, 0.5f, 0.5f };
+            
 
             ImGuizmo::Manipulate((float*)cameraView.AsPtr(), (float*)cameraProjection.AsPtr(),
-                m_GizmoType, ImGuizmo::LOCAL, (float*)transformMat.AsPtr(),
-                nullptr, /*snap ? snapValues :*/ nullptr);
+                m_GizmoType, m_GizmoMode, (float*)transformMat.AsPtr(), (float*)deltaMat.AsPtr(), snap ? &snapValues[0] : nullptr);
 
-            /*
+            
             if (ImGuizmo::IsUsing())
             {
-                glm::vec3 translation, rotation, scale;
-                Math::DecomposeTransform(transform, translation, rotation, scale);
-
-                glm::vec3 deltaRotation = rotation - tc.Rotation;
-                tc.Translation = translation;
-                tc.Rotation += deltaRotation;
-                tc.Scale = scale;
+                RedFoxMaths::Float3 translation, rotation, scale;
+                
+                ImGuizmo::DecomposeMatrixToComponents(deltaMat.AsPtr(), 
+                    (float*)&translation.x, (float*)&rotation.x, (float*)&scale.x);
+                
+                //TODO: Fix maths
+                //RedFoxMaths::Float3 deltaRotation = rotation - transformMat;
+                m_selectedObject->position += translation;
+                //tc.Rotation += deltaRotation;
+                //m_selectedObject->scale = scale;
             }
-            */
+            
         }
 
         if (ImGui::IsMouseDown(ImGuiMouseButton_Right) && ImGui::IsItemHovered())
@@ -557,7 +562,7 @@ void Engine::DrawIMGUI()
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
 
-                    // TO FIX(Emma): FromEuler gimbal lock
+                    // TO FIX(a.perche): Fix maths
                     RedFoxMaths::Float3 rotation = m_selectedObject->orientation.ToEuler();
                     RedFoxMaths::Float3 tmp = rotation;
                     rotation.x *= RAD2DEG;
@@ -590,77 +595,3 @@ void Engine::DrawIMGUI()
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
-
-/*
-void Engine::DrawGizmo(float* cameraView, float* cameraProjection, float* matrix, float camDistance, bool editTransformDecomposition)
-{
-    ImGuizmo::SetOrthographic(false);
-    static bool useSnap = false;
-    static float snap[3] = { 1.f, 1.f, 1.f };
-    static float bounds[] = { -0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f };
-    static float boundsSnap[] = { 0.1f, 0.1f, 0.1f };
-    static bool boundSizing = false;
-    static bool boundSizingSnap = false;
-
-    if (editTransformDecomposition)
-    {
-        if (ImGui::IsKeyPressed(ImGuiKey_T))
-            m_curGizmoOperation = ImGuizmo::TRANSLATE;
-        if (ImGui::IsKeyPressed(ImGuiKey_E))
-            m_curGizmoOperation = ImGuizmo::ROTATE;
-        if (ImGui::IsKeyPressed(ImGuiKey_R)) // r Key
-            m_curGizmoOperation = ImGuizmo::SCALE;
-
-        if (m_curGizmoOperation != ImGuizmo::SCALE)
-        {
-            if (ImGui::RadioButton("Local", m_curGizmoMode == ImGuizmo::LOCAL))
-                m_curGizmoMode = ImGuizmo::LOCAL;
-            ImGui::SameLine();
-            if (ImGui::RadioButton("World", m_curGizmoMode == ImGuizmo::WORLD))
-                m_curGizmoMode = ImGuizmo::WORLD;
-        }
-
-
-        float viewManipulateRight = m_ImGuiIO->DisplaySize.x;
-        float viewManipulateTop = 0;
-        
-        static ImGuiWindowFlags gizmoWindowFlags = 0;
-
-        if (useWindow)
-        {
-            ImGui::Begin("Gizmo", 0, gizmoWindowFlags);
-            ImGuizmo::SetDrawlist();
-            float windowWidth = (float)ImGui::GetWindowWidth();
-            float windowHeight = (float)ImGui::GetWindowHeight();
-            ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
-            viewManipulateRight = ImGui::GetWindowPos().x + windowWidth;
-            viewManipulateTop = ImGui::GetWindowPos().y;
-            ImGuiWindow* window = ImGui::GetCurrentWindow();
-            gizmoWindowFlags = ImGui::IsWindowHovered() && ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max) ? ImGuiWindowFlags_NoMove : 0;
-        }
-        else
-        {
-        
-        ImGuizmo::SetDrawlist();
-        ImGuizmo::SetRect(0, 0, m_ImGuiIO->DisplaySize.x, m_ImGuiIO->DisplaySize.y);
-        
-        viewManipulateRight = ImGui::GetWindowPos().x + windowWidth;
-        viewManipulateTop = ImGui::GetWindowPos().y;
-        
-        //}
-
-        //ImGuizmo::DrawGrid(cameraView, cameraProjection, RedFoxMaths::Mat4::GetIdentityMatrix().AsPtr(), 100.f);
-        //ImGuizmo::DrawCubes(cameraView, cameraProjection, &objectMatrix[0][0], gizmoCount);
-        ImGuizmo::Manipulate(cameraView, cameraProjection, m_curGizmoOperation, m_curGizmoMode, matrix, NULL, useSnap ? &snap[0] : NULL, boundSizing ? bounds : NULL, boundSizingSnap ? boundsSnap : NULL);
-
-        ImGuizmo::ViewManipulate(cameraView, camDistance, ImVec2(viewManipulateRight - 128, viewManipulateTop), ImVec2(128, 128), 0x10101010);
-    }
-
-
-    if (useWindow)
-    {
-        ImGui::End();
-        ImGui::PopStyleColor(1);
-    }
-}
-*/

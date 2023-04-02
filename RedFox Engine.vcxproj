@@ -242,7 +242,7 @@
     <ClInclude Include="include\ObjParser.hpp" />
     <ClInclude Include="include\OpenGLFunctions.hpp" />
     <ClInclude Include="include\OpenGLGraphics.hpp" />
-    <ClInclude Include="include\RedfoxMaths.hpp" />
+    <ClInclude Include="include\RedFoxMaths\RedfoxMaths.hpp" />
     <ClInclude Include="include\ResourceManager.hpp" />
     <ClInclude Include="include\ResourceManager.inl" />
     <ClInclude Include="include\ThreadManager.hpp" />
