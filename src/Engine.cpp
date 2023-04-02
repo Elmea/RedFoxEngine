@@ -116,8 +116,11 @@ void Engine::LoadScene(const char *fileName)
             sizeof(current->position), nullptr, nullptr);
         ReadFile(file, &current->scale,
             sizeof(current->scale), nullptr, nullptr);
+        current->scale.y = current->scale.z = 1;
         ReadFile(file, &current->orientation,
             sizeof(current->orientation), nullptr, nullptr);
+        current->orientation.a = 1;
+        current->orientation.b = current->orientation.c = current->orientation.d = 1;
     }
     CloseHandle(file);
 }
@@ -182,7 +185,7 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     {
         m_gameObjects[i].parent = nullptr;
         m_gameObjects[i].model = &m_models[i % m_modelCount];
-        m_gameObjects[i].scale = 1;
+        m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 1;
         m_gameObjects[i].orientation.a = 1;
         m_gameObjects[i].name = (char *)MyMalloc(&m_arenaAllocator,
             sizeof(char) * 13);

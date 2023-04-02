@@ -1,9 +1,6 @@
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
 
-#define MATHS_HPP_IMPLEMENTATION
-#include "engine_math.hpp"
-
 #include "Engine.hpp"
 
 using namespace RedFoxEngine;
@@ -302,7 +299,7 @@ void Engine::DrawIMGUI()
     ImGui_ImplOpenGL3_NewFrame();
     ImGui::NewFrame();
 
-    ImGuizmo::SetOrthographic(true);
+    ImGuizmo::SetOrthographic(false);
     ImGuizmo::BeginFrame();
     
     // TODO(a.perche) : Build dockspace at runtime
@@ -332,37 +329,45 @@ void Engine::DrawIMGUI()
             ImGuizmo::SetRect(0, 0, dimension.width, dimension.height);
 
             RedFoxMaths::Mat4 cameraProjection = m_editorCamera.m_projection.GetTransposedMatrix();
-            RedFoxMaths::Mat4 cameraView = m_editorCamera.GetViewMatrix().GetInverseMatrix().GetTransposedMatrix();
+            RedFoxMaths::Mat4 cameraView = m_editorCamera.GetViewMatrix().GetTransposedMatrix();
             RedFoxMaths::Mat4 transformMat = m_selectedObject->GetWorldMatrix().GetTransposedMatrix();
             RedFoxMaths::Mat4 deltaMat = { };
-            
+
             bool snap = m_input.LControl;
             //TODO (a.perche): Fix maths
             /*
             if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
                 snapValue = 45.0f;
             */
+            if (m_input.Q) // TODO: What are the unity or unreal buttons for this
+                m_GizmoType = ImGuizmo::OPERATION::SCALE;
+            else if (m_input.W)
+                m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
             float snapValues[3] = { 0.5f, 0.5f, 0.5f };
-            
+
 
             ImGuizmo::Manipulate((float*)cameraView.AsPtr(), (float*)cameraProjection.AsPtr(),
                 m_GizmoType, m_GizmoMode, (float*)transformMat.AsPtr(), (float*)deltaMat.AsPtr(), snap ? &snapValues[0] : nullptr);
 
-            
+
             if (ImGuizmo::IsUsing())
             {
                 RedFoxMaths::Float3 translation, rotation, scale;
-                
-                ImGuizmo::DecomposeMatrixToComponents(deltaMat.AsPtr(), 
+                RedFoxMaths::Float3 scaleUnit = {1, 1, 1};
+                ImGuizmo::DecomposeMatrixToComponents(deltaMat.AsPtr(),
                     (float*)&translation.x, (float*)&rotation.x, (float*)&scale.x);
-                
+
                 //TODO: Fix maths
                 //RedFoxMaths::Float3 deltaRotation = rotation - transformMat;
                 m_selectedObject->position += translation;
-                //tc.Rotation += deltaRotation;
-                //m_selectedObject->scale = scale;
+                m_selectedObject->scale += scale - scaleUnit;
+                if (m_selectedObject->scale.x <= 0) //TODO: Float3 clamp inside RedFoxMaths
+                    m_selectedObject->scale.x = 0.1;
+                if (m_selectedObject->scale.y <= 0)
+                    m_selectedObject->scale.y = 0.1;
+                if (m_selectedObject->scale.z <= 0)
+                    m_selectedObject->scale.z = 0.1;
             }
-            
         }
 
         if (ImGui::IsMouseDown(ImGuiMouseButton_Right) && ImGui::IsItemHovered())
@@ -583,7 +588,7 @@ void Engine::DrawIMGUI()
                     ImGui::Text("Scale");
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::DragFloat("TransformScale", &m_selectedObject->scale, 1.f, -32767.f, 32767.f);
+                    ImGui::DragFloat3("TransformScale", &m_selectedObject->scale.x, 1.f, -32767.f, 32767.f);
                     ImGui::EndTable();
                 }
             }

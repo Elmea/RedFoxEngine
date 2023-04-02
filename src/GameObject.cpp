@@ -5,13 +5,16 @@
 
 namespace RedFoxEngine
 {
+        RedFoxMaths::Mat4 GameObject::GetLocalMatrix()
+        {
+            return (RedFoxMaths::Mat4::CreateTransformMatrix(position, orientation, scale));
+        }
         RedFoxMaths::Mat4 GameObject::GetWorldMatrix()
         {
-            RedFoxMaths::Mat4 local = RedFoxMaths::Mat4::CreateTransformMatrix(position, orientation, {scale, scale, scale});
             if (parent)
-                return local * parent->GetWorldMatrix();
+                return GetLocalMatrix() * parent->GetWorldMatrix();
 
-            return local;
+            return GetLocalMatrix();
         }
 
         GameObject **GameObject::GetChildren(GameObject *objects, int objectCount, Memory *temp)

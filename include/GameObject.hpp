@@ -11,9 +11,10 @@ namespace RedFoxEngine
         GameObject* parent;
         Model *model;
         RedFoxMaths::Float3 position;
-        f32 scale;
+        RedFoxMaths::Float3 scale;
         RedFoxMaths::Quaternion orientation;
 
+        RedFoxMaths::Mat4 GetLocalMatrix();
         RedFoxMaths::Mat4 GetWorldMatrix();
         GameObject **GetChildren(GameObject *gameObjects, int modelCount,
             Memory *temp);

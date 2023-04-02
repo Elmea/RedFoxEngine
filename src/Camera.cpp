@@ -40,11 +40,11 @@ void Camera::SetViewLookAt(Float3 target, Float3 up)
 
 RedFoxMaths::Mat4 Camera::GetViewMatrix()
 {
-    return Mat4::CreateTransformMatrix(position, orientation, { 1.0f, 1.0f, 1.0f });
+    return Mat4::CreateTransformMatrix(position, orientation, { 1.0f, 1.0f, 1.0f }).GetInverseMatrix();
 }
 
 RedFoxMaths::Mat4 Camera::GetVP()
 {
-    return m_projection * GetViewMatrix().GetInverseMatrix();
+    return m_projection * GetViewMatrix();
 }
 
