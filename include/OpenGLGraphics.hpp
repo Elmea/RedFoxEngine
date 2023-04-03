@@ -25,14 +25,20 @@ private:
     GLuint m_gpipeline;
     GLuint m_pipeline;
     GLuint m_gBuffer;
+    GLuint m_gPosition, m_gNormal, m_gAlbedoSpec;
     GLuint m_imguiFramebuffer;
+
     u32    m_spotLightCount;
     GLuint m_spotLightBuffer;
     u32    m_dirLightCount;
     GLuint m_dirLightBuffer;
     u32    m_pointLightCount;
     GLuint m_pointLightBuffer;
-    GLuint m_gPosition, m_gNormal, m_gAlbedoSpec;
+
+    void SetDirLightBuffer(Light* pointLight, int lightCount);
+    void SetPointLightBuffer(Light* pointLight, int lightCount);
+    void SetSpotLightBuffer(Light* pointLight, int lightCount);
+
 public:
     Model *m_models = nullptr;
     u32    m_modelCount;
@@ -45,9 +51,9 @@ public:
     void InitModel(Model *model);
     void InitLights();
     void BindLights();
-    DirLight *GetDirLightBuffer(int *lightCount);
+    Light*GetDirLightBuffer(int *lightCount);
     void ReleaseDirLightBuffer();
-    PointLight *GetPointLightBuffer(int *lightCount);
+    Light*GetPointLightBuffer(int *lightCount);
     void ReleasePointLightBuffer();
     void InitTexture(ObjModel *model);
     u32 InitTexture(void *data,int height, int width);
