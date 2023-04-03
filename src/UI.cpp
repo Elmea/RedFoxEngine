@@ -156,17 +156,28 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
 
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 32.f);
-    ImGui::Button("PLAY", ImVec2(0, buttonHeight));
+    if (ImGui::Button("TRANSLATE", ImVec2(0, buttonHeight)))
+            m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
 
     ImGui::SameLine();
-    ImGui::Button("BUILD", ImVec2(0, buttonHeight));
+    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
+    if (ImGui::Button("ROTATE", ImVec2(0, buttonHeight)))
+        m_GizmoType = ImGuizmo::OPERATION::ROTATE;
+
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
+    if (ImGui::Button("SCALE", ImVec2(0, buttonHeight)))
+        m_GizmoType = ImGuizmo::OPERATION::SCALE;
     
     ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 64.f);
+    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 32.f);
     if (ImGui::Button("ADD ENTITY", ImVec2(0, buttonHeight)))
     {
         GameObject* newGameObject = &m_gameObjects[m_gameObjectCount++];
         newGameObject->name = (char*)MyMalloc(&m_arenaAllocator, 20);
+        newGameObject->orientation = { 1,0,0,0 };
+        newGameObject->scale = { 1,1,1 };
+        newGameObject->model = nullptr;
         sprintf(newGameObject->name, "New entity #%d", m_gameObjectCount - 1);
     }
 
@@ -339,8 +350,7 @@ void Engine::DrawIMGUI()
             ImGui::Image(framebuffer,
                 ImVec2(dimension.width, dimension.height), ImVec2(0, 1), ImVec2(1, 0));
         }
-           
-        
+               
         if (m_selectedObject != nullptr)
         {
             ImGuizmo::SetDrawlist();
@@ -351,6 +361,10 @@ void Engine::DrawIMGUI()
             RedFoxMaths::Mat4 cameraView = m_editorCamera.GetViewMatrix().GetTransposedMatrix();
             RedFoxMaths::Mat4 transformMat = m_selectedObject->GetWorldMatrix().GetTransposedMatrix();
             RedFoxMaths::Mat4 deltaMat = { };
+            float* cameraViewPtr = (float*)cameraView.AsPtr();
+            float* cameraProjectionPtr = (float*)cameraProjection.AsPtr();
+            float* transformMatPtr = (float*)transformMat.AsPtr();
+            float* deltaMatPtr = (float*)deltaMat.AsPtr();
 
             bool snap = m_input.LControl;
             //TODO (a.perche): Fix maths
@@ -358,16 +372,19 @@ void Engine::DrawIMGUI()
             if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
                 snapValue = 45.0f;
             */
-            if (m_input.Q && !m_input.lockMouse)
-                m_GizmoType = ImGuizmo::OPERATION::SCALE;
-            else if (m_input.W && !m_input.lockMouse)
-                m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
+            if (!m_input.lockMouse)
+            {
+                if (m_input.Q)
+                    m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
+                else if (m_input.W)
+                    m_GizmoType = ImGuizmo::OPERATION::ROTATE;
+                else if (m_input.E)
+                    m_GizmoType = ImGuizmo::OPERATION::SCALE;
+            }
             float snapValues[3] = { 0.5f, 0.5f, 0.5f };
-
-
-            ImGuizmo::Manipulate((float*)cameraView.AsPtr(), (float*)cameraProjection.AsPtr(),
-                m_GizmoType, m_GizmoMode, (float*)transformMat.AsPtr(), (float*)deltaMat.AsPtr(), snap ? &snapValues[0] : nullptr);
-
+                        
+            ImGuizmo::Manipulate(cameraViewPtr, cameraProjectionPtr,
+                m_GizmoType, m_GizmoMode, transformMatPtr, deltaMatPtr, snap ? &snapValues[0] : nullptr);
 
             if (ImGuizmo::IsUsing())
             {
@@ -525,6 +542,7 @@ void Engine::DrawIMGUI()
             ImGuiTreeNodeFlags_OpenOnArrow | 
             ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
+#if 0
         if (ImGui::CollapsingHeader("Camera", propertiesFlags))
         {
             ImGuiTableFlags tableFlags =
@@ -563,6 +581,7 @@ void Engine::DrawIMGUI()
                 ImGui::EndTable();
             }
         }
+#endif
 
         if (m_selectedObject != nullptr)
         {
