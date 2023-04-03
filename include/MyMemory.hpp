@@ -183,7 +183,7 @@ static void DeInitMemory(Memory *memory)
 
 static MyString initString(u64 n, Memory *memory)
 {
-    MyString result = {0};
+    MyString result = {};
     result.size = 0;
     result.capacity = n;
     result.data = (const char *)MyMalloc(memory, n);
@@ -192,7 +192,7 @@ static MyString initString(u64 n, Memory *memory)
 
 static MyString initStringChar(const char *str, u64 n, Memory *memory)
 {
-    MyString result = {0};
+    MyString result = {};
 
     int i = 0;
     while (str[i] && i < n)
@@ -205,16 +205,13 @@ static MyString initStringChar(const char *str, u64 n, Memory *memory)
     char *temp = (char *)result.data;
 
     while (i < result.size)
-    {
-        temp[i] = str[i];
-        i++;
-    }
+        temp[i++] = str[i];
     return (result);
 }
 
 static MyString OpenAndReadEntireFile(const char *filePath, Memory *memory)
 {
-    MyString result = {0};
+    MyString result = {};
 
     HANDLE File = CreateFileA(filePath, GENERIC_READ,
         FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING,
@@ -306,7 +303,7 @@ static char *my_strcpy_s(char *dest, u64 n, char *src)
 
 static fileResource FileResourceInit(const char *fileName, Memory *m)
 {
-    fileResource result;
+    fileResource result = {};
 
     result.path = initStringChar(fileName, 255, m);
     memset(&result.file, 0, sizeof(MyString));

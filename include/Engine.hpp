@@ -7,10 +7,13 @@
 // TODO(V. Caraulan): linux mac or whatever
 #endif
 
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 #include <imgui_internal.h>
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_win32.h"
+#include <ImGuizmo.h>
+
 #include "ObjParser.hpp"
 #include "OpenGLGraphics.hpp"
 #include "GameObject.hpp"
@@ -42,17 +45,27 @@ private:
     Camera m_editorCamera;
     ImGuiIO* m_ImGuiIO = nullptr;
     ImFont* m_defaultFont = nullptr;
+    MyString m_sceneName;
+    ImGuizmo::OPERATION m_GizmoType;
+    ImGuizmo::MODE m_GizmoMode;
+
+    RedFoxMaths::Float3 m_editorCameraSpeed;
+    bool m_editorCameraEnabled;
 private:
- 
-    void DrawIMGUI();
+    void DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight);
+    int DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
     void DrawSceneNodes(bool is_child, GameObject* model);
-    Input GetInputs();
+    void DrawIMGUI();
+    //void DrawGizmo(float* cameraView, float* cameraProjection, float* matrix, float camDistance, bool editTransformDecomposition);
+    void UpdateEditorCamera();
     void ObjModelPush(const char *objPath);
     void InitIMGUI();
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 viewProjection);
     void StartTime();
     void LoadScene(const char *fileName);
     void SaveScene(const char *fileName);
+    void UpdateLights(float time);
+    void initSphericalManyGameObjects(int count); //TODO: remove
 public:
     Engine(int width, int height);
     ~Engine();

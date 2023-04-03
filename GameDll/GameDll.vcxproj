@@ -73,7 +73,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>game</TargetName>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../include;../external/include</IncludePath>
-    <OutDir>../</OutDir>
+    <OutDir>../data/</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <TargetName>GameDll</TargetName>
@@ -231,6 +231,13 @@
   <ItemGroup>
     <ClInclude Include="..\include\Model.hpp" />
     <ClInclude Include="..\include\Win32Platform.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\data\Shaders\blin_phong.frag" />
+    <None Include="..\data\Shaders\fragment.frag" />
+    <None Include="..\data\Shaders\gBuffer.frag" />
+    <None Include="..\data\Shaders\gBuffer.vert" />
+    <None Include="..\data\Shaders\vertex.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

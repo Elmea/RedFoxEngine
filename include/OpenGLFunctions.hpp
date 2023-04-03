@@ -45,4 +45,15 @@
     X(PFNGLDRAWELEMENTSINSTANCEDPROC, glDrawElementsInstanced)                \
     X(PFNGLVERTEXARRAYBINDINGDIVISORPROC, glVertexArrayBindingDivisor)        \
     X(PFNGLBLITNAMEDFRAMEBUFFERPROC, glBlitNamedFramebuffer)                  \
+    X(PFNGLNAMEDBUFFERDATAPROC, glNamedBufferData)                            \
+    X(PFNGLMAPNAMEDBUFFERRANGEPROC, glMapNamedBufferRange)                    \
+    X(PFNGLUNMAPNAMEDBUFFERPROC, glUnmapNamedBuffer)                          \
+    X(PFNGLGETPROGRAMRESOURCEINDEXPROC, glGetProgramResourceIndex)            \
+    X(PFNGLSHADERSTORAGEBLOCKBINDINGPROC, glShaderStorageBlockBinding)        \
+    X(PFNGLGETPROGRAMINTERFACEIVPROC, glGetProgramInterfaceiv)                \
+    X(PFNGLBINDBUFFERBASEPROC, glBindBufferBase)                              \
+    X(PFNGLBINDBUFFERRANGEPROC, glBindBufferRange)                            \
+    X(PFNGLUNIFORMBLOCKBINDINGPROC, glUniformBlockBinding)                    \
     X(PFNGLNAMEDBUFFERSUBDATAPROC, glNamedBufferSubData)
+
+// X(PFNGLPROC, gl)                  \ 
