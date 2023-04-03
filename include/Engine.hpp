@@ -50,6 +50,7 @@ private:
     ImGuizmo::OPERATION m_GizmoType;
     ImGuizmo::MODE m_GizmoMode;
     RedFoxMaths::Float3 m_editorCameraSpeed;
+    int m_sceneUsedMemory = 0;
 private:
     void DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight);
     int DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);

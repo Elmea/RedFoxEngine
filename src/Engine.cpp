@@ -36,6 +36,8 @@ Engine::Engine(int width, int height) :
     //TODO transition to an instance based model 'model'
     for (int i = 0; i < (int)m_modelCount; i++)
         m_graphics.InitModel(&m_models[i]);
+    
+    m_sceneUsedMemory = m_arenaAllocator.usedSize;
 #if 0
     LoadScene("Sample Scene.scene");
 #else
@@ -87,9 +89,11 @@ void Engine::LoadScene(const char *fileName)
         GameObject *current = &m_gameObjects[i];
         int length = 0;
         ReadFile(file, &length, sizeof(int), nullptr, nullptr);
-        current->name = (char *)MyMalloc(&m_arenaAllocator, length);
-        current->name[length] = '\0';
-        ReadFile(file, current->name, length, nullptr, nullptr);
+
+        char tmp[255];
+        current->name = initStringChar(tmp, 255, &m_arenaAllocator);
+        ReadFile(file, &current->name, sizeof(MyString), nullptr, nullptr);
+        ReadFile(file, &current->name.data, current->name.size, nullptr, nullptr);
         int parent;
         ReadFile(file, &parent, sizeof(int), nullptr, nullptr);
         if (parent == -1)
@@ -130,7 +134,8 @@ void Engine::LoadScene(const char *fileName)
 
     struct GameObject
     {
-        s32 nameOfGameObjectSize;
+        u32 nameOfGameObjectSize;
+        u32 nameOfGameObjectCapacity;
         char nameOfGameObject[nameOfGameObjectSize];
         int parent; - -l if no parent, >= 0 if parent exists
         u64 modelHash; hash of the filename string of the model
@@ -157,11 +162,9 @@ void Engine::SaveScene(const char *fileName)
     for(int i = 0; i < (int)m_gameObjectCount; i++)
     {
         GameObject *current = &m_gameObjects[i];
-        int length = 0;
-        while (current->name[length] != '\0')
-            length++;
-        WriteFile(file, &length, sizeof(int), nullptr, nullptr);
-        WriteFile(file, current->name, length, nullptr, nullptr);
+
+        WriteFile(file, &current->name, sizeof(MyString), nullptr, nullptr);
+        WriteFile(file, current->name.data, current->name.size, nullptr, nullptr);
         int parent = (int)(current->parent - m_gameObjects);
         if (current->parent == nullptr)
             parent = -1;
@@ -187,9 +190,10 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
         m_gameObjects[i].model = &m_models[i % m_modelCount];
         m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 1;
         m_gameObjects[i].orientation.a = 1;
-        m_gameObjects[i].name = (char *)MyMalloc(&m_arenaAllocator,
-            sizeof(char) * 13);
-        snprintf(m_gameObjects[i].name, 13, "Entity%d", i);
+        char tmp[255];
+        int size = snprintf(tmp, 255, "Entity%d", i);
+        m_gameObjects[i].name = initStringChar(tmp, size, &m_arenaAllocator);
+        m_gameObjects[i].name.capacity = 255;
         if (i < 3 && i != 0)
         m_gameObjects[i].parent = &m_gameObjects[0];
     }

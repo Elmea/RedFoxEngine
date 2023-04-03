@@ -7,7 +7,7 @@ namespace RedFoxEngine
 {
     struct GameObject
     {
-        char* name;
+        MyString name;
         GameObject* parent;
         Model *model;
         RedFoxMaths::Float3 position;

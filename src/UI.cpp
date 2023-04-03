@@ -151,6 +151,16 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     ImGui::PopStyleColor();
     
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
+
+    if (ImGui::Button("NEW SCENE", ImVec2(0, buttonHeight)))
+    {
+        m_gameObjectCount = 0;
+        m_arenaAllocator.usedSize = m_sceneUsedMemory;
+        m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);
+    }
+
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
     if (ImGui::Button("SAVE SCENE", ImVec2(0, buttonHeight)))
         SaveScene(strcat((char*)m_sceneName.data, ".scene"));
 
@@ -174,11 +184,14 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     if (ImGui::Button("ADD ENTITY", ImVec2(0, buttonHeight)))
     {
         GameObject* newGameObject = &m_gameObjects[m_gameObjectCount++];
-        newGameObject->name = (char*)MyMalloc(&m_arenaAllocator, 20);
+        *newGameObject = { };
+        char tmp[255];
+        int size = snprintf(tmp, 255, "New entity #%d", m_gameObjectCount - 1);
+        newGameObject->name = initStringChar(tmp, size, &m_arenaAllocator);
+        newGameObject->name.capacity = 255;
         newGameObject->orientation = { 1,0,0,0 };
         newGameObject->scale = { 1,1,1 };
         newGameObject->model = nullptr;
-        sprintf(newGameObject->name, "New entity #%d", m_gameObjectCount - 1);
     }
 
     ImGui::SameLine();
@@ -186,11 +199,14 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     if (ImGui::Button("ADD CUBE", ImVec2(0, buttonHeight)))
     {
         GameObject* newGameObject = &m_gameObjects[m_gameObjectCount++];
-        newGameObject->name = (char*)MyMalloc(&m_arenaAllocator, 20);
+        *newGameObject = { };
+        char tmp[255];
+        int size = snprintf(tmp, 255, "New cube #%d", m_gameObjectCount - 1);
+        newGameObject->name = initStringChar(tmp, size, &m_arenaAllocator);
+        newGameObject->name.capacity = 255;
         newGameObject->orientation = { 1,0,0,0 };
         newGameObject->scale = { 1,1,1 };
         newGameObject->model = &m_models[0];
-        sprintf(newGameObject->name, "New cube #%d", m_gameObjectCount - 1);
     }
 
     ImGui::SameLine();
@@ -198,11 +214,14 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     if (ImGui::Button("ADD SPHERE", ImVec2(0, buttonHeight)))
     {
         GameObject* newGameObject = &m_gameObjects[m_gameObjectCount++];
-        newGameObject->name = (char*)MyMalloc(&m_arenaAllocator, 20);
+        *newGameObject = { };
+        char tmp[255];
+        int size = snprintf(tmp, 255, "New sphere #%d", m_gameObjectCount - 1);
+        newGameObject->name = initStringChar(tmp, size, &m_arenaAllocator);
+        newGameObject->name.capacity = 255;
         newGameObject->orientation = { 1,0,0,0 };
         newGameObject->scale = { 1,1,1 };
         newGameObject->model = &m_models[1];
-        sprintf(newGameObject->name, "New sphere #%d", m_gameObjectCount - 1);
     }
 
     ImGui::PopStyleVar();
@@ -265,7 +284,7 @@ void Engine::DrawSceneNodes(bool is_child, GameObject* gameObj)
         flags |= ImGuiTreeNodeFlags_Selected;
     flags |= ImGuiTreeNodeFlags_SpanFullWidth;
 
-    bool nodeOpen = ImGui::TreeNodeEx(gameObj->name, flags, "%s", gameObj->name);
+    bool nodeOpen = ImGui::TreeNodeEx((char*)gameObj->name.data, flags, "%s", (char*)gameObj->name.data);
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
     {
         m_selectedObject = gameObj;
@@ -495,43 +514,46 @@ void Engine::DrawIMGUI()
         }
         ImGui::TreePop();
 
-        ImGuiWindowFlags sceneGraphFlags =
-            ImGuiWindowFlags_AlwaysHorizontalScrollbar | 
-            ImGuiWindowFlags_AlwaysVerticalScrollbar |
-            ImGuiWindowFlags_NoMove;
-
-        ImGui::BeginChild("SceneGraphNodes", ImVec2(0, 0), true, sceneGraphFlags);
-        if (index < 0)
-            index = 0;
-        else if (index > (int)m_gameObjectCount - 1)
-            index = m_gameObjectCount - 1;
-
-        int maxItems = (int)ImGui::GetMainViewport()->Size.y / 16;
-        for (int i = 0; i + index < (int)m_gameObjectCount && i < maxItems; i++)
+        if (m_gameObjectCount > 0)
         {
-            if (i == 0 && index > 0 && ImGui::GetScrollY() == 0)
+            ImGuiWindowFlags sceneGraphFlags =
+                ImGuiWindowFlags_AlwaysHorizontalScrollbar |
+                ImGuiWindowFlags_AlwaysVerticalScrollbar |
+                ImGuiWindowFlags_NoMove;
+
+            ImGui::BeginChild("SceneGraphNodes", ImVec2(0, 0), true, sceneGraphFlags);
+            if (index < 0)
+                index = 0;
+            else if (index > (int)m_gameObjectCount - 1)
+                index = m_gameObjectCount - 1;
+
+            int maxItems = (int)ImGui::GetMainViewport()->Size.y / 16;
+            for (int i = 0; i + index < (int)m_gameObjectCount && i < maxItems; i++)
             {
-                ImGui::SetScrollY(1);
-                index -= scrollStrength;
+                if (i == 0 && index > 0 && ImGui::GetScrollY() == 0)
+                {
+                    ImGui::SetScrollY(1);
+                    index -= scrollStrength;
+                }
+
+                float scrollMax = 0;
+                if (i == maxItems - 1 && index + i < (int)m_gameObjectCount - 1 &&
+                    (scrollMax = ImGui::GetScrollMaxY()) == ImGui::GetScrollY() && scrollMax != 0)
+                {
+                    ImGui::SetScrollY(scrollMax - 1);
+                    index += scrollStrength;
+                }
+
+                if (index + i < 0)
+                    index = i;
+                else if (index + i > (int)m_gameObjectCount - 1)
+                    index = m_gameObjectCount - i - 1;
+
+                if (m_gameObjects[i + index].parent == nullptr)
+                    DrawSceneNodes(false, &m_gameObjects[i + index]);
             }
-
-            float scrollMax = 0;
-            if (i == maxItems - 1 && index + i < (int)m_gameObjectCount - 1 &&
-                (scrollMax = ImGui::GetScrollMaxY()) == ImGui::GetScrollY() && scrollMax != 0)
-            {
-                ImGui::SetScrollY(scrollMax - 1);
-                index += scrollStrength;
-            }
-
-            if (index + i < 0)
-                index = i;
-            else if (index + i > (int)m_gameObjectCount - 1)
-                index = m_gameObjectCount - i - 1;
-
-            if (m_gameObjects[i + index].parent == nullptr)
-                DrawSceneNodes(false, &m_gameObjects[i + index]);
+            ImGui::EndChild();
         }
-        ImGui::EndChild();
     }
     ImGui::End();
 
@@ -542,7 +564,7 @@ void Engine::DrawIMGUI()
             ImGuiTreeNodeFlags_OpenOnArrow | 
             ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
-#if 0
+#if 0 // DEBUG: Camera properties
         if (ImGui::CollapsingHeader("Camera", propertiesFlags))
         {
             ImGuiTableFlags tableFlags =
@@ -631,7 +653,7 @@ void Engine::DrawIMGUI()
                     ImGui::Text("Scale");
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::DragFloat3("TransformScale", &m_selectedObject->scale.x, 1.f, -32767.f, 32767.f);
+                    ImGui::DragFloat3("TransformScale", &m_selectedObject->scale.x, 1.f, 0.00001f, 32767.f);
                     ImGui::EndTable();
                 }
             }
