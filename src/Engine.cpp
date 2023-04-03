@@ -24,9 +24,9 @@ Engine::Engine(int width, int height) :
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
 
     m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 100);
-    ObjModelPush("ts_bot912.obj");
     m_models[m_modelCount++].obj = CreateCube(&m_arenaAllocator);
     m_models[m_modelCount++].obj = CreateSphere(30, 25, &m_arenaAllocator);
+    ObjModelPush("ts_bot912.obj");
     // ObjModelPush("bunny.obj");
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
@@ -37,7 +37,7 @@ Engine::Engine(int width, int height) :
     for (int i = 0; i < (int)m_modelCount; i++)
         m_graphics.InitModel(&m_models[i]);
 #if 0
-    LoadScene("test.scene");
+    LoadScene("Sample Scene.scene");
 #else
     initSphericalManyGameObjects(5000);
     m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);

@@ -150,16 +150,9 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     ImGui::PopStyleVar(2);
     ImGui::PopStyleColor();
     
-    if (ImGui::BeginPopupContextItem("MainMenu"))
-    {
-        if (ImGui::Selectable("Save scene"))
-            SaveScene(strcat((char*)m_sceneName.data, ".scene"));
-        ImGui::EndPopup();
-    }
-
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
-    if (ImGui::Button("LOGO HERE", ImVec2(0, buttonHeight)))
-        ImGui::OpenPopup("MainMenu");
+    if (ImGui::Button("SAVE SCENE", ImVec2(0, buttonHeight)))
+        SaveScene(strcat((char*)m_sceneName.data, ".scene"));
 
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 32.f);
@@ -172,10 +165,33 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 64.f);
     if (ImGui::Button("ADD ENTITY", ImVec2(0, buttonHeight)))
     {
-        m_gameObjectCount++;
-        GameObject* newGameObject = &m_gameObjects[m_gameObjectCount - 1];
+        GameObject* newGameObject = &m_gameObjects[m_gameObjectCount++];
         newGameObject->name = (char*)MyMalloc(&m_arenaAllocator, 20);
-        sprintf(newGameObject->name, "New entity #%d\0", m_gameObjectCount - 1);
+        sprintf(newGameObject->name, "New entity #%d", m_gameObjectCount - 1);
+    }
+
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
+    if (ImGui::Button("ADD CUBE", ImVec2(0, buttonHeight)))
+    {
+        GameObject* newGameObject = &m_gameObjects[m_gameObjectCount++];
+        newGameObject->name = (char*)MyMalloc(&m_arenaAllocator, 20);
+        newGameObject->orientation = { 1,0,0,0 };
+        newGameObject->scale = { 1,1,1 };
+        newGameObject->model = &m_models[0];
+        sprintf(newGameObject->name, "New cube #%d", m_gameObjectCount - 1);
+    }
+
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
+    if (ImGui::Button("ADD SPHERE", ImVec2(0, buttonHeight)))
+    {
+        GameObject* newGameObject = &m_gameObjects[m_gameObjectCount++];
+        newGameObject->name = (char*)MyMalloc(&m_arenaAllocator, 20);
+        newGameObject->orientation = { 1,0,0,0 };
+        newGameObject->scale = { 1,1,1 };
+        newGameObject->model = &m_models[1];
+        sprintf(newGameObject->name, "New sphere #%d", m_gameObjectCount - 1);
     }
 
     ImGui::PopStyleVar();
@@ -323,7 +339,8 @@ void Engine::DrawIMGUI()
             ImGui::Image(framebuffer,
                 ImVec2(dimension.width, dimension.height), ImVec2(0, 1), ImVec2(1, 0));
         }
-
+           
+        
         if (m_selectedObject != nullptr)
         {
             ImGuizmo::SetDrawlist();
@@ -341,9 +358,9 @@ void Engine::DrawIMGUI()
             if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
                 snapValue = 45.0f;
             */
-            if (m_input.Q) // TODO: What are the unity or unreal buttons for this
+            if (m_input.Q && !m_input.lockMouse)
                 m_GizmoType = ImGuizmo::OPERATION::SCALE;
-            else if (m_input.W)
+            else if (m_input.W && !m_input.lockMouse)
                 m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
             float snapValues[3] = { 0.5f, 0.5f, 0.5f };
 
@@ -380,6 +397,11 @@ void Engine::DrawIMGUI()
         {
             m_editorCameraSpeed = { 0.f, 0.f, 0.f };
             m_input.lockMouse = m_editorCameraEnabled = false;
+        }
+
+        if (m_input.Escape)
+        {
+            m_selectedObject = nullptr;
         }
     }
     ImGui::End();
