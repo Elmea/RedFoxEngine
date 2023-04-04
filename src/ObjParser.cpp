@@ -514,6 +514,31 @@ ObjMaterials ParseMTL(const char *objPath, MyString objBuffer, ObjImages *Images
             }
             endOfLine = get_next_line(mtlLibData.file, current) + 1;
         }
+        else if (StringsAreEqual_C({9, 9, "map_Bump "}, current, NULL))
+        {
+            result.material[i].hasNormal = 1;
+            int j = 0;
+
+            while (current[j + 9] != '\n' && current[j + 9] != '\r' && current[j + 9] != '\0')
+                j++;
+            ImagesOut->data[ImagesOut->count].path = initStringChar(&current[9], j, meshMem);
+            u8 found = 0;
+            for (int k = 0; k < (int)ImagesOut->count; k++)
+            {
+                if (k != i && StringsAreEqual(ImagesOut->data[ImagesOut->count].path, ImagesOut->data[k].path))
+                {
+                    result.material[i].normalMap = result.material[k].normalMap;
+                    found = 1;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                result.material[i].normalMap.index0 = ImagesOut->count;
+                ImagesOut->count++;
+            }
+            endOfLine = get_next_line(mtlLibData.file, current) + 1;
+        }
         else if (StringsAreEqual_C({3, 3, "Kd "}, current, NULL))
         {
             current = get_next_word(current);
@@ -797,6 +822,8 @@ int ParseModel(ObjModel *result, const char *path)
         *result->materials.material = initMaterial();
     }
 
+    if (result->meshCount == 0)
+        result->meshCount = 1;
     result->meshes[result->meshCount - 1].indexCount =
         result->indexCount - result->meshes[result->meshCount - 1].indexStart;
     if (result->meshes[result->meshCount - 1].materialIndex == (u32)-1)
@@ -804,7 +831,6 @@ int ParseModel(ObjModel *result, const char *path)
         __debugbreak();
     }
 
-    // Custom hash map with custom hash function to deduplicate vertices
 #if 0
     result->vertices = (ObjVertex *)MyMalloc(&result->vertexMem, result->indexCount * sizeof(ObjVertex));
     result->vertexCount = result->indexCount;
@@ -818,6 +844,7 @@ int ParseModel(ObjModel *result, const char *path)
         result->vertices[i] = tempVrtx;
     }
 #else
+    // Custom hash map with custom hash function to deduplicate vertices
     result->vertices = (ObjVertex *)MyMalloc(&result->vertexMem, result->indexCount * sizeof(ObjVertex));
     VertexKey *hash = (VertexKey *)MyMalloc(&tempVertexHashMem, sizeof(VertexKey) * result->indexCount);
     VertexKey *tempNext = (VertexKey *)MyMalloc(&tempVertexHashMem, sizeof(VertexKey) * result->indexCount);

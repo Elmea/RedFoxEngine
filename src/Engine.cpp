@@ -24,10 +24,10 @@ Engine::Engine(int width, int height) :
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
 
     m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 100);
-    ObjModelPush("ts_bot912.obj");
     m_models[m_modelCount++].obj = CreateCube(&m_arenaAllocator);
     m_models[m_modelCount++].obj = CreateSphere(30, 25, &m_arenaAllocator);
-    // ObjModelPush("bunny.obj");
+    ObjModelPush("ts_bot912.obj");
+    // ObjModelPush("vortigaunt.obj");
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
     m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator,
@@ -186,6 +186,10 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
         m_gameObjects[i].parent = nullptr;
         m_gameObjects[i].model = &m_models[i % m_modelCount];
         m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 1;
+        if(i % m_modelCount == 3)
+        {
+            m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 0.02;
+        }
         m_gameObjects[i].orientation.a = 1;
         m_gameObjects[i].name = (char *)MyMalloc(&m_arenaAllocator,
             sizeof(char) * 13);

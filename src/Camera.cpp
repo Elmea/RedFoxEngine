@@ -5,6 +5,7 @@ using namespace RedFoxMaths;
 
 Camera::Camera(projectionType projection, float aspect)
 {
+    orientation = {1, 0, 0, 0};
     scale = {1, 1, 1};
     m_parameters.FOV = 90;
     m_parameters.bottom = -10;

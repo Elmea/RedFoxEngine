@@ -58,9 +58,9 @@ void Engine::UpdateLights(float time) //TODO: This function or something like th
         {
             light[i] = {};
             light[i].direction = {{0, -1, 0}};
-            light[i].ambient = {{0.01, 0.01, 0.01}};
+            light[i].diffuse = {{0.02, 0.02, 0.02}};
             light[i].specular = {{0.1, 0.1, 0.1}};
-            light[i].ambient = {{0.01, 0.01, 0.01}};
+            light[i].ambient = {{0.1, 0.1, 0.1}};
         }
         m_graphics.ReleaseDirLightBuffer();
     }
@@ -107,6 +107,12 @@ void Graphics::ReleaseDirLightBuffer()
     glFlush();
 }
 
+void Graphics::SetPointLightBuffer(PointLight* pointLight, int lightCount)
+{
+    if (lightCount)
+        glNamedBufferSubData(m_pointLightBuffer, 0, lightCount * sizeof(PointLight), pointLight);
+}
+
 PointLight *Graphics::GetPointLightBuffer(int *lightCount)
 {
     if (lightCount)
@@ -116,7 +122,6 @@ PointLight *Graphics::GetPointLightBuffer(int *lightCount)
     GLbitfield mapFlags = (GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
     return((PointLight *)glMapNamedBufferRange(m_pointLightBuffer, 0,
         m_pointLightCount * sizeof(PointLight), mapFlags));
-
 }
 
 void Graphics::ReleasePointLightBuffer()

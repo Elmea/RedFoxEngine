@@ -25,6 +25,7 @@ private:
     GLuint m_gpipeline;
     GLuint m_pipeline;
     GLuint m_gBuffer;
+    GLuint m_booleanBuffer;
     GLuint m_imguiFramebuffer;
     u32    m_spotLightCount;
     GLuint m_spotLightBuffer;
@@ -40,12 +41,15 @@ public:
     void DrawGBuffer(GameObject *objects, int gameObjectCount, Memory *temp);
     void DrawQuad(WindowDimension dimension);
     void DrawModel(Model *model);
-    void DrawModelInstances(Model *model, int instanceCount);
+    // void DrawModelInstances(Model *model, int instanceCount);
+    void DrawModelInstances(Model *model, RedFoxMaths::Mat4 *modelMatrices,
+        int instanceCount);
     void InitQuad();
     void InitModel(Model *model);
     void InitLights();
     void BindLights();
     DirLight *GetDirLightBuffer(int *lightCount);
+    void SetPointLightBuffer(PointLight* pointLight, int lightCount);
     void ReleaseDirLightBuffer();
     PointLight *GetPointLightBuffer(int *lightCount);
     void ReleasePointLightBuffer();
