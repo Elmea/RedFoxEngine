@@ -452,7 +452,7 @@ void Graphics::setLightsCount(int dirCount, int pointCount, int spotCount)
 {
     m_dirLightCount = dirCount;
     m_pointLightCount = pointCount;
-    m_spotLightCount = dirCount;
+    m_spotLightCount = spotCount;
 }
 
 } // namespace RedFoxEngine

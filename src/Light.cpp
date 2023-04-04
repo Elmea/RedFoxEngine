@@ -139,9 +139,9 @@ void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This f
     }
 
     m_graphics.setLightsCount(dirCount, pointCount, spotCount);
-    m_graphics.FillLightBuffer(dirligths, dirCount, LightType::DIRECTIONAL);
-    m_graphics.FillLightBuffer(pointLights, pointCount, LightType::POINT);
-    m_graphics.FillLightBuffer(spotlights, spotCount, LightType::SPOT);
+    m_graphics.FillLightBuffer(dirligths, LightType::DIRECTIONAL);
+    m_graphics.FillLightBuffer(pointLights, LightType::POINT);
+    m_graphics.FillLightBuffer(spotlights, LightType::SPOT);
 }
 
 Light *Graphics::GetDirLightBuffer(int *lightCount)
@@ -202,29 +202,31 @@ void Graphics::ReleasePointLightBuffer()
     glFlush();
 }
 
-void Graphics::FillLightBuffer(Light* lights, int lightCount, LightType type)
+void Graphics::FillLightBuffer(Light* lights, LightType type)
 {
-    if (!lightCount)
-        return;
-
     GLuint lightBuffer = 0;
+    int lightCount = 0;
     switch (type)
     {
     case RedFoxEngine::NONE:
         return;
     case RedFoxEngine::DIRECTIONAL:
         lightBuffer = m_dirLightBuffer;
+        lightCount = m_dirLightCount;
         break;
     case RedFoxEngine::POINT:
         lightBuffer = m_pointLightBuffer;
+        lightCount = m_pointLightCount;
         break;
     case RedFoxEngine::SPOT:
         lightBuffer = m_spotLightBuffer;
+        lightCount = m_spotLightCount;
         break;
     default:
         break;
     }
-
+    if (!lightCount)
+        return;
     glNamedBufferSubData(lightBuffer, 0, lightCount * sizeof(Light) - sizeof(LightType), lights);
     //Light *test = (Light *)glMapNamedBufferRange(lightBuffer, 0, lightCount * sizeof(Light) - sizeof(LightType), GL_MAP_READ_BIT);
 }

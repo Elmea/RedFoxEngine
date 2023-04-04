@@ -73,8 +73,10 @@ void main()
         result += CalcDirLight(u_dirLightBlock.dirLight[i], Normal, vec3(0, 0, 0));
     for (int i = 0; i < u_pointLightBlock.pointLight.length(); i++)
         result += CalcPointLight(u_pointLightBlock.pointLight[i], Normal, FragPosition, vec3(0, 0, 0));
+#if 1
     for (int i = 0; i < u_spotLightBlock.spotLight.length(); i++)
         result     += CalcSpotLight(u_spotLightBlock.spotLight[i], Normal, FragPosition, vec3(0, 0, 0));
+#endif
     o_color = vec4(result, 1);
 }
 

@@ -73,7 +73,7 @@ public:
     void InitImGUIFramebuffer(WindowDimension dimension);
     void UpdateImGUIFrameBuffer(WindowDimension& dimension, WindowDimension content);
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
-    void FillLightBuffer(Light* lights, int lightCount, LightType type);
+    void FillLightBuffer(Light* lights, LightType type);
 
     void setLightsCount(int dirCount, int pointCount, int spotCount);
 };
