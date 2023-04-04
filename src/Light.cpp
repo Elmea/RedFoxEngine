@@ -1,11 +1,15 @@
 #include "OpenGLGraphics.hpp"
 #include "Engine.hpp"
 
+#define MEMORY_IMPLEMENTATION
+#include "MyMemory.hpp"
+
 
 namespace RedFoxEngine
 {
 Light::Light(LightType lightType)
 {
+    /*
     switch (lightType)
     {
     case DIRECTIONAL:
@@ -19,8 +23,9 @@ Light::Light(LightType lightType)
         break;
     default:
         break;
-    }
+    }*/
 
+    type = lightType;
     glCreateFramebuffers(1, &shadowParameters.depthMapFBO);
 
     glGenTextures(1, &shadowParameters.depthMap);
@@ -39,6 +44,11 @@ Light::Light(LightType lightType)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void Light::operator=(Light& light)
+{
+    memcpy(this, &light, sizeof(Light));
+}
+
 void Graphics::InitLights()
 {
     //NOTE: The allocation of pointLightCount to all of the lights is not a mistake.
@@ -46,23 +56,19 @@ void Graphics::InitLights()
     // allocated to their max value first, then we can increase in size or decrease at runtime
     // the amount we actually use without reallocating.
     
-    m_pointLightCount = 100; //TODO: in the future all lights will start at 0 count, and 
-    // the game or engine editor will add them in the scene.
-    m_dirLightCount = 1;
-    m_spotLightCount = 0;
     glCreateBuffers(1, &m_pointLightBuffer);
-    glNamedBufferStorage(m_pointLightBuffer, m_pointLightCount * sizeof(Light), nullptr,
+    glNamedBufferStorage(m_pointLightBuffer, 100 * sizeof(Light), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
     glCreateBuffers(1, &m_dirLightBuffer);
-    glNamedBufferStorage(m_dirLightBuffer, m_pointLightCount * sizeof(Light), nullptr,
-        GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
+    glNamedBufferStorage(m_dirLightBuffer, 100 * sizeof(Light), nullptr,
+        GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT | GL_MAP_READ_BIT);
 
     glCreateBuffers(1, &m_spotLightBuffer);
-    glNamedBufferStorage(m_spotLightBuffer, m_pointLightCount * sizeof(Light), nullptr,
+    glNamedBufferStorage(m_spotLightBuffer, 100 * sizeof(Light), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
 }
 
-void Engine::UpdateLights(float time) //TODO: This function or something like this could be in game or in physics
+void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This function or something like this could be in game or in physics
 {
 
     /*
@@ -72,7 +78,7 @@ void Engine::UpdateLights(float time) //TODO: This function or something like th
 
         for(int i = 0; i < lightCount; i++)
         {
-            //light[i] = {};
+            light[i] = {};
             light[i].position = {{sinf(time) * i * 2,
                                   sinf((time / 3) * i * 3),
                                   cosf((time / 6) * 2) * i * 3}};
@@ -93,7 +99,7 @@ void Engine::UpdateLights(float time) //TODO: This function or something like th
 
         for(int i = 0; i < lightCount; i++)
         {
-            //light[i] = {};
+            light[i] = {};
             light[i].direction = {{0, -1, 0}};
             light[i].ambient = {{0.01, 0.01, 0.01}};
             light[i].specular = {{0.1, 0.1, 0.1}};
@@ -101,10 +107,41 @@ void Engine::UpdateLights(float time) //TODO: This function or something like th
         }
         m_graphics.ReleaseDirLightBuffer();
     }*/
-    
-    int dirCount, pointCount, spotCount = 0;
 
-    // To do : Think a way to store light, in engine or graphics ? 
+    int dirCount = 0, pointCount = 0, spotCount = 0;
+
+    Light* dirligths = (Light*)MyMalloc(&m_tempAllocator, sizeof(Light) * 1000);
+    Light* pointLights = (Light*)MyMalloc(&m_tempAllocator, sizeof(Light) * 1000); ;
+    Light* spotlights = (Light*)MyMalloc(&m_tempAllocator, sizeof(Light) * 1000); ;
+
+    for (int i = 0; i < lightStorage->lightCount; i++)
+    {
+        switch (lightStorage->lights[i].type)
+        {
+        case (LightType::DIRECTIONAL):
+            dirligths[dirCount] = lightStorage->lights[i];
+            dirCount++;
+            break;
+
+        case (LightType::POINT):
+            pointLights[pointCount] = lightStorage->lights[i];
+            pointCount++;
+            break;
+
+        case (LightType::SPOT):
+            spotlights[spotCount] = lightStorage->lights[i];
+            spotCount++;
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    m_graphics.setLightsCount(dirCount, pointCount, spotCount);
+    m_graphics.FillLightBuffer(dirligths, dirCount, LightType::DIRECTIONAL);
+    m_graphics.FillLightBuffer(pointLights, pointCount, LightType::POINT);
+    m_graphics.FillLightBuffer(spotlights, spotCount, LightType::SPOT);
 }
 
 Light *Graphics::GetDirLightBuffer(int *lightCount)
@@ -165,28 +202,30 @@ void Graphics::ReleasePointLightBuffer()
     glFlush();
 }
 
-void Graphics::SetDirLightBuffer(Light* pointLight, int lightCount)
+void Graphics::FillLightBuffer(Light* lights, int lightCount, LightType type)
 {
-    if (lightCount)
-    {
-        glNamedBufferSubData(m_dirLightBuffer, 0, lightCount * sizeof(Light), pointLight);
-    }
-}
+    if (!lightCount)
+        return;
 
-void Graphics::SetPointLightBuffer(Light* pointLight, int lightCount)
-{
-    if (lightCount)
+    GLuint lightBuffer = 0;
+    switch (type)
     {
-        glNamedBufferSubData(m_pointLightBuffer, 0, lightCount * sizeof(Light), pointLight);
+    case RedFoxEngine::NONE:
+        return;
+    case RedFoxEngine::DIRECTIONAL:
+        lightBuffer = m_dirLightBuffer;
+        break;
+    case RedFoxEngine::POINT:
+        lightBuffer = m_pointLightBuffer;
+        break;
+    case RedFoxEngine::SPOT:
+        lightBuffer = m_spotLightBuffer;
+        break;
+    default:
+        break;
     }
-}
 
-void Graphics::SetSpotLightBuffer(Light* pointLight, int lightCount)
-{
-    if (lightCount)
-    {
-        glNamedBufferSubData(m_spotLightBuffer, 0, lightCount * sizeof(Light), pointLight);
-    }
+    glNamedBufferSubData(lightBuffer, 0, lightCount * sizeof(Light) - sizeof(LightType), lights);
+    //Light *test = (Light *)glMapNamedBufferRange(lightBuffer, 0, lightCount * sizeof(Light) - sizeof(LightType), GL_MAP_READ_BIT);
 }
-
 }

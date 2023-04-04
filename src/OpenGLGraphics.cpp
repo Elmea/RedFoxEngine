@@ -422,4 +422,37 @@ void Graphics::DrawQuad(WindowDimension dimension)
 #endif
 }
 
+LightStorage* Graphics::GetLights()
+{
+    return &lightStorage;
+}
+
+
+void LightStorage::AddLight(Light newLight)
+{
+    for (int i = 0; i < lightCount; i++)
+    {
+        if (lights[i].type == LightType::NONE)
+        {
+            lights[i] = newLight;
+            return;
+        }
+    }
+
+    lights[lightCount] = newLight;
+    lightCount++;
+}
+
+void LightStorage::RemoveLight(int lightIndex)
+{
+    lights[lightIndex].type = LightType::NONE;
+}
+
+void Graphics::setLightsCount(int dirCount, int pointCount, int spotCount)
+{
+    m_dirLightCount = dirCount;
+    m_pointLightCount = pointCount;
+    m_spotLightCount = dirCount;
+}
+
 } // namespace RedFoxEngine

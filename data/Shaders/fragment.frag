@@ -15,15 +15,15 @@ out vec4 o_color;    // output fragment data location 0
 struct Light
 {
     vec3 position;
-    float cutOff;
     vec3 direction;
-    float outerCutOff;
-
     vec3 ambient;
-    float constant;
     vec3 diffuse;
-    float linear;
     vec3 specular;
+
+    float cutOff;
+    float outerCutOff;
+    float constant;
+    float linear;
     float quadratic;
 };
 

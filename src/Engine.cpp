@@ -33,6 +33,8 @@ Engine::Engine(int width, int height) :
     m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator,
         sizeof(GameObject) * 100000);
 
+    m_graphics.GetLights()->lights = (Light*)MyMalloc(&m_arenaAllocator, sizeof(Light) * 1000);
+
     //TODO transition to an instance based model 'model'
     for (int i = 0; i < (int)m_modelCount; i++)
         m_graphics.InitModel(&m_models[i]);
@@ -41,6 +43,18 @@ Engine::Engine(int width, int height) :
 #else
     initSphericalManyGameObjects(5000);
     m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);
+    
+    Light dir{LightType::DIRECTIONAL};
+
+    dir.constant = 1.0f;
+    dir.linear = 0.09f;
+    dir.quadratic = 0.032f;
+    dir.direction = { {0.f, 1.f, 0.0f} };
+    dir.ambient = { {0.5, 0.5, 0.5} };
+    dir.diffuse = { {0.3, 0.3, 0.3} };
+    dir.specular = { {0.1, 0.1, 0.1} };
+
+    m_graphics.GetLights()->AddLight(dir);
 #endif
     m_input = {};
     m_dc = GetDC(m_platform.m_window);
@@ -48,6 +62,7 @@ Engine::Engine(int width, int height) :
         m_gameLibrary, &m_lastTime, nullptr);
     m_graphics.InitQuad();
     m_graphics.InitLights();
+
     StartTime();
 }
 
@@ -123,6 +138,8 @@ void Engine::LoadScene(const char *fileName)
         // current->orientation.b = current->orientation.c = current->orientation.d = 0;
     }
     CloseHandle(file);
+
+    
 }
 
 /*
@@ -269,7 +286,7 @@ void Engine::Update()
 
     static f32 time;
     time += m_deltaTime * 0.1f;
-    UpdateLights(time);
+    UpdateLights(time, m_graphics.GetLights());
     //TODO we'll need to think how we pass the resources,
     // and gameplay structures and objects to this update function
     UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount, time);

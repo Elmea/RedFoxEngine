@@ -20,51 +20,44 @@ struct Material {
     float shininess;
 }; 
 
-struct DirLight {
+struct ShadowParameters
+{
+    unsigned int depthMapFBO;
+    int SHADOW_WIDTH, SHADOW_HEIGHT;
+    unsigned int depthMap;
+};
+
+struct Light {
+    vec3 position;
     vec3 direction;
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
-};
 
-struct PointLight {
-    vec3 position;
-    float constant;
-    vec3 ambient;
-    float linear;
-    vec3 diffuse;
-    float quadratic;
-    vec3 specular;
-    float _padding;
-};
-
-struct SpotLight {
-    vec3 position;
     float cutOff;
-    vec3 direction;
     float outerCutOff;
-    vec3 ambient;
     float constant;
-    vec3 diffuse;
     float linear;
-    vec3 specular;       
     float quadratic;
+    float _padding;
+
+    ShadowParameters shadowParameters;
 };
 
-vec3 CalcDirLight  (DirLight   light, vec3 normal, vec3 viewDir);
-vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
-vec3 CalcSpotLight (SpotLight  light, vec3 normal, vec3 fragPos, vec3 viewDir);
+vec3 CalcDirLight  (Light   light, vec3 normal, vec3 viewDir);
+vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir);
+vec3 CalcSpotLight (Light  light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
 layout(std430, binding = 0) buffer PointLightBlock {
-    PointLight pointLight[];
+    Light pointLight[];
 } u_pointLightBlock;
 
 layout(std430, binding = 1) buffer DirLightBlock {
-    DirLight   dirLight[];
+    Light   dirLight[];
 } u_dirLightBlock;
 
 layout(std430, binding = 2) buffer SpotLightBlock {
-    SpotLight  spotLight[];
+    Light  spotLight[];
 } u_spotLightBlock;
 
 const float shininessFloat = 32;
@@ -85,7 +78,7 @@ void main()
     o_color = vec4(result, 1);
 }
 
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
+vec3 CalcDirLight(Light light, vec3 normal, vec3 viewDir)
 {
     vec3 lightDir = normalize(-light.direction);
     float diff = max(dot(normal, lightDir), 0.0);
@@ -102,7 +95,7 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
     return (ambient + diffuse + specular);
 }
 
-vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
+vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
 
     vec3 Color = vec3(texture(gAlbedo, TexCoord));
@@ -123,7 +116,7 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     return (ambient + diffuse + specular);
 }
 
-vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
+vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
     vec3 Color = texture(gAlbedo, TexCoord).rgb;
 

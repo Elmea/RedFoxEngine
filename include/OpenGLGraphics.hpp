@@ -14,6 +14,14 @@
 namespace RedFoxEngine
 {
 
+struct LightStorage
+{
+    int lightCount;
+    Light* lights;
+    void AddLight(Light newLight);
+    void RemoveLight(int lightIndex);
+};
+
 class Graphics
 {
 private:
@@ -35,35 +43,39 @@ private:
     u32    m_pointLightCount;
     GLuint m_pointLightBuffer;
 
-    void SetDirLightBuffer(Light* pointLight, int lightCount);
-    void SetPointLightBuffer(Light* pointLight, int lightCount);
-    void SetSpotLightBuffer(Light* pointLight, int lightCount);
+    LightStorage lightStorage;
+
 
 public:
-    Model *m_models = nullptr;
+    Model* m_models = nullptr;
     u32    m_modelCount;
     GLuint m_imguiTexture;
-    void DrawGBuffer(GameObject *objects, int gameObjectCount, Memory *temp);
+    LightStorage* GetLights();
+
+    void DrawGBuffer(GameObject* objects, int gameObjectCount, Memory* temp);
     void DrawQuad(WindowDimension dimension);
-    void DrawModel(Model *model);
-    void DrawModelInstances(Model *model, int instanceCount);
+    void DrawModel(Model* model);
+    void DrawModelInstances(Model* model, int instanceCount);
     void InitQuad();
-    void InitModel(Model *model);
+    void InitModel(Model* model);
     void InitLights();
     void BindLights();
-    Light*GetDirLightBuffer(int *lightCount);
+    Light* GetDirLightBuffer(int* lightCount);
     void ReleaseDirLightBuffer();
-    Light*GetPointLightBuffer(int *lightCount);
+    Light* GetPointLightBuffer(int* lightCount);
     void ReleasePointLightBuffer();
-    void InitTexture(ObjModel *model);
-    u32 InitTexture(void *data,int height, int width);
+    void InitTexture(ObjModel* model);
+    u32 InitTexture(void* data, int height, int width);
     void InitFramebuffer();
-    void InitShaders(Memory *tempArena);
-    void InitGraphics(Memory *tempArena, WindowDimension dimension);
+    void InitShaders(Memory* tempArena);
+    void InitGraphics(Memory* tempArena, WindowDimension dimension);
     void InitGeometryFramebuffer(WindowDimension dimension);
     void InitImGUIFramebuffer(WindowDimension dimension);
-    void UpdateImGUIFrameBuffer(WindowDimension &dimension, WindowDimension content);
+    void UpdateImGUIFrameBuffer(WindowDimension& dimension, WindowDimension content);
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
+    void FillLightBuffer(Light* lights, int lightCount, LightType type);
+
+    void setLightsCount(int dirCount, int pointCount, int spotCount);
 };
 } // namespace RedFoxEngine
 
