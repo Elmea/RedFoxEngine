@@ -62,16 +62,20 @@ namespace RedFoxEngine
     struct Light
     {
         vec3 position;
-        vec3 direction;
-        vec3 ambient;
-        vec3 diffuse;
-        vec3 specular;
-
         float cutOff;
+
+        vec3 direction;
         float outerCutOff;
+        
+        vec3 ambient;
         float constant;
+        
+        vec3 diffuse;
         float linear;
+        
+        vec3 specular;
         float quadratic;
+
         float __padding;
 
         ShadowParameters shadowParameters;
