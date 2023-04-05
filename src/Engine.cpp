@@ -49,10 +49,11 @@ Engine::Engine(int width, int height) :
     dir.constant = 1.0f;
     dir.linear = 0.09f;
     dir.quadratic = 0.032f;
-    dir.direction = { {0.f, 1.f, 0.0f} };
+    dir.direction = { {0.1f, -0.5f, -0.3f} };
     dir.ambient = { {0.5, 0.5, 0.5} };
-    dir.diffuse = { {0.3, 0.3, 0.3} };
-    dir.specular = { {0.1, 0.1, 0.1} };
+    dir.diffuse = { {0.6, 0.6, 0.6} };
+    dir.specular = { {0.5, 0.5, 0.5} };
+    dir.position = { {0.0f, 0.0f, 0.0f} };
 
     m_graphics.GetLights()->AddLight(dir);
 #endif

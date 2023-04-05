@@ -28,20 +28,26 @@ struct ShadowParameters
 };
 
 struct Light {
-    vec3 position;
-    vec3 direction;
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
+        vec3 position;
+        float cutOff;
 
-    float cutOff;
-    float outerCutOff;
-    float constant;
-    float linear;
-    float quadratic;
-    float _padding;
+        vec3 direction;
+        float outerCutOff;
+        
+        vec3 ambient;
+        float constant;
+        
+        vec3 diffuse;
+        float linear;
+        
+        vec3 specular;
+        float quadratic;
+
+        float _padding;
 
     ShadowParameters shadowParameters;
+
+    int test;
 };
 
 vec3 CalcDirLight  (Light   light, vec3 normal, vec3 viewDir);

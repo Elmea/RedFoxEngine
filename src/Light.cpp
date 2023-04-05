@@ -227,7 +227,7 @@ void Graphics::FillLightBuffer(Light* lights, LightType type)
     }
     if (!lightCount)
         return;
-    glNamedBufferSubData(lightBuffer, 0, lightCount * sizeof(Light) - sizeof(LightType), lights);
-    //Light *test = (Light *)glMapNamedBufferRange(lightBuffer, 0, lightCount * sizeof(Light) - sizeof(LightType), GL_MAP_READ_BIT);
+    glNamedBufferSubData(lightBuffer, 0, lightCount * sizeof(Light), lights);
+//    Light *test = (Light *)glMapNamedBufferRange(lightBuffer, 0, lightCount * sizeof(Light), GL_MAP_READ_BIT);
 }
 }
