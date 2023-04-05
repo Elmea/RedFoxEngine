@@ -24,10 +24,10 @@ Engine::Engine(int width, int height) :
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
 
     m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 100);
-    m_models[m_modelCount++].obj = CreateCube(&m_arenaAllocator);
-    m_models[m_modelCount++].obj = CreateSphere(30, 25, &m_arenaAllocator);
-    ObjModelPush("ts_bot912.obj");
-    // ObjModelPush("vortigaunt.obj");
+    // m_models[m_modelCount++].obj = CreateCube(&m_arenaAllocator);
+    // m_models[m_modelCount++].obj = CreateSphere(30, 25, &m_arenaAllocator);
+    // ObjModelPush("ts_bot912.obj");
+    ObjModelPush("vortigaunt.obj");
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
     m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator,
@@ -35,11 +35,16 @@ Engine::Engine(int width, int height) :
 
     //TODO transition to an instance based model 'model'
     for (int i = 0; i < (int)m_modelCount; i++)
-        m_graphics.InitModel(&m_models[i]);
+    {
+        if (m_models[i].obj.materials.material->hasNormal)
+            m_graphics.InitNormalMappedModel(&m_models[i], &m_tempAllocator);
+        else
+            m_graphics.InitModel(&m_models[i]);
+    }
 #if 0
     LoadScene("test.scene");
 #else
-    initSphericalManyGameObjects(5000);
+    initSphericalManyGameObjects(30);
     m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);
 #endif
     m_input = {};
@@ -186,9 +191,9 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
         m_gameObjects[i].parent = nullptr;
         m_gameObjects[i].model = &m_models[i % m_modelCount];
         m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 1;
-        if(i % m_modelCount == 3)
+        if(i % m_modelCount == 0)
         {
-            m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 0.02;
+            m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 0.2;
         }
         m_gameObjects[i].orientation.a = 1;
         m_gameObjects[i].name = (char *)MyMalloc(&m_arenaAllocator,

@@ -8,6 +8,8 @@ layout (binding=1)
 uniform sampler2D gNormal;    // texture unit binding 1
 layout (binding=2)
 uniform sampler2D gAlbedo;    // texture unit binding 2
+layout (binding=3)
+uniform sampler2D gTangent;
 
 layout (location=0)
 out vec4 o_color;  // output fragment data location 0
@@ -47,7 +49,7 @@ struct SpotLight {
     float constant;
     vec3 diffuse;
     float linear;
-    vec3 specular;       
+    vec3 specular;
     float quadratic;
 };
 
@@ -74,6 +76,10 @@ void main()
 {
     vec3 FragPosition = texture(gPosition, TexCoord).xyz;
     vec3 Normal       = texture(gNormal, TexCoord).xyz;
+    vec3 Tangent      = texture(gTangent, TexCoord).xyz;
+    vec3 BiTangent    = cross(Normal, Tangent);
+
+    mat3 TBN = transpose(mat3(Tangent, BiTangent, Normal));
 
     vec3 result = vec3(0, 0, 0);
     for (int i = 0; i < u_dirLightBlock.dirLight.length(); i++)
@@ -81,7 +87,7 @@ void main()
     for (int i = 0; i < u_pointLightBlock.pointLight.length(); i++)
         result += CalcPointLight(u_pointLightBlock.pointLight[i], Normal, FragPosition, vec3(0, 0, 0));
     for (int i = 0; i < u_spotLightBlock.spotLight.length(); i++)
-        result     += CalcSpotLight(u_spotLightBlock.spotLight[i], Normal, FragPosition, vec3(0, 0, 0));
+        result += CalcSpotLight(u_spotLightBlock.spotLight[i], Normal, FragPosition, vec3(0, 0, 0));
     o_color = vec4(result, 1);
 }
 
@@ -104,7 +110,6 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
 
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
-
     vec3 Color = vec3(texture(gAlbedo, TexCoord));
     vec3 lightDir = normalize(light.position - fragPos);
     float diff = max(dot(normal, lightDir), 0.0);

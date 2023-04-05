@@ -42,7 +42,7 @@ void Engine::UpdateLights(float time) //TODO: This function or something like th
             light[i].constant  = 1.0f;
             light[i].linear    = 0.09f;
             light[i].quadratic = 0.032f;
-            light[i].ambient = {{0.01, 0.01, 0.01}};
+            light[i].ambient = {{0.5, 0.5, 0.5}};
             light[i].specular = {{0.1, 0.1, 0.1}};
             float intensity = 0.3f;
             light[i].diffuse = {{sinf(time * 0.5 * i) * intensity,

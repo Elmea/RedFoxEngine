@@ -33,7 +33,7 @@ private:
     GLuint m_dirLightBuffer;
     u32    m_pointLightCount;
     GLuint m_pointLightBuffer;
-    GLuint m_gPosition, m_gNormal, m_gAlbedoSpec;
+    GLuint m_gPosition, m_gNormal, m_gAlbedoSpec, m_gTangent;
 public:
     Model *m_models = nullptr;
     u32    m_modelCount;
@@ -46,6 +46,7 @@ public:
         int instanceCount);
     void InitQuad();
     void InitModel(Model *model);
+    void InitNormalMappedModel(Model *model, Memory *temp);
     void InitLights();
     void BindLights();
     DirLight *GetDirLightBuffer(int *lightCount);

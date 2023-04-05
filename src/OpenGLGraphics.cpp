@@ -23,7 +23,7 @@ void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
     glNamedBufferStorage(m_booleanBuffer, sizeof(int), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
     // set to FALSE to disable vsync
-    wglSwapIntervalEXT(0);
+    wglSwapIntervalEXT(1);
 }
 
 void Graphics::InitGeometryFramebuffer(WindowDimension dimension)
@@ -33,6 +33,7 @@ void Graphics::InitGeometryFramebuffer(WindowDimension dimension)
     glCreateTextures(GL_TEXTURE_2D, 1, &m_gPosition);
     glCreateTextures(GL_TEXTURE_2D, 1, &m_gNormal);
     glCreateTextures(GL_TEXTURE_2D, 1, &m_gAlbedoSpec);
+    glCreateTextures(GL_TEXTURE_2D, 1, &m_gTangent);
 
     glTextureParameteri(m_gPosition  , GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTextureParameteri(m_gPosition  , GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -40,12 +41,16 @@ void Graphics::InitGeometryFramebuffer(WindowDimension dimension)
     glTextureParameteri(m_gNormal    , GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTextureParameteri(m_gAlbedoSpec, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTextureParameteri(m_gAlbedoSpec, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureParameteri(m_gTangent, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureParameteri(m_gTangent, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     glTextureStorage2D(m_gPosition  , 1, GL_RGBA16F, dimension.width,
         dimension.height);
     glTextureStorage2D(m_gNormal    , 1, GL_RGBA16F, dimension.width,
         dimension.height);
     glTextureStorage2D(m_gAlbedoSpec, 1, GL_RGBA8, dimension.width,
+        dimension.height);
+    glTextureStorage2D(m_gTangent, 1, GL_RGBA16F, dimension.width,
         dimension.height);
 
     glNamedFramebufferTexture(m_gBuffer, GL_COLOR_ATTACHMENT0,
@@ -54,13 +59,16 @@ void Graphics::InitGeometryFramebuffer(WindowDimension dimension)
          m_gNormal    , 0);
     glNamedFramebufferTexture(m_gBuffer, GL_COLOR_ATTACHMENT2,
          m_gAlbedoSpec, 0);
+    glNamedFramebufferTexture(m_gBuffer, GL_COLOR_ATTACHMENT3,
+         m_gTangent, 0);
 
     // tell OpenGL which color attachments we'll use (of this framebuffer)
     // for rendering
-    unsigned int attachments[3] = {GL_COLOR_ATTACHMENT0,
+    unsigned int attachments[] = {GL_COLOR_ATTACHMENT0,
                                    GL_COLOR_ATTACHMENT1,
-                                   GL_COLOR_ATTACHMENT2};
-    glNamedFramebufferDrawBuffers(m_gBuffer, 3, attachments);
+                                   GL_COLOR_ATTACHMENT2,
+                                   GL_COLOR_ATTACHMENT3};
+    glNamedFramebufferDrawBuffers(m_gBuffer, 4, attachments);
     // create and attach depth buffer (renderbuffer)
     unsigned int rboDepth;
     glCreateRenderbuffers(1, &rboDepth);
@@ -110,6 +118,7 @@ void Graphics::UpdateImGUIFrameBuffer(WindowDimension &dimension,
 
     glDeleteTextures(1, &m_gPosition);
     glDeleteTextures(1, &m_gNormal);
+    glDeleteTextures(1, &m_gTangent);
     glDeleteTextures(1, &m_gAlbedoSpec);
     glDeleteFramebuffers(1, &m_gBuffer);
     InitGeometryFramebuffer(dimension);
@@ -148,6 +157,140 @@ void Graphics::InitQuad()
             sizeof(float) * 2);
         glVertexArrayAttribBinding(m_quadVAO, a_uv, vbuf_index);
     }
+}
+
+struct NormalVertex
+{
+    vec3 position;
+    vec3 normal;
+    vec3 tangent;
+    vec2 textureUV;
+};
+
+void Graphics::InitNormalMappedModel(Model *model, Memory *temp)
+{
+    // vertex buffer containing triangle vertices
+
+    NormalVertex *vertices = (NormalVertex*)MyMalloc(temp, sizeof(NormalVertex) * model->obj.vertexCount);
+    unsigned int vbo;
+    {
+        glCreateBuffers(1, &vbo);
+        for (int i = 0; i < (int)model->obj.vertexCount; i += 3)
+        {
+            int v = i;
+            float deltaUV1x = model->obj.vertices[v + 1].textureUV.x - model->obj.vertices[i].textureUV.x;
+            float deltaUV1y = model->obj.vertices[v + 0].textureUV.y - model->obj.vertices[i].textureUV.y;
+            float deltaUV2x = model->obj.vertices[i + 2].textureUV.x - model->obj.vertices[i].textureUV.x;
+            float deltaUV2y = model->obj.vertices[i + 2].textureUV.y - model->obj.vertices[i].textureUV.y;
+            vec3 edge1;
+            vec3 edge2;
+            edge1.x = model->obj.vertices[i + 1].position.x - model->obj.vertices[i].position.x;
+            edge1.y = model->obj.vertices[i + 1].position.y - model->obj.vertices[i].position.y;
+            edge1.z = model->obj.vertices[i + 1].position.z - model->obj.vertices[i].position.z;
+            edge2.x = model->obj.vertices[i + 2].position.x - model->obj.vertices[i].position.x;
+            edge2.y = model->obj.vertices[i + 2].position.y - model->obj.vertices[i].position.y;
+            edge2.z = model->obj.vertices[i + 2].position.z - model->obj.vertices[i].position.z;
+            float f = 1.0f / (deltaUV1x * deltaUV2y - deltaUV2x * deltaUV1y);
+
+            vertices[i + 0].normal = model->obj.vertices[i + 0].normal;
+            vertices[i + 1].normal = model->obj.vertices[i + 1].normal;
+            vertices[i + 2].normal = model->obj.vertices[i + 2].normal;
+            vertices[i + 0].position = model->obj.vertices[i + 0].position;
+            vertices[i + 1].position = model->obj.vertices[i + 1].position;
+            vertices[i + 2].position = model->obj.vertices[i + 2].position;
+            vertices[i + 0].textureUV = model->obj.vertices[i + 0].textureUV;
+            vertices[i + 1].textureUV = model->obj.vertices[i + 1].textureUV;
+            vertices[i + 2].textureUV = model->obj.vertices[i + 2].textureUV;
+            vertices[i].tangent.x = f * (deltaUV2y * edge1.x - deltaUV1y * edge2.x);
+            vertices[i].tangent.y = f * (deltaUV2y * edge1.y - deltaUV1y * edge2.y);
+            vertices[i].tangent.z = f * (deltaUV2y * edge1.z - deltaUV1y * edge2.z);
+            vertices[i + 1].tangent = vertices[i].tangent;
+            vertices[i + 2].tangent = vertices[i].tangent;
+        }
+        glNamedBufferStorage(vbo,
+            model->obj.vertexCount * sizeof(NormalVertex),
+            vertices, 0);
+    }
+    unsigned int ebo;
+    {
+        glCreateBuffers(1, &ebo);
+        glNamedBufferStorage(ebo, model->obj.indexCount * sizeof(u32),
+            model->obj.indices, 0);
+    }
+    {
+        const int bufferBatchSize = 768; //TODO: test this number on different
+                                         // GPUs   
+        glCreateBuffers(1, &model->vbm);
+        glNamedBufferStorage(model->vbm,
+            bufferBatchSize * sizeof(RedFoxMaths::Mat4),
+            nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
+    }
+    // vertex input
+    {
+        glCreateVertexArrays(1, &model->vao);
+
+        int vbuf_index = 0;
+        glVertexArrayVertexBuffer(model->vao, vbuf_index, vbo, 0,
+            sizeof(NormalVertex));
+
+        int vbuf_matrix = 4;
+        glVertexArrayVertexBuffer(model->vao, vbuf_matrix, model->vbm, 0,
+            sizeof(RedFoxMaths::Mat4));
+
+        glVertexArrayElementBuffer(model->vao, ebo);
+
+        int a_pos = 0;
+        glEnableVertexArrayAttrib (model->vao, a_pos);
+        glVertexArrayAttribFormat (model->vao, a_pos, 3, GL_FLOAT, GL_FALSE,
+            offsetof(struct NormalVertex, position));
+        glVertexArrayAttribBinding(model->vao, a_pos, vbuf_index);
+
+        int a_normal = 1;
+        glEnableVertexArrayAttrib (model->vao, a_normal);
+        glVertexArrayAttribFormat (model->vao, a_normal, 3, GL_FLOAT, GL_FALSE,
+            offsetof(struct NormalVertex, normal));
+        glVertexArrayAttribBinding(model->vao, a_normal, vbuf_index);
+
+        int a_tangent = 2;
+        glEnableVertexArrayAttrib (model->vao, a_tangent);
+        glVertexArrayAttribFormat (model->vao, a_tangent, 3, GL_FLOAT, GL_FALSE,
+            offsetof(struct NormalVertex, normal));
+        glVertexArrayAttribBinding(model->vao, a_tangent, vbuf_index);
+        
+        int a_uv = 3;
+        glEnableVertexArrayAttrib (model->vao, a_uv);
+        glVertexArrayAttribFormat (model->vao, a_uv, 2, GL_FLOAT, GL_FALSE,
+            offsetof(struct NormalVertex, textureUV));
+        glVertexArrayAttribBinding(model->vao, a_uv, vbuf_index);
+
+        int a_matrix = 4;
+        // This is the matrix we're going to use for instanced models
+        glEnableVertexArrayAttrib (model->vao, a_matrix);
+        glVertexArrayAttribFormat (model->vao, a_matrix, 4, GL_FLOAT, GL_FALSE, 0);
+        glVertexArrayAttribBinding(model->vao, a_matrix, vbuf_matrix);
+
+        glEnableVertexArrayAttrib (model->vao, a_matrix + 1);
+        glVertexArrayAttribFormat (model->vao, a_matrix + 1, 4, GL_FLOAT, GL_FALSE,
+            (sizeof(float) * 4));
+        glVertexArrayAttribBinding(model->vao, a_matrix + 1, vbuf_matrix);
+
+        glEnableVertexArrayAttrib (model->vao, a_matrix + 2);
+        glVertexArrayAttribFormat (model->vao, a_matrix + 2, 4, GL_FLOAT, GL_FALSE,
+            (2 * sizeof(float) * 4));
+        glVertexArrayAttribBinding(model->vao, a_matrix + 2, vbuf_matrix);
+
+        glEnableVertexArrayAttrib (model->vao, a_matrix + 3);
+        glVertexArrayAttribFormat (model->vao, a_matrix + 3, 4, GL_FLOAT, GL_FALSE,
+            (3 * sizeof(float) * 4));
+        glVertexArrayAttribBinding(model->vao, a_matrix + 3, vbuf_matrix);
+
+        glVertexArrayBindingDivisor(model->vao, a_matrix + 0, 1);
+        glVertexArrayBindingDivisor(model->vao, a_matrix + 1, 1);
+        glVertexArrayBindingDivisor(model->vao, a_matrix + 2, 1);
+        glVertexArrayBindingDivisor(model->vao, a_matrix + 3, 1);
+    }
+    InitTexture(&model->obj);
+    DeInitGraphicsObj(&model->obj);
 }
 
 void Graphics::InitModel(Model *model)
@@ -325,9 +468,9 @@ void Graphics::InitShaders(Memory *tempArena)
 {
     // fragment & vertex shaders for drawing triangle
     MyString vertexShaderSource = OpenAndReadEntireFile(
-        "Shaders\\gBuffer.vert", tempArena);
+        "Shaders\\normalGBuffer.vert", tempArena);
     MyString fragmentShaderSource = OpenAndReadEntireFile(
-        "Shaders\\gBuffer.frag", tempArena);
+        "Shaders\\normalGBuffer.frag", tempArena);
     CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
         m_gvshader, m_gfshader, m_gpipeline);
 
@@ -365,6 +508,7 @@ void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
         sizeof(RedFoxMaths::Mat4) * batchCount * (m_modelCount + 1));
     u64 *modelCountIndex = (u64 *)MyMalloc(temp,
         sizeof(u64) * m_modelCount);
+    memset(modelCountIndex, 0, sizeof(u64) * m_modelCount);
     for(int index = 0;index < gameObjectCount; index++)
     {
         if (objects[index].model)
@@ -442,6 +586,7 @@ void Graphics::DrawQuad(WindowDimension dimension)
     glBindTextureUnit(0, m_gPosition);
     glBindTextureUnit(1, m_gNormal);
     glBindTextureUnit(2, m_gAlbedoSpec);
+    glBindTextureUnit(3, m_gTangent);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 #if 0 //TODO this might be necesary if we want to draw objects after defered shading
     glBlitNamedFramebuffer(m_gBuffer, 0, 0, 0, dimension.width, dimension.height,

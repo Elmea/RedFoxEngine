@@ -336,15 +336,14 @@ void Engine::DrawIMGUI()
             RedFoxMaths::Mat4 deltaMat = { };
 
             bool snap = m_input.LControl;
-            //TODO (a.perche): Fix maths
-            /*
-            if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
-                snapValue = 45.0f;
-            */
+            // if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
+            //     snapValue = 45.0f;
             if (m_input.Q) // TODO: What are the unity or unreal buttons for this
                 m_GizmoType = ImGuizmo::OPERATION::SCALE;
             else if (m_input.W)
                 m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
+            else if (m_input.R)
+                m_GizmoType = ImGuizmo::OPERATION::ROTATE;
             float snapValues[3] = { 0.5f, 0.5f, 0.5f };
 
 
@@ -354,15 +353,20 @@ void Engine::DrawIMGUI()
 
             if (ImGuizmo::IsUsing())
             {
-                RedFoxMaths::Float3 translation, rotation, scale;
-                RedFoxMaths::Float3 scaleUnit = {1, 1, 1};
+                using namespace RedFoxMaths;
+                Float3 translation, rotation, scale;
+                Float3 scaleUnit = {1, 1, 1};
                 ImGuizmo::DecomposeMatrixToComponents(deltaMat.AsPtr(),
                     (float*)&translation.x, (float*)&rotation.x, (float*)&scale.x);
 
-                //TODO: Fix maths
-                //RedFoxMaths::Float3 deltaRotation = rotation - transformMat;
-                m_selectedObject->position += translation;
-                m_selectedObject->scale += scale - scaleUnit;
+                m_selectedObject->orientation = 
+                    Quaternion::Hamilton(Quaternion::FromEuler(rotation*DEG2RAD),
+                    m_selectedObject->orientation);
+                if(m_GizmoType != ImGuizmo::OPERATION::ROTATE)
+                {
+                    m_selectedObject->position += translation;
+                    m_selectedObject->scale += scale - scaleUnit;
+                }
                 if (m_selectedObject->scale.x <= 0) //TODO: Float3 clamp inside RedFoxMaths
                     m_selectedObject->scale.x = 0.1;
                 if (m_selectedObject->scale.y <= 0)
@@ -442,8 +446,8 @@ void Engine::DrawIMGUI()
             const int buttonWidth = 50;
             if (buttonWidth < ImGui::GetContentRegionAvail().x)
             {
-                char tempString[255] = {};
-                snprintf(tempString, 255, "%d", scrollStrength);
+                char tempString[32] = {};
+                snprintf(tempString, 32, "%d", scrollStrength);
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - (f32)buttonWidth / 2);
                 if (ImGui::Button(tempString, ImVec2(buttonWidth, 0)))
                 {
@@ -526,17 +530,31 @@ void Engine::DrawIMGUI()
                 ImGui::Text("Rotation");
                 ImGui::TableSetColumnIndex(1);
                 ImGui::SetNextItemWidth(-FLT_MIN);
-                RedFoxMaths::Float3 rotation = m_editorCamera.orientation.ToEuler();
-                rotation.x *= RAD2DEG;
-                rotation.y *= RAD2DEG;
-                rotation.z *= RAD2DEG;
-                if (ImGui::DragFloat3("TransformRotation", &rotation.x, 1.0f, -360.f, 360.f))
+
+                static RedFoxMaths::Float3 rotation;
+                if (ImGui::DragFloat3("TransformRotation", &rotation.x, 1.0f, -360, 360.f))
                 {
+                    if (rotation.x == 360)
+                        rotation.x = -359;
+                    if (rotation.x == -360)
+                        rotation.x = 359;
+                    if (rotation.y == 360)
+                        rotation.y = -359;
+                    if (rotation.y == -360)
+                        rotation.y = 359;
+                    if (rotation.z == 360)
+                        rotation.z = -359;
+                    if (rotation.z == -360)
+                        rotation.z = 359;
                     rotation.x *= DEG2RAD;
                     rotation.y *= DEG2RAD;
                     rotation.z *= DEG2RAD;
-                    m_editorCamera.orientation = RedFoxMaths::Quaternion::FromEuler(rotation);
+                    //TODO: still pretty janky
+                    m_editorCamera.orientation = RedFoxMaths::Quaternion::SLerp(m_editorCamera.orientation, RedFoxMaths::Quaternion::FromEuler(rotation * 2), 1);
                     m_editorCamera.orientation.Normalize();
+                    rotation.x *= RAD2DEG;
+                    rotation.y *= RAD2DEG;
+                    rotation.z *= RAD2DEG;
                 }
                 ImGui::EndTable();
             }
@@ -561,7 +579,7 @@ void Engine::DrawIMGUI()
                     ImGui::TableSetColumnIndex(0);
                     ImGui::Text("Position");
                     ImGui::TableSetColumnIndex(1);
-                    ImGui::SetNextItemWidth(-FLT_MIN);
+                   ImGui::SetNextItemWidth(-FLT_MIN);
                     ImGui::DragFloat3("TransformPosition", &m_selectedObject->position.x, 1.f, -32767.f, 32767.f);
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
@@ -569,21 +587,29 @@ void Engine::DrawIMGUI()
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
 
-                    // TO FIX(a.perche): Fix maths
-                    RedFoxMaths::Float3 rotation = m_selectedObject->orientation.ToEuler();
-                    RedFoxMaths::Float3 tmp = rotation;
-                    rotation.x *= RAD2DEG;
-                    rotation.y *= RAD2DEG;
-                    rotation.z *= RAD2DEG;
+                    static RedFoxMaths::Float3 rotation;
                     if (ImGui::DragFloat3("TransformRotation", &rotation.x, 1.f, -360.f, 360.f))
                     {
+                        if (rotation.x == 360)
+                            rotation.x = -359;
+                        if (rotation.x == -360)
+                            rotation.x = 359;
+                        if (rotation.y == 360)
+                            rotation.y = -359;
+                        if (rotation.y == -360)
+                            rotation.y = 359;
+                        if (rotation.z == 360)
+                            rotation.z = -359;
+                        if (rotation.z == -360)
+                            rotation.z = 359;
                         rotation.x *= DEG2RAD;
                         rotation.y *= DEG2RAD;
                         rotation.z *= DEG2RAD;
-                        RedFoxMaths::Float3 delta = rotation - tmp;
-                        RedFoxMaths::Quaternion deltaQuat = RedFoxMaths::Quaternion::FromEuler(delta);
-                        m_selectedObject->orientation = m_selectedObject->orientation + delta;//RedFoxMaths::Quaternion::FromEuler(rotation);
+                        m_selectedObject->orientation = RedFoxMaths::Quaternion::SLerp(m_selectedObject->orientation, RedFoxMaths::Quaternion::FromEuler(rotation), 0.5);
                         m_selectedObject->orientation.Normalize();
+                        rotation.x *= RAD2DEG;
+                        rotation.y *= RAD2DEG;
+                        rotation.z *= RAD2DEG;
                     }
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
