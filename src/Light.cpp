@@ -65,28 +65,41 @@ void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This f
     LightInfo* pointLights = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * 1000); ;
     LightInfo* spotlights = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * 1000); ;
 
+    RedFoxMaths::Mat4 projection;
+
     for (int i = 0; i < lightStorage->lightCount; i++)
     {
         switch (lightStorage->lights[i].type)
         {
         case (LightType::DIRECTIONAL):
             dirligths[dirCount] = lightStorage->lights[i].lightInfo;
+            lightStorage->lights[i].lightInfo;
+            projection = RedFoxMaths::Mat4::GetOrthographicMatrix(-50, 50, -50, 50, 0.1, 100);
             dirCount++;
             break;
 
         case (LightType::POINT):
             pointLights[pointCount] = lightStorage->lights[i].lightInfo;
+            projection = RedFoxMaths::Mat4::GetPerspectiveMatrix(80, 1, 0.1, 25);
             pointCount++;
             break;
 
         case (LightType::SPOT):
             spotlights[spotCount] = lightStorage->lights[i].lightInfo;
+            projection = RedFoxMaths::Mat4::GetPerspectiveMatrix(80, 1, 0.1, 25);
             spotCount++;
             break;
 
         default:
             break;
         }
+
+        RedFoxMaths::Float3 rotation = RedFoxMaths::Float3::DirToEuler(lightStorage->lights[i].lightInfo.direction, { 0.0f, 1.0f, 0.0f });
+        RedFoxMaths::Mat4 lightView = RedFoxMaths::Mat4::GetTranslation(lightStorage->lights[i].lightInfo.position) *
+            RedFoxMaths::Mat4::GetRotationY(rotation.y) * RedFoxMaths::Mat4::GetRotationX(rotation.x) *
+            RedFoxMaths::Mat4::GetRotationZ(rotation.z);
+
+        lightStorage->lights[i].lightInfo.VP = (projection * lightView.GetInverseMatrix()).GetTransposedMatrix();
     }
 
     m_graphics.setLightsCount(dirCount, pointCount, spotCount);

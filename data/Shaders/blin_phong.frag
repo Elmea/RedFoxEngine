@@ -45,9 +45,8 @@ struct Light {
 
     float _padding;
 
+    mat4 lightVp;
     ShadowParameters shadowParameters;
-
-    int test;
 };
 
 vec3 CalcDirLight  (Light   light, vec3 normal, vec3 viewDir);

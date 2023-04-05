@@ -488,34 +488,10 @@ void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* tem
             lightStorage.lights[lightIdex].lightInfo.shadowParameters.SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, lightStorage.lights[lightIdex].lightInfo.shadowParameters.depthMapFBO);
 
-        RedFoxMaths::Mat4 lightProjection;
-
-        switch (lightStorage.lights[lightIdex].type)
-        {
-        case DIRECTIONAL:
-            lightProjection = RedFoxMaths::Mat4::GetOrthographicMatrix(-50, 50, -50, 50, 0.1, 100);
-            break;
-        case POINT:
-            lightProjection = RedFoxMaths::Mat4::GetPerspectiveMatrix(80, 1, 0.1, 25);
-            break;
-        case SPOT:
-            lightProjection = RedFoxMaths::Mat4::GetPerspectiveMatrix(80, 1, 0.1, 25);
-            break;
-        default:
-            break;
-        }
-
-        RedFoxMaths::Float3 rotation = RedFoxMaths::Float3::DirToEuler(lightStorage.lights[lightIdex].lightInfo.direction, {0.0f, 1.0f, 0.0f});
-        RedFoxMaths::Mat4 lightView = RedFoxMaths::Mat4::GetTranslation(lightStorage.lights[lightIdex].lightInfo.position) * 
-            RedFoxMaths::Mat4::GetRotationY(rotation.y) * RedFoxMaths::Mat4::GetRotationX(rotation.x) * 
-            RedFoxMaths::Mat4::GetRotationZ(rotation.z);
-
-        RedFoxMaths::Mat4 lightVP = lightProjection * lightView.GetInverseMatrix();
-
         {
             GLint u_matrix = 0;
             glProgramUniformMatrix4fv(m_shadowvshader, u_matrix, 1, GL_TRUE,
-                lightVP.AsPtr());
+                lightStorage.lights[lightIdex].lightInfo.VP.AsPtr());
 
             int batchCount = 768; //TODO figure out a good value for this
             RedFoxMaths::Mat4* mem = (RedFoxMaths::Mat4*)MyMalloc(temp,

@@ -40,6 +40,7 @@ namespace RedFoxEngine
 
         float __padding;
 
+        RedFoxMaths::Mat4 VP;
         ShadowParameters shadowParameters;
 
         void operator=(LightInfo& light);
