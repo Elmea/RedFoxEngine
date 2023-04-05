@@ -314,18 +314,19 @@ void Graphics::InitShaders(Memory *tempArena)
         m_gvshader, m_gfshader, m_gpipeline);
 
     vertexShaderSource = OpenAndReadEntireFile(
+        "Shaders\\ShadowShader.vert", tempArena);
+    fragmentShaderSource = OpenAndReadEntireFile(
+        "Shaders\\ShadowShader.frag", tempArena);
+    CompileShaders(vertexShaderSource.data, fragmentShaderSource.data, 
+        m_shadowvshader, m_shadowfshader, m_pipeline);
+
+    vertexShaderSource = OpenAndReadEntireFile(
         "Shaders\\vertex.vert", tempArena);
     fragmentShaderSource = OpenAndReadEntireFile(
         "Shaders\\blin_phong.frag", tempArena);
     CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
         m_vshader, m_fshader, m_pipeline);
 
-    vertexShaderSource = OpenAndReadEntireFile(
-        "Shaders\\ShadowShader.vert", tempArena);
-    fragmentShaderSource = OpenAndReadEntireFile(
-        "Shaders\\ShadowShader.frag", tempArena);
-    CompileShaders(vertexShaderSource.data, fragmentShaderSource.data, 
-        m_shadowvshader, m_shadowfshader, m_pipeline);
 }
 
 void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
@@ -434,7 +435,6 @@ LightStorage* Graphics::GetLights()
 {
     return &lightStorage;
 }
-
 
 void LightStorage::AddLight(Light newLight)
 {

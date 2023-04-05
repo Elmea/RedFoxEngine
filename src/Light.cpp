@@ -75,44 +75,6 @@ void Graphics::InitLights()
 
 void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This function or something like this could be in game or in physics
 {
-
-    /*
-    int lightCount = 0;
-    {
-        Light*light = (Light*)m_graphics.GetPointLightBuffer(&lightCount);
-
-        for(int i = 0; i < lightCount; i++)
-        {
-            light[i] = {};
-            light[i].position = {{sinf(time) * i * 2,
-                                  sinf((time / 3) * i * 3),
-                                  cosf((time / 6) * 2) * i * 3}};
-            light[i].constant  = 1.0f;
-            light[i].linear    = 0.09f;
-            light[i].quadratic = 0.032f;
-            light[i].ambient = {{0.01, 0.01, 0.01}};
-            light[i].specular = {{0.1, 0.1, 0.1}};
-            float intensity = 0.3f;
-            light[i].diffuse = {{sinf(time * 0.5 * i) * intensity,
-                                 sinf(time * 0.6 * i) * intensity,
-                                 cosf(time * 0.3 * i) * intensity}};
-        }
-    }
-    m_graphics.ReleasePointLightBuffer();
-    {
-        Light*light = (Light*)m_graphics.GetDirLightBuffer(&lightCount);
-
-        for(int i = 0; i < lightCount; i++)
-        {
-            light[i] = {};
-            light[i].direction = {{0, -1, 0}};
-            light[i].ambient = {{0.01, 0.01, 0.01}};
-            light[i].specular = {{0.1, 0.1, 0.1}};
-            light[i].ambient = {{0.01, 0.01, 0.01}};
-        }
-        m_graphics.ReleaseDirLightBuffer();
-    }*/
-
     int dirCount = 0, pointCount = 0, spotCount = 0;
 
     LightInfo* dirligths = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * 1000);
