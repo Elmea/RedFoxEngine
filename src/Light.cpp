@@ -26,19 +26,19 @@ Light::Light(LightType lightType)
     }*/
 
     type = lightType;
-    glCreateFramebuffers(1, &shadowParameters.depthMapFBO);
+    glCreateFramebuffers(1, &lightInfo.shadowParameters.depthMapFBO);
 
-    glGenTextures(1, &shadowParameters.depthMap);
-    glBindTexture(GL_TEXTURE_2D, shadowParameters.depthMap);
+    glGenTextures(1, &lightInfo.shadowParameters.depthMap);
+    glBindTexture(GL_TEXTURE_2D, lightInfo.shadowParameters.depthMap);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-        shadowParameters.SHADOW_WIDTH, shadowParameters.SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        lightInfo.shadowParameters.SHADOW_WIDTH, lightInfo.shadowParameters.SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, shadowParameters.depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowParameters.depthMap, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, lightInfo.shadowParameters.depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, lightInfo.shadowParameters.depthMap, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -47,6 +47,11 @@ Light::Light(LightType lightType)
 void Light::operator=(Light& light)
 {
     memcpy(this, &light, sizeof(Light));
+}
+
+void LightInfo::operator=(LightInfo& light)
+{
+    memcpy(this, &light, sizeof(LightInfo));
 }
 
 void Graphics::InitLights()
@@ -110,26 +115,26 @@ void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This f
 
     int dirCount = 0, pointCount = 0, spotCount = 0;
 
-    Light* dirligths = (Light*)MyMalloc(&m_tempAllocator, sizeof(Light) * 1000);
-    Light* pointLights = (Light*)MyMalloc(&m_tempAllocator, sizeof(Light) * 1000); ;
-    Light* spotlights = (Light*)MyMalloc(&m_tempAllocator, sizeof(Light) * 1000); ;
+    LightInfo* dirligths = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * 1000);
+    LightInfo* pointLights = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * 1000); ;
+    LightInfo* spotlights = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * 1000); ;
 
     for (int i = 0; i < lightStorage->lightCount; i++)
     {
         switch (lightStorage->lights[i].type)
         {
         case (LightType::DIRECTIONAL):
-            dirligths[dirCount] = lightStorage->lights[i];
+            dirligths[dirCount] = lightStorage->lights[i].lightInfo;
             dirCount++;
             break;
 
         case (LightType::POINT):
-            pointLights[pointCount] = lightStorage->lights[i];
+            pointLights[pointCount] = lightStorage->lights[i].lightInfo;
             pointCount++;
             break;
 
         case (LightType::SPOT):
-            spotlights[spotCount] = lightStorage->lights[i];
+            spotlights[spotCount] = lightStorage->lights[i].lightInfo;
             spotCount++;
             break;
 
@@ -202,7 +207,7 @@ void Graphics::ReleasePointLightBuffer()
     glFlush();
 }
 
-void Graphics::FillLightBuffer(Light* lights, LightType type)
+void Graphics::FillLightBuffer(LightInfo* lights, LightType type)
 {
     GLuint lightBuffer = 0;
     int lightCount = 0;
@@ -227,7 +232,7 @@ void Graphics::FillLightBuffer(Light* lights, LightType type)
     }
     if (!lightCount)
         return;
-    glNamedBufferSubData(lightBuffer, 0, lightCount * sizeof(Light), lights);
-//    Light *test = (Light *)glMapNamedBufferRange(lightBuffer, 0, lightCount * sizeof(Light), GL_MAP_READ_BIT);
+
+    glNamedBufferSubData(lightBuffer, 0, lightCount * sizeof(LightInfo), lights);
 }
 }

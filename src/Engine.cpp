@@ -44,18 +44,40 @@ Engine::Engine(int width, int height) :
     initSphericalManyGameObjects(5000);
     m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);
     
-    Light dir{LightType::DIRECTIONAL};
+    // Hardcoded light for testing
+    {
+        Light dir{ LightType::DIRECTIONAL };
 
-    dir.constant = 1.0f;
-    dir.linear = 0.09f;
-    dir.quadratic = 0.032f;
-    dir.direction = { {0.1f, -0.5f, -0.3f} };
-    dir.ambient = { {0.5, 0.5, 0.5} };
-    dir.diffuse = { {0.6, 0.6, 0.6} };
-    dir.specular = { {0.5, 0.5, 0.5} };
-    dir.position = { {0.0f, 0.0f, 0.0f} };
+        dir.lightInfo.constant = 1.0f;
+        dir.lightInfo.linear = 0.09f;
+        dir.lightInfo.quadratic = 0.032f;
+        dir.lightInfo.direction = { {0.1f, -0.5f, -0.3f} };
+        dir.lightInfo.ambient = { {0.3, 0.3, 0.3} };
+        dir.lightInfo.diffuse = { {0.6, 0.6, 0.6} };
+        dir.lightInfo.specular = { {0.1, 0.1, 0.1} };
+        dir.lightInfo.position = { {0.0f, 0.0f, 0.0f} };
 
-    m_graphics.GetLights()->AddLight(dir);
+
+        Light spot{ LightType::SPOT };
+        spot.lightInfo.constant = 1.0f;
+        spot.lightInfo.linear = 0.09f;
+        spot.lightInfo.quadratic = 0.032f;
+
+        spot.lightInfo.direction = { {0.0f, 0.0f, 1.0f} };
+        spot.lightInfo.position = { {0.0f, 0.0f, -3.0f} };
+
+        spot.lightInfo.ambient = { {0.3, 0.3, 0.3} };
+        spot.lightInfo.diffuse = { {0.6, 0.6, 0.6} };
+        spot.lightInfo.specular = { {0.1, 0.1, 0.1} };
+
+        spot.lightInfo.cutOff = 0.5f;
+        spot.lightInfo.outerCutOff = 0.1f;
+
+        m_graphics.GetLights()->AddLight(dir);
+        m_graphics.GetLights()->AddLight(spot);
+    }
+
+
 #endif
     m_input = {};
     m_dc = GetDC(m_platform.m_window);

@@ -28,6 +28,8 @@ private:
     RedFoxMaths::Mat4 m_viewProjection;
     GLuint m_vshader, m_fshader;
     GLuint m_gvshader, m_gfshader;
+    GLuint m_shadowvshader, m_shadowfshader;
+
     GLuint m_rboIMGUI;
     GLuint m_quadVAO;
     GLuint m_gpipeline;
@@ -73,7 +75,7 @@ public:
     void InitImGUIFramebuffer(WindowDimension dimension);
     void UpdateImGUIFrameBuffer(WindowDimension& dimension, WindowDimension content);
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
-    void FillLightBuffer(Light* lights, LightType type);
+    void FillLightBuffer(LightInfo* lights, LightType type);
 
     void setLightsCount(int dirCount, int pointCount, int spotCount);
 };

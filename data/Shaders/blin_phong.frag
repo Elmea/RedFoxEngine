@@ -28,22 +28,22 @@ struct ShadowParameters
 };
 
 struct Light {
-        vec3 position;
-        float cutOff;
+    vec3 position;
+    float cutOff;
 
-        vec3 direction;
-        float outerCutOff;
+    vec3 direction;
+    float outerCutOff;
         
-        vec3 ambient;
-        float constant;
+    vec3 ambient;
+    float constant;
         
-        vec3 diffuse;
-        float linear;
+    vec3 diffuse;
+    float linear;
         
-        vec3 specular;
-        float quadratic;
+    vec3 specular;
+    float quadratic;
 
-        float _padding;
+    float _padding;
 
     ShadowParameters shadowParameters;
 
@@ -79,10 +79,9 @@ void main()
         result += CalcDirLight(u_dirLightBlock.dirLight[i], Normal, vec3(0, 0, 0));
     for (int i = 0; i < u_pointLightBlock.pointLight.length(); i++)
         result += CalcPointLight(u_pointLightBlock.pointLight[i], Normal, FragPosition, vec3(0, 0, 0));
-#if 1
     for (int i = 0; i < u_spotLightBlock.spotLight.length(); i++)
-        result     += CalcSpotLight(u_spotLightBlock.spotLight[i], Normal, FragPosition, vec3(0, 0, 0));
-#endif
+        result += CalcSpotLight(u_spotLightBlock.spotLight[i], Normal, FragPosition, vec3(0, 0, 0));
+    
     o_color = vec4(result, 1);
 }
 
@@ -133,7 +132,7 @@ vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(viewDir, halfwayDir), 0.0), shininessFloat * 4);
     float distance    = length(light.position - fragPos);
-    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));    
+    float attenuation = 1.0 ; //  / (light.constant + light.linear * distance + light.quadratic * (distance * distance)); // Commented due to an issue that this calculation return nan.
     float theta       = dot(lightDir, normalize(-light.direction)); 
     float epsilon     = light.cutOff - light.outerCutOff;
     float intensity   = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
@@ -144,5 +143,6 @@ vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
     ambient  *= attenuation * intensity;
     diffuse  *= attenuation * intensity;
     specular *= attenuation * intensity;
+
     return (ambient + diffuse + specular);
 }

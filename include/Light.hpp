@@ -20,46 +20,8 @@ namespace RedFoxEngine
         SPOT
     };
 
-    /*
-    struct DirLight {
-        vec3 direction;
-        vec3 ambient;
-        vec3 diffuse;
-        vec3 specular;
-
-        ShadowParameters shadowParameters;
-    };
-
-    struct PointLight {
-        vec3 position;
-        float constant;
-        vec3 ambient;
-        float linear;
-        vec3 diffuse;
-        float quadratic;
-        vec3 specular;
-        float __padding;
-
-        ShadowParameters shadowParameters;
-    };
-
-    struct SpotLight {
-        vec3 position;
-        float cutOff;
-        vec3 direction;
-        float outerCutOff;
-        vec3 ambient;
-        float constant;
-        vec3 diffuse;
-        float linear;
-        vec3 specular;
-        float quadratic;
-
-        ShadowParameters shadowParameters;
-    };
-    */
-
-    struct Light
+    // Information for the GPU
+    struct LightInfo
     {
         vec3 position;
         float cutOff;
@@ -80,7 +42,14 @@ namespace RedFoxEngine
 
         ShadowParameters shadowParameters;
 
+        void operator=(LightInfo& light);
+    };
+
+    struct Light
+    {
         LightType type;
+
+        LightInfo lightInfo;
 
         Light::Light(LightType lightType);
         void operator=(Light& light);

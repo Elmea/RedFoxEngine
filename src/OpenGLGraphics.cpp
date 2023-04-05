@@ -17,6 +17,7 @@ void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
     }
+
     InitImGUIFramebuffer(dimension);
     InitGeometryFramebuffer(dimension);
     // set to FALSE to disable vsync
@@ -318,6 +319,13 @@ void Graphics::InitShaders(Memory *tempArena)
         "Shaders\\blin_phong.frag", tempArena);
     CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
         m_vshader, m_fshader, m_pipeline);
+
+    vertexShaderSource = OpenAndReadEntireFile(
+        "Shaders\\ShadowShader.vert", tempArena);
+    fragmentShaderSource = OpenAndReadEntireFile(
+        "Shaders\\ShadowShader.frag", tempArena);
+    CompileShaders(vertexShaderSource.data, fragmentShaderSource.data, 
+        m_shadowvshader, m_shadowfshader, m_pipeline);
 }
 
 void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
