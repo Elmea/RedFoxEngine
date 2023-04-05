@@ -7,7 +7,7 @@ namespace RedFoxEngine
     struct ShadowParameters
     {
         unsigned int depthMapFBO = 0;
-        const unsigned int SHADOW_WIDTH = 5120, SHADOW_HEIGHT = 5120;
+        const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
         unsigned int depthMap = 0;
         // RedFoxMaths::Mat4 projection;
     };

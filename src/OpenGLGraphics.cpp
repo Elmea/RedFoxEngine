@@ -271,13 +271,6 @@ void Graphics::InitTexture(ObjModel *model)
     }
 }
 
-void Graphics::UseShader(GLuint& vert, GLuint& frag)
-{
-    glGenProgramPipelines(1, &m_pipeline);
-    glUseProgramStages(m_pipeline, GL_VERTEX_SHADER_BIT, vert);
-    glUseProgramStages(m_pipeline, GL_FRAGMENT_SHADER_BIT, frag);
-}
-
 static void CompileShaders(const char *vertexShaderSource,
                     const char *fragmentShaderSource,
     GLuint &vert, GLuint &frag, GLuint &pipeline)
@@ -325,7 +318,7 @@ void Graphics::InitShaders(Memory *tempArena)
     fragmentShaderSource = OpenAndReadEntireFile(
         "Shaders\\ShadowShader.frag", tempArena);
     CompileShaders(vertexShaderSource.data, fragmentShaderSource.data, 
-        m_shadowvshader, m_shadowfshader, m_pipeline);
+        m_shadowvshader, m_shadowfshader, m_spipeline);
 
     vertexShaderSource = OpenAndReadEntireFile(
         "Shaders\\vertex.vert", tempArena);
@@ -343,6 +336,8 @@ void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
 void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
     Memory *temp)
 {
+ 
+
     //NOTE: here we clear the 0 framebuffer
     glClearColor(0, 0, 0, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -480,6 +475,9 @@ void Graphics::setLightsCount(int dirCount, int pointCount, int spotCount)
 
 void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* temp)
 {
+    glBindProgramPipeline(m_spipeline);
+    glCullFace(GL_FRONT);
+
     for (int lightIdex = 0; lightIdex < lightStorage.lightCount; lightIdex++)
     {
         if (lightStorage.lights[lightIdex].type == LightType::NONE)
@@ -489,7 +487,6 @@ void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* tem
         glViewport(0, 0, lightStorage.lights[lightIdex].lightInfo.shadowParameters.SHADOW_WIDTH, 
             lightStorage.lights[lightIdex].lightInfo.shadowParameters.SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, lightStorage.lights[lightIdex].lightInfo.shadowParameters.depthMapFBO);
-        glCullFace(GL_FRONT);
 
         RedFoxMaths::Mat4 lightProjection;
 
@@ -511,7 +508,7 @@ void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* tem
         RedFoxMaths::Float3 rotation = RedFoxMaths::Float3::DirToEuler(lightStorage.lights[lightIdex].lightInfo.direction, {0.0f, 1.0f, 0.0f});
         RedFoxMaths::Mat4 lightView = RedFoxMaths::Mat4::GetTranslation(lightStorage.lights[lightIdex].lightInfo.position) * 
             RedFoxMaths::Mat4::GetRotationY(rotation.y) * RedFoxMaths::Mat4::GetRotationX(rotation.x) * 
-            RedFoxMaths::Mat4::GetRotationZ(rotation.z) * RedFoxMaths::Mat4::GetScale({ 1,1,1 });
+            RedFoxMaths::Mat4::GetRotationZ(rotation.z);
 
         RedFoxMaths::Mat4 lightVP = lightProjection * lightView.GetInverseMatrix();
 
@@ -556,10 +553,8 @@ void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* tem
                 }
             }
         }
-
-        glCullFace(GL_BACK);
-
     }
+    glCullFace(GL_BACK);
 }
 
 } // namespace RedFoxEngine

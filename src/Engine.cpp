@@ -321,6 +321,10 @@ void Engine::Update()
 void Engine::Draw()
 {
     m_graphics.CalcShadows(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
+
+    // Should move it in DrawGBuffer method 
+    glViewport(0, 0, m_platform.m_windowDimension.width, m_platform.m_windowDimension.height);
+
     m_graphics.DrawGBuffer(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
     m_graphics.DrawQuad(m_platform.m_windowDimension);
     DrawIMGUI();

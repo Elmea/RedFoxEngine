@@ -34,6 +34,7 @@ private:
     GLuint m_quadVAO;
     GLuint m_gpipeline;
     GLuint m_pipeline;
+    GLuint m_spipeline;
     GLuint m_gBuffer;
     GLuint m_gPosition, m_gNormal, m_gAlbedoSpec;
     GLuint m_imguiFramebuffer;
@@ -77,7 +78,6 @@ public:
     void UpdateImGUIFrameBuffer(WindowDimension& dimension, WindowDimension content);
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
     void FillLightBuffer(LightInfo* lights, LightType type);
-    void UseShader(GLuint& vert, GLuint& frag);
 
     void setLightsCount(int dirCount, int pointCount, int spotCount);
     void CalcShadows(GameObject* objects, int gameObjectCount, Memory* temp);
