@@ -271,6 +271,13 @@ void Graphics::InitTexture(ObjModel *model)
     }
 }
 
+void Graphics::UseShader(GLuint& vert, GLuint& frag)
+{
+    glGenProgramPipelines(1, &m_pipeline);
+    glUseProgramStages(m_pipeline, GL_VERTEX_SHADER_BIT, vert);
+    glUseProgramStages(m_pipeline, GL_FRAGMENT_SHADER_BIT, frag);
+}
+
 static void CompileShaders(const char *vertexShaderSource,
                     const char *fragmentShaderSource,
     GLuint &vert, GLuint &frag, GLuint &pipeline)
@@ -326,7 +333,6 @@ void Graphics::InitShaders(Memory *tempArena)
         "Shaders\\blin_phong.frag", tempArena);
     CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
         m_vshader, m_fshader, m_pipeline);
-
 }
 
 void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
@@ -410,6 +416,15 @@ void Graphics::DrawModelInstances(Model *model, int instanceCount)
     }
 }
 
+void Graphics::DrawModelShadowInstances(Model* model, int instanceCount)
+{
+    // provide vertex input
+    glBindVertexArray(model->vao);
+
+    glDrawElementsInstanced(GL_TRIANGLES, model->obj.indexCount, GL_UNSIGNED_INT,
+        0, instanceCount);
+}
+
 void Graphics::DrawQuad(WindowDimension dimension)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
@@ -461,6 +476,90 @@ void Graphics::setLightsCount(int dirCount, int pointCount, int spotCount)
     m_dirLightCount = dirCount;
     m_pointLightCount = pointCount;
     m_spotLightCount = spotCount;
+}
+
+void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* temp)
+{
+    for (int lightIdex = 0; lightIdex < lightStorage.lightCount; lightIdex++)
+    {
+        if (lightStorage.lights[lightIdex].type == LightType::NONE)
+            continue;
+
+        //to depth map
+        glViewport(0, 0, lightStorage.lights[lightIdex].lightInfo.shadowParameters.SHADOW_WIDTH, 
+            lightStorage.lights[lightIdex].lightInfo.shadowParameters.SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, lightStorage.lights[lightIdex].lightInfo.shadowParameters.depthMapFBO);
+        glCullFace(GL_FRONT);
+
+        RedFoxMaths::Mat4 lightProjection;
+
+        switch (lightStorage.lights[lightIdex].type)
+        {
+        case DIRECTIONAL:
+            lightProjection = RedFoxMaths::Mat4::GetOrthographicMatrix(-50, 50, -50, 50, 0.1, 100);
+            break;
+        case POINT:
+            lightProjection = RedFoxMaths::Mat4::GetPerspectiveMatrix(80, 1, 0.1, 25);
+            break;
+        case SPOT:
+            lightProjection = RedFoxMaths::Mat4::GetPerspectiveMatrix(80, 1, 0.1, 25);
+            break;
+        default:
+            break;
+        }
+
+        RedFoxMaths::Float3 rotation = RedFoxMaths::Float3::DirToEuler(lightStorage.lights[lightIdex].lightInfo.direction, {0.0f, 1.0f, 0.0f});
+        RedFoxMaths::Mat4 lightView = RedFoxMaths::Mat4::GetTranslation(lightStorage.lights[lightIdex].lightInfo.position) * 
+            RedFoxMaths::Mat4::GetRotationY(rotation.y) * RedFoxMaths::Mat4::GetRotationX(rotation.x) * 
+            RedFoxMaths::Mat4::GetRotationZ(rotation.z) * RedFoxMaths::Mat4::GetScale({ 1,1,1 });
+
+        RedFoxMaths::Mat4 lightVP = lightProjection * lightView.GetInverseMatrix();
+
+        {
+            GLint u_matrix = 0;
+            glProgramUniformMatrix4fv(m_shadowvshader, u_matrix, 1, GL_TRUE,
+                lightVP.AsPtr());
+
+            int batchCount = 768; //TODO figure out a good value for this
+            RedFoxMaths::Mat4* mem = (RedFoxMaths::Mat4*)MyMalloc(temp,
+                sizeof(RedFoxMaths::Mat4) * batchCount * (m_modelCount + 1));
+            u64* modelCountIndex = (u64*)MyMalloc(temp,
+                sizeof(u64) * m_modelCount);
+            for (int index = 0; index < gameObjectCount; index++)
+            {
+                if (objects[index].model)
+                {
+                    u64 modelIndex = objects[index].model - m_models;
+                    u64 countIndex = modelCountIndex[modelIndex];
+                    mem[countIndex + (batchCount * modelIndex)] =
+                        objects[index].GetWorldMatrix().GetTransposedMatrix();
+                    modelCountIndex[modelIndex]++;
+                    if (modelCountIndex[modelIndex] == (u64)batchCount)
+                    {
+                        u64 countIndex = modelCountIndex[modelIndex];
+                        glNamedBufferSubData(m_models[modelIndex].vbm, 0,
+                            sizeof(RedFoxMaths::Mat4) * batchCount, &mem[batchCount * modelIndex]);
+                        DrawModelShadowInstances(&m_models[modelIndex], countIndex);
+                        modelCountIndex[modelIndex] = 0;
+                    }
+                }
+            }
+            for (int i = 0; i < (int)m_modelCount; i++)
+            {
+                u64 countIndex = modelCountIndex[i];
+                if (countIndex)
+                {
+                    glNamedBufferSubData(m_models[i].vbm, 0,
+                        sizeof(RedFoxMaths::Mat4) * countIndex, &mem[batchCount * i]);
+                    DrawModelShadowInstances(&m_models[i], countIndex);
+                    modelCountIndex[i] = 0;
+                }
+            }
+        }
+
+        glCullFace(GL_BACK);
+
+    }
 }
 
 } // namespace RedFoxEngine

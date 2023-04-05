@@ -9,22 +9,6 @@ namespace RedFoxEngine
 {
 Light::Light(LightType lightType)
 {
-    /*
-    switch (lightType)
-    {
-    case DIRECTIONAL:
-        shadowParameters.projection = RedFoxMaths::Mat4::GetOrthographicMatrix(-50, 50, -50, 50, 0.1, 100);
-        break;
-    case POINT:
-        shadowParameters.projection = RedFoxMaths::Mat4::GetPerspectiveMatrix(80, 1, 0.1, 25);
-        break;
-    case SPOT:
-        shadowParameters.projection = RedFoxMaths::Mat4::GetPerspectiveMatrix(80, 1, 0.1, 25);
-        break;
-    default:
-        break;
-    }*/
-
     type = lightType;
     glCreateFramebuffers(1, &lightInfo.shadowParameters.depthMapFBO);
 

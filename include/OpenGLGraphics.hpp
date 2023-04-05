@@ -58,6 +58,7 @@ public:
     void DrawQuad(WindowDimension dimension);
     void DrawModel(Model* model);
     void DrawModelInstances(Model* model, int instanceCount);
+    void DrawModelShadowInstances(Model* model, int instanceCount);
     void InitQuad();
     void InitModel(Model* model);
     void InitLights();
@@ -76,8 +77,10 @@ public:
     void UpdateImGUIFrameBuffer(WindowDimension& dimension, WindowDimension content);
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
     void FillLightBuffer(LightInfo* lights, LightType type);
+    void UseShader(GLuint& vert, GLuint& frag);
 
     void setLightsCount(int dirCount, int pointCount, int spotCount);
+    void CalcShadows(GameObject* objects, int gameObjectCount, Memory* temp);
 };
 } // namespace RedFoxEngine
 

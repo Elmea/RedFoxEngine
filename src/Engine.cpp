@@ -51,11 +51,11 @@ Engine::Engine(int width, int height) :
         dir.lightInfo.constant = 1.0f;
         dir.lightInfo.linear = 0.09f;
         dir.lightInfo.quadratic = 0.032f;
-        dir.lightInfo.direction = { {0.1f, -0.5f, -0.3f} };
-        dir.lightInfo.ambient = { {0.3, 0.3, 0.3} };
-        dir.lightInfo.diffuse = { {0.6, 0.6, 0.6} };
-        dir.lightInfo.specular = { {0.1, 0.1, 0.1} };
-        dir.lightInfo.position = { {0.0f, 0.0f, 0.0f} };
+        dir.lightInfo.direction = { 0.1f, -0.5f, -0.3f };
+        dir.lightInfo.ambient = {0.3, 0.3, 0.3};
+        dir.lightInfo.diffuse = {0.6, 0.6, 0.6};
+        dir.lightInfo.specular = {0.1, 0.1, 0.1};
+        dir.lightInfo.position = {0.0f, 0.0f, 0.0f};
 
 
         Light spot{ LightType::SPOT };
@@ -63,12 +63,12 @@ Engine::Engine(int width, int height) :
         spot.lightInfo.linear = 0.09f;
         spot.lightInfo.quadratic = 0.032f;
 
-        spot.lightInfo.direction = { {0.0f, 0.0f, 1.0f} };
-        spot.lightInfo.position = { {0.0f, 0.0f, -3.0f} };
+        spot.lightInfo.direction = {0.0f, 0.0f, 1.0f};
+        spot.lightInfo.position = {0.0f, 0.0f, -3.0f};
 
-        spot.lightInfo.ambient = { {0.3, 0.3, 0.3} };
-        spot.lightInfo.diffuse = { {0.6, 0.6, 0.6} };
-        spot.lightInfo.specular = { {0.1, 0.1, 0.1} };
+        spot.lightInfo.ambient = {0.3, 0.3, 0.3};
+        spot.lightInfo.diffuse = {0.6, 0.6, 0.6};
+        spot.lightInfo.specular = {0.1, 0.1, 0.1};
 
         spot.lightInfo.cutOff = 0.5f;
         spot.lightInfo.outerCutOff = 0.1f;
@@ -320,6 +320,7 @@ void Engine::Update()
 
 void Engine::Draw()
 {
+    m_graphics.CalcShadows(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
     m_graphics.DrawGBuffer(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
     m_graphics.DrawQuad(m_platform.m_windowDimension);
     DrawIMGUI();

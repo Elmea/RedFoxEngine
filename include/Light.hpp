@@ -1,5 +1,5 @@
 #pragma once
-#include "engine_math.hpp"
+#include "RedfoxMaths.hpp"
 
 
 namespace RedFoxEngine
@@ -23,19 +23,19 @@ namespace RedFoxEngine
     // Information for the GPU
     struct LightInfo
     {
-        vec3 position;
+        RedFoxMaths::Float3 position;
         float cutOff;
 
-        vec3 direction;
+        RedFoxMaths::Float3 direction;
         float outerCutOff;
         
-        vec3 ambient;
+        RedFoxMaths::Float3 ambient;
         float constant;
         
-        vec3 diffuse;
+        RedFoxMaths::Float3 diffuse;
         float linear;
         
-        vec3 specular;
+        RedFoxMaths::Float3 specular;
         float quadratic;
 
         float __padding;
