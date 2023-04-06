@@ -46,11 +46,11 @@ private:
     ImGuiIO* m_ImGuiIO = nullptr;
     ImFont* m_defaultFont = nullptr;
     MyString m_sceneName;
+    bool m_editorCameraEnabled;
     ImGuizmo::OPERATION m_GizmoType;
     ImGuizmo::MODE m_GizmoMode;
-
     RedFoxMaths::Float3 m_editorCameraSpeed;
-    bool m_editorCameraEnabled;
+    int m_sceneUsedMemory = 0;
 private:
     void DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight);
     int DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);

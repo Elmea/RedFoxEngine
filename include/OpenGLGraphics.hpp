@@ -18,12 +18,11 @@ class Graphics
 {
 private:
     RedFoxMaths::Mat4 m_viewProjection;
-    GLuint m_vshader, m_fshader;
-    GLuint m_gvshader, m_gfshader;
+    GLuint m_vshader, m_fshader, m_pipeline;
+    GLuint m_gvshader, m_gfshader, m_gpipeline;
+    GLuint m_ngvshader, m_ngfshader, m_ngpipeline;
     GLuint m_rboIMGUI;
     GLuint m_quadVAO;
-    GLuint m_gpipeline;
-    GLuint m_pipeline;
     GLuint m_gBuffer;
     GLuint m_booleanBuffer;
     GLuint m_imguiFramebuffer;

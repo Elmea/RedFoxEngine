@@ -303,21 +303,6 @@ void Graphics::InitModel(Model *model)
         glNamedBufferStorage(vbo,
             model->obj.vertexCount * sizeof(ObjVertex),
             model->obj.vertices, 0);
-              // for (int i = 0; i < model->obj.vertexCount; i += 3)
-              // {
-              // 	int v = i;
-              // 	vec2 deltaUV1 = { model->obj.vertices[v + 1].textureUV - model->obj.vertices[i].textureUV };
-              // 	vec2 deltaUV2 = { model->obj.vertices[i + 2].textureUV - model->obj.vertices[i].textureUV };
-              // 	Vec3 edge1 = { model->obj.vertices[i + 1].position - model->obj.vertices[i].position };
-              // 	Vec3 edge2 = { model->obj.vertices[i + 2].position - model->obj.vertices[i].position };
-              // 	float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-
-              // 	model->obj.vertices[i].tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-              // 	model->obj.vertices[i].tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
-              // 	model->obj.vertices[i].tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-              // 	model->obj.vertices[i + 1].tangent = vertices[i].tangent;
-              // 	model->obj.vertices[i + 2].tangent = vertices[i].tangent;
-              // }
     }
     unsigned int ebo;
     {
@@ -468,9 +453,9 @@ void Graphics::InitShaders(Memory *tempArena)
 {
     // fragment & vertex shaders for drawing triangle
     MyString vertexShaderSource = OpenAndReadEntireFile(
-        "Shaders\\normalGBuffer.vert", tempArena);
+        "Shaders\\gBuffer.vert", tempArena);
     MyString fragmentShaderSource = OpenAndReadEntireFile(
-        "Shaders\\normalGBuffer.frag", tempArena);
+        "Shaders\\gBuffer.frag", tempArena);
     CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
         m_gvshader, m_gfshader, m_gpipeline);
 
@@ -480,6 +465,12 @@ void Graphics::InitShaders(Memory *tempArena)
         "Shaders\\blin_phong.frag", tempArena);
     CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
         m_vshader, m_fshader, m_pipeline);
+    vertexShaderSource = OpenAndReadEntireFile(
+        "Shaders\\normalGbuffer.vert", tempArena);
+    fragmentShaderSource = OpenAndReadEntireFile(
+        "Shaders\\normalGBuffer.frag", tempArena);
+    CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
+        m_ngvshader, m_ngfshader, m_ngpipeline);
 }
 
 void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
@@ -496,12 +487,8 @@ void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
     // clear screen
     glBindFramebuffer(GL_FRAMEBUFFER, m_gBuffer);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glBindProgramPipeline(m_gpipeline);
     glDisable(GL_BLEND);
 
-    GLint u_matrix = 0;
-    glProgramUniformMatrix4fv(m_gvshader, u_matrix, 1, GL_TRUE,
-        m_viewProjection.AsPtr());
 
     int batchCount = 768; //TODO figure out a good value for this
     RedFoxMaths::Mat4 *mem = (RedFoxMaths::Mat4 *)MyMalloc(temp,
@@ -562,8 +549,19 @@ void Graphics::DrawModelInstances(Model *model,
                 glBindTextureUnit(diffuseMap, 0);
             if (material->hasNormal)
             {
+                GLint u_matrix = 0;
+                glProgramUniformMatrix4fv(m_ngvshader, u_matrix, 1, GL_TRUE,
+                    m_viewProjection.AsPtr());
+                glBindProgramPipeline(m_ngpipeline);
                 hasNormalMap = 1;
                 glBindTextureUnit(normalMap, material->normalMap.index0);
+            }
+            else
+            {
+                GLint u_matrix = 0;
+                glProgramUniformMatrix4fv(m_gvshader, u_matrix, 1, GL_TRUE,
+                    m_viewProjection.AsPtr());
+                glBindProgramPipeline(m_gpipeline);
             }
         }
         glNamedBufferSubData(m_booleanBuffer, 0, sizeof(int) * 1, &hasNormalMap);
