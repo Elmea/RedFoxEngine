@@ -1,8 +1,10 @@
-#version 330 core
+#version 450 core
 layout (location = 0) in vec3 aPos;
 
-uniform mat4 VP;
-uniform mat4 model;
+layout (location = 1) uniform mat4 VP;
+layout (location = 2) uniform mat4 model;
+
+out gl_PerVertex { vec4 gl_Position; };
 
 void main()
 {

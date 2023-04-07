@@ -43,7 +43,7 @@ static void APIENTRY DebugCallback(GLenum source, GLenum type, GLuint id, GLenum
         {
             Assert(!"OpenGL error - check the callstack in debugger");
         }
-        FatalError("OpenGL API usage error! Use debugger to examine call stack!");
+        //FatalError("OpenGL API usage error! Use debugger to examine call stack!");
     }
 }
 #endif

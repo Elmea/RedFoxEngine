@@ -33,7 +33,8 @@ Engine::Engine(int width, int height) :
     m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator,
         sizeof(GameObject) * 100000);
 
-    m_graphics.GetLights()->lights = (Light*)MyMalloc(&m_arenaAllocator, sizeof(Light) * 1000);
+    m_graphics.GetLightStorage()->lights = (Light*)MyMalloc(&m_arenaAllocator, sizeof(Light) * 1000);
+    m_graphics.GetLightStorage()->shadowMaps = (unsigned int*)MyMalloc(&m_arenaAllocator, sizeof(unsigned int) * 1000);
 
     //TODO transition to an instance based model 'model'
     for (int i = 0; i < (int)m_modelCount; i++)
@@ -73,8 +74,8 @@ Engine::Engine(int width, int height) :
         spot.lightInfo.cutOff = 0.5f;
         spot.lightInfo.outerCutOff = 0.1f;
 
-        m_graphics.GetLights()->AddLight(dir);
-        m_graphics.GetLights()->AddLight(spot);
+        m_graphics.GetLightStorage()->AddLight(dir);
+        m_graphics.GetLightStorage()->AddLight(spot);
     }
 
 
@@ -309,7 +310,7 @@ void Engine::Update()
 
     static f32 time;
     time += m_deltaTime * 0.1f;
-    UpdateLights(time, m_graphics.GetLights());
+    UpdateLights(time, m_graphics.GetLightStorage());
     //TODO we'll need to think how we pass the resources,
     // and gameplay structures and objects to this update function
     UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount, time);

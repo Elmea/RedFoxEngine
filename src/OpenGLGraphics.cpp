@@ -433,6 +433,7 @@ void Graphics::DrawQuad(WindowDimension dimension)
     glBindTextureUnit(0, m_gPosition);
     glBindTextureUnit(1, m_gNormal);
     glBindTextureUnit(2, m_gAlbedoSpec);
+    glBindTextures(0, 3, lightStorage.shadowMaps);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 #if 0 //TODO this might be necesary if we want to draw objectts after defered shading
     glBlitNamedFramebuffer(m_gBuffer, 0, 0, 0, dimension.width, dimension.height,
@@ -441,7 +442,7 @@ void Graphics::DrawQuad(WindowDimension dimension)
 #endif
 }
 
-LightStorage* Graphics::GetLights()
+LightStorage* Graphics::GetLightStorage()
 {
     return &lightStorage;
 }
@@ -458,6 +459,7 @@ void LightStorage::AddLight(Light newLight)
     }
 
     lights[lightCount] = newLight;
+    shadowMaps[lightCount] = lights[lightCount].lightInfo.shadowParameters.depthMap;
     lightCount++;
 }
 
@@ -487,9 +489,11 @@ void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* tem
         glViewport(0, 0, lightStorage.lights[lightIdex].lightInfo.shadowParameters.SHADOW_WIDTH, 
             lightStorage.lights[lightIdex].lightInfo.shadowParameters.SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, lightStorage.lights[lightIdex].lightInfo.shadowParameters.depthMapFBO);
+        glClearColor(0, 0, 0, 1.f);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
         {
-            GLint u_matrix = 0;
+            GLint u_matrix = 1;
             glProgramUniformMatrix4fv(m_shadowvshader, u_matrix, 1, GL_TRUE,
                 lightStorage.lights[lightIdex].lightInfo.VP.AsPtr());
 
@@ -530,7 +534,9 @@ void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* tem
             }
         }
     }
+
     glCullFace(GL_BACK);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 } // namespace RedFoxEngine

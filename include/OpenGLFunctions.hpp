@@ -54,6 +54,7 @@
     X(PFNGLBINDBUFFERBASEPROC, glBindBufferBase)                              \
     X(PFNGLBINDBUFFERRANGEPROC, glBindBufferRange)                            \
     X(PFNGLUNIFORMBLOCKBINDINGPROC, glUniformBlockBinding)                    \
+    X(PFNGLBINDTEXTURESPROC, glBindTextures)                    \
     X(PFNGLNAMEDBUFFERSUBDATAPROC, glNamedBufferSubData)
 
 // X(PFNGLPROC, gl)                  \ 
