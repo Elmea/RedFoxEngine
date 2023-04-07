@@ -2,6 +2,7 @@
 #include <windows.h>
 #include "Win32Platform.hpp"
 
+#include "Transform.hpp"
 
 #define REDFOXMATHS_IMPLEMENTATION
 #include "RedfoxMaths.hpp"
@@ -39,9 +40,18 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     */
     for (int i = 0; i < (int)gameObjectCount; i++)
     {
-//        gameObjects[i].Test();
-        //gameObjects[i].rb->userData = gameObjects[i].model;
-
+        
+     //   gameObjects[i].Test();
+//        gameObjects[i].rb.setPos
+      
+       
+        /*
+        RedFoxEngine::Transform tr;       
+        gameObjects[i].rb->setGlobalPose(PxTransform(PxVec3(0,0,0)));
+        tr.assign(gameObjects[i].rb->getGlobalPose());
+        
+        printf("%f, %f, %f\n", tr.position.x, tr.position.y, tr.position.z);
+        */
     }
 
 

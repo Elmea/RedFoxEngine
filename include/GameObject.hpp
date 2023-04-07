@@ -2,6 +2,7 @@
 #include "ObjParser.hpp"
 #include "RedfoxMaths.hpp"
 #include "Model.hpp"
+#include "Transform.hpp"
 
 #include <PhysX/PxConfig.h>
 #include <PhysX/PxPhysicsAPI.h>
@@ -16,6 +17,7 @@ namespace RedFoxEngine
         char* name;
         GameObject* parent;
         Model *model;
+
         RedFoxMaths::Float3 position;
         RedFoxMaths::Float3 scale;
         RedFoxMaths::Quaternion orientation;

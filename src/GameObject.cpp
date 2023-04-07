@@ -44,6 +44,6 @@ namespace RedFoxEngine
 
         void GameObject::Test()
         {
-            rb->userData = model;
+            printf("Test");
         }
 }

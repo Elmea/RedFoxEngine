@@ -220,6 +220,7 @@
     <ClCompile Include="..\src\ObjParser.cpp" />
     <ClCompile Include="..\src\OpenGLGraphics.cpp" />
     <ClCompile Include="..\src\Physics.cpp" />
+    <ClCompile Include="..\src\Transform.cpp" />
     <ClCompile Include="..\src\UI.cpp" />
     <ClCompile Include="..\src\Win32Platform.cpp" />
   </ItemGroup>
@@ -245,6 +246,7 @@
     <ClInclude Include="..\include\OpenGLFunctions.hpp" />
     <ClInclude Include="..\include\OpenGLGraphics.hpp" />
     <ClInclude Include="..\include\RedFoxMaths\RedfoxMaths.hpp" />
+    <ClInclude Include="..\include\Transform.hpp" />
     <ClInclude Include="..\include\Win32Platform.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
