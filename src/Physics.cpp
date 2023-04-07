@@ -32,3 +32,13 @@ void Engine::InitPhysX()
 	PxRigidStatic* groundPlane = PxCreatePlane(*gPhysics, PxPlane(0, 1, 0, 0), *gMaterial);
 	gScene->addActor(*groundPlane);
 }
+
+bool Engine::UpdatePhysX(PxReal dt)
+{
+	m_Accumulator += dt;
+	if (m_Accumulator < m_StepSize)
+		return false;
+	m_Accumulator -= m_StepSize;
+	gScene->simulate(m_StepSize);
+	return true;
+}

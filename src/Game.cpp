@@ -37,4 +37,13 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
 
     }
     */
+    for (int i = 0; i < (int)gameObjectCount; i++)
+    {
+//        gameObjects[i].Test();
+        //gameObjects[i].rb->userData = gameObjects[i].model;
+
+    }
+
+
+
 }

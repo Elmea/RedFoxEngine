@@ -63,6 +63,8 @@ private:
     physx::PxScene* gScene = nullptr;
     physx::PxMaterial* gMaterial = nullptr;
     physx::PxPvd* gPvd = NULL;
+    float m_StepSize = 1.0f / 60.0f;
+    float m_Accumulator = 0;
 
 private:
     void InitPhysX();
@@ -80,6 +82,7 @@ private:
     void SaveScene(const char *fileName);
     void UpdateLights(float time);
     void initSphericalManyGameObjects(int count); //TODO: remove
+    bool UpdatePhysX(PxReal dt); 
 public:
     Engine(int width, int height);
     ~Engine();
@@ -88,4 +91,5 @@ public:
     void Draw();
     bool isRunning();
 };
+
 } // namespace RedFoxEngine
