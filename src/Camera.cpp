@@ -12,7 +12,7 @@ Camera::Camera(projectionType projection, float aspect)
     m_parameters.top = 10;
     m_parameters.left = -10;
     m_parameters.right = 10;
-    m_parameters._near = 0.1f;
+    m_parameters._near = 1.f;
     m_parameters._far = 1000;
     m_parameters.aspect = aspect;
     SetProjection(projection);

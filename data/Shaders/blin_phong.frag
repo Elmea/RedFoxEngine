@@ -5,11 +5,9 @@ in vec2 TexCoord;
 layout (binding=0)            // (from ARB_shading_language_420pack)
 uniform sampler2D gPosition;  // texture unit binding 0
 layout (binding=1)
-uniform sampler2D gNormal;    // texture unit binding 1
+uniform sampler2D gNormal;
 layout (binding=2)
-uniform sampler2D gAlbedo;    // texture unit binding 2
-layout (binding=3)
-uniform sampler2D gTangent;
+uniform sampler2D gAlbedo;
 
 layout (location=0)
 out vec4 o_color;  // output fragment data location 0
@@ -69,6 +67,7 @@ layout(std430, binding = 2) buffer SpotLightBlock {
     SpotLight  spotLight[];
 } u_spotLightBlock;
 
+
 const float shininessFloat = 32;
 const float specularFloat = 32;
 
@@ -76,16 +75,28 @@ void main()
 {
     vec3 FragPosition = texture(gPosition, TexCoord).xyz;
     vec3 Normal       = texture(gNormal, TexCoord).xyz;
-    vec3 Tangent      = texture(gTangent, TexCoord).xyz;
-    vec3 BiTangent    = cross(Normal, Tangent);
-
-    mat3 TBN = transpose(mat3(Tangent, BiTangent, Normal));
-
+    float isNormalMapped = texture(gNormal, TexCoord).w;
+    
+    mat3 TBN = mat3(1.0f);
+    if (isNormalMapped != 0)
+    {
+        Normal = normalize(Normal * 2.0 - 1.0);
+        vec3 q1 = dFdx(vec3(gl_FragCoord.xy, 0.0));
+        vec3 q2 = dFdy(vec3(gl_FragCoord.xy, 0.0));
+        vec3 T = normalize(q1 * q2.y - q2 * q1.y);
+        vec3 B = normalize(cross(Normal, T));
+        TBN = transpose(mat3(T, B, Normal));
+        FragPosition = TBN * FragPosition;
+    }
     vec3 result = vec3(0, 0, 0);
     for (int i = 0; i < u_dirLightBlock.dirLight.length(); i++)
         result += CalcDirLight(u_dirLightBlock.dirLight[i], Normal, vec3(0, 0, 0));
     for (int i = 0; i < u_pointLightBlock.pointLight.length(); i++)
-        result += CalcPointLight(u_pointLightBlock.pointLight[i], Normal, FragPosition, vec3(0, 0, 0));
+    {
+        PointLight light = u_pointLightBlock.pointLight[i];
+        light.position = TBN * light.position;
+        result += CalcPointLight(light, Normal, FragPosition, vec3(0, 0, 0));
+    }
     for (int i = 0; i < u_spotLightBlock.spotLight.length(); i++)
         result += CalcSpotLight(u_spotLightBlock.spotLight[i], Normal, FragPosition, vec3(0, 0, 0));
     o_color = vec4(result, 1);

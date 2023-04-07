@@ -24,7 +24,7 @@ private:
     GLuint m_rboIMGUI;
     GLuint m_quadVAO;
     GLuint m_gBuffer;
-    GLuint m_booleanBuffer;
+    // GLuint m_booleanBuffer;
     GLuint m_imguiFramebuffer;
     u32    m_spotLightCount;
     GLuint m_spotLightBuffer;
@@ -32,7 +32,7 @@ private:
     GLuint m_dirLightBuffer;
     u32    m_pointLightCount;
     GLuint m_pointLightBuffer;
-    GLuint m_gPosition, m_gNormal, m_gAlbedoSpec, m_gTangent;
+    GLuint m_gPosition, m_gNormal, m_gAlbedoSpec;
 public:
     Model *m_models = nullptr;
     u32    m_modelCount;
@@ -45,7 +45,6 @@ public:
         int instanceCount);
     void InitQuad();
     void InitModel(Model *model);
-    void InitNormalMappedModel(Model *model, Memory *temp);
     void InitLights();
     void BindLights();
     DirLight *GetDirLightBuffer(int *lightCount);

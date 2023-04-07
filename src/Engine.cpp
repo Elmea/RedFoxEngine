@@ -40,14 +40,9 @@ Engine::Engine(int width, int height) :
 
     //TODO transition to an instance based model 'model'
     for (int i = 0; i < (int)m_modelCount; i++)
-    {
-        if (m_models[i].obj.materials.material->hasNormal)
-            m_graphics.InitNormalMappedModel(&m_models[i], &m_tempAllocator);
-        else
-            m_graphics.InitModel(&m_models[i]);
-    }
+        m_graphics.InitModel(&m_models[i]);
     m_sceneUsedMemory = m_arenaAllocator.usedSize;
-#if 1
+#if 0
     LoadScene("Sample Scene.scene");
 #else
     initSphericalManyGameObjects(30);
