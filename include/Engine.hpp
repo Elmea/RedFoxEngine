@@ -14,6 +14,9 @@
 #include "imgui_impl_win32.h"
 #include <ImGuizmo.h>
 
+#include <PhysX/PxConfig.h>
+#include <PhysX/PxPhysicsAPI.h>
+
 #include "ObjParser.hpp"
 #include "OpenGLGraphics.hpp"
 #include "GameObject.hpp"
@@ -51,7 +54,18 @@ private:
 
     RedFoxMaths::Float3 m_editorCameraSpeed;
     bool m_editorCameraEnabled;
+
+    physx::PxDefaultAllocator gAllocator;
+    physx::PxDefaultErrorCallback gErrorCallback;
+    physx::PxFoundation* gFoundation = nullptr;
+    physx::PxPhysics* gPhysics = nullptr;
+    physx::PxDefaultCpuDispatcher* gDispatcher = nullptr;
+    physx::PxScene* gScene = nullptr;
+    physx::PxMaterial* gMaterial = nullptr;
+    physx::PxPvd* gPvd = NULL;
+
 private:
+    void InitPhysX();
     void DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight);
     int DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
     void DrawSceneNodes(bool is_child, GameObject* model);

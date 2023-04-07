@@ -21,6 +21,7 @@ Engine::Engine(int width, int height) :
     IncreaseTotalCapacity(&m_arenaAllocator, 1 * MegaByte);
     m_graphics.InitGraphics(&m_tempAllocator, m_platform.m_windowDimension);
     InitIMGUI();
+    InitPhysX();
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
 
     m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 100);
