@@ -19,10 +19,25 @@ void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
     }
     InitImGUIFramebuffer(dimension);
     InitGeometryFramebuffer(dimension);
-    // glCreateBuffers(1, &m_booleanBuffer);
-    // glNamedBufferStorage(m_booleanBuffer, sizeof(int), nullptr,
-    //     GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
-    // set to FALSE to disable vsync
+    {
+        glCreateBuffers(1, &m_matrixSSBO);
+        glNamedBufferStorage(m_matrixSSBO,
+            10000 * sizeof(RedFoxMaths::Mat4),
+            nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
+        glCreateBuffers(1, &m_textureSSBO);
+
+        glCreateBuffers(1, &m_materialSSBO);
+        glNamedBufferStorage(m_materialSSBO,
+            100 * sizeof(ObjMaterial),
+            nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
+    }
+    glCreateSamplers(1, &m_textureSampler);
+    glSamplerParameteri(m_textureSampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glSamplerParameteri(m_textureSampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glSamplerParameteri(m_textureSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(m_textureSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glNamedBufferStorage(m_textureSSBO, 10000 * sizeof(u64), nullptr, GL_DYNAMIC_STORAGE_BIT);
     wglSwapIntervalEXT(0);
 }
 
@@ -156,12 +171,10 @@ void Graphics::InitQuad()
 void Graphics::InitModel(Model *model)
 {
     // vertex buffer containing triangle vertices
-
     unsigned int vbo;
     {
         glCreateBuffers(1, &vbo);
-        glNamedBufferStorage(vbo,
-            model->obj.vertexCount * sizeof(ObjVertex),
+        glNamedBufferStorage(vbo, model->obj.vertexCount * (sizeof(ObjVertex)),
             model->obj.vertices, 0);
     }
     unsigned int ebo;
@@ -170,14 +183,6 @@ void Graphics::InitModel(Model *model)
         glNamedBufferStorage(ebo, model->obj.indexCount * sizeof(u32),
             model->obj.indices, 0);
     }
-    {
-        const int bufferBatchSize = 768; //TODO: test this number on different
-                                         // GPUs   
-        glCreateBuffers(1, &model->vbm);
-        glNamedBufferStorage(model->vbm,
-            bufferBatchSize * sizeof(RedFoxMaths::Mat4),
-            nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
-    }
     // vertex input
     {
         glCreateVertexArrays(1, &model->vao);
@@ -185,10 +190,6 @@ void Graphics::InitModel(Model *model)
         int vbuf_index = 0;
         glVertexArrayVertexBuffer(model->vao, vbuf_index, vbo, 0,
             sizeof(ObjVertex));
-
-        int vbuf_matrix = 3;
-        glVertexArrayVertexBuffer(model->vao, vbuf_matrix, model->vbm, 0,
-            sizeof(RedFoxMaths::Mat4));
 
         glVertexArrayElementBuffer(model->vao, ebo);
 
@@ -209,34 +210,13 @@ void Graphics::InitModel(Model *model)
         glVertexArrayAttribFormat (model->vao, a_uv, 2, GL_FLOAT, GL_FALSE,
             offsetof(struct ObjVertex, textureUV));
         glVertexArrayAttribBinding(model->vao, a_uv, vbuf_index);
-
-        int a_matrix = 3;
-        // This is the matrix we're going to use for instanced models
-        glEnableVertexArrayAttrib (model->vao, a_matrix);
-        glVertexArrayAttribFormat (model->vao, a_matrix, 4, GL_FLOAT, GL_FALSE, 0);
-        glVertexArrayAttribBinding(model->vao, a_matrix, vbuf_matrix);
-
-        glEnableVertexArrayAttrib (model->vao, 4);
-        glVertexArrayAttribFormat (model->vao, 4, 4, GL_FLOAT, GL_FALSE,
-            (sizeof(float) * 4));
-        glVertexArrayAttribBinding(model->vao, 4, vbuf_matrix);
-
-        glEnableVertexArrayAttrib (model->vao, 5);
-        glVertexArrayAttribFormat (model->vao, 5, 4, GL_FLOAT, GL_FALSE,
-            (2 * sizeof(float) * 4));
-        glVertexArrayAttribBinding(model->vao, 5, vbuf_matrix);
-
-        glEnableVertexArrayAttrib (model->vao, 6);
-        glVertexArrayAttribFormat (model->vao, 6, 4, GL_FLOAT, GL_FALSE,
-            (3 * sizeof(float) * 4));
-        glVertexArrayAttribBinding(model->vao, 6, vbuf_matrix);
-
-        glVertexArrayBindingDivisor(model->vao, 3, 1);
-        glVertexArrayBindingDivisor(model->vao, 4, 1);
-        glVertexArrayBindingDivisor(model->vao, 5, 1);
-        glVertexArrayBindingDivisor(model->vao, 6, 1);
+        int a_textureID = 3;
+        glEnableVertexArrayAttrib (model->vao, a_textureID);
+        glVertexArrayAttribIFormat (model->vao, a_textureID, 1, GL_UNSIGNED_INT,
+            offsetof(struct ObjVertex, materialID));
+        glVertexArrayAttribBinding(model->vao, a_textureID, vbuf_index);
     }
-    InitTexture(&model->obj);
+    InitModelTextures(&model->obj);
     DeInitGraphicsObj(&model->obj);
 }
 
@@ -244,38 +224,32 @@ u32 Graphics::InitTexture(void *data,int height, int width)
 {
     GLuint texture;
     glCreateTextures(GL_TEXTURE_2D, 1, &texture);
-
-    glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER,
-        GL_LINEAR_MIPMAP_LINEAR);
-    glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
+    // m_textures.textures[i] = i;
     glTextureStorage2D(texture, 1, GL_RGBA8, width, height);
     glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RGBA,
          GL_UNSIGNED_BYTE, data);
+    GLuint64 textureHandle = glGetTextureSamplerHandleARB(texture, m_textureSampler);
+    glMakeTextureHandleResidentARB(textureHandle);
     return (texture);
 }
 
-void Graphics::InitTexture(ObjModel *model)
+void Graphics::InitModelTextures(ObjModel *model)
 {
-    GLuint texture[128];
-
     // TODO(V. Caraulan): Wrap in waiting for thread function
     WaitForSingleObject(model->images.thread, INFINITE);
+
+    for (int i = 0; i < (int)model->materials.count; i++)
+    {
+        model->materials.material[i].diffuseMap.index0 += m_textures.textureCount;
+        model->materials.material[i].normalMap.index0 += m_textures.textureCount;
+    }
     for (int i = 0; i < (int)model->images.count; i++)
     {
         if (model->images.data[i].height && model->images.data[i].width)
-            texture[i] = InitTexture(model->images.data[i].data,
-        model->images.data[i].height, model->images.data[i].width);
-    }
-    
-    for (int i = 0; i < (int)model->materials.count; i++)
-    {
-        int tempDiffuse = (int)model->materials.material[i].diffuseMap.index0;
-        int tempNormal = (int)model->materials.material[i].normalMap.index0;
-        model->materials.material[i].normalMap.index0 = texture[tempNormal];
-        model->materials.material[i].diffuseMap.index0 = texture[tempDiffuse];
+        {
+            m_textures.textures[m_textures.textureCount++] = InitTexture(model->images.data[i].data,
+                model->images.data[i].height, model->images.data[i].width);
+        }
     }
 }
 
@@ -329,13 +303,6 @@ void Graphics::InitShaders(Memory *tempArena)
     CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
         m_vshader, m_fshader, m_pipeline);
     tempArena->usedSize = tempSize;
-    vertexShaderSource = OpenAndReadEntireFile(
-        "Shaders\\normalGbuffer.vert", tempArena);
-    fragmentShaderSource = OpenAndReadEntireFile(
-        "Shaders\\normalGBuffer.frag", tempArena);
-    CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
-        m_ngvshader, m_ngfshader, m_ngpipeline);
-    tempArena->usedSize = tempSize;
 }
 
 void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
@@ -347,14 +314,14 @@ void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
     Memory *temp)
 {
     //NOTE: here we clear the 0 framebuffer
-    glClearColor(1, 1, 1, 1.f);
+    glClearColor(0, 0, 0, 0.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // clear screen
     glBindFramebuffer(GL_FRAMEBUFFER, m_gBuffer);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDisable(GL_BLEND);
 
-    int batchCount = 768; //TODO figure out a good value for this
+    int batchCount = 10000;
     RedFoxMaths::Mat4 *mem = (RedFoxMaths::Mat4 *)MyMalloc(temp,
         sizeof(RedFoxMaths::Mat4) * batchCount * (m_modelCount + 1));
     u64 *modelCountIndex = (u64 *)MyMalloc(temp,
@@ -369,15 +336,12 @@ void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
             mem[countIndex + (batchCount * modelIndex)] =
                 objects[index].GetWorldMatrix().GetTransposedMatrix();
             modelCountIndex[modelIndex]++;
-            countIndex = modelCountIndex[modelIndex];
-            if (countIndex == (u64)batchCount)
-            {
-                DrawModelInstances(&m_models[modelIndex],
-                    &mem[batchCount * modelIndex], countIndex);
-                modelCountIndex[modelIndex] = 0;
-            }
         }
     }
+    GLint u_matrix = 0;
+    glProgramUniformMatrix4fv(m_gvshader, u_matrix, 1, GL_TRUE,
+        m_viewProjection.AsPtr());
+
     for (int i = 0; i < (int)m_modelCount; i++)
     {
         if (modelCountIndex[i])
@@ -386,49 +350,59 @@ void Graphics::DrawGBuffer(GameObject *objects, int gameObjectCount,
     }
 }
 
+struct Material
+{
+    vec3 ambient;
+    float Opaqueness;
+
+    vec3 diffuse;
+    float Shininess;
+
+    vec3 specular;
+    int diffuseMap;
+
+    vec3 emissive;
+    int normalMap;
+};
+
 void Graphics::DrawModelInstances(Model *model,
     RedFoxMaths::Mat4 *modelMatrices, int instanceCount)
 {
     // provide vertex input
-    glBindVertexArray(model->vao);
-    glNamedBufferSubData(model->vbm,	0,
-        sizeof(RedFoxMaths::Mat4) * instanceCount, modelMatrices);
+    GLuint64 textureHandles[128];
+    for (int i = 0; i < (int)m_textures.textureCount; i++)
+        textureHandles[i] = glGetTextureSamplerHandleARB(m_textures.textures[i], m_textureSampler);
+    glNamedBufferSubData(m_matrixSSBO,	0, sizeof(RedFoxMaths::Mat4) * instanceCount, modelMatrices);
+    glNamedBufferSubData(m_textureSSBO,	0, sizeof(u64) * (m_textures.textureCount), textureHandles);
+    Material materials[100] = {};
 
-    GLint diffuseMap = 0;
-    glBindTextureUnit(diffuseMap, 0);
-    GLint normalMap = 1;
-    glBindTextureUnit(normalMap, 0);
-
-    for (int i = 0; i < (int)model->obj.meshCount; i++)
+    for (int i = 0; i < (int)model->obj.materials.count; i++)
     {
-        ObjMesh *mesh = &model->obj.meshes[i];
-        ObjMaterial *material = &model->obj.materials.material[mesh->materialIndex];
-        //TODO: make sure all objs have a default material.
-        if (material)
-        {
-            if (material->hasTexture)
-                glBindTextureUnit(diffuseMap, material->diffuseMap.index0);
-            else
-                glBindTextureUnit(diffuseMap, 0);
-            if (material->hasNormal)
-            {
-                GLint u_matrix = 0;
-                glProgramUniformMatrix4fv(m_ngvshader, u_matrix, 1, GL_TRUE,
-                    m_viewProjection.AsPtr());
-                glBindProgramPipeline(m_ngpipeline);
-                glBindTextureUnit(normalMap, material->normalMap.index0);
-            }
-            else
-            {
-                GLint u_matrix = 0;
-                glProgramUniformMatrix4fv(m_gvshader, u_matrix, 1, GL_TRUE,
-                    m_viewProjection.AsPtr());
-                glBindProgramPipeline(m_gpipeline);
-            }
-        }
-        glDrawElementsInstanced(GL_TRIANGLES, mesh->indexCount ,GL_UNSIGNED_INT,
-            (void *)((mesh->indexStart) * sizeof(u32)), instanceCount);
+        materials[i].ambient    = model->obj.materials.material[i].ambient;
+        materials[i].Opaqueness = model->obj.materials.material[i].Opaqueness;
+        materials[i].diffuse    = model->obj.materials.material[i].diffuse;
+        materials[i].Shininess  = model->obj.materials.material[i].Shininess;
+        materials[i].specular   = model->obj.materials.material[i].specular;
+        materials[i].emissive   = model->obj.materials.material[i].emissive;
+        if (model->obj.materials.material[i].hasTexture == 0)
+            materials[i].diffuseMap = -1;
+        else
+            materials[i].diffuseMap = model->obj.materials.material[i].diffuseMap.index0;
+        if (model->obj.materials.material[i].hasNormal == 0)
+            materials[i].normalMap = -1;
+        else
+            materials[i].normalMap = model->obj.materials.material[i].normalMap.index0;
     }
+    glNamedBufferSubData(m_materialSSBO,	0, sizeof(ObjMaterial) * model->obj.materials.count, materials);
+    glBindProgramPipeline(m_gpipeline);
+    glBindVertexArray(model->vao);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_matrixSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_textureSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_materialSSBO);
+
+    glDrawElementsInstanced(GL_TRIANGLES, model->obj.indexCount,
+        GL_UNSIGNED_INT, 0, instanceCount);
 }
 
 void Graphics::DrawQuad(WindowDimension dimension)

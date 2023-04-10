@@ -15,15 +15,15 @@ void Graphics::InitLights()
     // the game or engine editor will add them in the scene.
     m_dirLightCount = 1;
     m_spotLightCount = 0;
-    glCreateBuffers(1, &m_pointLightBuffer);
-    glNamedBufferStorage(m_pointLightBuffer, m_pointLightCount * sizeof(PointLight), nullptr,
+    glCreateBuffers(1, &m_pointLightSSBO);
+    glNamedBufferStorage(m_pointLightSSBO, m_pointLightCount * sizeof(PointLight), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
-    glCreateBuffers(1, &m_dirLightBuffer);
-    glNamedBufferStorage(m_dirLightBuffer, m_pointLightCount * sizeof(DirLight), nullptr,
+    glCreateBuffers(1, &m_dirLightSSBO);
+    glNamedBufferStorage(m_dirLightSSBO, m_pointLightCount * sizeof(DirLight), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
 
-    glCreateBuffers(1, &m_spotLightBuffer);
-    glNamedBufferStorage(m_spotLightBuffer, m_pointLightCount * sizeof(SpotLight), nullptr,
+    glCreateBuffers(1, &m_spotLightSSBO);
+    glNamedBufferStorage(m_spotLightSSBO, m_pointLightCount * sizeof(SpotLight), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
 }
 
@@ -74,9 +74,8 @@ DirLight *Graphics::GetDirLightBuffer(int *lightCount)
     else
         return (nullptr);
     GLbitfield mapFlags = (GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-    return((DirLight *)glMapNamedBufferRange(m_dirLightBuffer, 0,
+    return((DirLight *)glMapNamedBufferRange(m_dirLightSSBO, 0,
         m_dirLightCount * sizeof(DirLight), mapFlags));
-
 }
 
 void Graphics::BindLights()
@@ -84,33 +83,33 @@ void Graphics::BindLights()
     if (m_pointLightCount)
     {
         GLuint bindingPoint = 0;
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_pointLightBuffer, 0, m_pointLightCount);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_pointLightBuffer);
+        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_pointLightSSBO, 0, m_pointLightCount);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_pointLightSSBO);
     }
     if (m_dirLightCount)
     {
         GLuint bindingDir = 1;
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingDir, m_dirLightBuffer, 0, m_dirLightCount);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingDir, m_dirLightBuffer);
+        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingDir, m_dirLightSSBO, 0, m_dirLightCount);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingDir, m_dirLightSSBO);
     }
     if (m_spotLightCount)
     {
         GLuint bindingSpot = 2;
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingSpot, m_spotLightBuffer, 0, m_spotLightCount);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingSpot, m_spotLightBuffer);
+        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingSpot, m_spotLightSSBO, 0, m_spotLightCount);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingSpot, m_spotLightSSBO);
     }
 }
 
 void Graphics::ReleaseDirLightBuffer()
 {
-    glUnmapNamedBuffer(m_dirLightBuffer);
+    glUnmapNamedBuffer(m_dirLightSSBO);
     glFlush();
 }
 
 void Graphics::SetPointLightBuffer(PointLight* pointLight, int lightCount)
 {
     if (lightCount)
-        glNamedBufferSubData(m_pointLightBuffer, 0, lightCount * sizeof(PointLight), pointLight);
+        glNamedBufferSubData(m_pointLightSSBO, 0, lightCount * sizeof(PointLight), pointLight);
 }
 
 PointLight *Graphics::GetPointLightBuffer(int *lightCount)
@@ -120,13 +119,13 @@ PointLight *Graphics::GetPointLightBuffer(int *lightCount)
     else
         return (nullptr);
     GLbitfield mapFlags = (GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-    return((PointLight *)glMapNamedBufferRange(m_pointLightBuffer, 0,
+    return((PointLight *)glMapNamedBufferRange(m_pointLightSSBO, 0,
         m_pointLightCount * sizeof(PointLight), mapFlags));
 }
 
 void Graphics::ReleasePointLightBuffer()
 {
-    glUnmapNamedBuffer(m_pointLightBuffer);
+    glUnmapNamedBuffer(m_pointLightSSBO);
     glFlush();
 }
 }

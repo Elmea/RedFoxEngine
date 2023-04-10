@@ -33,11 +33,9 @@ typedef struct ObjMaterial
     vec3 emissive;
     f32 Shininess;
     f32 Opaqueness;
-
     u8 hasTexture : 1;
     u8 hasNormal : 1;
     u8 hasSpecular : 1;
-
     ObjTexture diffuseMap;
     ObjTexture normalMap;
     MyString name;
@@ -61,6 +59,7 @@ typedef struct ObjVertex
     vec3 position;
     vec3 normal;
     vec2 textureUV;
+    u32  materialID;
 } ObjVertex;
 
 typedef struct ObjVertexIndex

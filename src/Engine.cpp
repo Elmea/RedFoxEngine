@@ -32,6 +32,7 @@ Engine::Engine(int width, int height) :
     m_modelCount++;
     ObjModelPush("ts_bot912.obj");
     ObjModelPush("vortigaunt.obj");
+    ObjModelPush("barbarian.obj");
 
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
@@ -45,7 +46,7 @@ Engine::Engine(int width, int height) :
 #if 0
     LoadScene("Sample Scene.scene");
 #else
-    initSphericalManyGameObjects(30);
+    initSphericalManyGameObjects(5000);
     m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);
 #endif
     m_input = {};
@@ -195,7 +196,7 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
         m_gameObjects[i].parent = nullptr;
         m_gameObjects[i].model = &m_models[i % m_modelCount];
         m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 1;
-        if(i % m_modelCount == 0)
+        if(i % m_modelCount == 3)
         {
             m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 0.2;
         }
@@ -209,7 +210,6 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     }
     //TODO transition to an instance based model 'model'
 
-    m_gameObjects[1].parent = &m_gameObjects[0];
     m_gameObjects[1].position = {};
     m_gameObjects[1].scale = {0.5, 0.5, 0.5};
     m_gameObjects[2].position = {2, 1, 0};
@@ -282,7 +282,7 @@ void Engine::Update()
     UpdateEditorCamera();
 
     static f32 time;
-    time += m_deltaTime * 0.1f;
+    time += m_deltaTime;
     UpdateLights(time);
     //TODO we'll need to think how we pass the resources,
     // and gameplay structures and objects to this update function

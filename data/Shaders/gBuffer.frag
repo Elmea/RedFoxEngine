@@ -1,24 +1,63 @@
 #version 450 core
+#extension GL_ARB_bindless_texture : enable
 
-layout (binding=0)             // (from ARB_shading_language_420pack)
-uniform sampler2D diffuseMap;  // texture unit binding 0
+layout(std430, binding=1) buffer Texture
+{
+    readonly uvec2 data[];
+} sb_Texture;
+
+struct Material
+{
+    vec3 ambient;
+    float Opaqueness;
+        
+    vec3 diffuse;
+    float Shininess;
+        
+    vec3 specular;
+    int diffuseMap;
+
+    vec3 emissive;
+    int normalMap;
+};
+
+layout(std430, binding=3) buffer Materials
+{
+    readonly Material material[];
+} mat;
 
 in FS_IN
 {
     vec3 Position;
     vec3 Normal;
     vec2 TexCoords;
+    flat unsigned int materialID;
 } fs_in;
 
 layout (location = 0) out vec3 gPosition;
-layout (location = 1) out vec3 gNormal;
+layout (location = 1) out vec4 gNormal;
 layout (location = 2) out vec3 gAlbedoSpec;
 
 void main()
 {
     gPosition = fs_in.Position;
-    gNormal = normalize(fs_in.Normal);
-    gAlbedoSpec = texture(diffuseMap, fs_in.TexCoords).xyz;
-    if (gAlbedoSpec == vec3(0, 0, 0)) //TODO handle materials
-        gAlbedoSpec = vec3(1, 1, 1);
+
+    if (mat.material[fs_in.materialID].diffuseMap == -1)
+        gAlbedoSpec = mat.material[fs_in.materialID].diffuse;
+    else
+    {
+        sampler2D diffuse = sampler2D(sb_Texture.data[mat.material[fs_in.materialID].diffuseMap]);
+        gAlbedoSpec = texture(diffuse, fs_in.TexCoords).xyz;
+    }
+    if (mat.material[fs_in.materialID].normalMap == -1)
+    {
+        gNormal.xyz = normalize(fs_in.Normal);
+        gNormal.w = 0;
+    }
+    else
+    {
+        sampler2D normal = sampler2D(sb_Texture.data[mat.material[fs_in.materialID].normalMap]);
+        gNormal.xyz = texture(normal, fs_in.TexCoords).xyz * fs_in.Normal;
+        gNormal.w = 1;
+    }
 }

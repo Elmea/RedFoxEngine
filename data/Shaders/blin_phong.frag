@@ -56,17 +56,16 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 vec3 CalcSpotLight (SpotLight  light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
 layout(std430, binding = 0) buffer PointLightBlock {
-    PointLight pointLight[];
+    readonly PointLight pointLight[];
 } u_pointLightBlock;
 
 layout(std430, binding = 1) buffer DirLightBlock {
-    DirLight   dirLight[];
+    readonly DirLight   dirLight[];
 } u_dirLightBlock;
 
 layout(std430, binding = 2) buffer SpotLightBlock {
-    SpotLight  spotLight[];
+    readonly SpotLight  spotLight[];
 } u_spotLightBlock;
-
 
 const float shininessFloat = 32;
 const float specularFloat = 32;
@@ -98,7 +97,11 @@ void main()
         result += CalcPointLight(light, Normal, FragPosition, vec3(0, 0, 0));
     }
     for (int i = 0; i < u_spotLightBlock.spotLight.length(); i++)
-        result += CalcSpotLight(u_spotLightBlock.spotLight[i], Normal, FragPosition, vec3(0, 0, 0));
+    {
+        SpotLight light = u_spotLightBlock.spotLight[i];
+        light.position = TBN * light.position;
+        result += CalcSpotLight(light, Normal, FragPosition, vec3(0, 0, 0));
+    }
     o_color = vec4(result, 1);
 }
 

@@ -564,7 +564,6 @@ void Engine::DrawIMGUI()
             ImGuiTreeNodeFlags_OpenOnArrow | 
             ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
-#if 0 // DEBUG: Camera properties
         if (ImGui::CollapsingHeader("Camera", propertiesFlags))
         {
             ImGuiTableFlags tableFlags =
@@ -608,7 +607,12 @@ void Engine::DrawIMGUI()
                     rotation.y *= DEG2RAD;
                     rotation.z *= DEG2RAD;
                     //TODO: still pretty janky
-                    m_editorCamera.orientation = RedFoxMaths::Quaternion::SLerp(m_editorCamera.orientation, RedFoxMaths::Quaternion::FromEuler(rotation * 2), 1);
+                    {
+                        using namespace RedFoxMaths;
+                        m_editorCamera.orientation = 
+                            Quaternion::SLerp(m_editorCamera.orientation, 
+                                Quaternion::FromEuler(rotation * 2), 1);
+                    }
                     m_editorCamera.orientation.Normalize();
                     rotation.x *= RAD2DEG;
                     rotation.y *= RAD2DEG;
@@ -617,7 +621,6 @@ void Engine::DrawIMGUI()
                 ImGui::EndTable();
             }
         }
-#endif
 
         if (m_selectedObject != nullptr)
         {
@@ -664,7 +667,12 @@ void Engine::DrawIMGUI()
                         rotation.x *= DEG2RAD;
                         rotation.y *= DEG2RAD;
                         rotation.z *= DEG2RAD;
-                        m_selectedObject->orientation = RedFoxMaths::Quaternion::SLerp(m_selectedObject->orientation, RedFoxMaths::Quaternion::FromEuler(rotation), 0.5);
+                        {
+                        using namespace RedFoxMaths;
+                        m_selectedObject->orientation =
+                                 Quaternion::SLerp(m_selectedObject->orientation,
+                            Quaternion::FromEuler(rotation), 0.5);
+                        }
                         m_selectedObject->orientation.Normalize();
                         rotation.x *= RAD2DEG;
                         rotation.y *= RAD2DEG;
