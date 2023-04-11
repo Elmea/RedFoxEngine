@@ -40,9 +40,19 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     */
     for (int i = 0; i < (int)gameObjectCount; i++)
     {
+        RedFoxEngine::Transform tr;
+        tr.position = RedFoxMaths::Float3(0, 0, 0);
+        tr.scale = RedFoxMaths::Float3(1, 1, 1);
+        tr.orientation = RedFoxMaths::Quaternion();
+
         
-        gameObjects[i].Test();
-//        gameObjects[i].rb.setPos
+        /*
+        PxShape* shape = physics.create;
+
+        gameObjects[i].rb->attachShape(PxShape)
+
+        gameObjects[i].rb = new PxRigidBody(tr.toPxTransform());
+       // gameObjects[i].rb->setGlobalPose(tr.toPxTransform());
       
        
         /*

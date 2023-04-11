@@ -17,10 +17,6 @@ namespace RedFoxEngine
         RedFoxMaths::Float3 scale;
         RedFoxMaths::Quaternion orientation;
 
-
-
-        Transform operator=(const Transform& pOther);
-        Transform operator=(const PxTransform& pOther);
 		
         PxTransform toPxTransform();
 

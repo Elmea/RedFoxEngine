@@ -41,18 +41,4 @@ namespace RedFoxEngine
             }
             return (count);
         }
-
-        void GameObject::Test()
-        {
-            RedFoxEngine::Transform tr;
-
-            tr.orientation = RedFoxMaths::Quaternion();
-            tr.position = RedFoxMaths::Float3(0, 0, 0);
-            tr.scale = RedFoxMaths::Float3(0, 0, 0);
-
-
-           
-            PxTransform test = tr.toPxTransform();
-
-        }
 }
