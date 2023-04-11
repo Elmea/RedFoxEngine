@@ -10,7 +10,7 @@ layout (binding=2)
 uniform sampler2D gAlbedo;    // texture unit binding 2
 
 layout (binding=3)
-uniform sampler2DArray shadowMaps;
+uniform sampler2D shadowMap;
 
 layout (location=0)
 out vec4 o_color;  // output fragment data location 0
@@ -94,6 +94,8 @@ void main()
 
 float ShadowCalculation(Light light, int ShadowIndex)
 {
+    return 0;
+
     // Adapted code from a previous project
     vec3 FragPosition = texture(gPosition, TexCoord).xyz;
     vec3 Normal       = texture(gNormal, TexCoord).xyz;
@@ -105,19 +107,19 @@ float ShadowCalculation(Light light, int ShadowIndex)
     projCoords = projCoords * 0.5 + 0.5;
 
     // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
-    float closestDepth = texture(shadowMaps, vec3(TexCoord, ShadowIndex)).r;
+    float closestDepth = texture(shadowMap, projCoords.xy).r; 
     // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
     // check whether current frag pos is in shadow
     float bias = -max(0.00025 * (1.0 - dot(Normal, vec3(fragPosLightSpace))), 0.000025);  
 
     float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(shadowMaps, 0).xy;
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
     for(int x = -1; x <= 1; ++x)
     {
         for(int y = -1; y <= 1; ++y)
         {
-            float pcfDepth = texture(shadowMaps, vec3(projCoords.xy + vec2(x, y) * texelSize, ShadowIndex)).r; 
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
             shadow += currentDepth + bias > pcfDepth ? 1.0 : 0.0;        
         }    
     }

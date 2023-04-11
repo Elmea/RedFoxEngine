@@ -57,8 +57,9 @@ Engine::Engine(int width, int height) :
         dir.lightInfo.diffuse = {0.6, 0.6, 0.6};
         dir.lightInfo.specular = {0.1, 0.1, 0.1};
         dir.lightInfo.position = {0.0f, 0.0f, 0.0f};
+        m_graphics.GetLightStorage()->AddLight(dir);
 
-
+        /*
         Light spot{ LightType::SPOT };
         spot.lightInfo.constant = 1.0f;
         spot.lightInfo.linear = 0.09f;
@@ -73,9 +74,9 @@ Engine::Engine(int width, int height) :
 
         spot.lightInfo.cutOff = 0.5f;
         spot.lightInfo.outerCutOff = 0.1f;
-
-        m_graphics.GetLightStorage()->AddLight(dir);
         m_graphics.GetLightStorage()->AddLight(spot);
+        */
+
     }
 
 

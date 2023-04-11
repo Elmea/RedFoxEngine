@@ -23,8 +23,7 @@ Light::Light(LightType lightType)
 
     glBindFramebuffer(GL_FRAMEBUFFER, lightInfo.shadowParameters.depthMapFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, lightInfo.shadowParameters.depthMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -74,7 +73,7 @@ void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This f
         case (LightType::DIRECTIONAL):
             dirligths[dirCount] = lightStorage->lights[i].lightInfo;
             lightStorage->lights[i].lightInfo;
-            projection = RedFoxMaths::Mat4::GetOrthographicMatrix(-50, 50, -50, 50, 0.1, 100);
+            projection = RedFoxMaths::Mat4::GetOrthographicMatrix(-50, 50, -50, 50, 0.1, 50);
             dirCount++;
             break;
 

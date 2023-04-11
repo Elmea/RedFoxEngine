@@ -416,8 +416,13 @@ void Graphics::DrawModelShadowInstances(Model* model, int instanceCount)
     // provide vertex input
     glBindVertexArray(model->vao);
 
-    glDrawElementsInstanced(GL_TRIANGLES, model->obj.indexCount, GL_UNSIGNED_INT,
-        0, instanceCount);
+    for (int i = 0; i < (int)model->obj.meshCount; i++)
+    {
+        ObjMesh* mesh = &model->obj.meshes[i];
+
+        glDrawElementsInstanced(GL_TRIANGLES, model->obj.indexCount, GL_UNSIGNED_INT, 
+            0, instanceCount);
+    }
 }
 
 void Graphics::DrawQuad(WindowDimension dimension)
@@ -433,7 +438,10 @@ void Graphics::DrawQuad(WindowDimension dimension)
     glBindTextureUnit(0, m_gPosition);
     glBindTextureUnit(1, m_gNormal);
     glBindTextureUnit(2, m_gAlbedoSpec);
-    glBindTextures(0, 3, lightStorage.shadowMaps);
+    //for (int i = 0; i < lightStorage.lightCount; i++)
+    glBindTextureUnit(3, lightStorage.shadowMaps[0]);
+
+    //glBindTextures(3, 3, lightStorage.shadowMaps);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 #if 0 //TODO this might be necesary if we want to draw objectts after defered shading
     glBlitNamedFramebuffer(m_gBuffer, 0, 0, 0, dimension.width, dimension.height,
@@ -488,6 +496,7 @@ void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* tem
         //to depth map
         glViewport(0, 0, lightStorage.lights[lightIdex].lightInfo.shadowParameters.SHADOW_WIDTH, 
             lightStorage.lights[lightIdex].lightInfo.shadowParameters.SHADOW_HEIGHT);
+
         glBindFramebuffer(GL_FRAMEBUFFER, lightStorage.lights[lightIdex].lightInfo.shadowParameters.depthMapFBO);
         glClearColor(0, 0, 0, 1.f);
         glClear(GL_DEPTH_BUFFER_BIT);
