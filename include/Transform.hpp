@@ -22,7 +22,7 @@ namespace RedFoxEngine
         Transform operator=(const Transform& pOther);
         Transform operator=(const PxTransform& pOther);
 		
-		void assign(PxTransform other);
+        PxTransform toPxTransform();
 
     };
 }

@@ -1,11 +1,5 @@
 #include "Transform.hpp"
 
-void Transform::assign(PxTransform other)
-{
-	position = RedFoxMaths::Float3(other.p.x, other.p.y, other.p.z);
-	orientation = RedFoxMaths::Quaternion(other.q.x, other.q.y, other.q.z, other.q.w);
-	scale = RedFoxMaths::Float3(1, 1, 1);
-}
 
 inline Transform Transform::operator=(const Transform& pOther)
 {
@@ -32,4 +26,22 @@ inline Transform Transform::operator=(const PxTransform& pOther)
 	tr.scale = RedFoxMaths::Float3(1, 1, 1);
 
 	return tr;
+}
+
+
+//Loses the scale information because physX does not handle it
+PxTransform Transform::toPxTransform()
+{
+	PxTransform newTr;
+
+	newTr.p.x = position.x;
+	newTr.p.y = position.y;
+	newTr.p.z = position.z;
+	
+	newTr.q.x = orientation.a;
+	newTr.q.y = orientation.b;
+	newTr.q.z = orientation.c;
+	newTr.q.w = orientation.d;
+
+	return newTr;
 }
