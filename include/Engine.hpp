@@ -65,6 +65,7 @@ private:
     physx::PxScene* m_scene = nullptr;
     physx::PxMaterial* m_material = nullptr;
     physx::PxPvd* m_pvd = nullptr;
+    physx::PxCudaContextManager* m_cudaContextManager = nullptr;
    
     bool isCube(GameObject& object);
     bool isSphere(GameObject& object);

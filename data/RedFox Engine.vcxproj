@@ -101,6 +101,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(SolutionDir)external\libs</AdditionalLibraryDirectories>
+      <Profile>true</Profile>
     </Link>
     <PreBuildEvent>
       <Command>
@@ -158,6 +159,7 @@
     <Link>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);opengl32.lib;user32.lib;gdi32.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_static_64.lib;PhysXCooking_static_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_static_64.lib;PhysXPvdSDK_static_64.lib;PhysXVehicle2_static_64.lib;PhysXVehicle_static_64.lib;PhysX_static_64.lib;PVDRuntime_64.lib;SnippetRender_static_64.lib;SnippetUtils_static_64.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)external\libs</AdditionalLibraryDirectories>
+      <Profile>true</Profile>
     </Link>
     <PreBuildEvent>
       <Command>
