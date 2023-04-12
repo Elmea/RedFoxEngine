@@ -477,7 +477,7 @@ void LightStorage::RemoveLight(int lightIndex)
     lights[lightIndex].SetType(LightType::NONE);
 }
 
-void Graphics::setLightsCount(int dirCount, int pointCount, int spotCount)
+void Graphics::SetLightsCount(int dirCount, int pointCount, int spotCount)
 {
     m_dirLightCount = dirCount;
     m_pointLightCount = pointCount;

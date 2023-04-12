@@ -77,7 +77,7 @@ public:
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
     void FillLightBuffer(LightInfo* lights, LightType type);
 
-    void setLightsCount(int dirCount, int pointCount, int spotCount);
+    void SetLightsCount(int dirCount, int pointCount, int spotCount);
     void CalcShadows(GameObject* objects, int gameObjectCount, Memory* temp);
 };
 } // namespace RedFoxEngine

@@ -133,7 +133,7 @@ void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This f
         current->lightInfo.VP = (lightStorage->lights[i].GetProjection() * lightView.GetInverseMatrix()).GetTransposedMatrix();
     }
 
-    m_graphics.setLightsCount(dirCount, pointCount, spotCount);
+    m_graphics.SetLightsCount(dirCount, pointCount, spotCount);
     m_graphics.FillLightBuffer(dirligths, LightType::DIRECTIONAL);
     m_graphics.FillLightBuffer(pointLights, LightType::POINT);
     m_graphics.FillLightBuffer(spotlights, LightType::SPOT);
