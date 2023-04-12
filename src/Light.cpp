@@ -7,8 +7,9 @@
 
 namespace RedFoxEngine
 {
-Light::Light(LightType lightType)
+Light::Light(LightType lightType, int _index)
 {
+    lightInfo.index = _index;
     type = lightType;
     glCreateFramebuffers(1, &lightInfo.shadowParameters.depthMapFBO);
 
@@ -23,6 +24,43 @@ Light::Light(LightType lightType)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, lightInfo.shadowParameters.depthMap, 0);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Light::SetProjection(LightType type)
+{
+    switch (type)
+    {
+    case (LightType::DIRECTIONAL):
+        projection = RedFoxMaths::Mat4::GetOrthographicMatrix(-100, 100, -100, 100, 0.1, 100);
+        break;
+
+    case (LightType::POINT):
+        projection = RedFoxMaths::Mat4::GetPerspectiveMatrix(80, 1, 25, 0.1);
+        break;
+
+    case (LightType::SPOT):
+        projection = RedFoxMaths::Mat4::GetPerspectiveMatrix(80, 1, 25, 0.1);
+        break;
+
+    default:
+        break;
+    }
+}
+
+void Light::SetType(LightType _type)
+{
+    type = _type;
+    SetProjection(type);
+}
+
+RedFoxMaths::Mat4 Light::GetProjection()
+{
+    return projection;
+}
+
+LightType Light::GetType()
+{
+    return type;
 }
 
 void Light::operator=(Light& light)
@@ -62,28 +100,23 @@ void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This f
     LightInfo* pointLights = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * 1000); ;
     LightInfo* spotlights = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * 1000); ;
 
-    RedFoxMaths::Mat4 projection;
-
     for (int i = 0; i < lightStorage->lightCount; i++)
     {
-        switch (lightStorage->lights[i].type)
+        Light* current = &lightStorage->lights[i];
+        switch (current->GetType())
         {
         case (LightType::DIRECTIONAL):
-            dirligths[dirCount] = lightStorage->lights[i].lightInfo;
-            lightStorage->lights[i].lightInfo;
-            projection = RedFoxMaths::Mat4::GetOrthographicMatrix(-50, 50, -50, 50, 0.1, 50);
+            dirligths[dirCount] = current->lightInfo;
             dirCount++;
             break;
 
         case (LightType::POINT):
-            pointLights[pointCount] = lightStorage->lights[i].lightInfo;
-            projection = RedFoxMaths::Mat4::GetPerspectiveMatrix(80, 1, 0.1, 25);
+            pointLights[pointCount] = current->lightInfo;
             pointCount++;
             break;
 
         case (LightType::SPOT):
-            spotlights[spotCount] = lightStorage->lights[i].lightInfo;
-            projection = RedFoxMaths::Mat4::GetPerspectiveMatrix(80, 1, 0.1, 25);
+            spotlights[spotCount] = current->lightInfo;
             spotCount++;
             break;
 
@@ -91,12 +124,13 @@ void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This f
             break;
         }
 
-        RedFoxMaths::Float3 rotation = RedFoxMaths::Float3::DirToEuler(lightStorage->lights[i].lightInfo.direction, { 0.0f, 1.0f, 0.0f });
-        RedFoxMaths::Mat4 lightView = RedFoxMaths::Mat4::GetTranslation(lightStorage->lights[i].lightInfo.position) *
+
+        RedFoxMaths::Float3 rotation = RedFoxMaths::Float3::DirToEuler(current->lightInfo.direction, { 0.0f, 0.0f, 1.0f });
+        RedFoxMaths::Mat4 lightView = RedFoxMaths::Mat4::GetTranslation(current->lightInfo.position) *
             RedFoxMaths::Mat4::GetRotationY(rotation.y) * RedFoxMaths::Mat4::GetRotationX(rotation.x) *
             RedFoxMaths::Mat4::GetRotationZ(rotation.z);
 
-        lightStorage->lights[i].lightInfo.VP = (projection * lightView.GetInverseMatrix()).GetTransposedMatrix();
+        current->lightInfo.VP = (lightStorage->lights[i].GetProjection() * lightView.GetInverseMatrix()).GetTransposedMatrix();
     }
 
     m_graphics.setLightsCount(dirCount, pointCount, spotCount);

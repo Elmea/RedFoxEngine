@@ -33,8 +33,8 @@ Engine::Engine(int width, int height) :
     m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator,
         sizeof(GameObject) * 100000);
 
-    m_graphics.GetLightStorage()->lights = (Light*)MyMalloc(&m_arenaAllocator, sizeof(Light) * 1000);
-    m_graphics.GetLightStorage()->shadowMaps = (unsigned int*)MyMalloc(&m_arenaAllocator, sizeof(unsigned int) * 1000);
+    m_graphics.lightStorage.lights = (Light*)MyMalloc(&m_arenaAllocator, sizeof(Light) * 1000);
+    m_graphics.lightStorage.shadowMaps = (unsigned int*)MyMalloc(&m_arenaAllocator, sizeof(unsigned int) * 1000);
 
     //TODO transition to an instance based model 'model'
     for (int i = 0; i < (int)m_modelCount; i++)
@@ -45,38 +45,32 @@ Engine::Engine(int width, int height) :
     initSphericalManyGameObjects(5000);
     m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);
     
-    // Hardcoded light for testing
+    // Some light for testing
     {
-        Light dir{ LightType::DIRECTIONAL };
+        Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
 
-        dir.lightInfo.constant = 1.0f;
-        dir.lightInfo.linear = 0.09f;
-        dir.lightInfo.quadratic = 0.032f;
-        dir.lightInfo.direction = { 0.1f, -0.5f, -0.3f };
-        dir.lightInfo.ambient = {0.3, 0.3, 0.3};
-        dir.lightInfo.diffuse = {0.6, 0.6, 0.6};
-        dir.lightInfo.specular = {0.1, 0.1, 0.1};
-        dir.lightInfo.position = {0.0f, 0.0f, 0.0f};
-        m_graphics.GetLightStorage()->AddLight(dir);
-
+        dir->lightInfo.constant = 1.0f;
+        dir->lightInfo.linear = 0.09f;
+        dir->lightInfo.quadratic = 0.032f;
+        dir->lightInfo.position = {0.0f, 0.0f, 0.0f};
+        dir->lightInfo.direction = { 0.0f, -0.5f, -0.0f };
+        dir->lightInfo.ambient = {0.3, 0.3, 0.3};
+        dir->lightInfo.diffuse = {0.6, 0.6, 0.6};
+        dir->lightInfo.specular = {0.1, 0.1, 0.1};
+     
         /*
-        Light spot{ LightType::SPOT };
-        spot.lightInfo.constant = 1.0f;
-        spot.lightInfo.linear = 0.09f;
-        spot.lightInfo.quadratic = 0.032f;
-
-        spot.lightInfo.direction = {0.0f, 0.0f, 1.0f};
-        spot.lightInfo.position = {0.0f, 0.0f, -3.0f};
-
-        spot.lightInfo.ambient = {0.3, 0.3, 0.3};
-        spot.lightInfo.diffuse = {0.6, 0.6, 0.6};
-        spot.lightInfo.specular = {0.1, 0.1, 0.1};
-
-        spot.lightInfo.cutOff = 0.5f;
-        spot.lightInfo.outerCutOff = 0.1f;
-        m_graphics.GetLightStorage()->AddLight(spot);
+        Light* spot = m_graphics.lightStorage.CreateLight(LightType::SPOT);
+        spot->lightInfo.constant = 1.0f;
+        spot->lightInfo.linear = 0.09f;
+        spot->lightInfo.quadratic = 0.032f;
+        spot->lightInfo.direction = {0.0f, 0.0f, 1.0f};
+        spot->lightInfo.position = {0.0f, 0.0f, -5.0f};
+        spot->lightInfo.ambient = {0.3, 0.3, 0.3};
+        spot->lightInfo.diffuse = {0.6, 0.6, 0.6};
+        spot->lightInfo.specular = {0.1, 0.1, 0.1};
+        spot->lightInfo.cutOff = 0.5f;
+        spot->lightInfo.outerCutOff = 0.1f;
         */
-
     }
 
 
@@ -311,7 +305,7 @@ void Engine::Update()
 
     static f32 time;
     time += m_deltaTime * 0.1f;
-    UpdateLights(time, m_graphics.GetLightStorage());
+    UpdateLights(time, &m_graphics.lightStorage);
     //TODO we'll need to think how we pass the resources,
     // and gameplay structures and objects to this update function
     UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount, time);

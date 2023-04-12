@@ -9,5 +9,5 @@ out gl_PerVertex { vec4 gl_Position; };
 void main()
 {
     vec4 worldPosition = worldMatrix * vec4(aPos, 1);
-    gl_Position = VP * worldPosition;
+    gl_Position = worldPosition * VP;
 }  

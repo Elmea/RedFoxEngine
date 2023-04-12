@@ -19,7 +19,7 @@ struct LightStorage
     int lightCount;
     Light* lights;
     unsigned int* shadowMaps;
-    void AddLight(Light newLight);
+    Light* CreateLight(LightType type);
     void RemoveLight(int lightIndex);
 };
 
@@ -47,14 +47,11 @@ private:
     u32    m_pointLightCount;
     GLuint m_pointLightBuffer;
 
-    LightStorage lightStorage;
-
-
 public:
     Model* m_models = nullptr;
     u32    m_modelCount;
     GLuint m_imguiTexture;
-    LightStorage* GetLightStorage();
+    LightStorage lightStorage;
 
     void DrawGBuffer(GameObject* objects, int gameObjectCount, Memory* temp);
     void DrawQuad(WindowDimension dimension);

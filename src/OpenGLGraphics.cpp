@@ -450,30 +450,31 @@ void Graphics::DrawQuad(WindowDimension dimension)
 #endif
 }
 
-LightStorage* Graphics::GetLightStorage()
+Light* LightStorage::CreateLight(LightType type)
 {
-    return &lightStorage;
-}
-
-void LightStorage::AddLight(Light newLight)
-{
-    for (int i = 0; i < lightCount; i++)
+    for (int i = 0 ; i < lightCount; i++)
     {
-        if (lights[i].type == LightType::NONE)
+        if (lights[i].GetType() == LightType::NONE)
         {
-            lights[i] = newLight;
-            return;
+            lights[i].SetType(type);
+            return &lights[i];
         }
     }
+
+    Light newLight { type , lightCount };
+    newLight.lightInfo.index = lightCount;
+    newLight.SetType(type);
 
     lights[lightCount] = newLight;
     shadowMaps[lightCount] = lights[lightCount].lightInfo.shadowParameters.depthMap;
     lightCount++;
+
+    return &lights[lightCount-1];
 }
 
 void LightStorage::RemoveLight(int lightIndex)
 {
-    lights[lightIndex].type = LightType::NONE;
+    lights[lightIndex].SetType(LightType::NONE);
 }
 
 void Graphics::setLightsCount(int dirCount, int pointCount, int spotCount)
@@ -490,7 +491,7 @@ void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* tem
 
     for (int lightIdex = 0; lightIdex < lightStorage.lightCount; lightIdex++)
     {
-        if (lightStorage.lights[lightIdex].type == LightType::NONE)
+        if (lightStorage.lights[lightIdex].GetType() == LightType::NONE)
             continue;
 
         //to depth map
