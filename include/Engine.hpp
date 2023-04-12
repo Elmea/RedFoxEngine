@@ -22,6 +22,8 @@
 #include "GameObject.hpp"
 #include "Camera.hpp"
 
+#include <vector> // TODO: Remove
+
 namespace RedFoxEngine
 {
 
@@ -55,19 +57,25 @@ private:
     RedFoxMaths::Float3 m_editorCameraSpeed;
     bool m_editorCameraEnabled;
 
-    physx::PxDefaultAllocator gAllocator;
-    physx::PxDefaultErrorCallback gErrorCallback;
-    physx::PxFoundation* gFoundation = nullptr;
-    physx::PxPhysics* gPhysics = nullptr;
-    physx::PxDefaultCpuDispatcher* gDispatcher = nullptr;
-    physx::PxScene* gScene = nullptr;
-    physx::PxMaterial* gMaterial = nullptr;
-    physx::PxPvd* gPvd = NULL;
-    float m_StepSize = 1.0f / 60.0f;
-    float m_Accumulator = 0;
+    physx::PxDefaultAllocator m_allocator;
+    physx::PxDefaultErrorCallback m_errorCallback;
+    physx::PxFoundation* m_foundation = nullptr;
+    physx::PxPhysics* m_physics = nullptr;
+    physx::PxDefaultCpuDispatcher* m_dispatcher = nullptr;
+    physx::PxScene* m_scene = nullptr;
+    physx::PxMaterial* m_material = nullptr;
+    physx::PxPvd* m_pvd = nullptr;
+   
+    bool isCube(GameObject& object);
+    bool isSphere(GameObject& object);
+    void createCubeCollider(const physx::PxTransform& t, physx::PxU32 size, physx::PxReal halfExtent);
+    void createSphereCollider(const physx::PxTransform& t, physx::PxReal radius);
 
 private:
-    void InitPhysX();
+    
+    void InitPhysics();
+    void UpdatePhysics();
+    
     void DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight);
     int DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
     void DrawSceneNodes(bool is_child, GameObject* model);
@@ -82,7 +90,6 @@ private:
     void SaveScene(const char *fileName);
     void UpdateLights(float time);
     void initSphericalManyGameObjects(int count); //TODO: remove
-    bool UpdatePhysX(PxReal dt); 
 public:
     Engine(int width, int height);
     ~Engine();

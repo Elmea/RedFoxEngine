@@ -2,7 +2,6 @@
 #include <windows.h>
 #include "Win32Platform.hpp"
 
-#include "Transform.hpp"
 
 #define REDFOXMATHS_IMPLEMENTATION
 #include "RedfoxMaths.hpp"
@@ -10,15 +9,15 @@
 using namespace RedFoxMaths;
 
 BOOL APIENTRY DllMain(HMODULE hModule,
-                      DWORD  ul_reason_for_call,
-                      LPVOID lpReserved)
+    DWORD  ul_reason_for_call,
+    LPVOID lpReserved)
 {
     switch (ul_reason_for_call)
     {
-        case DLL_PROCESS_ATTACH:
-        case DLL_THREAD_ATTACH:
-        case DLL_THREAD_DETACH:
-        case DLL_PROCESS_DETACH:
+    case DLL_PROCESS_ATTACH:
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    case DLL_PROCESS_DETACH:
         break;
     }
     return TRUE;
@@ -26,44 +25,11 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
 {
-    #pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
+#pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
     /*
-    Quaternion alpha = Quaternion::FromEuler(Float3(0, 90, 0));
-    Quaternion beta = Quaternion::FromEuler(Float3(0, 0, 90));
     for (int i = 0; i < (int)gameObjectCount; i++) // TODO physics code here ?
     {
-         gameObjects[i].position += Float3(sinf(time), cosf(time), 0) * 0.001f;
-         gameObjects[i].orientation = Quaternion::SLerp(beta, alpha, time);
-         gameObjects[i].scale = Misc::Lerp(0.1, 2, Misc::Abs(cosf(time)));
-
+        gameObjects[i].position += Float3(sinf(time), cosf(time), 0) * 0.001f;
     }
     */
-    for (int i = 0; i < (int)gameObjectCount; i++)
-    {
-        RedFoxEngine::Transform tr;
-        tr.position = RedFoxMaths::Float3(0, 0, 0);
-        tr.scale = RedFoxMaths::Float3(1, 1, 1);
-        tr.orientation = RedFoxMaths::Quaternion();
-
-        
-        /*
-        PxShape* shape = physics.create;
-
-        gameObjects[i].rb->attachShape(PxShape)
-
-        gameObjects[i].rb = new PxRigidBody(tr.toPxTransform());
-       // gameObjects[i].rb->setGlobalPose(tr.toPxTransform());
-      
-       
-        /*
-        RedFoxEngine::Transform tr;       
-        gameObjects[i].rb->setGlobalPose(PxTransform(PxVec3(0,0,0)));
-        tr.assign(gameObjects[i].rb->getGlobalPose());
-        
-        printf("%f, %f, %f\n", tr.position.x, tr.position.y, tr.position.z);
-        */
-    }
-
-
-
 }

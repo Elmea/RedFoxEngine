@@ -21,7 +21,6 @@ Engine::Engine(int width, int height) :
     IncreaseTotalCapacity(&m_arenaAllocator, 1 * MegaByte);
     m_graphics.InitGraphics(&m_tempAllocator, m_platform.m_windowDimension);
     InitIMGUI();
-    InitPhysX();
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
 
     m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 100);
@@ -49,6 +48,7 @@ Engine::Engine(int width, int height) :
         m_gameLibrary, &m_lastTime, nullptr);
     m_graphics.InitQuad();
     m_graphics.InitLights();
+    InitPhysics();
     StartTime();
 }
 
@@ -186,6 +186,10 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     {
         m_gameObjects[i].parent = nullptr;
         m_gameObjects[i].model = &m_models[i % m_modelCount];
+        if (m_gameObjects[i].model == &m_models[0])
+            m_gameObjects[i].boxExtents = { 0.5, 0.5, 0.5 };
+        else if (m_gameObjects[i].model == &m_models[1])
+            m_gameObjects[i].radius = 1;
         m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 1;
         m_gameObjects[i].orientation.a = 1;
         m_gameObjects[i].name = (char *)MyMalloc(&m_arenaAllocator,
@@ -271,6 +275,7 @@ void Engine::Update()
     static f32 time;
     time += m_deltaTime * 0.1f;
     UpdateLights(time);
+    UpdatePhysics();
     //TODO we'll need to think how we pass the resources,
     // and gameplay structures and objects to this update function
     UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount, time);
