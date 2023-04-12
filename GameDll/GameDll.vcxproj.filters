@@ -52,5 +52,8 @@
     <None Include="..\data\Shaders\ShadowShader.vert">
       <Filter>Resource Files\Shaders</Filter>
     </None>
+    <None Include="..\data\Shaders\blinn_phong.frag.glsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

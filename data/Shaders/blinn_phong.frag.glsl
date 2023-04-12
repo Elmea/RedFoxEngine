@@ -1,38 +1,36 @@
 #version 450 core
 #extension GL_ARB_bindless_texture : enable
 
-
-struct DirLight {
-    vec3 direction;
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
+struct ShadowParameters
+{
+    unsigned int depthMapFBO;
+    int SHADOW_WIDTH, SHADOW_HEIGHT;
+    unsigned int depthMap;
 };
 
-struct PointLight {
-    vec3 position;
-    float constant;
-    vec3 ambient;
-    float linear;
-    vec3 diffuse;
-    float quadratic;
-    vec3 specular;
-    float _padding;
-};
-
-struct SpotLight {
+struct Light {
     vec3 position;
     float cutOff;
+
     vec3 direction;
     float outerCutOff;
+        
     vec3 ambient;
     float constant;
+        
     vec3 diffuse;
     float linear;
+        
     vec3 specular;
     float quadratic;
-};
 
+    float _padding;
+
+    mat4 lightVp;
+    ShadowParameters shadowParameters;
+
+    int index;
+};
 struct Material
 {
     vec3 ambient;
@@ -62,15 +60,15 @@ out vec4 o_color;  // output fragment data location 0
 
 
 layout(std430, binding = 0) buffer PointLightBlock {
-    readonly PointLight pointLight[];
+    readonly Light pointLight[];
 } u_pointLightBlock;
 
 layout(std430, binding = 1) buffer DirLightBlock {
-    readonly DirLight   dirLight[];
+    readonly Light   dirLight[];
 } u_dirLightBlock;
 
 layout(std430, binding = 2) buffer SpotLightBlock {
-    readonly SpotLight  spotLight[];
+    readonly Light  spotLight[];
 } u_spotLightBlock;
 
 
@@ -86,7 +84,7 @@ layout(std430, binding = 5) buffer Materials
 
 const float specularFloat = 32;
 
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 Color)
+vec3 CalcDirLight(Light light, vec3 normal, vec3 viewDir, vec3 Color)
 {
     vec3 lightDir = normalize(-light.direction);
     float diff = max(dot(normal, lightDir), 0.0);
@@ -102,7 +100,7 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 Color)
     return (ambient + diffuse + specular);
 }
 
-vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 Color)
+vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 Color)
 {
     vec3 lightDir = normalize(light.position - fragPos);
     float diff = max(dot(normal, lightDir), 0.0);
@@ -121,7 +119,7 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, v
     return (ambient + diffuse + specular);
 }
 
-vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 Color)
+vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 Color)
 {
     vec3 lightDir     = normalize(light.position - fragPos);
     float diff        = max(dot(normal, lightDir), 0.0);
@@ -177,13 +175,13 @@ void main()
         result += CalcDirLight(u_dirLightBlock.dirLight[i], Normal, vec3(0, 0, 0), Color);
     for (int i = 0; i < u_pointLightBlock.pointLight.length(); i++)
     {
-        PointLight light = u_pointLightBlock.pointLight[i];
+        Light light = u_pointLightBlock.pointLight[i];
         light.position = TBN * light.position;
         result += CalcPointLight(light, Normal, FragPosition, vec3(0, 0, 0), Color);
     }
     for (int i = 0; i < u_spotLightBlock.spotLight.length(); i++)
     {
-        SpotLight light = u_spotLightBlock.spotLight[i];
+        Light light = u_spotLightBlock.spotLight[i];
         light.position = TBN * light.position;
         result += CalcSpotLight(light, Normal, FragPosition, vec3(0, 0, 0), Color);
     }

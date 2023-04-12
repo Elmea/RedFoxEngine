@@ -233,6 +233,7 @@
     <ClInclude Include="..\include\Win32Platform.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\data\Shaders\blinn_phong.frag.glsl" />
     <None Include="..\data\Shaders\blin_phong.frag" />
     <None Include="..\data\Shaders\fragment.frag" />
     <None Include="..\data\Shaders\gBuffer.frag" />
