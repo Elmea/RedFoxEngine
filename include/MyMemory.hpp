@@ -81,6 +81,8 @@ u32 my_strnlen(char *src, u64 n);
 #endif // MY_MEMORY_H
 
 #ifdef MEMORY_IMPLEMENTATION
+#ifndef MEMORY_IMPLEMENTED
+#define MEMORY_IMPLEMENTED
 
 static void IncreaseTotalCapacity(Memory *memory, size_t AmountIncrease)
 {
@@ -337,5 +339,6 @@ static fileResource *LoadFile(fileResource *result, Memory *memory)
     return (result);
 }
 
+#endif
 #undef MEMORY_IMPLEMENTATION
 #endif // MEMORY_IMPLEMENTATION

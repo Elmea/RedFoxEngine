@@ -8,7 +8,7 @@ int Platform::m_running;
 static void FatalError(const char *message)
 {
     MessageBoxA(nullptr, message, "Error", MB_ICONEXCLAMATION);
-    ExitProcess(0);
+    // ExitProcess(0);
 }
 
 static int StringisEqual(const char *src, const char *dst, size_t dstlen)

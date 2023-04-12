@@ -5,13 +5,14 @@ using namespace RedFoxMaths;
 
 Camera::Camera(projectionType projection, float aspect)
 {
+    orientation = {1, 0, 0, 0};
     scale = {1, 1, 1};
     m_parameters.FOV = 90;
     m_parameters.bottom = -10;
     m_parameters.top = 10;
     m_parameters.left = -10;
     m_parameters.right = 10;
-    m_parameters._near = 0.1f;
+    m_parameters._near = 1.f;
     m_parameters._far = 1000;
     m_parameters.aspect = aspect;
     SetProjection(projection);

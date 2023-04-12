@@ -23,55 +23,50 @@ struct LightStorage
     void RemoveLight(int lightIndex);
 };
 
+struct Textures
+{
+    GLuint textures[128];
+    u32 textureCount; 
+};
+
 class Graphics
 {
 private:
+    GLuint m_textureSampler;
+    Textures m_textures = {};
     RedFoxMaths::Mat4 m_viewProjection;
-    GLuint m_vshader, m_fshader;
-    GLuint m_gvshader, m_gfshader;
-    GLuint m_shadowvshader, m_shadowfshader;
-
-    GLuint m_rboIMGUI;
-    GLuint m_quadVAO;
-    GLuint m_gpipeline;
-    GLuint m_pipeline;
-    GLuint m_spipeline;
-    GLuint m_gBuffer;
-    GLuint m_gPosition, m_gNormal, m_gAlbedoSpec;
+    GLuint m_gvshader, m_gfshader, m_gpipeline;
+    GLuint m_shadowvshader, m_shadowfshader, m_spipeline;
     GLuint m_imguiFramebuffer;
-
+    u32    m_materialSSBO;
+    u32    m_matrixSSBO;
+    u32    m_textureSSBO;
     u32    m_spotLightCount;
-    GLuint m_spotLightBuffer;
+    GLuint m_spotLightSSBO;
     u32    m_dirLightCount;
-    GLuint m_dirLightBuffer;
+    GLuint m_dirLightSSBO;
     u32    m_pointLightCount;
-    GLuint m_pointLightBuffer;
-
+    GLuint m_pointLightSSBO;
+    RedFoxMaths::Mat4 *mem;
+    u64 *modelCountIndex;
 public:
     Model* m_models = nullptr;
     u32    m_modelCount;
     GLuint m_imguiTexture;
     LightStorage lightStorage;
-
-    void DrawGBuffer(GameObject* objects, int gameObjectCount, Memory* temp);
-    void DrawQuad(WindowDimension dimension);
-    void DrawModel(Model* model);
-    void DrawModelInstances(Model* model, int instanceCount);
+    void DrawGameObjects(GameObject *objects, int gameObjectCount, Memory *temp);
+    // void DrawModelInstances(Model *model, int instanceCount);
+    void DrawModelInstances(Model *model, RedFoxMaths::Mat4 *modelMatrices,
+        int instanceCount);
     void DrawModelShadowInstances(Model* model, int instanceCount);
-    void InitQuad();
-    void InitModel(Model* model);
+    void InitModel(Model *model);
     void InitLights();
     void BindLights();
-    Light* GetDirLightBuffer(int* lightCount);
-    void ReleaseDirLightBuffer();
-    Light* GetPointLightBuffer(int* lightCount);
-    void ReleasePointLightBuffer();
-    void InitTexture(ObjModel* model);
-    u32 InitTexture(void* data, int height, int width);
+    void InitModelTextures(ObjModel *model);
+    u32 InitTexture(void *data,int height, int width);
     void InitFramebuffer();
-    void InitShaders(Memory* tempArena);
-    void InitGraphics(Memory* tempArena, WindowDimension dimension);
-    void InitGeometryFramebuffer(WindowDimension dimension);
+    void InitShaders(Memory *tempArena);
+    void InitGraphics(Memory *tempArena, WindowDimension dimension);
     void InitImGUIFramebuffer(WindowDimension dimension);
     void UpdateImGUIFrameBuffer(WindowDimension& dimension, WindowDimension content);
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);

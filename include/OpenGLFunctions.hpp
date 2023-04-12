@@ -22,6 +22,7 @@
     X(PFNGLVERTEXARRAYATTRIBBINDINGPROC, glVertexArrayAttribBinding)          \
     X(PFNGLVERTEXARRAYVERTEXBUFFERPROC, glVertexArrayVertexBuffer)            \
     X(PFNGLVERTEXARRAYATTRIBFORMATPROC, glVertexArrayAttribFormat)            \
+    X(PFNGLVERTEXARRAYATTRIBIFORMATPROC, glVertexArrayAttribIFormat)          \
     X(PFNGLVERTEXARRAYELEMENTBUFFERPROC, glVertexArrayElementBuffer)          \
     X(PFNGLENABLEVERTEXARRAYATTRIBPROC, glEnableVertexArrayAttrib)            \
     X(PFNGLCREATESHADERPROGRAMVPROC, glCreateShaderProgramv)                  \
@@ -54,6 +55,10 @@
     X(PFNGLBINDBUFFERBASEPROC, glBindBufferBase)                              \
     X(PFNGLBINDBUFFERRANGEPROC, glBindBufferRange)                            \
     X(PFNGLUNIFORMBLOCKBINDINGPROC, glUniformBlockBinding)                    \
+    X(PFNGLCREATESAMPLERSPROC, glCreateSamplers)                              \
+    X(PFNGLSAMPLERPARAMETERIPROC, glSamplerParameteri)                        \
+    X(PFNGLGETTEXTURESAMPLERHANDLEARBPROC, glGetTextureSamplerHandleARB)      \
+    X(PFNGLMAKETEXTUREHANDLERESIDENTARBPROC, glMakeTextureHandleResidentARB)  \
     X(PFNGLBINDTEXTURESPROC, glBindTextures)                    \
     X(PFNGLNAMEDBUFFERSUBDATAPROC, glNamedBufferSubData)
 

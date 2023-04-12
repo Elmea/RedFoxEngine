@@ -80,15 +80,19 @@ void Graphics::InitLights()
     // allocated to their max value first, then we can increase in size or decrease at runtime
     // the amount we actually use without reallocating.
     
-    glCreateBuffers(1, &m_pointLightBuffer);
-    glNamedBufferStorage(m_pointLightBuffer, 100 * sizeof(Light), nullptr,
+    m_pointLightCount = 100; //TODO: in the future all lights will start at 0 count, and 
+    // the game or engine editor will add them in the scene.
+    m_dirLightCount = 1;
+    m_spotLightCount = 0;
+    glCreateBuffers(1, &m_pointLightSSBO);
+    glNamedBufferStorage(m_pointLightSSBO, m_pointLightCount * sizeof(Light), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
-    glCreateBuffers(1, &m_dirLightBuffer);
-    glNamedBufferStorage(m_dirLightBuffer, 100 * sizeof(Light), nullptr,
-        GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT | GL_MAP_READ_BIT);
+    glCreateBuffers(1, &m_dirLightSSBO);
+    glNamedBufferStorage(m_dirLightSSBO, m_pointLightCount * sizeof(Light), nullptr,
+        GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
 
-    glCreateBuffers(1, &m_spotLightBuffer);
-    glNamedBufferStorage(m_spotLightBuffer, 100 * sizeof(Light), nullptr,
+    glCreateBuffers(1, &m_spotLightSSBO);
+    glNamedBufferStorage(m_spotLightSSBO, m_pointLightCount * sizeof(Light), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
 }
 
@@ -139,62 +143,26 @@ void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This f
     m_graphics.FillLightBuffer(spotlights, LightType::SPOT);
 }
 
-Light *Graphics::GetDirLightBuffer(int *lightCount)
-{
-    if (lightCount)
-        *lightCount = m_dirLightCount;
-    else
-        return (nullptr);
-    GLbitfield mapFlags = (GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-    return((Light*)glMapNamedBufferRange(m_dirLightBuffer, 0,
-        m_dirLightCount * sizeof(Light), mapFlags));
-
-}
-
 void Graphics::BindLights()
 {
     if (m_pointLightCount)
     {
         GLuint bindingPoint = 0;
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_pointLightBuffer, 0, m_pointLightCount);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_pointLightBuffer);
+        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_pointLightSSBO, 0, m_pointLightCount);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_pointLightSSBO);
     }
     if (m_dirLightCount)
     {
         GLuint bindingDir = 1;
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingDir, m_dirLightBuffer, 0, m_dirLightCount);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingDir, m_dirLightBuffer);
+        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingDir, m_dirLightSSBO, 0, m_dirLightCount);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingDir, m_dirLightSSBO);
     }
     if (m_spotLightCount)
     {
         GLuint bindingSpot = 2;
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingSpot, m_spotLightBuffer, 0, m_spotLightCount);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingSpot, m_spotLightBuffer);
+        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingSpot, m_spotLightSSBO, 0, m_spotLightCount);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingSpot, m_spotLightSSBO);
     }
-}
-
-void Graphics::ReleaseDirLightBuffer()
-{
-    glUnmapNamedBuffer(m_dirLightBuffer);
-    glFlush();
-}
-
-Light *Graphics::GetPointLightBuffer(int *lightCount)
-{
-    if (lightCount)
-        *lightCount = m_pointLightCount;
-    else
-        return (nullptr);
-    GLbitfield mapFlags = (GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-    return((Light*)glMapNamedBufferRange(m_pointLightBuffer, 0,
-        m_pointLightCount * sizeof(Light), mapFlags));
-
-}
-
-void Graphics::ReleasePointLightBuffer()
-{
-    glUnmapNamedBuffer(m_pointLightBuffer);
-    glFlush();
 }
 
 void Graphics::FillLightBuffer(LightInfo* lights, LightType type)
@@ -206,15 +174,15 @@ void Graphics::FillLightBuffer(LightInfo* lights, LightType type)
     case RedFoxEngine::NONE:
         return;
     case RedFoxEngine::DIRECTIONAL:
-        lightBuffer = m_dirLightBuffer;
+        lightBuffer = m_dirLightSSBO;
         lightCount = m_dirLightCount;
         break;
     case RedFoxEngine::POINT:
-        lightBuffer = m_pointLightBuffer;
+        lightBuffer = m_pointLightSSBO;
         lightCount = m_pointLightCount;
         break;
     case RedFoxEngine::SPOT:
-        lightBuffer = m_spotLightBuffer;
+        lightBuffer = m_spotLightSSBO;
         lightCount = m_spotLightCount;
         break;
     default:

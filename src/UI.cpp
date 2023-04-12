@@ -150,32 +150,78 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     ImGui::PopStyleVar(2);
     ImGui::PopStyleColor();
     
-    if (ImGui::BeginPopupContextItem("MainMenu"))
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
+
+    if (ImGui::Button("NEW SCENE", ImVec2(0, buttonHeight)))
     {
-        if (ImGui::Selectable("Save scene"))
-            SaveScene(strcat((char*)m_sceneName.data, ".scene"));
-        ImGui::EndPopup();
+        m_gameObjectCount = 0;
+        m_arenaAllocator.usedSize = m_sceneUsedMemory;
+        m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);
     }
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
-    if (ImGui::Button("LOGO HERE", ImVec2(0, buttonHeight)))
-        ImGui::OpenPopup("MainMenu");
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
+    if (ImGui::Button("SAVE SCENE", ImVec2(0, buttonHeight)))
+        SaveScene(strcat((char*)m_sceneName.data, ".scene"));
 
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 32.f);
-    ImGui::Button("PLAY", ImVec2(0, buttonHeight));
+    if (ImGui::Button("TRANSLATE", ImVec2(0, buttonHeight)))
+            m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
 
     ImGui::SameLine();
-    ImGui::Button("BUILD", ImVec2(0, buttonHeight));
+    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
+    if (ImGui::Button("ROTATE", ImVec2(0, buttonHeight)))
+        m_GizmoType = ImGuizmo::OPERATION::ROTATE;
+
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
+    if (ImGui::Button("SCALE", ImVec2(0, buttonHeight)))
+        m_GizmoType = ImGuizmo::OPERATION::SCALE;
     
     ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 64.f);
+    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 32.f);
     if (ImGui::Button("ADD ENTITY", ImVec2(0, buttonHeight)))
     {
-        m_gameObjectCount++;
-        GameObject* newGameObject = &m_gameObjects[m_gameObjectCount - 1];
-        newGameObject->name = (char*)MyMalloc(&m_arenaAllocator, 20);
-        sprintf(newGameObject->name, "New entity #%d\0", m_gameObjectCount - 1);
+        GameObject* newGameObject = &m_gameObjects[m_gameObjectCount++];
+        *newGameObject = { };
+        char tmp[255];
+        int size = snprintf(tmp, 255, "New entity #%d", m_gameObjectCount - 1);
+        newGameObject->name = initStringChar(tmp, size, &m_arenaAllocator);
+        newGameObject->name.capacity = 255;
+        newGameObject->orientation = { 1,0,0,0 };
+        newGameObject->scale = { 1,1,1 };
+        newGameObject->model = nullptr;
+    }
+
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
+    if (ImGui::Button("ADD CUBE", ImVec2(0, buttonHeight)))
+    {
+        GameObject* newGameObject = &m_gameObjects[m_gameObjectCount++];
+        *newGameObject = { };
+        char tmp[255];
+        int size = snprintf(tmp, 255, "New cube #%d", m_gameObjectCount - 1);
+        newGameObject->name = initStringChar(tmp, size, &m_arenaAllocator);
+        newGameObject->name.capacity = 255;
+        newGameObject->orientation = { 1,0,0,0 };
+        newGameObject->scale = { 1,1,1 };
+        newGameObject->model = &m_models[0];
+    }
+
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
+    if (ImGui::Button("ADD SPHERE", ImVec2(0, buttonHeight)))
+    {
+        GameObject* newGameObject = &m_gameObjects[m_gameObjectCount++];
+        *newGameObject = { };
+        char tmp[255];
+        int size = snprintf(tmp, 255, "New sphere #%d", m_gameObjectCount - 1);
+        newGameObject->name = initStringChar(tmp, size, &m_arenaAllocator);
+        newGameObject->name.capacity = 255;
+        newGameObject->orientation = { 1,0,0,0 };
+        newGameObject->scale = { 1,1,1 };
+        newGameObject->model = &m_models[1];
     }
 
     ImGui::PopStyleVar();
@@ -238,8 +284,9 @@ void Engine::DrawSceneNodes(bool is_child, GameObject* gameObj)
         flags |= ImGuiTreeNodeFlags_Selected;
     flags |= ImGuiTreeNodeFlags_SpanFullWidth;
 
-    bool nodeOpen = ImGui::TreeNodeEx(gameObj->name, flags, "%s", gameObj->name);
-    if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+    bool nodeOpen = ImGui::TreeNodeEx((char*)gameObj->name.data, flags, "%s", (char*)gameObj->name.data);
+    if ((ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) || 
+        ImGui::IsItemFocused())
     {
         m_selectedObject = gameObj;
     }
@@ -323,7 +370,7 @@ void Engine::DrawIMGUI()
             ImGui::Image(framebuffer,
                 ImVec2(dimension.width, dimension.height), ImVec2(0, 1), ImVec2(1, 0));
         }
-
+               
         if (m_selectedObject != nullptr)
         {
             ImGuizmo::SetDrawlist();
@@ -334,35 +381,41 @@ void Engine::DrawIMGUI()
             RedFoxMaths::Mat4 cameraView = m_editorCamera.GetViewMatrix().GetTransposedMatrix();
             RedFoxMaths::Mat4 transformMat = m_selectedObject->GetWorldMatrix().GetTransposedMatrix();
             RedFoxMaths::Mat4 deltaMat = { };
-
+            float* cameraViewPtr = (float*)cameraView.AsPtr();
+            float* cameraProjectionPtr = (float*)cameraProjection.AsPtr();
+            float* transformMatPtr = (float*)transformMat.AsPtr();
+            float* deltaMatPtr = (float*)deltaMat.AsPtr();
+            float snapValue = 0.5;
             bool snap = m_input.LControl;
-            //TODO (a.perche): Fix maths
-            /*
             if (m_GizmoType == ImGuizmo::OPERATION::ROTATE)
                 snapValue = 45.0f;
-            */
             if (m_input.Q) // TODO: What are the unity or unreal buttons for this
                 m_GizmoType = ImGuizmo::OPERATION::SCALE;
             else if (m_input.W)
                 m_GizmoType = ImGuizmo::OPERATION::TRANSLATE;
-            float snapValues[3] = { 0.5f, 0.5f, 0.5f };
-
-
-            ImGuizmo::Manipulate((float*)cameraView.AsPtr(), (float*)cameraProjection.AsPtr(),
-                m_GizmoType, m_GizmoMode, (float*)transformMat.AsPtr(), (float*)deltaMat.AsPtr(), snap ? &snapValues[0] : nullptr);
-
+            else if (m_input.R)
+                m_GizmoType = ImGuizmo::OPERATION::ROTATE;
+            float snapValues[3] = { snapValue, snapValue, snapValue };
+                        
+            ImGuizmo::Manipulate(cameraViewPtr, cameraProjectionPtr,
+                m_GizmoType, m_GizmoMode, transformMatPtr, deltaMatPtr, snap ? &snapValues[0] : nullptr);
 
             if (ImGuizmo::IsUsing())
             {
-                RedFoxMaths::Float3 translation, rotation, scale;
-                RedFoxMaths::Float3 scaleUnit = {1, 1, 1};
+                using namespace RedFoxMaths;
+                Float3 translation, rotation, scale;
+                Float3 scaleUnit = {1, 1, 1};
                 ImGuizmo::DecomposeMatrixToComponents(deltaMat.AsPtr(),
                     (float*)&translation.x, (float*)&rotation.x, (float*)&scale.x);
 
-                //TODO: Fix maths
-                //RedFoxMaths::Float3 deltaRotation = rotation - transformMat;
-                m_selectedObject->position += translation;
-                m_selectedObject->scale += scale - scaleUnit;
+                m_selectedObject->orientation = 
+                    Quaternion::Hamilton(Quaternion::FromEuler(rotation*DEG2RAD),
+                    m_selectedObject->orientation);
+                if(m_GizmoType != ImGuizmo::OPERATION::ROTATE)
+                {
+                    m_selectedObject->position += translation;
+                    m_selectedObject->scale += scale - scaleUnit;
+                }
                 if (m_selectedObject->scale.x <= 0) //TODO: Float3 clamp inside RedFoxMaths
                     m_selectedObject->scale.x = 0.1;
                 if (m_selectedObject->scale.y <= 0)
@@ -380,6 +433,11 @@ void Engine::DrawIMGUI()
         {
             m_editorCameraSpeed = { 0.f, 0.f, 0.f };
             m_input.lockMouse = m_editorCameraEnabled = false;
+        }
+
+        if (m_input.Escape)
+        {
+            m_selectedObject = nullptr;
         }
     }
     ImGui::End();
@@ -442,8 +500,8 @@ void Engine::DrawIMGUI()
             const int buttonWidth = 50;
             if (buttonWidth < ImGui::GetContentRegionAvail().x)
             {
-                char tempString[255] = {};
-                snprintf(tempString, 255, "%d", scrollStrength);
+                char tempString[32] = {};
+                snprintf(tempString, 32, "%d", scrollStrength);
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - (f32)buttonWidth / 2);
                 if (ImGui::Button(tempString, ImVec2(buttonWidth, 0)))
                 {
@@ -456,43 +514,46 @@ void Engine::DrawIMGUI()
         }
         ImGui::TreePop();
 
-        ImGuiWindowFlags sceneGraphFlags =
-            ImGuiWindowFlags_AlwaysHorizontalScrollbar | 
-            ImGuiWindowFlags_AlwaysVerticalScrollbar |
-            ImGuiWindowFlags_NoMove;
-
-        ImGui::BeginChild("SceneGraphNodes", ImVec2(0, 0), true, sceneGraphFlags);
-        if (index < 0)
-            index = 0;
-        else if (index > (int)m_gameObjectCount - 1)
-            index = m_gameObjectCount - 1;
-
-        int maxItems = (int)ImGui::GetMainViewport()->Size.y / 16;
-        for (int i = 0; i + index < (int)m_gameObjectCount && i < maxItems; i++)
+        if (m_gameObjectCount > 0)
         {
-            if (i == 0 && index > 0 && ImGui::GetScrollY() == 0)
+            ImGuiWindowFlags sceneGraphFlags =
+                ImGuiWindowFlags_AlwaysHorizontalScrollbar |
+                ImGuiWindowFlags_AlwaysVerticalScrollbar |
+                ImGuiWindowFlags_NoMove;
+
+            ImGui::BeginChild("SceneGraphNodes", ImVec2(0, 0), true, sceneGraphFlags);
+            if (index < 0)
+                index = 0;
+            else if (index > (int)m_gameObjectCount - 1)
+                index = m_gameObjectCount - 1;
+
+            int maxItems = (int)ImGui::GetMainViewport()->Size.y / 16;
+            for (int i = 0; i + index < (int)m_gameObjectCount && i < maxItems; i++)
             {
-                ImGui::SetScrollY(1);
-                index -= scrollStrength;
+                if (i == 0 && index > 0 && ImGui::GetScrollY() == 0)
+                {
+                    ImGui::SetScrollY(1);
+                    index -= scrollStrength;
+                }
+
+                float scrollMax = 0;
+                if (i == maxItems - 1 && index + i < (int)m_gameObjectCount - 1 &&
+                    (scrollMax = ImGui::GetScrollMaxY()) == ImGui::GetScrollY() && scrollMax != 0)
+                {
+                    ImGui::SetScrollY(scrollMax - 1);
+                    index += scrollStrength;
+                }
+
+                if (index + i < 0)
+                    index = i;
+                else if (index + i > (int)m_gameObjectCount - 1)
+                    index = m_gameObjectCount - i - 1;
+
+                if (m_gameObjects[i + index].parent == nullptr)
+                    DrawSceneNodes(false, &m_gameObjects[i + index]);
             }
-
-            float scrollMax = 0;
-            if (i == maxItems - 1 && index + i < (int)m_gameObjectCount - 1 &&
-                (scrollMax = ImGui::GetScrollMaxY()) == ImGui::GetScrollY() && scrollMax != 0)
-            {
-                ImGui::SetScrollY(scrollMax - 1);
-                index += scrollStrength;
-            }
-
-            if (index + i < 0)
-                index = i;
-            else if (index + i > (int)m_gameObjectCount - 1)
-                index = m_gameObjectCount - i - 1;
-
-            if (m_gameObjects[i + index].parent == nullptr)
-                DrawSceneNodes(false, &m_gameObjects[i + index]);
+            ImGui::EndChild();
         }
-        ImGui::EndChild();
     }
     ImGui::End();
 
@@ -526,17 +587,36 @@ void Engine::DrawIMGUI()
                 ImGui::Text("Rotation");
                 ImGui::TableSetColumnIndex(1);
                 ImGui::SetNextItemWidth(-FLT_MIN);
-                RedFoxMaths::Float3 rotation = m_editorCamera.orientation.ToEuler();
-                rotation.x *= RAD2DEG;
-                rotation.y *= RAD2DEG;
-                rotation.z *= RAD2DEG;
-                if (ImGui::DragFloat3("TransformRotation", &rotation.x, 1.0f, -360.f, 360.f))
+
+                static RedFoxMaths::Float3 rotation;
+                if (ImGui::DragFloat3("TransformRotation", &rotation.x, 1.0f, -360, 360.f))
                 {
+                    if (rotation.x == 360)
+                        rotation.x = -359;
+                    if (rotation.x == -360)
+                        rotation.x = 359;
+                    if (rotation.y == 360)
+                        rotation.y = -359;
+                    if (rotation.y == -360)
+                        rotation.y = 359;
+                    if (rotation.z == 360)
+                        rotation.z = -359;
+                    if (rotation.z == -360)
+                        rotation.z = 359;
                     rotation.x *= DEG2RAD;
                     rotation.y *= DEG2RAD;
                     rotation.z *= DEG2RAD;
-                    m_editorCamera.orientation = RedFoxMaths::Quaternion::FromEuler(rotation);
+                    //TODO: still pretty janky
+                    {
+                        using namespace RedFoxMaths;
+                        m_editorCamera.orientation = 
+                            Quaternion::SLerp(m_editorCamera.orientation, 
+                                Quaternion::FromEuler(rotation * 2), 1);
+                    }
                     m_editorCamera.orientation.Normalize();
+                    rotation.x *= RAD2DEG;
+                    rotation.y *= RAD2DEG;
+                    rotation.z *= RAD2DEG;
                 }
                 ImGui::EndTable();
             }
@@ -561,7 +641,7 @@ void Engine::DrawIMGUI()
                     ImGui::TableSetColumnIndex(0);
                     ImGui::Text("Position");
                     ImGui::TableSetColumnIndex(1);
-                    ImGui::SetNextItemWidth(-FLT_MIN);
+                   ImGui::SetNextItemWidth(-FLT_MIN);
                     ImGui::DragFloat3("TransformPosition", &m_selectedObject->position.x, 1.f, -32767.f, 32767.f);
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
@@ -569,28 +649,41 @@ void Engine::DrawIMGUI()
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
 
-                    // TO FIX(a.perche): Fix maths
-                    RedFoxMaths::Float3 rotation = m_selectedObject->orientation.ToEuler();
-                    RedFoxMaths::Float3 tmp = rotation;
-                    rotation.x *= RAD2DEG;
-                    rotation.y *= RAD2DEG;
-                    rotation.z *= RAD2DEG;
+                    static RedFoxMaths::Float3 rotation;
                     if (ImGui::DragFloat3("TransformRotation", &rotation.x, 1.f, -360.f, 360.f))
                     {
+                        if (rotation.x == 360)
+                            rotation.x = -359;
+                        if (rotation.x == -360)
+                            rotation.x = 359;
+                        if (rotation.y == 360)
+                            rotation.y = -359;
+                        if (rotation.y == -360)
+                            rotation.y = 359;
+                        if (rotation.z == 360)
+                            rotation.z = -359;
+                        if (rotation.z == -360)
+                            rotation.z = 359;
                         rotation.x *= DEG2RAD;
                         rotation.y *= DEG2RAD;
                         rotation.z *= DEG2RAD;
-                        RedFoxMaths::Float3 delta = rotation - tmp;
-                        RedFoxMaths::Quaternion deltaQuat = RedFoxMaths::Quaternion::FromEuler(delta);
-                        m_selectedObject->orientation = m_selectedObject->orientation + delta;//RedFoxMaths::Quaternion::FromEuler(rotation);
+                        {
+                        using namespace RedFoxMaths;
+                        m_selectedObject->orientation =
+                                 Quaternion::SLerp(m_selectedObject->orientation,
+                            Quaternion::FromEuler(rotation), 0.5);
+                        }
                         m_selectedObject->orientation.Normalize();
+                        rotation.x *= RAD2DEG;
+                        rotation.y *= RAD2DEG;
+                        rotation.z *= RAD2DEG;
                     }
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
                     ImGui::Text("Scale");
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::DragFloat3("TransformScale", &m_selectedObject->scale.x, 1.f, -32767.f, 32767.f);
+                    ImGui::DragFloat3("TransformScale", &m_selectedObject->scale.x, 1.f, 0.00001f, 32767.f);
                     ImGui::EndTable();
                 }
             }

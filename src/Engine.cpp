@@ -24,10 +24,16 @@ Engine::Engine(int width, int height) :
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
 
     m_models = (Model *)MyMalloc(&m_arenaAllocator, sizeof(Model) * 100);
+    m_models[m_modelCount].obj = CreateCube(&m_arenaAllocator);
+    m_models[m_modelCount].hash = 1;
+    m_modelCount++;
+    m_models[m_modelCount].obj = CreateSphere(30, 25, &m_arenaAllocator);
+    m_models[m_modelCount].hash = 2;
+    m_modelCount++;
     ObjModelPush("ts_bot912.obj");
-    m_models[m_modelCount++].obj = CreateCube(&m_arenaAllocator);
-    m_models[m_modelCount++].obj = CreateSphere(30, 25, &m_arenaAllocator);
-    // ObjModelPush("bunny.obj");
+    ObjModelPush("vortigaunt.obj");
+    ObjModelPush("barbarian.obj");
+
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
     m_gameObjects = (GameObject *)MyMalloc(&m_arenaAllocator,
@@ -39,10 +45,11 @@ Engine::Engine(int width, int height) :
     //TODO transition to an instance based model 'model'
     for (int i = 0; i < (int)m_modelCount; i++)
         m_graphics.InitModel(&m_models[i]);
+    m_sceneUsedMemory = m_arenaAllocator.usedSize;
 #if 0
-    LoadScene("test.scene");
+    LoadScene("Sample Scene.scene");
 #else
-    initSphericalManyGameObjects(5000);
+    initSphericalManyGameObjects(1000);
     m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);
     
     // Some light for testing
@@ -79,7 +86,6 @@ Engine::Engine(int width, int height) :
     m_dc = GetDC(m_platform.m_window);
     UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll",
         m_gameLibrary, &m_lastTime, nullptr);
-    m_graphics.InitQuad();
     m_graphics.InitLights();
 
     StartTime();
@@ -88,7 +94,13 @@ Engine::Engine(int width, int height) :
 void Engine::ObjModelPush(const char *path)
 {
     if (ParseModel(&m_models[m_modelCount++].obj, path))
-        __debugbreak();
+    {
+        m_modelCount--;
+#if DEBUG 
+        __debugbreak():
+#endif
+        return;
+    }
     u32 length = 0;
     while (path[length] != '\0')
         length++;
@@ -119,11 +131,9 @@ void Engine::LoadScene(const char *fileName)
     for(int i = 0; i < (int)m_gameObjectCount; i++)
     {
         GameObject *current = &m_gameObjects[i];
-        int length = 0;
-        ReadFile(file, &length, sizeof(int), nullptr, nullptr);
-        current->name = (char *)MyMalloc(&m_arenaAllocator, length);
-        current->name[length] = '\0';
-        ReadFile(file, current->name, length, nullptr, nullptr);
+        ReadFile(file, &current->name, sizeof(MyString), nullptr, nullptr);
+        current->name.data = (char *)MyMalloc(&m_arenaAllocator, 255);
+        ReadFile(file, (void*)current->name.data, current->name.size, nullptr, nullptr);
         int parent;
         ReadFile(file, &parent, sizeof(int), nullptr, nullptr);
         if (parent == -1)
@@ -166,7 +176,8 @@ void Engine::LoadScene(const char *fileName)
 
     struct GameObject
     {
-        s32 nameOfGameObjectSize;
+        u32 nameOfGameObjectSize;
+        u32 nameOfGameObjectCapacity;
         char nameOfGameObject[nameOfGameObjectSize];
         int parent; - -l if no parent, >= 0 if parent exists
         u64 modelHash; hash of the filename string of the model
@@ -193,11 +204,9 @@ void Engine::SaveScene(const char *fileName)
     for(int i = 0; i < (int)m_gameObjectCount; i++)
     {
         GameObject *current = &m_gameObjects[i];
-        int length = 0;
-        while (current->name[length] != '\0')
-            length++;
-        WriteFile(file, &length, sizeof(int), nullptr, nullptr);
-        WriteFile(file, current->name, length, nullptr, nullptr);
+
+        WriteFile(file, &current->name, sizeof(MyString), nullptr, nullptr);
+        WriteFile(file, current->name.data, current->name.size, nullptr, nullptr);
         int parent = (int)(current->parent - m_gameObjects);
         if (current->parent == nullptr)
             parent = -1;
@@ -222,16 +231,18 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
         m_gameObjects[i].parent = nullptr;
         m_gameObjects[i].model = &m_models[i % m_modelCount];
         m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 1;
+        if(i % m_modelCount == 3)
+            m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 0.2;
         m_gameObjects[i].orientation.a = 1;
-        m_gameObjects[i].name = (char *)MyMalloc(&m_arenaAllocator,
-            sizeof(char) * 13);
-        snprintf(m_gameObjects[i].name, 13, "Entity%d", i);
+        char tmp[255];
+        int size = snprintf(tmp, 255, "Entity%d", i);
+        m_gameObjects[i].name = initStringChar(tmp, size, &m_arenaAllocator);
+        m_gameObjects[i].name.capacity = 255;
         if (i < 3 && i != 0)
         m_gameObjects[i].parent = &m_gameObjects[0];
     }
     //TODO transition to an instance based model 'model'
 
-    m_gameObjects[1].parent = &m_gameObjects[0];
     m_gameObjects[1].position = {};
     m_gameObjects[1].scale = {0.5, 0.5, 0.5};
     m_gameObjects[2].position = {2, 1, 0};
@@ -256,7 +267,6 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
                 };
             m_gameObjects[index - 1].position =
                 m_gameObjects[index - 1].position * scale;
-            //m_gameObjects[index - 1].position.y *= 2;
         }
     }
 }
@@ -283,9 +293,9 @@ void Engine::UpdateEditorCamera()
 
         Float3 inputDirection(0, 0, 0);
         if (m_input.W || m_input.Up)    inputDirection.z += -1;
-        if (m_input.S || m_input.Down)  inputDirection.z += 1;
+        if (m_input.S || m_input.Down)  inputDirection.z +=  1;
         if (m_input.A || m_input.Left)  inputDirection.x += -1;
-        if (m_input.D || m_input.Right) inputDirection.x += 1;
+        if (m_input.D || m_input.Right) inputDirection.x +=  1;
         inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
         inputDirection.Normalize();
         inputDirection = inputDirection * 20.f;
@@ -304,7 +314,7 @@ void Engine::Update()
     UpdateEditorCamera();
 
     static f32 time;
-    time += m_deltaTime * 0.1f;
+    time += m_deltaTime;
     UpdateLights(time, &m_graphics.lightStorage);
     //TODO we'll need to think how we pass the resources,
     // and gameplay structures and objects to this update function
@@ -318,11 +328,7 @@ void Engine::Draw()
 {
     m_graphics.CalcShadows(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
 
-    // Should move it in DrawGBuffer method 
-    glViewport(0, 0, m_platform.m_windowDimension.width, m_platform.m_windowDimension.height);
-
-    m_graphics.DrawGBuffer(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
-    m_graphics.DrawQuad(m_platform.m_windowDimension);
+    m_graphics.DrawGameObjects(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
     DrawIMGUI();
     // swap the buffers to show output
     if (!SwapBuffers(m_dc))

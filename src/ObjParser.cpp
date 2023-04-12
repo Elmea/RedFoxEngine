@@ -514,6 +514,31 @@ ObjMaterials ParseMTL(const char *objPath, MyString objBuffer, ObjImages *Images
             }
             endOfLine = get_next_line(mtlLibData.file, current) + 1;
         }
+        else if (StringsAreEqual_C({9, 9, "map_Bump "}, current, NULL))
+        {
+            result.material[i].hasNormal = 1;
+            int j = 0;
+
+            while (current[j + 9] != '\n' && current[j + 9] != '\r' && current[j + 9] != '\0')
+                j++;
+            ImagesOut->data[ImagesOut->count].path = initStringChar(&current[9], j, meshMem);
+            u8 found = 0;
+            for (int k = 0; k < (int)ImagesOut->count; k++)
+            {
+                if (k != i && StringsAreEqual(ImagesOut->data[ImagesOut->count].path, ImagesOut->data[k].path))
+                {
+                    result.material[i].normalMap = result.material[k].normalMap;
+                    found = 1;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                result.material[i].normalMap.index0 = ImagesOut->count;
+                ImagesOut->count++;
+            }
+            endOfLine = get_next_line(mtlLibData.file, current) + 1;
+        }
         else if (StringsAreEqual_C({3, 3, "Kd "}, current, NULL))
         {
             current = get_next_word(current);
@@ -797,6 +822,8 @@ int ParseModel(ObjModel *result, const char *path)
         *result->materials.material = initMaterial();
     }
 
+    if (result->meshCount == 0)
+        result->meshCount = 1;
     result->meshes[result->meshCount - 1].indexCount =
         result->indexCount - result->meshes[result->meshCount - 1].indexStart;
     if (result->meshes[result->meshCount - 1].materialIndex == (u32)-1)
@@ -804,7 +831,6 @@ int ParseModel(ObjModel *result, const char *path)
         __debugbreak();
     }
 
-    // Custom hash map with custom hash function to deduplicate vertices
 #if 0
     result->vertices = (ObjVertex *)MyMalloc(&result->vertexMem, result->indexCount * sizeof(ObjVertex));
     result->vertexCount = result->indexCount;
@@ -818,6 +844,7 @@ int ParseModel(ObjModel *result, const char *path)
         result->vertices[i] = tempVrtx;
     }
 #else
+    // Custom hash map with custom hash function to deduplicate vertices
     result->vertices = (ObjVertex *)MyMalloc(&result->vertexMem, result->indexCount * sizeof(ObjVertex));
     VertexKey *hash = (VertexKey *)MyMalloc(&tempVertexHashMem, sizeof(VertexKey) * result->indexCount);
     VertexKey *tempNext = (VertexKey *)MyMalloc(&tempVertexHashMem, sizeof(VertexKey) * result->indexCount);
@@ -845,9 +872,20 @@ int ParseModel(ObjModel *result, const char *path)
         }
         if (memcmp(&key->key, &zero, sizeof(ObjVertexIndex)) == 0)
         {
+            u32 materialId = 0;
+            for (int j = 0; j < result->meshCount; j++)
+            {
+                if (i >= result->meshes[j].indexStart &&
+                    i <= result->meshes[j].indexCount +
+                         result->meshes[j].indexStart)
+                {
+                    materialId = result->meshes[j].materialIndex;
+                }
+            }
             ObjVertex tempVrtx = {tempParser.position[tempParser.vertexIndices[i].positionIndex],
                                   tempParser.normal[tempParser.vertexIndices[i].normalIndex],
-                                  tempParser.textureUV[tempParser.vertexIndices[i].textureIndex]};
+                                  tempParser.textureUV[tempParser.vertexIndices[i].textureIndex],
+                                  materialId};
             key->key = tempParser.vertexIndices[i];
             result->vertices[tempCount] = tempVrtx;
             key->index = tempCount;
@@ -869,9 +907,20 @@ int ParseModel(ObjModel *result, const char *path)
             if (current->next == nullptr &&
                 memcmp(&current->key, &tempParser.vertexIndices[i], sizeof(ObjVertexIndex)) != 0)
             {
+                u32 materialId = 0;
+                for (int j = 0; j < result->meshCount; j++)
+                {
+                    if (i >= result->meshes[j].indexStart &&
+                        i <= result->meshes[j].indexCount +
+                             result->meshes[j].indexStart)
+                    {
+                        materialId = result->meshes[j].materialIndex;
+                    }
+                }
                 ObjVertex tempVrtx = {tempParser.position[tempParser.vertexIndices[i].positionIndex],
                                       tempParser.normal[tempParser.vertexIndices[i].normalIndex],
-                                      tempParser.textureUV[tempParser.vertexIndices[i].textureIndex]};
+                                      tempParser.textureUV[tempParser.vertexIndices[i].textureIndex],
+                                      materialId};
                 current->next = tempNext + listCount;
                 current->next->key = tempParser.vertexIndices[i];
                 current->next->index = tempCount;
@@ -889,9 +938,8 @@ int ParseModel(ObjModel *result, const char *path)
         result->indices[i] = tempIndex;
     }
     result->vertexCount = tempCount;
-
-   snprintf(OutputStringDebug, 254, "%d deduplicates %lld hash collisions\n", deduplicates, listCount);
-   OutputDebugStringA(OutputStringDebug);
+    snprintf(OutputStringDebug, 254, "%d deduplicates %lld hash collisions\n", deduplicates, listCount);
+    OutputDebugStringA(OutputStringDebug);
 #endif
 
     DeInitMemory(&tempPosition);
@@ -991,7 +1039,10 @@ ObjModel CreateCube(Memory *memory)
     result.vertices = (ObjVertex *)MyMalloc(memory, sizeof(ObjVertex) * result.vertexCount);
 
     for (int i = 0; i < (int)result.vertexCount; i++)
+    {
         result.vertices[i] = vertices[i];
+        result.vertices[i].materialID = 0;
+    }
 
     int triangleIndices[] = {0,  1, 2, 3,  4, 5, 6,  7, 8, 9,  10, 11, 12, 13, 14, 15, 16, 17,
                              18, 0, 2, 19, 3, 5, 20, 6, 8, 21, 9,  11, 22, 12, 14, 23, 15, 17};
@@ -1005,7 +1056,7 @@ ObjModel CreateCube(Memory *memory)
     result.materials.material->ambient = {1, 1, 1};
     result.materials.material->diffuse = {1, 1, 1};
     result.materials.material->Opaqueness = 1.f;
-
+    result.materials.material->Shininess = 1.f;
     return (result);
 }
 
@@ -1039,6 +1090,7 @@ ObjModel CreateSphere(int latitudeCount, int longitudeCount, ArenaAllocator *mem
             result.vertices[v].normal = result.vertices[v].position;
             NormalizeV3(result.vertices[v].normal);
             result.vertices[v].textureUV = {{(f32)j / longitudeCount, (f32)i / latitudeCount}};
+            result.vertices[v].materialID = 0;
         }
     }
 
@@ -1077,5 +1129,6 @@ ObjModel CreateSphere(int latitudeCount, int longitudeCount, ArenaAllocator *mem
     result.materials.material->ambient = {1, 1, 1};
     result.materials.material->diffuse = {1, 1, 1};
     result.materials.material->Opaqueness = 1.f;
+    result.materials.material->Shininess = 1.f;
     return result;
 }
