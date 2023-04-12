@@ -36,8 +36,8 @@ void Engine::InitPhysics()
 	m_physics = PxCreatePhysics(PX_PHYSICS_VERSION, *m_foundation, PxTolerancesScale());
 
 	// TODO(a.perche): Make GPU work
-	//PxCudaContextManagerDesc cudaContextManagerDesc;
-	//m_cudaContextManager = PxCreateCudaContextManager(*m_foundation, cudaContextManagerDesc, PxGetProfilerCallback());
+	PxCudaContextManagerDesc cudaContextManagerDesc;
+	m_cudaContextManager = PxCreateCudaContextManager(*m_foundation, cudaContextManagerDesc, PxGetProfilerCallback());
 
 	PxSceneDesc sceneDesc(m_physics->getTolerancesScale());
 	sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
