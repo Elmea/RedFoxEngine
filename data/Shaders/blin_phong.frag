@@ -91,9 +91,9 @@ void main()
     o_color = vec4(result, 1);
 }
 
+// Adapted code from a previous project
 float ShadowCalculation(Light light)
 {
-    // Adapted code from a previous project
     vec3 FragPosition = texture(gPosition, TexCoord).xyz;
     vec3 Normal       = texture(gNormal, TexCoord).xyz;
     vec4 fragPosLightSpace = light.lightVp * vec4(FragPosition, 1);
