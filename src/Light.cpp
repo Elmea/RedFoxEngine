@@ -36,15 +36,16 @@ void Engine::UpdateLights(float time) //TODO: This function or something like th
         for(int i = 0; i < lightCount; i++)
         {
             light[i] = {};
-            light[i].position = {{sinf(time) * i * 2,
+            light[i].position = { m_gameObjects[i].position.x, m_gameObjects[i].position.y, m_gameObjects[i].position.z };
+            /*{{sinf(time) * i * 2,
                                   sinf((time / 3) * i * 3),
-                                  cosf((time / 6) * 2) * i * 3}};
+                                  cosf((time / 6) * 2) * i * 3}};*/
             light[i].constant  = 1.0f;
-            light[i].linear    = 0.09f;
-            light[i].quadratic = 0.032f;
-            light[i].ambient = {{0.01, 0.01, 0.01}};
+            light[i].linear    = 0.1f;
+            //light[i].quadratic = 0.032f;
+            light[i].ambient = {{0.1, 0.1, 0.1}};
             light[i].specular = {{0.1, 0.1, 0.1}};
-            float intensity = 0.3f;
+            float intensity = 0.7f;
             light[i].diffuse = {{sinf(time * 0.5 * i) * intensity,
                                  sinf(time * 0.6 * i) * intensity,
                                  cosf(time * 0.3 * i) * intensity}};
@@ -58,9 +59,9 @@ void Engine::UpdateLights(float time) //TODO: This function or something like th
         {
             light[i] = {};
             light[i].direction = {{0, -1, 0}};
-            light[i].ambient = {{0.01, 0.01, 0.01}};
+            light[i].diffuse = {{0.1, 0.1, 0.1}};
             light[i].specular = {{0.1, 0.1, 0.1}};
-            light[i].ambient = {{0.01, 0.01, 0.01}};
+            light[i].ambient = {{0.1, 0.1, 0.1}};
         }
         m_graphics.ReleaseDirLightBuffer();
     }

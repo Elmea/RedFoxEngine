@@ -1,11 +1,12 @@
-#include "Engine.hpp"
-
 #include <thread>
+#include <vector>
+
+#include "Engine.hpp"
 
 using namespace RedFoxEngine;
 using namespace physx;
 
-void Engine::createCubeCollider(const PxTransform& t, PxU32 size, PxReal halfExtent)
+void Engine::CreateCubeCollider(const PxTransform& t, PxU32 size, PxReal halfExtent)
 {
 	PxShape* shape = m_physics->createShape(PxBoxGeometry(halfExtent, halfExtent, halfExtent), *m_material);
 	PxRigidDynamic* body = m_physics->createRigidDynamic(t);
@@ -15,7 +16,7 @@ void Engine::createCubeCollider(const PxTransform& t, PxU32 size, PxReal halfExt
 	shape->release();
 }
 
-void Engine::createSphereCollider(const PxTransform& t, PxReal radius)
+void Engine::CreateSphereCollider(const PxTransform& t, PxReal radius)
 {
 	PxShape* shape = m_physics->createShape(PxSphereGeometry(radius), *m_material);
 	PxRigidDynamic* body = m_physics->createRigidDynamic(t);
@@ -35,18 +36,22 @@ void Engine::InitPhysics()
 
 	m_physics = PxCreatePhysics(PX_PHYSICS_VERSION, *m_foundation, PxTolerancesScale());
 
-	// TODO(a.perche): Make GPU work
 	PxCudaContextManagerDesc cudaContextManagerDesc;
 	m_cudaContextManager = PxCreateCudaContextManager(*m_foundation, cudaContextManagerDesc, PxGetProfilerCallback());
-
+	
 	PxSceneDesc sceneDesc(m_physics->getTolerancesScale());
-	sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
+	sceneDesc.gravity = PxVec3(0.0f, -30.f /*-9.81f*/, 0.0f);
+
 	m_dispatcher = PxDefaultCpuDispatcherCreate(std::thread::hardware_concurrency());
 	sceneDesc.cpuDispatcher = m_dispatcher;
 	sceneDesc.filterShader = PxDefaultSimulationFilterShader;
-	//sceneDesc.cudaContextManager = m_cudaContextManager;
-	//sceneDesc.flags |= PxSceneFlag::eENABLE_GPU_DYNAMICS;
-	//sceneDesc.broadPhaseType = PxBroadPhaseType::eGPU;
+
+	if (m_cudaContextManager->contextIsValid())
+	{
+		sceneDesc.cudaContextManager = m_cudaContextManager;
+		sceneDesc.flags |= PxSceneFlag::eENABLE_GPU_DYNAMICS;
+		sceneDesc.broadPhaseType = PxBroadPhaseType::eGPU;
+	}
 	m_scene = m_physics->createScene(sceneDesc);
 
 	PxPvdSceneClient* pvdClient = m_scene->getScenePvdClient();
@@ -58,18 +63,18 @@ void Engine::InitPhysics()
 	}
 	m_material = m_physics->createMaterial(0.5f, 0.5f, 0.6f);
 
-	for (u32 i = 0; i < m_gameObjectCount; i++)
-	{
-		PxTransform gameObjectTransform(m_gameObjects[i].position.x,
-			m_gameObjects[i].position.y, m_gameObjects[i].position.z);
-		if (isSphere(m_gameObjects[i]))
-			createSphereCollider(gameObjectTransform, (float)m_gameObjects[i].radius);
-		else
-			createCubeCollider(gameObjectTransform, 1, 0.5);
-	}
-	
+	// TODO: Replace with scene loaded context
 	PxRigidStatic* groundPlane = PxCreatePlane(*m_physics, PxPlane(0, 1, 0, 10), *m_material);
 	m_scene->addActor(*groundPlane);
+
+	for (u32 i = 0; i < m_gameObjectCount; i++)
+	{
+		PxTransform gameObjectTransform(m_gameObjects[i].position.x, m_gameObjects[i].position.y, m_gameObjects[i].position.z);
+		if (m_gameObjects[i].model == &m_models[1])
+			CreateSphereCollider(gameObjectTransform, (float)m_gameObjects[i].radius);
+		else
+			CreateCubeCollider(gameObjectTransform, 1, 0.5);
+	}
 }
 
 void Engine::UpdatePhysics()
@@ -80,7 +85,7 @@ void Engine::UpdatePhysics()
 		m_scene->simulate(1.0f / 60.0f);
 		m_scene->fetchResults(true);
 		std::vector<physx::PxRigidActor*> actors;
-		actors.resize(m_gameObjectCount + 1); // We add the hard coded floor
+		actors.resize(nbActors);
 		m_scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC, reinterpret_cast<PxActor**>(&actors[0]), nbActors);
 		for (int i = 1; i < m_gameObjectCount; i++)
 		{
@@ -94,14 +99,4 @@ void Engine::UpdatePhysics()
 			m_gameObjects[i].orientation.d = transform.q.z;
 		}
 	}
-}
-
-bool Engine::isCube(GameObject& object)
-{
-	return object.model == &m_models[0];
-}
-
-bool Engine::isSphere(GameObject& object)
-{
-	return object.model == &m_models[1];
 }

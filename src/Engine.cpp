@@ -39,7 +39,7 @@ Engine::Engine(int width, int height) :
 #if 0
     LoadScene("test.scene");
 #else
-    initSphericalManyGameObjects(5000);
+    initSphericalManyGameObjects(70000);
     m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);
 #endif
     m_input = {};
@@ -185,7 +185,7 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     for (int i = 0; i < (int)m_gameObjectCount; i++)
     {
         m_gameObjects[i].parent = nullptr;
-        m_gameObjects[i].model = &m_models[i % m_modelCount];
+        m_gameObjects[i].model = &m_models[2];// i% m_modelCount];
         if (m_gameObjects[i].model == &m_models[0])
             m_gameObjects[i].boxExtents = { 0.5, 0.5, 0.5 };
         else if (m_gameObjects[i].model == &m_models[1])
@@ -199,12 +199,13 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
         m_gameObjects[i].parent = &m_gameObjects[0];
     }
     //TODO transition to an instance based model 'model'
-
+    /*
     m_gameObjects[1].parent = &m_gameObjects[0];
     m_gameObjects[1].position = {};
     m_gameObjects[1].scale = {0.5, 0.5, 0.5};
     m_gameObjects[2].position = {2, 1, 0};
     m_gameObjects[2].scale = m_gameObjects[1].scale;
+    */
 
     int countX = (int)sqrtf(count);
     int countY = count / countX;
@@ -220,7 +221,7 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
             m_gameObjects[index++].position =
                 {
                     cosf(longitudeStep * j) * sinf(i * latitudeStep),
-                    sinf(longitudeStep * j) * sinf(i * latitudeStep),
+                    sinf(longitudeStep * j) * sinf(i * latitudeStep) + 50,
                     cosf(i * latitudeStep - M_PI)
                 };
             m_gameObjects[index - 1].position =
@@ -257,10 +258,10 @@ void Engine::UpdateEditorCamera()
         if (m_input.D || m_input.Right) inputDirection.x += 1;
         inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
         inputDirection.Normalize();
-        inputDirection = inputDirection * 20.f;
+        inputDirection = inputDirection * 200.f;
         m_editorCamera.position += m_editorCameraSpeed * dt32 + inputDirection * (dt32 * dt32 * 0.5f);
         m_editorCameraSpeed += inputDirection * dt32 * 0.5f;
-        m_editorCameraSpeed *= exp(dt32 * -2.f); // Drag
+        m_editorCameraSpeed *= exp(dt32 * -3.f); // Drag
     }
     m_editorCamera.m_parameters.aspect = m_platform.m_windowDimension.width / (f32)m_platform.m_windowDimension.height;
 }
@@ -303,4 +304,5 @@ Engine::~Engine()
         DeInitObj(&m_models[i].obj);
     m_defaultFont->ContainerAtlas->Clear();
     ImGui::DestroyContext();
+    m_cudaContextManager->release();
 }

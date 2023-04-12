@@ -22,8 +22,6 @@
 #include "GameObject.hpp"
 #include "Camera.hpp"
 
-#include <vector> // TODO: Remove
-
 namespace RedFoxEngine
 {
 
@@ -66,22 +64,17 @@ private:
     physx::PxMaterial* m_material = nullptr;
     physx::PxPvd* m_pvd = nullptr;
     physx::PxCudaContextManager* m_cudaContextManager = nullptr;
-   
-    bool isCube(GameObject& object);
-    bool isSphere(GameObject& object);
-    void createCubeCollider(const physx::PxTransform& t, physx::PxU32 size, physx::PxReal halfExtent);
-    void createSphereCollider(const physx::PxTransform& t, physx::PxReal radius);
 
 private:
-    
     void InitPhysics();
+    void CreateCubeCollider(const physx::PxTransform& t, physx::PxU32 size, physx::PxReal halfExtent);
+    void CreateSphereCollider(const physx::PxTransform& t, physx::PxReal radius);
     void UpdatePhysics();
     
     void DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight);
-    int DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
+    int  DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
     void DrawSceneNodes(bool is_child, GameObject* model);
     void DrawIMGUI();
-    //void DrawGizmo(float* cameraView, float* cameraProjection, float* matrix, float camDistance, bool editTransformDecomposition);
     void UpdateEditorCamera();
     void ObjModelPush(const char *objPath);
     void InitIMGUI();
