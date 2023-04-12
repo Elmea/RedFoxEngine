@@ -46,14 +46,13 @@ Engine::Engine(int width, int height) :
 #if 0
     LoadScene("Sample Scene.scene");
 #else
-    initSphericalManyGameObjects(5000);
+    initSphericalManyGameObjects(1000);
     m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);
 #endif
     m_input = {};
     m_dc = GetDC(m_platform.m_window);
     UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll",
         m_gameLibrary, &m_lastTime, nullptr);
-    m_graphics.InitQuad();
     m_graphics.InitLights();
     StartTime();
 }
@@ -197,9 +196,7 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
         m_gameObjects[i].model = &m_models[i % m_modelCount];
         m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 1;
         if(i % m_modelCount == 3)
-        {
             m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 0.2;
-        }
         m_gameObjects[i].orientation.a = 1;
         char tmp[255];
         int size = snprintf(tmp, 255, "Entity%d", i);
@@ -234,7 +231,6 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
                 };
             m_gameObjects[index - 1].position =
                 m_gameObjects[index - 1].position * scale;
-            //m_gameObjects[index - 1].position.y *= 2;
         }
     }
 }
@@ -294,8 +290,7 @@ void Engine::Update()
 
 void Engine::Draw()
 {
-    m_graphics.DrawGBuffer(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
-    m_graphics.DrawQuad(m_platform.m_windowDimension);
+    m_graphics.DrawGameObjects(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
     DrawIMGUI();
     // swap the buffers to show output
     if (!SwapBuffers(m_dc))

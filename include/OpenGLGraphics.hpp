@@ -26,12 +26,7 @@ private:
     GLuint m_textureSampler;
     Textures m_textures = {};
     RedFoxMaths::Mat4 m_viewProjection;
-    GLuint m_vshader, m_fshader, m_pipeline;
     GLuint m_gvshader, m_gfshader, m_gpipeline;
-    GLuint m_rboIMGUI;
-    GLuint m_quadVAO;
-    GLuint m_gBuffer;
-    // GLuint m_booleanBuffer;
     GLuint m_imguiFramebuffer;
     u32    m_materialSSBO;
     u32    m_matrixSSBO;
@@ -42,18 +37,16 @@ private:
     GLuint m_dirLightSSBO;
     u32    m_pointLightCount;
     GLuint m_pointLightSSBO;
-    GLuint m_gPosition, m_gNormal, m_gAlbedoSpec;
+    RedFoxMaths::Mat4 *mem;
+    u64 *modelCountIndex;
 public:
     Model *m_models = nullptr;
     u32    m_modelCount;
     GLuint m_imguiTexture;
-    void DrawGBuffer(GameObject *objects, int gameObjectCount, Memory *temp);
-    void DrawQuad(WindowDimension dimension);
-    void DrawModel(Model *model);
+    void DrawGameObjects(GameObject *objects, int gameObjectCount, Memory *temp);
     // void DrawModelInstances(Model *model, int instanceCount);
     void DrawModelInstances(Model *model, RedFoxMaths::Mat4 *modelMatrices,
         int instanceCount);
-    void InitQuad();
     void InitModel(Model *model);
     void InitLights();
     void BindLights();
@@ -67,7 +60,6 @@ public:
     void InitFramebuffer();
     void InitShaders(Memory *tempArena);
     void InitGraphics(Memory *tempArena, WindowDimension dimension);
-    void InitGeometryFramebuffer(WindowDimension dimension);
     void InitImGUIFramebuffer(WindowDimension dimension);
     void UpdateImGUIFrameBuffer(WindowDimension &dimension, WindowDimension content);
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
