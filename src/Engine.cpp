@@ -50,11 +50,12 @@ Engine::Engine(int width, int height) :
 #if 0
     LoadScene("Sample Scene.scene");
 #else
-    initSphericalManyGameObjects(10);
+    initSphericalManyGameObjects(1000);
     m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);
     
     // Some light for testing
     {
+        /*
         Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
 
         dir->lightInfo.constant = 1.0f;
@@ -65,8 +66,8 @@ Engine::Engine(int width, int height) :
         dir->lightInfo.ambient = {0.3, 0.3, 0.3};
         dir->lightInfo.diffuse = {0.6, 0.6, 0.6};
         dir->lightInfo.specular = {0.1, 0.1, 0.1};
+        */
      
-        /*
         Light* spot = m_graphics.lightStorage.CreateLight(LightType::SPOT);
         spot->lightInfo.constant = 1.0f;
         spot->lightInfo.linear = 0.09f;
@@ -78,7 +79,6 @@ Engine::Engine(int width, int height) :
         spot->lightInfo.specular = {0.1, 0.1, 0.1};
         spot->lightInfo.cutOff = 0.5f;
         spot->lightInfo.outerCutOff = 0.1f;
-        */
     }
 
 

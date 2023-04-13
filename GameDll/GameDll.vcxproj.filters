@@ -34,18 +34,6 @@
     <None Include="..\data\Shaders\blin_phong.frag">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="..\data\Shaders\fragment.frag">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="..\data\Shaders\gBuffer.frag">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="..\data\Shaders\gBuffer.vert">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="..\data\Shaders\vertex.vert">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
     <None Include="..\data\Shaders\ShadowShader.frag">
       <Filter>Resource Files\Shaders</Filter>
     </None>
@@ -53,6 +41,9 @@
       <Filter>Resource Files\Shaders</Filter>
     </None>
     <None Include="..\data\Shaders\blinn_phong.frag.glsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="..\data\Shaders\blinn_phong.vert.glsl">
       <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>

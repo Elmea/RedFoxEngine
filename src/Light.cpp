@@ -34,15 +34,15 @@ void Light::SetProjection(LightType type)
     switch (type)
     {
     case (LightType::DIRECTIONAL):
-        projection = RedFoxMaths::Mat4::GetOrthographicMatrix(-100, 100, -100, 100, 0.1, 100);
+        projection = RedFoxMaths::Mat4::GetOrthographicMatrix(-100, 100, -100, 100, 100.0001, 0.0001);
         break;
 
     case (LightType::POINT):
-        projection = RedFoxMaths::Mat4::GetPerspectiveMatrix(80, 1, 25, 0.1);
+        projection = RedFoxMaths::Mat4::GetPerspectiveMatrix(1, 80, 1000, 0.0001);
         break;
 
     case (LightType::SPOT):
-        projection = RedFoxMaths::Mat4::GetPerspectiveMatrix(80, 1, 25, 0.1);
+        projection = RedFoxMaths::Mat4::GetPerspectiveMatrix(1, 80, 10, 0.0001);
         break;
 
     default:
@@ -133,10 +133,8 @@ void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This f
         if (update)
         {
             RedFoxMaths::Float3 rotation = RedFoxMaths::Float3::DirToEuler(current->lightInfo.direction, { 0.0f, 1.0f, 0.0f });
-            RedFoxMaths::Mat4 lightView = RedFoxMaths::Mat4::GetTranslation(current->lightInfo.position) *
-                RedFoxMaths::Mat4::GetRotationY(rotation.y) * RedFoxMaths::Mat4::GetRotationX(rotation.x) *
-                RedFoxMaths::Mat4::GetRotationZ(rotation.z);
-            current->lightInfo.VP = (lightStorage->lights[i].GetProjection() * lightView.GetInverseMatrix()).GetTransposedMatrix();
+            RedFoxMaths::Mat4 lightView = RedFoxMaths::Mat4::CreateTransformMatrix(current->lightInfo.position, rotation, { 1.f, 1.f, 1.f });
+            current->lightInfo.VP = (lightStorage->lights[i].GetProjection() * lightView).GetTransposedMatrix();
         }
     }
 

@@ -81,7 +81,7 @@ layout(std430, binding = 5) buffer Materials
     readonly Material material[];
 } mat;
 
-layout(std430, binding = 4) buffer ShadowMaps
+layout(std430, binding = 6) buffer ShadowMaps
 {
     readonly uvec2 data[];
 } sb_ShadowMaps;
@@ -94,7 +94,7 @@ float ShadowCalculation(Light light)
     vec3 Normal       = fs_in.Normal;
 
     vec4 fragPosLightSpace = light.lightVp * vec4(FragPosition, 1);
-    sampler2D shadowMap = sampler2D(sb_ShadowMaps.data[light.index]);
+    sampler2D shadowMap = sampler2D(sb_ShadowMaps.data[0]);
 
     // perform perspective divide
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
@@ -136,7 +136,8 @@ vec3 CalcDirLight(Light light, vec3 normal, vec3 viewDir, vec3 Color)
     vec3 ambient = light.ambient * Color;
     vec3 diffuse = light.diffuse * diff * Color;
     vec3 specular = light.specular * spec * specularFloat;
-    return (ambient + diffuse + specular);
+    float shadow = ShadowCalculation(light);
+    return (ambient + (1.0 - shadow) * (diffuse + specular));
 }
 
 vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 Color)
@@ -166,7 +167,7 @@ vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 Co
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(viewDir, halfwayDir), 0.0), mat.material[fs_in.materialID].Shininess);
     float distance    = length(light.position - fragPos);
-    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+    float attenuation = 1.0; // / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
     float theta       = dot(lightDir, normalize(-light.direction)); 
     float epsilon     = light.cutOff - light.outerCutOff;
     float intensity   = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
@@ -177,7 +178,8 @@ vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 Co
     ambient  *= attenuation * intensity;
     diffuse  *= attenuation * intensity;
     specular *= attenuation * intensity;
-    return (ambient + diffuse + specular);
+    float shadow = ShadowCalculation(light);
+    return (ambient + (1.0 - shadow) * (diffuse + specular));
 }
 
 void main()
