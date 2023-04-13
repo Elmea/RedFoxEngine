@@ -25,6 +25,7 @@ void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
             10000 * sizeof(RedFoxMaths::Mat4),
             nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
         glCreateBuffers(1, &m_textureSSBO);
+        glCreateBuffers(1, &m_shadowMapsSSBO);
 
         glCreateBuffers(1, &m_materialSSBO);
         glNamedBufferStorage(m_materialSSBO,
@@ -38,6 +39,7 @@ void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
     glSamplerParameteri(m_textureSampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     glNamedBufferStorage(m_textureSSBO, 10000 * sizeof(u64), nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(m_shadowMapsSSBO, 1000 * sizeof(u64), nullptr, GL_DYNAMIC_STORAGE_BIT);
     wglSwapIntervalEXT(0);
 }
 
@@ -228,6 +230,12 @@ void Graphics::DrawGameObjects()
     for (int i = 0; i < (int)m_textures.textureCount; i++)
         textureHandles[i] = glGetTextureSamplerHandleARB(m_textures.textures[i], m_textureSampler);
     glNamedBufferSubData(m_textureSSBO,	0, sizeof(u64) * (m_textures.textureCount), textureHandles);
+
+    GLuint64 shadowMapsHandles[128];
+    for (int i = 0; i < (int)lightStorage.lightCount; i++)
+        shadowMapsHandles[i] = glGetTextureHandleARB(lightStorage.lights[i].lightInfo.shadowParameters.depthMap);
+    glNamedBufferSubData(m_shadowMapsSSBO, 0, sizeof(u64) * (lightStorage.lightCount), shadowMapsHandles);
+
     glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -290,6 +298,7 @@ void Graphics::DrawModelInstances(Model *model,
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_matrixSSBO);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, m_textureSSBO);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, m_materialSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, m_shadowMapsSSBO);
 
     glDrawElementsInstanced(GL_TRIANGLES, model->obj.indexCount,
         GL_UNSIGNED_INT, 0, instanceCount);

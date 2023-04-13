@@ -57,6 +57,7 @@
     X(PFNGLUNIFORMBLOCKBINDINGPROC, glUniformBlockBinding)                    \
     X(PFNGLCREATESAMPLERSPROC, glCreateSamplers)                              \
     X(PFNGLSAMPLERPARAMETERIPROC, glSamplerParameteri)                        \
+    X(PFNGLGETTEXTUREHANDLEARBPROC, glGetTextureHandleARB)                    \
     X(PFNGLGETTEXTURESAMPLERHANDLEARBPROC, glGetTextureSamplerHandleARB)      \
     X(PFNGLMAKETEXTUREHANDLERESIDENTARBPROC, glMakeTextureHandleResidentARB)  \
     X(PFNGLBINDTEXTURESPROC, glBindTextures)                    \

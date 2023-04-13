@@ -23,6 +23,9 @@ Light::Light(LightType lightType, int _index)
     glBindFramebuffer(GL_FRAMEBUFFER, lightInfo.shadowParameters.depthMapFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, lightInfo.shadowParameters.depthMap, 0);
 
+    u64 handle = glGetTextureHandleARB(lightInfo.shadowParameters.depthMap);
+    glMakeTextureHandleResidentARB(handle);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 

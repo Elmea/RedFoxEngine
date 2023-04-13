@@ -41,6 +41,7 @@ private:
     u32    m_materialSSBO;
     u32    m_matrixSSBO;
     u32    m_textureSSBO;
+    u32    m_shadowMapsSSBO;
     u32    m_spotLightCount;
     GLuint m_spotLightSSBO;
     u32    m_dirLightCount;
