@@ -167,6 +167,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)include\RedFoxMaths;$(SolutionDir)external;$(SolutionDir)external\include\Jolt;$(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <PreLinkEvent>
       <Command>

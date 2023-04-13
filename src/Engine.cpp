@@ -329,8 +329,9 @@ void Engine::Draw()
 {
     if (m_deltaTime < 3)
     { 
+        float sleepTime = 3 - m_deltaTime;
         timeBeginPeriod(1);
-        Sleep(3);
+        Sleep((DWORD)sleepTime);
         timeEndPeriod(1);
     }
     m_graphics.CalcShadows(m_gameObjects, m_gameObjectCount, &m_tempAllocator);

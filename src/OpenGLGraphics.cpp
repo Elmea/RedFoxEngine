@@ -22,7 +22,7 @@ void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
     {
         glCreateBuffers(1, &m_matrixSSBO);
         glNamedBufferStorage(m_matrixSSBO,
-            10000 * sizeof(RedFoxMaths::Mat4),
+            100000 * sizeof(RedFoxMaths::Mat4),
             nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
         glCreateBuffers(1, &m_textureSSBO);
         glCreateBuffers(1, &m_shadowMapsSSBO);
@@ -223,7 +223,7 @@ void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
 void Graphics::DrawGameObjects()
 {
     //NOTE: here we clear the 0 framebuffer
-    int batchCount = 10000; //TODO figure out a good value for this
+    int batchCount = 100000;
     glClearColor(0, 0, 0, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // clear screen
@@ -303,13 +303,15 @@ void Graphics::DrawModelInstances(Model *model,
 
     glDrawElementsInstanced(GL_TRIANGLES, model->obj.indexCount,
         GL_UNSIGNED_INT, 0, instanceCount);
+    glFlush();
+    glFinish();
 }
 
 void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* temp)
 {
     glCullFace(GL_FRONT);
 
-    int batchCount = 10000;
+    int batchCount = 100000;
     mem = (RedFoxMaths::Mat4 *)MyMalloc(temp,
         sizeof(RedFoxMaths::Mat4) * batchCount * (m_modelCount));
     modelCountIndex = (u64 *)MyMalloc(temp,
