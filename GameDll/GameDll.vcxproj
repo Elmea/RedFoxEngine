@@ -235,12 +235,10 @@
   <ItemGroup>
     <None Include="..\data\Shaders\blinn_phong.frag.glsl" />
     <None Include="..\data\Shaders\blin_phong.frag" />
-    <None Include="..\data\Shaders\fragment.frag" />
-    <None Include="..\data\Shaders\gBuffer.frag" />
-    <None Include="..\data\Shaders\gBuffer.vert" />
     <None Include="..\data\Shaders\ShadowShader.frag" />
     <None Include="..\data\Shaders\ShadowShader.vert" />
-    <None Include="..\data\Shaders\vertex.vert" />
+    <None Include="..\data\Shaders\skydome.frag" />
+    <None Include="..\data\Shaders\skydome.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -31,7 +31,10 @@ Engine::Engine(int width, int height) :
     m_models[m_modelCount].obj = CreateSphere(30, 25, &m_arenaAllocator);
     m_models[m_modelCount].hash = 2;
     m_modelCount++;
-    ObjModelPush("ts_bot912.obj");
+    m_models[m_modelCount].obj = CreateSkyDome(100, 100, &m_arenaAllocator);
+    m_models[m_modelCount].hash = 3;
+    m_modelCount++;
+    //ObjModelPush("ts_bot912.obj");
     //ObjModelPush("vortigaunt.obj");
     //ObjModelPush("barbarian.obj");
 
@@ -46,6 +49,7 @@ Engine::Engine(int width, int height) :
     //TODO transition to an instance based model 'model'
     for (int i = 0; i < (int)m_modelCount; i++)
         m_graphics.InitModel(&m_models[i]);
+    m_graphics.InitSkyDome();
     m_sceneUsedMemory = m_arenaAllocator.usedSize;
 #if 0
     LoadScene("Sample Scene.scene");
@@ -337,6 +341,8 @@ void Engine::Draw()
     m_graphics.CalcShadows(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
     glViewport(0, 0, m_platform.m_windowDimension.width,
                      m_platform.m_windowDimension.height);
+    m_graphics.DrawSkyDome(m_deltaTime);
+
     m_graphics.DrawGameObjects();
     DrawIMGUI();
     // swap the buffers to show output

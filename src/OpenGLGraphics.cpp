@@ -1,6 +1,9 @@
 #include "OpenGLGraphics.hpp"
 #include "glcorearb.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "STB_Image/stb_image.h"
+
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
 
@@ -37,7 +40,7 @@ void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
     glSamplerParameteri(m_textureSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glSamplerParameteri(m_textureSampler, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glSamplerParameteri(m_textureSampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
+   
     glNamedBufferStorage(m_textureSSBO, 10000 * sizeof(u64), nullptr, GL_DYNAMIC_STORAGE_BIT);
     glNamedBufferStorage(m_shadowMapsSSBO, 1000 * sizeof(u64), nullptr, GL_DYNAMIC_STORAGE_BIT);
     wglSwapIntervalEXT(0);
@@ -213,6 +216,13 @@ void Graphics::InitShaders(Memory *tempArena)
     CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
         m_shadowvshader, m_shadowfshader, m_spipeline);
     tempArena->usedSize = tempSize;
+    vertexShaderSource = OpenAndReadEntireFile(
+        "Shaders\\skydome.vert", tempArena);
+    fragmentShaderSource = OpenAndReadEntireFile(
+        "Shaders\\skydome.frag", tempArena);
+    CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
+        m_skyvshader, m_skyfshader, m_skypipeline);
+    tempArena->usedSize = tempSize;
 }
 
 void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
@@ -220,12 +230,98 @@ void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
     m_viewProjection = vp;
 }
 
+void Graphics::InitSkyDome()
+{
+    m_skyDome.sunPosition = { 0, 1, 1 };
+    m_skyDome.model = RedFoxMaths::Mat4::GetScale({ 500, 500, 500 });
+    m_skyDome.starsRotation = RedFoxMaths::Mat4::GetIdentityMatrix();
+
+    int x, y, comp;
+    glCreateTextures(GL_TEXTURE_2D, 5, &m_skyDome.topTint);
+
+    char* data = (char*)stbi_load("Textures/topSkyTint.png", &x, &y, &comp, 4);
+    glTextureStorage2D(m_skyDome.topTint, 1, GL_RGBA8, x, y);
+    glTextureSubImage2D(m_skyDome.topTint, 0, 0, 0, x, y, GL_RGBA,
+        GL_UNSIGNED_BYTE, data);
+    /*glTextureParameteri(m_skyDome.topTint, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTextureParameteri(m_skyDome.topTint, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTextureParameteri(m_skyDome.topTint, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTextureParameteri(m_skyDome.topTint, GL_TEXTURE_MIN_FILTER, GL_LINEAR);*/
+    stbi_image_free(data);
+
+    data = (char*)stbi_load("Textures/botSkyTint.png", &x, &y, &comp, 4);
+    glTextureStorage2D(m_skyDome.botTint, 1, GL_RGBA8, x, y);
+    glTextureSubImage2D(m_skyDome.botTint, 0, 0, 0, x, y, GL_RGBA,
+        GL_UNSIGNED_BYTE, data);
+    /*glTextureParameteri(m_skyDome.botTint, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTextureParameteri(m_skyDome.botTint, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTextureParameteri(m_skyDome.botTint, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTextureParameteri(m_skyDome.botTint, GL_TEXTURE_MIN_FILTER, GL_LINEAR);*/
+    stbi_image_free(data);
+
+    data = (char*)stbi_load("Textures/sun.png", &x, &y, &comp, 4);
+    glTextureStorage2D(m_skyDome.sun, 1, GL_RGBA8, x, y);
+    glTextureSubImage2D(m_skyDome.sun, 0, 0, 0, x, y, GL_RGBA,
+        GL_UNSIGNED_BYTE, data);
+    /*glTextureParameteri(m_skyDome.sun, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTextureParameteri(m_skyDome.sun, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTextureParameteri(m_skyDome.sun, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTextureParameteri(m_skyDome.sun, GL_TEXTURE_MIN_FILTER, GL_LINEAR);*/
+    stbi_image_free(data);
+
+    data = (char*)stbi_load("Textures/moon.png", &x, &y, &comp, 4);
+    glTextureStorage2D(m_skyDome.moon, 1, GL_RGBA8, x, y);
+    glTextureSubImage2D(m_skyDome.moon, 0, 0, 0, x, y, GL_RGBA,
+        GL_UNSIGNED_BYTE, data);
+    /*glTextureParameteri(m_skyDome.moon, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTextureParameteri(m_skyDome.moon, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTextureParameteri(m_skyDome.moon, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTextureParameteri(m_skyDome.moon, GL_TEXTURE_MIN_FILTER, GL_LINEAR);*/
+    stbi_image_free(data);
+
+    data = (char*)stbi_load("Textures/clouds.png", &x, &y, &comp, 4);
+    glTextureStorage2D(m_skyDome.clouds, 1, GL_RGBA8, x, y);
+    glTextureSubImage2D(m_skyDome.clouds, 0, 0, 0, x, y, GL_RGBA,
+        GL_UNSIGNED_BYTE, data);
+    /*glTextureParameteri(m_skyDome.clouds, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTextureParameteri(m_skyDome.clouds, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTextureParameteri(m_skyDome.clouds, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTextureParameteri(m_skyDome.clouds, GL_TEXTURE_MIN_FILTER, GL_NEAREST);*/
+    stbi_image_free(data);
+}
+
+void Graphics::DrawSkyDome(float dt)
+{
+    static float time;
+    time += dt;
+    glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
+    glBindProgramPipeline(m_skypipeline);
+    glBindVertexArray(m_models[2].vao);
+
+    glClearColor(0, 0, 0, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    GLint u_matrix = 1;
+    RedFoxMaths::Mat4 mvp = m_viewProjection * m_skyDome.model;
+    
+    glBindTextureUnit(0, m_skyDome.topTint);
+    glBindTextureUnit(1, m_skyDome.botTint);
+    glBindTextureUnit(2, m_skyDome.sun);
+    glBindTextureUnit(3, m_skyDome.moon);
+    glBindTextureUnit(4, m_skyDome.clouds);
+    m_skyDome.sunPosition.x = cosf(time / 10);
+    m_skyDome.sunPosition.y = sinf(time / 10);
+    glProgramUniform3fv(m_skyvshader, 0, 1, &m_skyDome.sunPosition.x);
+    glProgramUniformMatrix4fv(m_skyvshader, u_matrix, 1, GL_TRUE, mvp.AsPtr());
+    glProgramUniformMatrix3fv(m_skyvshader, 2, 1, true, m_skyDome.starsRotation.AsPtr());
+
+    glDrawElements(GL_TRIANGLES, m_models[2].obj.indexCount, GL_UNSIGNED_INT, 0);
+}
+
 void Graphics::DrawGameObjects()
 {
     //NOTE: here we clear the 0 framebuffer
     int batchCount = 100000;
-    glClearColor(0, 0, 0, 1.f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // clear screen
     GLuint64 textureHandles[128];
     for (int i = 0; i < (int)m_textures.textureCount; i++)
@@ -238,7 +334,7 @@ void Graphics::DrawGameObjects()
     glNamedBufferSubData(m_shadowMapsSSBO, 0, sizeof(u64) * (lightStorage.lightCount), shadowMapsHandles);
 
     glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    /*glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);*/
 
     GLint u_matrix = 0;
     glProgramUniformMatrix4fv(m_gvshader, u_matrix, 1, GL_TRUE,
