@@ -104,6 +104,7 @@ void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This f
     for (int i = 0; i < lightStorage->lightCount; i++)
     {
         Light* current = &lightStorage->lights[i];
+        bool update = true;
         switch (current->GetType())
         {
         case (LightType::DIRECTIONAL):
@@ -122,16 +123,18 @@ void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This f
             break;
 
         default:
+            update = false;
             break;
         }
 
-
-        RedFoxMaths::Float3 rotation = RedFoxMaths::Float3::DirToEuler(current->lightInfo.direction, { 0.0f, 1.0f, 0.0f });
-        RedFoxMaths::Mat4 lightView = RedFoxMaths::Mat4::GetTranslation(current->lightInfo.position) *
-            RedFoxMaths::Mat4::GetRotationY(rotation.y) * RedFoxMaths::Mat4::GetRotationX(rotation.x) *
-            RedFoxMaths::Mat4::GetRotationZ(rotation.z);
-
-        current->lightInfo.VP = (lightStorage->lights[i].GetProjection() * lightView.GetInverseMatrix()).GetTransposedMatrix();
+        if (update)
+        {
+            RedFoxMaths::Float3 rotation = RedFoxMaths::Float3::DirToEuler(current->lightInfo.direction, { 0.0f, 1.0f, 0.0f });
+            RedFoxMaths::Mat4 lightView = RedFoxMaths::Mat4::GetTranslation(current->lightInfo.position) *
+                RedFoxMaths::Mat4::GetRotationY(rotation.y) * RedFoxMaths::Mat4::GetRotationX(rotation.x) *
+                RedFoxMaths::Mat4::GetRotationZ(rotation.z);
+            current->lightInfo.VP = (lightStorage->lights[i].GetProjection() * lightView.GetInverseMatrix()).GetTransposedMatrix();
+        }
     }
 
     m_graphics.SetLightsCount(dirCount, pointCount, spotCount);
