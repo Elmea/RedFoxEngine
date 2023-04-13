@@ -27,7 +27,6 @@ struct SkyDome
 {
     RedFoxMaths::Float3 sunPosition;
     RedFoxMaths::Mat4 model;
-    RedFoxMaths::Mat4 starsRotation;
     GLuint topTint, botTint, sun, moon, clouds;
 };
 

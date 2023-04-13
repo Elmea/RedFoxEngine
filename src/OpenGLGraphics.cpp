@@ -232,9 +232,8 @@ void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
 
 void Graphics::InitSkyDome()
 {
-    m_skyDome.sunPosition = { 0, 1, 1 };
+    m_skyDome.sunPosition = { 0.2, 1, 0 };
     m_skyDome.model = RedFoxMaths::Mat4::GetScale({ 500, 500, 500 });
-    m_skyDome.starsRotation = RedFoxMaths::Mat4::GetIdentityMatrix();
 
     int x, y, comp;
     glCreateTextures(GL_TEXTURE_2D, 5, &m_skyDome.topTint);
@@ -243,50 +242,30 @@ void Graphics::InitSkyDome()
     glTextureStorage2D(m_skyDome.topTint, 1, GL_RGBA8, x, y);
     glTextureSubImage2D(m_skyDome.topTint, 0, 0, 0, x, y, GL_RGBA,
         GL_UNSIGNED_BYTE, data);
-    /*glTextureParameteri(m_skyDome.topTint, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTextureParameteri(m_skyDome.topTint, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTextureParameteri(m_skyDome.topTint, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTextureParameteri(m_skyDome.topTint, GL_TEXTURE_MIN_FILTER, GL_LINEAR);*/
     stbi_image_free(data);
 
     data = (char*)stbi_load("Textures/botSkyTint.png", &x, &y, &comp, 4);
     glTextureStorage2D(m_skyDome.botTint, 1, GL_RGBA8, x, y);
     glTextureSubImage2D(m_skyDome.botTint, 0, 0, 0, x, y, GL_RGBA,
         GL_UNSIGNED_BYTE, data);
-    /*glTextureParameteri(m_skyDome.botTint, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTextureParameteri(m_skyDome.botTint, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTextureParameteri(m_skyDome.botTint, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTextureParameteri(m_skyDome.botTint, GL_TEXTURE_MIN_FILTER, GL_LINEAR);*/
     stbi_image_free(data);
 
     data = (char*)stbi_load("Textures/sun.png", &x, &y, &comp, 4);
     glTextureStorage2D(m_skyDome.sun, 1, GL_RGBA8, x, y);
     glTextureSubImage2D(m_skyDome.sun, 0, 0, 0, x, y, GL_RGBA,
         GL_UNSIGNED_BYTE, data);
-    /*glTextureParameteri(m_skyDome.sun, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTextureParameteri(m_skyDome.sun, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTextureParameteri(m_skyDome.sun, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTextureParameteri(m_skyDome.sun, GL_TEXTURE_MIN_FILTER, GL_LINEAR);*/
     stbi_image_free(data);
 
     data = (char*)stbi_load("Textures/moon.png", &x, &y, &comp, 4);
     glTextureStorage2D(m_skyDome.moon, 1, GL_RGBA8, x, y);
     glTextureSubImage2D(m_skyDome.moon, 0, 0, 0, x, y, GL_RGBA,
         GL_UNSIGNED_BYTE, data);
-    /*glTextureParameteri(m_skyDome.moon, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTextureParameteri(m_skyDome.moon, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTextureParameteri(m_skyDome.moon, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTextureParameteri(m_skyDome.moon, GL_TEXTURE_MIN_FILTER, GL_LINEAR);*/
     stbi_image_free(data);
 
     data = (char*)stbi_load("Textures/clouds.png", &x, &y, &comp, 4);
     glTextureStorage2D(m_skyDome.clouds, 1, GL_RGBA8, x, y);
     glTextureSubImage2D(m_skyDome.clouds, 0, 0, 0, x, y, GL_RGBA,
         GL_UNSIGNED_BYTE, data);
-    /*glTextureParameteri(m_skyDome.clouds, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTextureParameteri(m_skyDome.clouds, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTextureParameteri(m_skyDome.clouds, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTextureParameteri(m_skyDome.clouds, GL_TEXTURE_MIN_FILTER, GL_NEAREST);*/
     stbi_image_free(data);
 }
 
@@ -301,19 +280,19 @@ void Graphics::DrawSkyDome(float dt)
     glClearColor(0, 0, 0, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    GLint u_matrix = 1;
     RedFoxMaths::Mat4 mvp = m_viewProjection * m_skyDome.model;
     
+    float skySimulationTime = time / 250;
     glBindTextureUnit(0, m_skyDome.topTint);
     glBindTextureUnit(1, m_skyDome.botTint);
     glBindTextureUnit(2, m_skyDome.sun);
     glBindTextureUnit(3, m_skyDome.moon);
     glBindTextureUnit(4, m_skyDome.clouds);
-    m_skyDome.sunPosition.x = cosf(time / 10);
-    m_skyDome.sunPosition.y = sinf(time / 10);
+    m_skyDome.sunPosition.x = cosf(skySimulationTime);
+    m_skyDome.sunPosition.y = sinf(skySimulationTime);
     glProgramUniform3fv(m_skyvshader, 0, 1, &m_skyDome.sunPosition.x);
-    glProgramUniformMatrix4fv(m_skyvshader, u_matrix, 1, GL_TRUE, mvp.AsPtr());
-    glProgramUniformMatrix3fv(m_skyvshader, 2, 1, true, m_skyDome.starsRotation.AsPtr());
+    glProgramUniformMatrix4fv(m_skyvshader, 1, 1, GL_TRUE, mvp.AsPtr());
+    glProgramUniform1f(m_skyfshader, 0, skySimulationTime);
 
     glDrawElements(GL_TRIANGLES, m_models[2].obj.indexCount, GL_UNSIGNED_INT, 0);
 }
