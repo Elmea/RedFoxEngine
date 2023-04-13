@@ -187,4 +187,5 @@ void main()
         result += CalcSpotLight(light, Normal, FragPosition, vec3(0, 0, 0), Color);
     }
     o_color = vec4(result, 1);
+    // o_color = vec4(Color, 1);
 }

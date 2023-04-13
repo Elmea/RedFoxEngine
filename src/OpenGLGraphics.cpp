@@ -118,11 +118,11 @@ void Graphics::InitModel(Model *model)
         glVertexArrayAttribFormat (model->vao, a_uv, 2, GL_FLOAT, GL_FALSE,
             offsetof(struct ObjVertex, textureUV));
         glVertexArrayAttribBinding(model->vao, a_uv, vbuf_index);
-        int a_textureID = 3;
-        glEnableVertexArrayAttrib (model->vao, a_textureID);
-        glVertexArrayAttribIFormat (model->vao, a_textureID, 1, GL_UNSIGNED_INT,
+        int a_materialID = 3;
+        glEnableVertexArrayAttrib (model->vao, a_materialID);
+        glVertexArrayAttribIFormat (model->vao, a_materialID, 1, GL_UNSIGNED_INT,
             offsetof(struct ObjVertex, materialID));
-        glVertexArrayAttribBinding(model->vao, a_textureID, vbuf_index);
+        glVertexArrayAttribBinding(model->vao, a_materialID, vbuf_index);
     }
     InitModelTextures(&model->obj);
     DeInitGraphicsObj(&model->obj);
@@ -221,7 +221,7 @@ void Graphics::DrawGameObjects()
 {
     //NOTE: here we clear the 0 framebuffer
     int batchCount = 10000; //TODO figure out a good value for this
-    glClearColor(0, 0, 0, 0.f);
+    glClearColor(0, 0, 0, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // clear screen
     GLuint64 textureHandles[128];

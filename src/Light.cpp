@@ -138,31 +138,37 @@ void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This f
     }
 
     m_graphics.SetLightsCount(dirCount, pointCount, spotCount);
-    m_graphics.FillLightBuffer(dirligths, LightType::DIRECTIONAL);
     m_graphics.FillLightBuffer(pointLights, LightType::POINT);
+    m_graphics.FillLightBuffer(dirligths, LightType::DIRECTIONAL);
     m_graphics.FillLightBuffer(spotlights, LightType::SPOT);
 }
 
 void Graphics::BindLights()
 {
+    GLuint bindingPoint = 0;
     if (m_pointLightCount)
     {
-        GLuint bindingPoint = 0;
         glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_pointLightSSBO, 0, m_pointLightCount);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_pointLightSSBO);
     }
+    else
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, 0);
+    GLuint bindingDir = 1;
     if (m_dirLightCount)
     {
-        GLuint bindingDir = 1;
         glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingDir, m_dirLightSSBO, 0, m_dirLightCount);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingDir, m_dirLightSSBO);
     }
+    else
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingDir, 0);
+    GLuint bindingSpot = 2;
     if (m_spotLightCount)
     {
-        GLuint bindingSpot = 2;
         glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingSpot, m_spotLightSSBO, 0, m_spotLightCount);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingSpot, m_spotLightSSBO);
     }
+    else  
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingSpot, 0);
 }
 
 void Graphics::FillLightBuffer(LightInfo* lights, LightType type)
