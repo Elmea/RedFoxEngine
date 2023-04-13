@@ -205,6 +205,7 @@ void Graphics::InitShaders(Memory *tempArena)
         "Shaders\\blinn_phong.frag.glsl", tempArena);
     CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
         m_gvshader, m_gfshader, m_gpipeline);
+    tempArena->usedSize = tempSize;
     vertexShaderSource = OpenAndReadEntireFile(
         "Shaders\\ShadowShader.vert", tempArena);
     fragmentShaderSource = OpenAndReadEntireFile(
@@ -306,7 +307,6 @@ void Graphics::DrawModelInstances(Model *model,
 
 void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* temp)
 {
-    glBindProgramPipeline(m_spipeline);
     glCullFace(GL_FRONT);
 
     int batchCount = 10000;
@@ -326,23 +326,19 @@ void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* tem
             modelCountIndex[modelIndex]++;
         }
     }
-    for (int lightIdex = 0; lightIdex < lightStorage.lightCount; lightIdex++)
+    for (int lightIndex = 0; lightIndex < lightStorage.lightCount; lightIndex++)
     {
-        if (lightStorage.lights[lightIdex].GetType() == LightType::NONE)
+        if (lightStorage.lights[lightIndex].GetType() == LightType::NONE)
             continue;
 
         //to depth map
-        glViewport(0, 0, lightStorage.lights[lightIdex].lightInfo.shadowParameters.SHADOW_WIDTH, 
-            lightStorage.lights[lightIdex].lightInfo.shadowParameters.SHADOW_HEIGHT);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, lightStorage.lights[lightIdex].lightInfo.shadowParameters.depthMapFBO);
-        glClearColor(0, 0, 0, 1.f);
-        glClear(GL_DEPTH_BUFFER_BIT);
+        glViewport(0, 0, lightStorage.lights[lightIndex].lightInfo.shadowParameters.SHADOW_WIDTH, 
+            lightStorage.lights[lightIndex].lightInfo.shadowParameters.SHADOW_HEIGHT);
 
         {
             GLint u_matrix = 0;
             glProgramUniformMatrix4fv(m_shadowvshader, u_matrix, 1, GL_TRUE,
-                lightStorage.lights[lightIdex].lightInfo.VP.AsPtr());
+                lightStorage.lights[lightIndex].lightInfo.VP.AsPtr());
             for (int i = 0; i < (int)m_modelCount; i++)
             {
                 u64 countIndex = modelCountIndex[i];
@@ -350,6 +346,9 @@ void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* tem
                 {
                     glNamedBufferSubData(m_matrixSSBO, 0,
                         sizeof(RedFoxMaths::Mat4) * countIndex, &mem[batchCount * i]);
+                    glBindFramebuffer(GL_FRAMEBUFFER, lightStorage.lights[lightIndex].lightInfo.shadowParameters.depthMapFBO);
+                    glClearColor(0, 0, 0, 1.f);
+                    glClear(GL_DEPTH_BUFFER_BIT);
                     DrawModelShadowInstances(&m_models[i], countIndex);
                 }
             }
@@ -363,10 +362,13 @@ void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* tem
 void Graphics::DrawModelShadowInstances(Model* model, int instanceCount)
 {
     // provide vertex input
+    glBindProgramPipeline(m_spipeline);
     glBindVertexArray(model->vao);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_matrixSSBO);
     glDrawElementsInstanced(GL_TRIANGLES, model->obj.indexCount, GL_UNSIGNED_INT,
             0, instanceCount);
+    glFlush();
+    glFinish();
 
 }
 

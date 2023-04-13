@@ -11,6 +11,7 @@
 using namespace RedFoxEngine;
 
 using namespace RedFoxMaths;
+#include <timeapi.h>
 
 Engine::Engine(int width, int height) :
     m_platform(width, height),
@@ -31,8 +32,8 @@ Engine::Engine(int width, int height) :
     m_models[m_modelCount].hash = 2;
     m_modelCount++;
     ObjModelPush("ts_bot912.obj");
-    ObjModelPush("vortigaunt.obj");
-    ObjModelPush("barbarian.obj");
+    //ObjModelPush("vortigaunt.obj");
+    //ObjModelPush("barbarian.obj");
 
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
@@ -49,7 +50,7 @@ Engine::Engine(int width, int height) :
 #if 0
     LoadScene("Sample Scene.scene");
 #else
-    initSphericalManyGameObjects(1000);
+    initSphericalManyGameObjects(10);
     m_sceneName = initStringChar("Sample Scene", 255, &m_arenaAllocator);
     
     // Some light for testing
@@ -231,8 +232,8 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
         m_gameObjects[i].parent = nullptr;
         m_gameObjects[i].model = &m_models[i % m_modelCount];
         m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 1;
-        if(i % m_modelCount == 3)
-            m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 0.2;
+        //if(i % m_modelCount == 3)
+            //m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 0.2;
         m_gameObjects[i].orientation.a = 1;
         char tmp[255];
         int size = snprintf(tmp, 255, "Entity%d", i);
@@ -326,6 +327,12 @@ void Engine::Update()
 
 void Engine::Draw()
 {
+    if (m_deltaTime < 3)
+    { 
+        timeBeginPeriod(1);
+        Sleep(3);
+        timeEndPeriod(1);
+    }
     m_graphics.CalcShadows(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
     glViewport(0, 0, m_platform.m_windowDimension.width,
                      m_platform.m_windowDimension.height);
