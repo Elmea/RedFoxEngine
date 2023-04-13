@@ -54,7 +54,7 @@ public:
     u32    m_modelCount;
     GLuint m_imguiTexture;
     LightStorage lightStorage;
-    void DrawGameObjects(GameObject *objects, int gameObjectCount, Memory *temp);
+    void DrawGameObjects();
     // void DrawModelInstances(Model *model, int instanceCount);
     void DrawModelInstances(Model *model, RedFoxMaths::Mat4 *modelMatrices,
         int instanceCount);

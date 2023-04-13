@@ -79,20 +79,17 @@ void Graphics::InitLights()
     //     We should think about a max value, but that is the intention, all lights are
     // allocated to their max value first, then we can increase in size or decrease at runtime
     // the amount we actually use without reallocating.
-    
-    m_pointLightCount = 100; //TODO: in the future all lights will start at 0 count, and 
-    // the game or engine editor will add them in the scene.
-    m_dirLightCount = 1;
-    m_spotLightCount = 0;
+
+    const int maxLightCount = 100;
     glCreateBuffers(1, &m_pointLightSSBO);
-    glNamedBufferStorage(m_pointLightSSBO, m_pointLightCount * sizeof(Light), nullptr,
+    glNamedBufferStorage(m_pointLightSSBO, maxLightCount * sizeof(Light), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
     glCreateBuffers(1, &m_dirLightSSBO);
-    glNamedBufferStorage(m_dirLightSSBO, m_pointLightCount * sizeof(Light), nullptr,
+    glNamedBufferStorage(m_dirLightSSBO, maxLightCount * sizeof(Light), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
 
     glCreateBuffers(1, &m_spotLightSSBO);
-    glNamedBufferStorage(m_spotLightSSBO, m_pointLightCount * sizeof(Light), nullptr,
+    glNamedBufferStorage(m_spotLightSSBO, maxLightCount * sizeof(Light), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
 }
 
@@ -100,9 +97,9 @@ void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This f
 {
     int dirCount = 0, pointCount = 0, spotCount = 0;
 
-    LightInfo* dirligths = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * 1000);
-    LightInfo* pointLights = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * 1000); ;
-    LightInfo* spotlights = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * 1000); ;
+    LightInfo* dirligths = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * lightStorage->lightCount);
+    LightInfo* pointLights = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * lightStorage->lightCount);
+    LightInfo* spotlights = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * lightStorage->lightCount);
 
     for (int i = 0; i < lightStorage->lightCount; i++)
     {
@@ -188,9 +185,6 @@ void Graphics::FillLightBuffer(LightInfo* lights, LightType type)
     default:
         break;
     }
-    if (!lightCount)
-        return;
-
     glNamedBufferSubData(lightBuffer, 0, lightCount * sizeof(LightInfo), lights);
 }
 }

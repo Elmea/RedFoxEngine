@@ -327,8 +327,9 @@ void Engine::Update()
 void Engine::Draw()
 {
     m_graphics.CalcShadows(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
-
-    m_graphics.DrawGameObjects(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
+    glViewport(0, 0, m_platform.m_windowDimension.width,
+                     m_platform.m_windowDimension.height);
+    m_graphics.DrawGameObjects();
     DrawIMGUI();
     // swap the buffers to show output
     if (!SwapBuffers(m_dc))

@@ -37,11 +37,12 @@ namespace RedFoxEngine
         RedFoxMaths::Float3 specular;
         float quadratic;
 
-        float __padding;
-
         RedFoxMaths::Mat4 VP;
         ShadowParameters shadowParameters;
         int index;
+        int padding0;
+        int padding1;
+        int padding2;
 
         void operator=(LightInfo& light);
     };

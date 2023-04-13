@@ -24,12 +24,13 @@ struct Light {
     vec3 specular;
     float quadratic;
 
-    float _padding;
-
     mat4 lightVp;
     ShadowParameters shadowParameters;
 
     int index;
+    int padding0;
+    int padding1;
+    int padding2;
 };
 struct Material
 {

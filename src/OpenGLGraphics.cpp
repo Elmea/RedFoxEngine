@@ -217,28 +217,10 @@ void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
     m_viewProjection = vp;
 }
 
-void Graphics::DrawGameObjects(GameObject *objects, int gameObjectCount,
-    Memory *temp)
+void Graphics::DrawGameObjects()
 {
-    int batchCount = 10000;
-    mem = (RedFoxMaths::Mat4 *)MyMalloc(temp,
-        sizeof(RedFoxMaths::Mat4) * batchCount * (m_modelCount));
-    modelCountIndex = (u64 *)MyMalloc(temp,
-        sizeof(u64) * m_modelCount);
-    memset(modelCountIndex, 0, sizeof(u64) * m_modelCount);
-    for(int index = 0;index < gameObjectCount; index++)
-    {
-        if (objects[index].model)
-        {
-            u64 modelIndex = objects[index].model - m_models;
-            u64 countIndex = modelCountIndex[modelIndex];
-            mem[countIndex + (batchCount * modelIndex)] =
-                objects[index].GetWorldMatrix().GetTransposedMatrix();
-            modelCountIndex[modelIndex]++;
-        }
-    }
-
     //NOTE: here we clear the 0 framebuffer
+    int batchCount = 10000; //TODO figure out a good value for this
     glClearColor(0, 0, 0, 0.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // clear screen
@@ -313,11 +295,67 @@ void Graphics::DrawModelInstances(Model *model,
         GL_UNSIGNED_INT, 0, instanceCount);
 }
 
+void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* temp)
+{
+    glBindProgramPipeline(m_spipeline);
+    glCullFace(GL_FRONT);
+
+    int batchCount = 10000;
+    mem = (RedFoxMaths::Mat4 *)MyMalloc(temp,
+        sizeof(RedFoxMaths::Mat4) * batchCount * (m_modelCount));
+    modelCountIndex = (u64 *)MyMalloc(temp,
+        sizeof(u64) * m_modelCount);
+    memset(modelCountIndex, 0, sizeof(u64) * m_modelCount);
+    for(int index = 0;index < gameObjectCount; index++)
+    {
+        if (objects[index].model)
+        {
+            u64 modelIndex = objects[index].model - m_models;
+            u64 countIndex = modelCountIndex[modelIndex];
+            mem[countIndex + (batchCount * modelIndex)] =
+                objects[index].GetWorldMatrix().GetTransposedMatrix();
+            modelCountIndex[modelIndex]++;
+        }
+    }
+    for (int lightIdex = 0; lightIdex < lightStorage.lightCount; lightIdex++)
+    {
+        if (lightStorage.lights[lightIdex].GetType() == LightType::NONE)
+            continue;
+
+        //to depth map
+        glViewport(0, 0, lightStorage.lights[lightIdex].lightInfo.shadowParameters.SHADOW_WIDTH, 
+            lightStorage.lights[lightIdex].lightInfo.shadowParameters.SHADOW_HEIGHT);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, lightStorage.lights[lightIdex].lightInfo.shadowParameters.depthMapFBO);
+        glClearColor(0, 0, 0, 1.f);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        {
+            GLint u_matrix = 0;
+            glProgramUniformMatrix4fv(m_shadowvshader, u_matrix, 1, GL_TRUE,
+                lightStorage.lights[lightIdex].lightInfo.VP.AsPtr());
+            for (int i = 0; i < (int)m_modelCount; i++)
+            {
+                u64 countIndex = modelCountIndex[i];
+                if (countIndex)
+                {
+                    glNamedBufferSubData(m_matrixSSBO, 0,
+                        sizeof(RedFoxMaths::Mat4) * countIndex, &mem[batchCount * i]);
+                    DrawModelShadowInstances(&m_models[i], countIndex);
+                }
+            }
+        }
+    }
+
+    glCullFace(GL_BACK);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void Graphics::DrawModelShadowInstances(Model* model, int instanceCount)
 {
     // provide vertex input
     glBindVertexArray(model->vao);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_matrixSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_matrixSSBO);
     glDrawElementsInstanced(GL_TRIANGLES, model->obj.indexCount, GL_UNSIGNED_INT,
             0, instanceCount);
 
@@ -355,63 +393,6 @@ void Graphics::SetLightsCount(int dirCount, int pointCount, int spotCount)
     m_dirLightCount = dirCount;
     m_pointLightCount = pointCount;
     m_spotLightCount = spotCount;
-}
-
-void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* temp)
-{
-    glBindProgramPipeline(m_spipeline);
-    glCullFace(GL_FRONT);
-
-    for (int lightIdex = 0; lightIdex < lightStorage.lightCount; lightIdex++)
-    {
-        if (lightStorage.lights[lightIdex].GetType() == LightType::NONE)
-            continue;
-
-        //to depth map
-        glViewport(0, 0, lightStorage.lights[lightIdex].lightInfo.shadowParameters.SHADOW_WIDTH, 
-            lightStorage.lights[lightIdex].lightInfo.shadowParameters.SHADOW_HEIGHT);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, lightStorage.lights[lightIdex].lightInfo.shadowParameters.depthMapFBO);
-        glClearColor(0, 0, 0, 1.f);
-        glClear(GL_DEPTH_BUFFER_BIT);
-
-        {
-            GLint u_matrix = 1;
-            glProgramUniformMatrix4fv(m_shadowvshader, u_matrix, 1, GL_TRUE,
-                lightStorage.lights[lightIdex].lightInfo.VP.AsPtr());
-
-            int batchCount = 10000; //TODO figure out a good value for this
-            RedFoxMaths::Mat4* mem = (RedFoxMaths::Mat4*)MyMalloc(temp,
-                sizeof(RedFoxMaths::Mat4) * batchCount * (m_modelCount + 1));
-            u64* modelCountIndex = (u64*)MyMalloc(temp,
-                sizeof(u64) * m_modelCount);
-            for (int index = 0; index < gameObjectCount; index++)
-            {
-                if (objects[index].model)
-                {
-                    u64 modelIndex = objects[index].model - m_models;
-                    u64 countIndex = modelCountIndex[modelIndex];
-                    mem[countIndex + (batchCount * modelIndex)] =
-                        objects[index].GetWorldMatrix().GetTransposedMatrix();
-                    modelCountIndex[modelIndex]++;
-                }
-            }
-            for (int i = 0; i < (int)m_modelCount; i++)
-            {
-                u64 countIndex = modelCountIndex[i];
-                if (countIndex)
-                {
-                    glNamedBufferSubData(m_matrixSSBO, 0,
-                        sizeof(RedFoxMaths::Mat4) * countIndex, &mem[batchCount * i]);
-                    DrawModelShadowInstances(&m_models[i], countIndex);
-                    modelCountIndex[i] = 0;
-                }
-            }
-        }
-    }
-
-    glCullFace(GL_BACK);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 } // namespace RedFoxEngine
