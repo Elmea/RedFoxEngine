@@ -70,11 +70,12 @@ public:
     void InitGraphics(Memory *tempArena, WindowDimension dimension);
     void InitImGUIFramebuffer(WindowDimension dimension);
     void UpdateImGUIFrameBuffer(WindowDimension& dimension, WindowDimension content);
+    void UpdateModelMatrices(GameObject* objects, int gameObjectCount, Memory* temp);
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
     void FillLightBuffer(LightInfo* lights, LightType type);
 
     void SetLightsCount(int dirCount, int pointCount, int spotCount);
-    void CalcShadows(GameObject* objects, int gameObjectCount, Memory* temp);
+    void CalcShadows();
 };
 } // namespace RedFoxEngine
 

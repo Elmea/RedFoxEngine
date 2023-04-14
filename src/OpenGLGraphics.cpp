@@ -307,10 +307,8 @@ void Graphics::DrawModelInstances(Model *model,
     glFinish();
 }
 
-void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* temp)
+void Graphics::UpdateModelMatrices(GameObject* objects, int gameObjectCount, Memory* temp)
 {
-    //glCullFace(GL_FRONT);
-
     int batchCount = 100000;
     mem = (RedFoxMaths::Mat4 *)MyMalloc(temp,
         sizeof(RedFoxMaths::Mat4) * batchCount * (m_modelCount));
@@ -328,6 +326,12 @@ void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* tem
             modelCountIndex[modelIndex]++;
         }
     }
+}
+
+void Graphics::CalcShadows()
+{
+    int batchCount = 100000;
+    //glCullFace(GL_FRONT);
 
     for (int lightIndex = 0; lightIndex < lightStorage.lightCount; lightIndex++)
     {

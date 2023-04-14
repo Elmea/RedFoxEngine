@@ -14,6 +14,9 @@
 #include "imgui_impl_win32.h"
 #include <ImGuizmo.h>
 
+#include <PhysX/PxConfig.h>
+#include <PhysX/PxPhysicsAPI.h>
+
 #include "ObjParser.hpp"
 #include "OpenGLGraphics.hpp"
 #include "GameObject.hpp"
@@ -46,17 +49,32 @@ private:
     ImGuiIO* m_ImGuiIO = nullptr;
     ImFont* m_defaultFont = nullptr;
     MyString m_sceneName;
-    bool m_editorCameraEnabled;
     ImGuizmo::OPERATION m_GizmoType;
     ImGuizmo::MODE m_GizmoMode;
     RedFoxMaths::Float3 m_editorCameraSpeed;
     int m_sceneUsedMemory = 0;
+    bool m_editorCameraEnabled;
+
+    physx::PxDefaultAllocator m_allocator;
+    physx::PxDefaultErrorCallback m_errorCallback;
+    physx::PxFoundation* m_foundation = nullptr;
+    physx::PxPhysics* m_physics = nullptr;
+    physx::PxDefaultCpuDispatcher* m_dispatcher = nullptr;
+    physx::PxScene* m_scene = nullptr;
+    physx::PxMaterial* m_material = nullptr;
+    physx::PxPvd* m_pvd = nullptr;
+    physx::PxCudaContextManager* m_cudaContextManager = nullptr;
+
 private:
+    void InitPhysics();
+    void CreateCubeCollider(const physx::PxTransform& t, physx::PxU32 size, physx::PxReal halfExtent);
+    void CreateSphereCollider(const physx::PxTransform& t, physx::PxReal radius);
+    void UpdatePhysics();
+    
     void DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight);
-    int DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
+    int  DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
     void DrawSceneNodes(bool is_child, GameObject* model);
     void DrawIMGUI();
-    //void DrawGizmo(float* cameraView, float* cameraProjection, float* matrix, float camDistance, bool editTransformDecomposition);
     void UpdateEditorCamera();
     void ObjModelPush(const char *objPath);
     void InitIMGUI();
@@ -74,4 +92,5 @@ public:
     void Draw();
     bool isRunning();
 };
+
 } // namespace RedFoxEngine

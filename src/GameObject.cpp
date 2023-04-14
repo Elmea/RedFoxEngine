@@ -9,6 +9,7 @@ namespace RedFoxEngine
         {
             return (RedFoxMaths::Mat4::CreateTransformMatrix(position, orientation, scale));
         }
+       
         RedFoxMaths::Mat4 GameObject::GetWorldMatrix()
         {
             if (parent)

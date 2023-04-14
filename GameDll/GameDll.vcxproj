@@ -227,6 +227,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Game.cpp" />
+    <ClCompile Include="..\src\GameObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Model.hpp" />

@@ -79,6 +79,18 @@ Engine::Engine(int width, int height) :
         spot->lightInfo.specular = {0.1, 0.1, 0.1};
         spot->lightInfo.cutOff = 0.5f;
         spot->lightInfo.outerCutOff = 0.1f;
+        
+        // Light* point = m_graphics.lightStorage.CreateLight(LightType::POINT);
+        // point->lightInfo.constant = 1.0f;
+        // point->lightInfo.linear = 0.1f;
+        // point->lightInfo.quadratic = 0.1f;
+        // point->lightInfo.direction = {0.0f, 0.0f, 1.0f};
+        // point->lightInfo.position = {0.0f, 0.0f, -5.0f};
+        // point->lightInfo.ambient = {0.3, 0.3, 0.3};
+        // point->lightInfo.diffuse = {0.6, 0.6, 0.6};
+        // point->lightInfo.specular = {0.1, 0.1, 0.1};
+        // point->lightInfo.cutOff = 0.5f;
+        // point->lightInfo.outerCutOff = 0.1f;
     }
 
 
@@ -88,7 +100,7 @@ Engine::Engine(int width, int height) :
     UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll",
         m_gameLibrary, &m_lastTime, nullptr);
     m_graphics.InitLights();
-
+    InitPhysics();
     StartTime();
 }
 
@@ -97,8 +109,8 @@ void Engine::ObjModelPush(const char *path)
     if (ParseModel(&m_models[m_modelCount++].obj, path))
     {
         m_modelCount--;
-#if DEBUG 
-        __debugbreak():
+#if _DEBUG 
+        __debugbreak();
 #endif
         return;
     }
@@ -230,7 +242,11 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     for (int i = 0; i < (int)m_gameObjectCount; i++)
     {
         m_gameObjects[i].parent = nullptr;
-        m_gameObjects[i].model = &m_models[i % m_modelCount];
+        m_gameObjects[i].model = &m_models[2];// i% m_modelCount];
+        if (m_gameObjects[i].model == &m_models[0])
+            m_gameObjects[i].boxExtents = { 0.5, 0.5, 0.5 };
+        else if (m_gameObjects[i].model == &m_models[1])
+            m_gameObjects[i].radius = 1;
         m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 1;
         //if(i % m_modelCount == 3)
             //m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 0.2;
@@ -242,12 +258,6 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
         if (i < 3 && i != 0)
         m_gameObjects[i].parent = &m_gameObjects[0];
     }
-    //TODO transition to an instance based model 'model'
-
-    m_gameObjects[1].position = {};
-    m_gameObjects[1].scale = {0.5, 0.5, 0.5};
-    m_gameObjects[2].position = {2, 1, 0};
-    m_gameObjects[2].scale = m_gameObjects[1].scale;
 
     int countX = (int)sqrtf(count);
     int countY = count / countX;
@@ -263,7 +273,7 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
             m_gameObjects[index++].position =
                 {
                     cosf(longitudeStep * j) * sinf(i * latitudeStep),
-                    sinf(longitudeStep * j) * sinf(i * latitudeStep),
+                    sinf(longitudeStep * j) * sinf(i * latitudeStep) + 50,
                     cosf(i * latitudeStep - M_PI)
                 };
             m_gameObjects[index - 1].position =
@@ -299,10 +309,10 @@ void Engine::UpdateEditorCamera()
         if (m_input.D || m_input.Right) inputDirection.x +=  1;
         inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
         inputDirection.Normalize();
-        inputDirection = inputDirection * 20.f;
+        inputDirection = inputDirection * 200.f;
         m_editorCamera.position += m_editorCameraSpeed * dt32 + inputDirection * (dt32 * dt32 * 0.5f);
         m_editorCameraSpeed += inputDirection * dt32 * 0.5f;
-        m_editorCameraSpeed *= exp(dt32 * -2.f); // Drag
+        m_editorCameraSpeed *= exp(dt32 * -3.f); // Drag
     }
     m_editorCamera.m_parameters.aspect = m_platform.m_windowDimension.width / (f32)m_platform.m_windowDimension.height;
 }
@@ -315,8 +325,9 @@ void Engine::Update()
     UpdateEditorCamera();
 
     static f32 time;
-    time += m_deltaTime;
+    time += m_deltaTime * 0.1f;
     UpdateLights(time, &m_graphics.lightStorage);
+    UpdatePhysics();
     //TODO we'll need to think how we pass the resources,
     // and gameplay structures and objects to this update function
     UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount, time);
@@ -334,7 +345,8 @@ void Engine::Draw()
         Sleep((DWORD)sleepTime);
         timeEndPeriod(1);
     }
-    m_graphics.CalcShadows(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
+    m_graphics.UpdateModelMatrices(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
+    m_graphics.CalcShadows();
     glViewport(0, 0, m_platform.m_windowDimension.width,
                      m_platform.m_windowDimension.height);
     m_graphics.DrawGameObjects();
@@ -353,4 +365,5 @@ Engine::~Engine()
         DeInitObj(&m_models[i].obj);
     m_defaultFont->ContainerAtlas->Clear();
     ImGui::DestroyContext();
+    m_cudaContextManager->release();
 }

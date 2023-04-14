@@ -9,15 +9,15 @@
 using namespace RedFoxMaths;
 
 BOOL APIENTRY DllMain(HMODULE hModule,
-                      DWORD  ul_reason_for_call,
-                      LPVOID lpReserved)
+    DWORD  ul_reason_for_call,
+    LPVOID lpReserved)
 {
     switch (ul_reason_for_call)
     {
-        case DLL_PROCESS_ATTACH:
-        case DLL_THREAD_ATTACH:
-        case DLL_THREAD_DETACH:
-        case DLL_PROCESS_DETACH:
+    case DLL_PROCESS_ATTACH:
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    case DLL_PROCESS_DETACH:
         break;
     }
     return TRUE;
@@ -25,9 +25,11 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
 {
-    #pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
+#pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
+    /*
     for (int i = 0; i < (int)gameObjectCount; i++) // TODO physics code here ?
     {
-         gameObjects[i].position += Float3(sinf(time), cosf(time), 0) * 0.001f;
+        gameObjects[i].position += Float3(sinf(time), cosf(time), 0) * 0.001f;
     }
+    */
 }
