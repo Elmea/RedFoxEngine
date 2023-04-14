@@ -379,6 +379,7 @@ void Graphics::CalcShadows()
         glClear(GL_DEPTH_BUFFER_BIT);
 
         GLint u_matrix = 0;
+
         glProgramUniformMatrix4fv(m_shadowvshader, u_matrix, 1, GL_TRUE,
             lightStorage.lights[lightIndex].lightInfo.VP.AsPtr());
 
