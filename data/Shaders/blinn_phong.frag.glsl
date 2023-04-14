@@ -116,7 +116,7 @@ float ShadowCalculation(Light light)
         {
             float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
             shadow += currentDepth + bias > pcfDepth ? 1.0 : 0.0;        
-        }    
+        } 
     }
     shadow /= 9.0;
     return shadow;
