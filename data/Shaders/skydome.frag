@@ -31,11 +31,11 @@ void main()
     vec3 posNorm = normalize(pos);
     float dist = dot(sunNorm, posNorm);
     
-    vec3 color_top_sun = texture(topSkyTint,  vec2((sunNorm.y + 1.0) / 2.0, max(0.01, -posNorm.y))).rgb;
-    vec3 color_bot_sun = texture(botSkyTint,  vec2((sunNorm.y + 1.0) / 2.0, max(0.01, -posNorm.y))).rgb;
+    vec3 color_top_sun = texture(topSkyTint,  vec2((sunNorm.y + 1.0) / 2.0, -1)).rgb;
+    vec3 color_bot_sun = texture(botSkyTint,  vec2((sunNorm.y + 1.0) / 2.0, -1)).rgb;
     color = vec4(mix(color_bot_sun.xyz, color_top_sun, dist * 0.5 + 0.5), 1);
 
-    // Computing uv for the clouds textures (spherical projection)
+    // Clouds
     float u = 0.5 + atan(posNorm.z, posNorm.x) / (2 * 3.14159265);
     float v = 1 - (-0.5 + asin(posNorm.y) / 3.14159265);
     vec3 cloudColor = vec3(min(3.0/2.0, 1.0)) * (sunNorm.y > 0 ? 0.95 : 0.95+sunNorm.y * 1.8);

@@ -282,7 +282,7 @@ void Graphics::DrawSkyDome(float dt)
 
     RedFoxMaths::Mat4 mvp = m_viewProjection * m_skyDome.model;
     
-    float skySimulationTime = time / 250;
+    float skySimulationTime = time / 10;
     glBindTextureUnit(0, m_skyDome.topTint);
     glBindTextureUnit(1, m_skyDome.botTint);
     glBindTextureUnit(2, m_skyDome.sun);
