@@ -2,6 +2,9 @@
 #include "ObjParser.hpp"
 #include "meow_hash_x64_aesni.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "STB_Image/stb_image.h"
+
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
 
@@ -31,9 +34,6 @@ Engine::Engine(int width, int height) :
     m_models[m_modelCount].obj = CreateSphere(30, 25, &m_arenaAllocator);
     m_models[m_modelCount].hash = 2;
     m_modelCount++;
-    m_models[m_modelCount].obj = CreateSkyDome(100, 100, &m_arenaAllocator);
-    m_models[m_modelCount].hash = 3;
-    m_modelCount++;
     //ObjModelPush("ts_bot912.obj");
     //ObjModelPush("vortigaunt.obj");
     //ObjModelPush("barbarian.obj");
@@ -49,7 +49,7 @@ Engine::Engine(int width, int height) :
     //TODO transition to an instance based model 'model'
     for (int i = 0; i < (int)m_modelCount; i++)
         m_graphics.InitModel(&m_models[i]);
-    m_graphics.InitSkyDome();
+    InitSkyDome();
     m_sceneUsedMemory = m_arenaAllocator.usedSize;
 #if 0
     LoadScene("Sample Scene.scene");
@@ -341,8 +341,7 @@ void Engine::Draw()
     m_graphics.CalcShadows(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
     glViewport(0, 0, m_platform.m_windowDimension.width,
                      m_platform.m_windowDimension.height);
-    m_graphics.DrawSkyDome(m_deltaTime);
-
+    m_graphics.DrawSkyDome(m_skyDome, m_deltaTime);
     m_graphics.DrawGameObjects();
     DrawIMGUI();
     // swap the buffers to show output
@@ -351,6 +350,46 @@ void Engine::Draw()
     u64 endTime = RedFoxEngine::Platform::GetTimer();
     m_deltaTime = (endTime - m_time) / (f64)Platform::GetTimerFrequency();
     m_tempAllocator.usedSize = 0;
+}
+
+void Engine::InitSkyDome()
+{
+    m_skyDome.sunPosition = { 0, 1, 0 };
+    m_skyDome.model = RedFoxMaths::Mat4::GetScale({ 500, 500, 500 });
+
+    int x, y, comp;
+    glCreateTextures(GL_TEXTURE_2D, 5, &m_skyDome.topTint);
+    char* data = (char*)stbi_load("Textures/topSkyTint.png", &x, &y, &comp, 4);
+    glTextureStorage2D(m_skyDome.topTint, 1, GL_RGBA8, x, y);
+    glTextureSubImage2D(m_skyDome.topTint, 0, 0, 0, x, y, GL_RGBA,
+        GL_UNSIGNED_BYTE, data);
+    glTextureParameteri(m_skyDome.topTint, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTextureParameteri(m_skyDome.topTint, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    stbi_image_free(data);
+
+    data = (char*)stbi_load("Textures/botSkyTint.png", &x, &y, &comp, 4);
+    glTextureStorage2D(m_skyDome.botTint, 1, GL_RGBA8, x, y);
+    glTextureSubImage2D(m_skyDome.botTint, 0, 0, 0, x, y, GL_RGBA,
+        GL_UNSIGNED_BYTE, data);
+    stbi_image_free(data);
+
+    data = (char*)stbi_load("Textures/sun.png", &x, &y, &comp, 4);
+    glTextureStorage2D(m_skyDome.sun, 1, GL_RGBA8, x, y);
+    glTextureSubImage2D(m_skyDome.sun, 0, 0, 0, x, y, GL_RGBA,
+        GL_UNSIGNED_BYTE, data);
+    stbi_image_free(data);
+
+    data = (char*)stbi_load("Textures/moon.png", &x, &y, &comp, 4);
+    glTextureStorage2D(m_skyDome.moon, 1, GL_RGBA8, x, y);
+    glTextureSubImage2D(m_skyDome.moon, 0, 0, 0, x, y, GL_RGBA,
+        GL_UNSIGNED_BYTE, data);
+    stbi_image_free(data);
+
+    data = (char*)stbi_load("Textures/clouds.png", &x, &y, &comp, 4);
+    glTextureStorage2D(m_skyDome.clouds, 1, GL_RGBA8, x, y);
+    glTextureSubImage2D(m_skyDome.clouds, 0, 0, 0, x, y, GL_RGBA,
+        GL_UNSIGNED_BYTE, data);
+    stbi_image_free(data);
 }
 
 Engine::~Engine()

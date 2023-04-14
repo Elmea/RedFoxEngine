@@ -26,8 +26,8 @@ struct LightStorage
 struct SkyDome
 {
     RedFoxMaths::Float3 sunPosition;
-    RedFoxMaths::Mat4 model;
     GLuint topTint, botTint, sun, moon, clouds;
+    RedFoxMaths::Mat4 model;
 };
 
 struct Textures
@@ -41,7 +41,6 @@ class Graphics
 private:
     GLuint m_textureSampler;
     Textures m_textures = {};
-    SkyDome m_skyDome;
     RedFoxMaths::Mat4 m_viewProjection;
     GLuint m_gvshader, m_gfshader, m_gpipeline;
     GLuint m_shadowvshader, m_shadowfshader, m_spipeline;
@@ -64,8 +63,8 @@ public:
     u32    m_modelCount;
     GLuint m_imguiTexture;
     LightStorage lightStorage;
-    void InitSkyDome();
-    void DrawSkyDome(float time);
+    
+    void DrawSkyDome(SkyDome skyDome, float dt);
     void DrawGameObjects();
     // void DrawModelInstances(Model *model, int instanceCount);
     void DrawModelInstances(Model *model, RedFoxMaths::Mat4 *modelMatrices,

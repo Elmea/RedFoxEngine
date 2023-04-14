@@ -1,9 +1,6 @@
 #include "OpenGLGraphics.hpp"
 #include "glcorearb.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "STB_Image/stb_image.h"
-
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
 
@@ -230,71 +227,34 @@ void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
     m_viewProjection = vp;
 }
 
-void Graphics::InitSkyDome()
-{
-    m_skyDome.sunPosition = { 0.2, 1, 0 };
-    m_skyDome.model = RedFoxMaths::Mat4::GetScale({ 500, 500, 500 });
-
-    int x, y, comp;
-    glCreateTextures(GL_TEXTURE_2D, 5, &m_skyDome.topTint);
-
-    char* data = (char*)stbi_load("Textures/topSkyTint.png", &x, &y, &comp, 4);
-    glTextureStorage2D(m_skyDome.topTint, 1, GL_RGBA8, x, y);
-    glTextureSubImage2D(m_skyDome.topTint, 0, 0, 0, x, y, GL_RGBA,
-        GL_UNSIGNED_BYTE, data);
-    stbi_image_free(data);
-
-    data = (char*)stbi_load("Textures/botSkyTint.png", &x, &y, &comp, 4);
-    glTextureStorage2D(m_skyDome.botTint, 1, GL_RGBA8, x, y);
-    glTextureSubImage2D(m_skyDome.botTint, 0, 0, 0, x, y, GL_RGBA,
-        GL_UNSIGNED_BYTE, data);
-    stbi_image_free(data);
-
-    data = (char*)stbi_load("Textures/sun.png", &x, &y, &comp, 4);
-    glTextureStorage2D(m_skyDome.sun, 1, GL_RGBA8, x, y);
-    glTextureSubImage2D(m_skyDome.sun, 0, 0, 0, x, y, GL_RGBA,
-        GL_UNSIGNED_BYTE, data);
-    stbi_image_free(data);
-
-    data = (char*)stbi_load("Textures/moon.png", &x, &y, &comp, 4);
-    glTextureStorage2D(m_skyDome.moon, 1, GL_RGBA8, x, y);
-    glTextureSubImage2D(m_skyDome.moon, 0, 0, 0, x, y, GL_RGBA,
-        GL_UNSIGNED_BYTE, data);
-    stbi_image_free(data);
-
-    data = (char*)stbi_load("Textures/clouds.png", &x, &y, &comp, 4);
-    glTextureStorage2D(m_skyDome.clouds, 1, GL_RGBA8, x, y);
-    glTextureSubImage2D(m_skyDome.clouds, 0, 0, 0, x, y, GL_RGBA,
-        GL_UNSIGNED_BYTE, data);
-    stbi_image_free(data);
-}
-
-void Graphics::DrawSkyDome(float dt)
+void Graphics::DrawSkyDome(SkyDome skyDome, float dt)
 {
     static float time;
     time += dt;
     glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
     glBindProgramPipeline(m_skypipeline);
-    glBindVertexArray(m_models[2].vao);
+    glBindVertexArray(m_models[1].vao);
 
     glClearColor(0, 0, 0, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glDisable(GL_CULL_FACE);
 
-    RedFoxMaths::Mat4 mvp = m_viewProjection * m_skyDome.model;
-    
-    float skySimulationTime = time / 10;
-    glBindTextureUnit(0, m_skyDome.topTint);
-    glBindTextureUnit(1, m_skyDome.botTint);
-    glBindTextureUnit(2, m_skyDome.sun);
-    glBindTextureUnit(3, m_skyDome.moon);
-    glBindTextureUnit(4, m_skyDome.clouds);
-    m_skyDome.sunPosition.x = cosf(skySimulationTime);
-    m_skyDome.sunPosition.y = sinf(skySimulationTime);
-    glProgramUniform3fv(m_skyvshader, 0, 1, &m_skyDome.sunPosition.x);
+    RedFoxMaths::Mat4 mvp = m_viewProjection * skyDome.model;
+
+    float skySimulationTime = time / 5;
+    glBindTextureUnit(0, skyDome.topTint);
+    glBindTextureUnit(1, skyDome.botTint);
+    glBindTextureUnit(2, skyDome.sun);
+    glBindTextureUnit(3, skyDome.moon);
+    glBindTextureUnit(4, skyDome.clouds);
+    skyDome.sunPosition.x = cosf(skySimulationTime);
+    skyDome.sunPosition.y = sinf(skySimulationTime);
+    glProgramUniform3fv(m_skyvshader, 0, 1, &skyDome.sunPosition.x);
     glProgramUniformMatrix4fv(m_skyvshader, 1, 1, GL_TRUE, mvp.AsPtr());
     glProgramUniform1f(m_skyfshader, 0, skySimulationTime);
 
-    glDrawElements(GL_TRIANGLES, m_models[2].obj.indexCount, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, m_models[1].obj.indexCount, GL_UNSIGNED_INT, 0);
+    glEnable(GL_CULL_FACE);
 }
 
 void Graphics::DrawGameObjects()
