@@ -23,6 +23,13 @@ struct LightStorage
     void RemoveLight(int lightIndex);
 };
 
+struct SkyDome
+{
+    RedFoxMaths::Float3 sunPosition;
+    GLuint topTint, botTint, sun, moon, clouds;
+    RedFoxMaths::Mat4 model;
+};
+
 struct Textures
 {
     GLuint textures[128];
@@ -37,6 +44,7 @@ private:
     RedFoxMaths::Mat4 m_viewProjection;
     GLuint m_gvshader, m_gfshader, m_gpipeline;
     GLuint m_shadowvshader, m_shadowfshader, m_spipeline;
+    GLuint m_skyvshader, m_skyfshader, m_skypipeline;
     GLuint m_imguiFramebuffer;
     u32    m_materialSSBO;
     u32    m_matrixSSBO;
@@ -55,6 +63,8 @@ public:
     u32    m_modelCount;
     GLuint m_imguiTexture;
     LightStorage lightStorage;
+    
+    void DrawSkyDome(SkyDome skyDome, float dt);
     void DrawGameObjects();
     // void DrawModelInstances(Model *model, int instanceCount);
     void DrawModelInstances(Model *model, RedFoxMaths::Mat4 *modelMatrices,

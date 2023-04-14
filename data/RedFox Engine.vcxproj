@@ -254,6 +254,14 @@
     <ClInclude Include="..\include\RedFoxMaths\RedfoxMaths.hpp" />
     <ClInclude Include="..\include\Win32Platform.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\blinn_phong.frag.glsl" />
+    <None Include="Shaders\blinn_phong.vert.glsl" />
+    <None Include="Shaders\ShadowShader.frag" />
+    <None Include="Shaders\ShadowShader.vert" />
+    <None Include="Shaders\skydome.frag" />
+    <None Include="Shaders\skydome.vert" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

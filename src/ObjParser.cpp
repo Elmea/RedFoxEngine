@@ -6,8 +6,6 @@
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_NO_STDIO
 #include <STB_Image/stb_image.h>
 
 /*

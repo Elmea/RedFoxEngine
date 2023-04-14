@@ -24,7 +24,7 @@
 
 namespace RedFoxEngine
 {
-
+    
 class Engine
 {
 private:
@@ -71,6 +71,10 @@ private:
     void CreateSphereCollider(const physx::PxTransform& t, physx::PxReal radius);
     void UpdatePhysics();
     
+    SkyDome m_skyDome;
+
+private:
+    void InitSkyDome();
     void DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight);
     int  DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
     void DrawSceneNodes(bool is_child, GameObject* model);
