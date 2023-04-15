@@ -334,10 +334,8 @@ void Engine::DrawSceneNodes(bool is_child, GameObject* gameObj)
     }
 }
 
-void Engine::DrawIMGUI()
+void Engine::UpdateIMGUI()
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
     ImGuiDockNodeFlags dockingFlags =
         ImGuiDockNodeFlags_NoWindowMenuButton |
         ImGuiDockNodeFlags_NoCloseButton;
@@ -454,14 +452,14 @@ void Engine::DrawIMGUI()
             ImGuiTreeNodeFlags_SpanFullWidth;
 
         static int scrollStrength = 1;
-        static int test = 0;
+        static int currentFrame = 0;
         static float fps[255];
         static float averageFps;
         if (m_deltaTime)
-            fps[test++] = (1.0f / m_deltaTime);
-        if (test >= (int)(1 / m_deltaTime))
+            fps[currentFrame++] = (1.0f / m_deltaTime);
+        if (currentFrame >= (int)(1 / m_deltaTime))
         {
-            test = 0;
+            currentFrame = 0;
             for (int i = 0; i < (int)(1 / m_deltaTime); i += 2)
             {
                 averageFps = (fps[i] + averageFps) / 2.0f;
@@ -691,7 +689,4 @@ void Engine::DrawIMGUI()
     }
     ImGui::End();
     ImGui::PopFont();
-    
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }

@@ -1,5 +1,6 @@
 #include "OpenGLGraphics.hpp"
 #include "glcorearb.h"
+#include "imgui_impl_opengl3.h"
 
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
@@ -24,13 +25,17 @@ void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
         glNamedBufferStorage(m_matrixSSBO,
             100000 * sizeof(RedFoxMaths::Mat4),
             nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
-        glCreateBuffers(1, &m_textureSSBO);
-        glCreateBuffers(1, &m_shadowMapsSSBO);
 
         glCreateBuffers(1, &m_materialSSBO);
         glNamedBufferStorage(m_materialSSBO,
             100 * sizeof(ObjMaterial),
             nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
+        
+        glCreateBuffers(1, &m_textureSSBO);
+        glNamedBufferStorage(m_textureSSBO, 10000 * sizeof(u64), nullptr, GL_DYNAMIC_STORAGE_BIT);
+        
+        glCreateBuffers(1, &m_shadowMapsSSBO);
+        glNamedBufferStorage(m_shadowMapsSSBO, 1000 * sizeof(u64), nullptr, GL_DYNAMIC_STORAGE_BIT);
     }
     glCreateSamplers(1, &m_textureSampler);
     glSamplerParameteri(m_textureSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -38,8 +43,6 @@ void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
     glSamplerParameteri(m_textureSampler, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glSamplerParameteri(m_textureSampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
    
-    glNamedBufferStorage(m_textureSSBO, 10000 * sizeof(u64), nullptr, GL_DYNAMIC_STORAGE_BIT);
-    glNamedBufferStorage(m_shadowMapsSSBO, 1000 * sizeof(u64), nullptr, GL_DYNAMIC_STORAGE_BIT);
     wglSwapIntervalEXT(0);
 }
 
@@ -69,6 +72,7 @@ void Graphics::InitImGUIFramebuffer(WindowDimension dimension)
         __debugbreak();
 }
 
+/*If the dimensions of the window change, we need to resize*/
 void Graphics::UpdateImGUIFrameBuffer(WindowDimension &dimension,
     WindowDimension content)
 {
@@ -130,16 +134,23 @@ void Graphics::InitModel(Model *model)
     DeInitGraphicsObj(&model->obj);
 }
 
-u32 Graphics::InitTexture(void *data,int height, int width)
+u32 Graphics::InitTexture(void *data, int width, int height, bool resident, bool repeat)
 {
     GLuint texture;
     glCreateTextures(GL_TEXTURE_2D, 1, &texture);
-    // m_textures.textures[i] = i;
     glTextureStorage2D(texture, 1, GL_RGBA8, width, height);
     glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RGBA,
-         GL_UNSIGNED_BYTE, data);
-    GLuint64 textureHandle = glGetTextureSamplerHandleARB(texture, m_textureSampler);
-    glMakeTextureHandleResidentARB(textureHandle);
+        GL_UNSIGNED_BYTE, data);
+    if (repeat)
+    {
+        glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    }
+    if (resident)
+    {
+        GLuint64 textureHandle = glGetTextureSamplerHandleARB(texture, m_textureSampler);
+        glMakeTextureHandleResidentARB(textureHandle);
+    }
     return (texture);
 }
 
@@ -149,7 +160,7 @@ void Graphics::InitModelTextures(ObjModel *model)
     WaitForSingleObject(model->images.thread, INFINITE);
 
     for (int i = 0; i < (int)model->materials.count; i++)
-    {
+    {//TODO: if we ever have 1 model draw function, we nedd to get rid of this
         model->materials.material[i].diffuseMap.index0 += m_textures.textureCount;
         model->materials.material[i].normalMap.index0 += m_textures.textureCount;
     }
@@ -158,68 +169,9 @@ void Graphics::InitModelTextures(ObjModel *model)
         if (model->images.data[i].height && model->images.data[i].width)
         {
             m_textures.textures[m_textures.textureCount++] = InitTexture(model->images.data[i].data,
-                model->images.data[i].height, model->images.data[i].width);
+                model->images.data[i].width, model->images.data[i].height, true, false);
         }
     }
-}
-
-static void CompileShaders(const char *vertexShaderSource,
-                    const char *fragmentShaderSource,
-    GLuint &vert, GLuint &frag, GLuint &pipeline)
-{
-    vert = glCreateShaderProgramv(GL_VERTEX_SHADER, 1,
-        &vertexShaderSource);
-    frag = glCreateShaderProgramv(GL_FRAGMENT_SHADER, 1,
-        &fragmentShaderSource);
-
-    GLint linked;
-    glGetProgramiv(vert, GL_LINK_STATUS, &linked);
-    if (!linked)
-    {
-        char message[1024];
-        glGetProgramInfoLog(vert, sizeof(message), nullptr, message);
-        OutputDebugStringA(message);
-        Assert(!"Failed to create vertex shader!");
-    }
-
-    glGetProgramiv(frag, GL_LINK_STATUS, &linked);
-    if (!linked)
-    {
-        char message[1024];
-        glGetProgramInfoLog(frag, sizeof(message), nullptr, message);
-        OutputDebugStringA(message);
-        Assert(!"Failed to create fragment shader!");
-    }
-    glGenProgramPipelines(1, &pipeline);
-    glUseProgramStages(pipeline, GL_VERTEX_SHADER_BIT, vert);
-    glUseProgramStages(pipeline, GL_FRAGMENT_SHADER_BIT, frag);
-}
-
-void Graphics::InitShaders(Memory *tempArena)
-{
-    int tempSize = tempArena->usedSize;
-    // fragment & vertex shaders for drawing triangle
-    MyString vertexShaderSource = OpenAndReadEntireFile(
-        "Shaders\\blinn_phong.vert.glsl", tempArena);
-    MyString fragmentShaderSource = OpenAndReadEntireFile(
-        "Shaders\\blinn_phong.frag.glsl", tempArena);
-    CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
-        m_gvshader, m_gfshader, m_gpipeline);
-    tempArena->usedSize = tempSize;
-    vertexShaderSource = OpenAndReadEntireFile(
-        "Shaders\\ShadowShader.vert", tempArena);
-    fragmentShaderSource = OpenAndReadEntireFile(
-        "Shaders\\ShadowShader.frag", tempArena);
-    CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
-        m_shadowvshader, m_shadowfshader, m_spipeline);
-    tempArena->usedSize = tempSize;
-    vertexShaderSource = OpenAndReadEntireFile(
-        "Shaders\\skydome.vert", tempArena);
-    fragmentShaderSource = OpenAndReadEntireFile(
-        "Shaders\\skydome.frag", tempArena);
-    CompileShaders(vertexShaderSource.data, fragmentShaderSource.data,
-        m_skyvshader, m_skyfshader, m_skypipeline);
-    tempArena->usedSize = tempSize;
 }
 
 void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
@@ -227,80 +179,60 @@ void Graphics::SetViewProjectionMatrix(RedFoxMaths::Mat4 vp)
     m_viewProjection = vp;
 }
 
-void Graphics::DrawSkyDome(SkyDome skyDome, float dt)
+void Graphics::DrawSkyDome(SkyDome skyDome, float time)
 {
-    static float time;
-    time += dt;
-    glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
-    glBindProgramPipeline(m_skypipeline);
-    glBindVertexArray(m_models[1].vao);
-
-    glClearColor(0, 0, 0, 1.f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    glDisable(GL_CULL_FACE);
+    glBindProgramPipeline(m_sky.pipeline);
+    glBindVertexArray(m_models[1].vao); // TODO:Maybe pass the model as a parameter
 
     RedFoxMaths::Mat4 mvp = m_viewProjection * skyDome.model;
 
-    float skySimulationTime = time / 500;
     glBindTextureUnit(0, skyDome.topTint);
     glBindTextureUnit(1, skyDome.botTint);
     glBindTextureUnit(2, skyDome.sun);
     glBindTextureUnit(3, skyDome.moon);
     glBindTextureUnit(4, skyDome.clouds);
-    skyDome.sunPosition.x = cosf(skySimulationTime);
-    skyDome.sunPosition.y = sinf(skySimulationTime);
-    glProgramUniform3fv(m_skyvshader, 0, 1, &skyDome.sunPosition.x);
-    glProgramUniformMatrix4fv(m_skyvshader, 1, 1, GL_TRUE, mvp.AsPtr());
-    glProgramUniform1f(m_skyfshader, 0, skySimulationTime);
+    glProgramUniform3fv(m_sky.vertex, 0, 1, &skyDome.sunPosition.x);
+    glProgramUniformMatrix4fv(m_sky.vertex, 1, 1, GL_TRUE, mvp.AsPtr());
+    glProgramUniform1f(m_sky.fragment, 0, time);
 
     glDrawElements(GL_TRIANGLES, m_models[1].obj.indexCount, GL_UNSIGNED_INT, 0);
-    glEnable(GL_CULL_FACE);
 }
 
-void Graphics::DrawGameObjects()
+void Graphics::Draw(RedFoxMaths::Mat4 *p_modelMatrices, u64 *p_modelCountIndex, WindowDimension p_windowDimension, SkyDome p_skyDome, float p_time)
 {
-    //NOTE: here we clear the 0 framebuffer
-    int batchCount = 100000;
-    // clear screen
-    GLuint64 textureHandles[128];
-    for (int i = 0; i < (int)m_textures.textureCount; i++)
-        textureHandles[i] = glGetTextureSamplerHandleARB(m_textures.textures[i], m_textureSampler);
-    glNamedBufferSubData(m_textureSSBO,	0, sizeof(u64) * (m_textures.textureCount), textureHandles);
-
-    GLuint64 shadowMapsHandles[128];
-    for (int i = 0; i < (int)lightStorage.lightCount; i++)
-        shadowMapsHandles[i] = glGetTextureHandleARB(lightStorage.lights[i].lightInfo.shadowParameters.depthMap);
-    glNamedBufferSubData(m_shadowMapsSSBO, 0, sizeof(u64) * (lightStorage.lightCount), shadowMapsHandles);
+    DrawShadowMaps(p_modelMatrices, p_modelCountIndex);
 
     glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
-    /*glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);*/
+    glCullFace(GL_BACK);
+    glViewport(0, 0, p_windowDimension.width,
+                     p_windowDimension.height);
+    glClearColor(0, 0, 0, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glDisable(GL_CULL_FACE);
+    DrawSkyDome(p_skyDome, p_time / 500);
+    glEnable(GL_CULL_FACE);
+    DrawGameObjects(p_modelMatrices, p_modelCountIndex);
+    // swap the buffers to show output
 
-    GLint u_matrix = 0;
-    glProgramUniformMatrix4fv(m_gvshader, u_matrix, 1, GL_TRUE,
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void Graphics::DrawGameObjects(RedFoxMaths::Mat4 *modelMatrices, u64 *modelCountIndex)
+{
+    int batchCount = 100000;
+    GLint u_matrix = 0; //location inside shader
+    glProgramUniformMatrix4fv(m_blinnPhong.vertex, u_matrix, 1, GL_TRUE,
         m_viewProjection.AsPtr());
 
     for (int i = 0; i < (int)m_modelCount; i++)
     {
         if (modelCountIndex[i])
-            DrawModelInstances(&m_models[i], &mem[batchCount * i],
+            DrawModelInstances(&m_models[i], &modelMatrices[batchCount * i],
                 modelCountIndex[i]);
     }
 }
-
-struct Material
-{
-    vec3 ambient;
-    float Opaqueness;
-
-    vec3 diffuse;
-    float Shininess;
-
-    vec3 specular;
-    int diffuseMap;
-
-    vec3 emissive;
-    int normalMap;
-};
 
 void Graphics::DrawModelInstances(Model *model,
     RedFoxMaths::Mat4 *modelMatrices, int instanceCount)
@@ -327,7 +259,7 @@ void Graphics::DrawModelInstances(Model *model,
             materials[i].normalMap = model->obj.materials.material[i].normalMap.index0;
     }
     glNamedBufferSubData(m_materialSSBO,	0, sizeof(ObjMaterial) * model->obj.materials.count, materials);
-    glBindProgramPipeline(m_gpipeline);
+    glBindProgramPipeline(m_blinnPhong.pipeline);
     glBindVertexArray(model->vao);
 
     BindLights();
@@ -342,29 +274,12 @@ void Graphics::DrawModelInstances(Model *model,
     glFinish();
 }
 
-void Graphics::UpdateModelMatrices(GameObject* objects, int gameObjectCount, Memory* temp)
+void Graphics::DrawShadowMaps(RedFoxMaths::Mat4 *modelMatrices, u64 *modelCountIndex)
 {
-    int batchCount = 100000;
-    mem = (RedFoxMaths::Mat4 *)MyMalloc(temp,
-        sizeof(RedFoxMaths::Mat4) * batchCount * (m_modelCount));
-    modelCountIndex = (u64 *)MyMalloc(temp,
-        sizeof(u64) * m_modelCount);
-    memset(modelCountIndex, 0, sizeof(u64) * m_modelCount);
-    for(int index = 0;index < gameObjectCount; index++)
-    {
-        if (objects[index].model)
-        {
-            u64 modelIndex = objects[index].model - m_models;
-            u64 countIndex = modelCountIndex[modelIndex];
-            mem[countIndex + (batchCount * modelIndex)] =
-                objects[index].GetWorldMatrix().GetTransposedMatrix();
-            modelCountIndex[modelIndex]++;
-        }
-    }
-}
-
-void Graphics::CalcShadows()
-{
+    GLuint64 textureHandles[128];
+    for (int i = 0; i < (int)m_textures.textureCount; i++)
+        textureHandles[i] = glGetTextureSamplerHandleARB(m_textures.textures[i], m_textureSampler);
+    glNamedBufferSubData(m_textureSSBO,	0, sizeof(u64) * (m_textures.textureCount), textureHandles);
     int batchCount = 100000;
     //glCullFace(GL_FRONT);
 
@@ -380,7 +295,7 @@ void Graphics::CalcShadows()
 
         GLint u_matrix = 0;
 
-        glProgramUniformMatrix4fv(m_shadowvshader, u_matrix, 1, GL_TRUE,
+        glProgramUniformMatrix4fv(m_shadow.vertex, u_matrix, 1, GL_TRUE,
             lightStorage.lights[lightIndex].lightInfo.VP.AsPtr());
 
         for (int i = 0; i < (int)m_modelCount; i++)
@@ -388,59 +303,26 @@ void Graphics::CalcShadows()
             u64 countIndex = modelCountIndex[i];
             if (countIndex)
             {
-            glNamedBufferSubData(m_matrixSSBO, 0,
-                sizeof(RedFoxMaths::Mat4) * countIndex, &mem[batchCount * i]);
-                DrawModelShadowInstances(&m_models[i], countIndex);
+                glNamedBufferSubData(m_matrixSSBO, 0,
+                    sizeof(RedFoxMaths::Mat4) * countIndex, &modelMatrices[batchCount * i]);
+                    DrawModelShadowInstances(&m_models[i], countIndex);
             }
         }
     }
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glCullFace(GL_BACK);
+    GLuint64 shadowMapsHandles[128];
+    for (int i = 0; i < (int)lightStorage.lightCount; i++)
+        shadowMapsHandles[i] = glGetTextureHandleARB(lightStorage.lights[i].lightInfo.shadowParameters.depthMap);
+    glNamedBufferSubData(m_shadowMapsSSBO, 0, sizeof(u64) * (lightStorage.lightCount), shadowMapsHandles);
 }
 
 void Graphics::DrawModelShadowInstances(Model* model, int instanceCount)
 {
     // provide vertex input
-    glBindProgramPipeline(m_spipeline);
+    glBindProgramPipeline(m_sky.pipeline);
     glBindVertexArray(model->vao);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_matrixSSBO);
     glDrawElementsInstanced(GL_TRIANGLES, model->obj.indexCount, GL_UNSIGNED_INT,
             0, instanceCount);
-}
-
-Light* LightStorage::CreateLight(LightType type)
-{
-    for (int i = 0 ; i < lightCount; i++)
-    {
-        if (lights[i].GetType() == LightType::NONE)
-        {
-            lights[i].SetType(type);
-            return &lights[i];
-        }
-    }
-
-    Light newLight { type , lightCount };
-    newLight.lightInfo.index = lightCount;
-    newLight.SetType(type);
-
-    lights[lightCount] = newLight;
-    shadowMaps[lightCount] = lights[lightCount].lightInfo.shadowParameters.depthMap;
-    lightCount++;
-
-    return &lights[lightCount-1];
-}
-
-void LightStorage::RemoveLight(int lightIndex)
-{
-    lights[lightIndex].SetType(LightType::NONE);
-}
-
-void Graphics::SetLightsCount(int dirCount, int pointCount, int spotCount)
-{
-    m_dirLightCount = dirCount;
-    m_pointLightCount = pointCount;
-    m_spotLightCount = spotCount;
 }
 
 } // namespace RedFoxEngine

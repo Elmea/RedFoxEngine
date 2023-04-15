@@ -28,33 +28,52 @@ namespace RedFoxEngine
 class Engine
 {
 private:
-    u64 m_startingTime = 0;
+    //Memory Arena class
     Memory m_arenaAllocator = {};
     Memory m_tempAllocator = {};
+    int m_sceneUsedMemory = 0;
+
+    //Models/Scene/SceneGraph class
+    MyString m_sceneName;
+    RedFoxMaths::Mat4 *m_modelMatrices;
+    u64 *m_modelCountIndex;
     Model *m_models = nullptr;
     u64 m_modelCount = 0;
+    //GameState??/Scene/SceneGraph    
     GameObject *m_gameObjects = nullptr;
     u32 m_gameObjectCount = 0;
-    GameObject *m_selectedObject = nullptr;
+    SkyDome m_skyDome;
+    
+
+    //GameState
     Input m_input = {};
+
     HDC m_dc = 0;
+
+    //Game dll, library
     HINSTANCE m_gameLibrary = 0;
     FILETIME m_lastTime = {};
+    _updategame *UpdateGame = nullptr;
+
+    //Perfect where it is
     Platform m_platform = {};
     Graphics m_graphics = {};
-    u64 m_time = 0;
+
+    f64 m_time = 0;    //Pass to gamestate as well ?
     f64 m_deltaTime = 0;
-    _updategame *UpdateGame = nullptr;
+
+    //Editor ui
+    GameObject *m_selectedObject = nullptr;
     Camera m_editorCamera;
     ImGuiIO* m_ImGuiIO = nullptr;
     ImFont* m_defaultFont = nullptr;
-    MyString m_sceneName;
     ImGuizmo::OPERATION m_GizmoType;
     ImGuizmo::MODE m_GizmoMode;
-    RedFoxMaths::Float3 m_editorCameraSpeed;
-    int m_sceneUsedMemory = 0;
-    bool m_editorCameraEnabled;
 
+    RedFoxMaths::Float3 m_editorCameraSpeed;
+    bool m_editorCameraEnabled;
+    
+    //Physics
     physx::PxDefaultAllocator m_allocator;
     physx::PxDefaultErrorCallback m_errorCallback;
     physx::PxFoundation* m_foundation = nullptr;
@@ -65,29 +84,29 @@ private:
     physx::PxPvd* m_pvd = nullptr;
     physx::PxCudaContextManager* m_cudaContextManager = nullptr;
 
+public:
+    bool isGame = false;
 private:
     void InitPhysics();
     void CreateCubeCollider(const physx::PxTransform& t, physx::PxU32 size, physx::PxReal halfExtent);
     void CreateSphereCollider(const physx::PxTransform& t, physx::PxReal radius);
     void UpdatePhysics();
     
-    SkyDome m_skyDome;
-
-private:
     void InitSkyDome();
+    void DrawIMGUI();
     void DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight);
     int  DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
     void DrawSceneNodes(bool is_child, GameObject* model);
-    void DrawIMGUI();
+    void UpdateIMGUI();
     void UpdateEditorCamera();
+    void UpdateModelMatrices();
     void ObjModelPush(const char *objPath);
     void InitIMGUI();
-    void SetViewProjectionMatrix(RedFoxMaths::Mat4 viewProjection);
-    void StartTime();
     void LoadScene(const char *fileName);
     void SaveScene(const char *fileName);
-    void UpdateLights(float time, LightStorage* lightStorage);
+    void UpdateLights(LightStorage* lightStorage);
     void initSphericalManyGameObjects(int count); //TODO: remove
+    u32 LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat);
 public:
     Engine(int width, int height);
     ~Engine();

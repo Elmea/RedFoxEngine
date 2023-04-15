@@ -126,7 +126,7 @@ public:
     WindowDimension GetWindowDimension();
     void SetMousePosition(int x, int y);
     static u64 GetTimerFrequency();
-    static u64 GetTimer();
+    static f64 GetTimer();
     _updategame *LoadGameLibrary(const char *functionName, const char *libraryPath, HINSTANCE &gameLibrary, LPFILETIME LastWriteTime, _updategame *functionPointer);
 };
 } // namespace RedFoxEngine

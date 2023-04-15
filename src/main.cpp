@@ -6,10 +6,9 @@ int main()
 
     while (engine.isRunning())
     {
-        engine.ProcessInputs();
         engine.Update();
         engine.Draw();
     }
     
     return (0);
-}
+}//

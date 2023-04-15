@@ -14,7 +14,6 @@
 using namespace RedFoxEngine;
 
 using namespace RedFoxMaths;
-#include <timeapi.h>
 
 Engine::Engine(int width, int height) :
     m_platform(width, height),
@@ -35,8 +34,8 @@ Engine::Engine(int width, int height) :
     m_models[m_modelCount].hash = 2;
     m_modelCount++;
     ObjModelPush("ts_bot912.obj");
-    //ObjModelPush("vortigaunt.obj");
-    //ObjModelPush("barbarian.obj");
+    // ObjModelPush("vortigaunt.obj");
+    ObjModelPush("barbarian.obj");
 
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
@@ -59,7 +58,6 @@ Engine::Engine(int width, int height) :
     
     // Some light for testing
     {
-        /*
         Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
 
         dir->lightInfo.constant = 1.0f;
@@ -70,19 +68,18 @@ Engine::Engine(int width, int height) :
         dir->lightInfo.ambient = {0.3, 0.3, 0.3};
         dir->lightInfo.diffuse = {0.6, 0.6, 0.6};
         dir->lightInfo.specular = {0.1, 0.1, 0.1};
-        */
      
-        Light* spot = m_graphics.lightStorage.CreateLight(LightType::SPOT);
-        spot->lightInfo.constant = 1.0f;
-        spot->lightInfo.linear = 0.09f;
-        spot->lightInfo.quadratic = 0.032f;
-        spot->lightInfo.direction = {0.0f, 0.0f, 1.0f};
-        spot->lightInfo.position = {0.0f, 0.0f, -5.0f};
-        spot->lightInfo.ambient = {0.3, 0.3, 0.3};
-        spot->lightInfo.diffuse = {0.6, 0.6, 0.6};
-        spot->lightInfo.specular = {0.1, 0.1, 0.1};
-        spot->lightInfo.cutOff = 0.5f;
-        spot->lightInfo.outerCutOff = 0.1f;
+        // Light* spot = m_graphics.lightStorage.CreateLight(LightType::SPOT);
+        // spot->lightInfo.constant = 1.0f;
+        // spot->lightInfo.linear = 0.09f;
+        // spot->lightInfo.quadratic = 0.032f;
+        // spot->lightInfo.direction = {0.0f, 0.0f, 1.0f};
+        // spot->lightInfo.position = {0.0f, 0.0f, -5.0f};
+        // spot->lightInfo.ambient = {0.3, 0.3, 0.3};
+        // spot->lightInfo.diffuse = {0.6, 0.6, 0.6};
+        // spot->lightInfo.specular = {0.1, 0.1, 0.1};
+        // spot->lightInfo.cutOff = 0.5f;
+        // spot->lightInfo.outerCutOff = 0.1f;
         
         // Light* point = m_graphics.lightStorage.CreateLight(LightType::POINT);
         // point->lightInfo.constant = 1.0f;
@@ -105,7 +102,6 @@ Engine::Engine(int width, int height) :
         m_gameLibrary, &m_lastTime, nullptr);
     m_graphics.InitLights();
     InitPhysics();
-    StartTime();
 }
 
 void Engine::ObjModelPush(const char *path)
@@ -125,119 +121,9 @@ void Engine::ObjModelPush(const char *path)
         (u64)length, (void *)path), 0);
 }
 
-
 bool Engine::isRunning()
 {
     return(m_platform.m_running);
-}
-
-void Engine::StartTime()
-{
-    m_startingTime = m_platform.GetTimer();
-}
-
-void Engine::LoadScene(const char *fileName)
-{
-    HANDLE file = CreateFile(fileName, GENERIC_READ,
-        FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL, nullptr);
-    
-    m_sceneName = initStringChar(fileName, 255, &m_arenaAllocator);
-
-    ReadFile(file, &m_gameObjectCount, sizeof(u32), nullptr, nullptr);
-    for(int i = 0; i < (int)m_gameObjectCount; i++)
-    {
-        GameObject *current = &m_gameObjects[i];
-        ReadFile(file, &current->name, sizeof(MyString), nullptr, nullptr);
-        current->name.data = (char *)MyMalloc(&m_arenaAllocator, 255);
-        ReadFile(file, (void*)current->name.data, current->name.size, nullptr, nullptr);
-        int parent;
-        ReadFile(file, &parent, sizeof(int), nullptr, nullptr);
-        if (parent == -1)
-            current->parent = nullptr;
-        else
-            current->parent = &m_gameObjects[parent];
-        u64 hash = 0;
-        ReadFile(file, &hash, sizeof(u64), nullptr, nullptr);
-        current->model = nullptr;
-        if (hash != 0)
-        {
-            for (int modelIndex = 0;
-            modelIndex < (int)m_modelCount;
-            modelIndex++)
-            {
-                if (m_models[modelIndex].hash == hash)
-                {
-                    current->model = &m_models[modelIndex];
-                    break;
-                }
-            }
-        }
-        ReadFile(file, &current->position,
-            sizeof(current->position), nullptr, nullptr);
-        ReadFile(file, &current->scale,
-            sizeof(current->scale), nullptr, nullptr);
-        // current->scale.y = current->scale.z = 1;
-        ReadFile(file, &current->orientation,
-            sizeof(current->orientation), nullptr, nullptr);
-        // current->orientation.a = 1;
-        // current->orientation.b = current->orientation.c = current->orientation.d = 0;
-    }
-    CloseHandle(file);
-
-    
-}
-
-/*
-    Scene file reference (in progress)
-
-    struct GameObject
-    {
-        u32 nameOfGameObjectSize;
-        u32 nameOfGameObjectCapacity;
-        char nameOfGameObject[nameOfGameObjectSize];
-        int parent; - -l if no parent, >= 0 if parent exists
-        u64 modelHash; hash of the filename string of the model
-        float position[3];
-        float scale[3];
-        float orientation[4];
-    }
-
-    - Start Of File
-    struct
-    {
-        s32 gameObjectCount;
-        GameObject arrayOfGameObjects[gameObjectCount];
-    }
-*/
-
-void Engine::SaveScene(const char *fileName)
-{
-    HANDLE file = CreateFile(fileName, GENERIC_WRITE,
-        FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS,
-        FILE_ATTRIBUTE_NORMAL, nullptr);
-
-    WriteFile(file, &m_gameObjectCount, sizeof(u32), nullptr, nullptr);
-    for(int i = 0; i < (int)m_gameObjectCount; i++)
-    {
-        GameObject *current = &m_gameObjects[i];
-
-        WriteFile(file, &current->name, sizeof(MyString), nullptr, nullptr);
-        WriteFile(file, current->name.data, current->name.size, nullptr, nullptr);
-        int parent = (int)(current->parent - m_gameObjects);
-        if (current->parent == nullptr)
-            parent = -1;
-        WriteFile(file, &parent, sizeof(int), nullptr, nullptr);
-        WriteFile(file, &current->model->hash, sizeof(u64), nullptr, nullptr);
-
-        WriteFile(file, &current->position,
-            sizeof(current->position), nullptr, nullptr);
-        WriteFile(file, &current->scale,
-            sizeof(current->scale), nullptr, nullptr);
-        WriteFile(file, &current->orientation,
-            sizeof(current->orientation), nullptr, nullptr);
-    }
-    CloseHandle(file);
 }
 
 void Engine::initSphericalManyGameObjects(int count) //TODO: remove
@@ -252,15 +138,11 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
         else if (m_gameObjects[i].model == &m_models[1])
             m_gameObjects[i].radius = 1;
         m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 1;
-        //if(i % m_modelCount == 3)
-            //m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 0.2;
         m_gameObjects[i].orientation.a = 1;
         char tmp[255];
         int size = snprintf(tmp, 255, "Entity%d", i);
         m_gameObjects[i].name = initStringChar(tmp, size, &m_arenaAllocator);
         m_gameObjects[i].name.capacity = 255;
-        if (i < 3 && i != 0)
-        m_gameObjects[i].parent = &m_gameObjects[0];
     }
 
     int countX = (int)sqrtf(count);
@@ -284,6 +166,15 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
                 m_gameObjects[index - 1].position * scale;
         }
     }
+    m_gameObjects[0].position =
+    {
+        0, -10, 0
+    };
+    m_gameObjects[0].scale =
+    {
+        1000, 1, 1000
+    };
+
 }
 
 void Engine::ProcessInputs()
@@ -291,7 +182,6 @@ void Engine::ProcessInputs()
     m_time = Platform::GetTimer();
 
     m_platform.MessageProcessing(&m_input);
-//    m_platform.GetWindowDimension();
     glViewport(0, 0, m_platform.m_windowDimension.width,
                      m_platform.m_windowDimension.height);
     m_editorCamera.SetProjection(projectionType::PERSPECTIVE);
@@ -301,7 +191,7 @@ void Engine::UpdateEditorCamera()
 {
     if (m_editorCameraEnabled)
     {
-        const float dt32 = (f32)m_deltaTime;
+        const f32 dt32 = (f32)m_deltaTime;
         static Float3 cameraRotation;
         cameraRotation += {(f32)m_input.mouseYDelta* dt32, (f32)m_input.mouseXDelta* dt32, 0};
         m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
@@ -321,87 +211,78 @@ void Engine::UpdateEditorCamera()
     m_editorCamera.m_parameters.aspect = m_platform.m_windowDimension.width / (f32)m_platform.m_windowDimension.height;
 }
 
+void Engine::UpdateModelMatrices()
+{
+    int batchCount = 100000;
+    m_modelMatrices = (RedFoxMaths::Mat4 *)MyMalloc(&m_tempAllocator,
+        sizeof(RedFoxMaths::Mat4) * batchCount * (m_modelCount));
+    m_modelCountIndex = (u64 *)MyMalloc(&m_tempAllocator,
+        sizeof(u64) * m_modelCount);
+    memset(m_modelCountIndex, 0, sizeof(u64) * m_modelCount);
+    for(int index = 0;index < m_gameObjectCount; index++)
+    {
+        if (m_gameObjects[index].model)
+        {
+            u64 modelIndex = m_gameObjects[index].model - m_models;
+            u64 countIndex = m_modelCountIndex[modelIndex];
+            m_modelMatrices[countIndex + (batchCount * modelIndex)] =
+                m_gameObjects[index].GetWorldMatrix().GetTransposedMatrix();
+            m_modelCountIndex[modelIndex]++;
+        }
+    }
+}
+
 void Engine::Update()
 {
+    ProcessInputs();
     UpdateGame = m_platform.LoadGameLibrary("UpdateGame", "game.dll",
         m_gameLibrary, &m_lastTime, UpdateGame);
-    
+
     UpdateEditorCamera();
 
-    static f32 time;
-    time += m_deltaTime * 0.1f;
-    UpdateLights(time, &m_graphics.lightStorage);
+    UpdateLights(&m_graphics.lightStorage);
     UpdatePhysics();
     //TODO we'll need to think how we pass the resources,
     // and gameplay structures and objects to this update function
-    UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount, time);
-    m_graphics.SetViewProjectionMatrix(m_editorCamera.GetVP());
-    m_gameObjects[0].GetChildren(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
+    UpdateGame(m_deltaTime, m_input, m_gameObjects, m_gameObjectCount, m_time);
+    UpdateModelMatrices();
+    UpdateIMGUI();
+    m_skyDome.sunPosition.x = cosf(m_time / 500);
+    m_skyDome.sunPosition.y = sinf(m_time / 500);
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 
 void Engine::Draw()
 {
-    if (m_deltaTime < 3)
-    { 
-        float sleepTime = 3 - m_deltaTime;
-        timeBeginPeriod(1);
-        Sleep((DWORD)sleepTime);
-        timeEndPeriod(1);
-    }
-    m_graphics.UpdateModelMatrices(m_gameObjects, m_gameObjectCount, &m_tempAllocator);
-    m_graphics.CalcShadows();
-    glViewport(0, 0, m_platform.m_windowDimension.width,
-                     m_platform.m_windowDimension.height);
-    m_graphics.DrawSkyDome(m_skyDome, m_deltaTime);
-    m_graphics.DrawGameObjects();
-    DrawIMGUI();
-    // swap the buffers to show output
+    Camera *currentCamera = &m_editorCamera; //TODO game camera
+    m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
+    m_graphics.Draw(m_modelMatrices, m_modelCountIndex, m_platform.m_windowDimension, m_skyDome, m_time);
     if (!SwapBuffers(m_dc))
         m_platform.FatalError("Failed to swap OpenGL buffers!");
-    u64 endTime = RedFoxEngine::Platform::GetTimer();
-    m_deltaTime = (endTime - m_time) / (f64)Platform::GetTimerFrequency();
+    m_deltaTime = (Platform::GetTimer() - m_time);
     m_tempAllocator.usedSize = 0;
+}
+
+u32 Engine::LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat)
+{
+    int width, height, comp;
+    MyString file = OpenAndReadEntireFile(filePath, &m_tempAllocator);
+    char* data = (char*)stbi_load_from_memory((u8*)file.data, file.size, &width, &height, &comp, 4);
+    GLuint texture = m_graphics.InitTexture(data, width, height, resident, repeat);
+    stbi_image_free(data);
+    return (texture);
 }
 
 void Engine::InitSkyDome()
 {
     m_skyDome.sunPosition = { 0, 1, 0 };
-    m_skyDome.model = RedFoxMaths::Mat4::GetScale({ 500, 500, 500 });
+    m_skyDome.model = RedFoxMaths::Mat4::GetScale({ 5000, 5000, 5000 });
 
-    int x, y, comp;
-    glCreateTextures(GL_TEXTURE_2D, 5, &m_skyDome.topTint);
-    char* data = (char*)stbi_load("Textures/topSkyTint.png", &x, &y, &comp, 4);
-    glTextureStorage2D(m_skyDome.topTint, 1, GL_RGBA8, x, y);
-    glTextureSubImage2D(m_skyDome.topTint, 0, 0, 0, x, y, GL_RGBA,
-        GL_UNSIGNED_BYTE, data);
-    glTextureParameteri(m_skyDome.topTint, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTextureParameteri(m_skyDome.topTint, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    stbi_image_free(data);
-
-    data = (char*)stbi_load("Textures/botSkyTint.png", &x, &y, &comp, 4);
-    glTextureStorage2D(m_skyDome.botTint, 1, GL_RGBA8, x, y);
-    glTextureSubImage2D(m_skyDome.botTint, 0, 0, 0, x, y, GL_RGBA,
-        GL_UNSIGNED_BYTE, data);
-    stbi_image_free(data);
-
-    data = (char*)stbi_load("Textures/sun.png", &x, &y, &comp, 4);
-    glTextureStorage2D(m_skyDome.sun, 1, GL_RGBA8, x, y);
-    glTextureSubImage2D(m_skyDome.sun, 0, 0, 0, x, y, GL_RGBA,
-        GL_UNSIGNED_BYTE, data);
-    stbi_image_free(data);
-
-    data = (char*)stbi_load("Textures/moon.png", &x, &y, &comp, 4);
-    glTextureStorage2D(m_skyDome.moon, 1, GL_RGBA8, x, y);
-    glTextureSubImage2D(m_skyDome.moon, 0, 0, 0, x, y, GL_RGBA,
-        GL_UNSIGNED_BYTE, data);
-    stbi_image_free(data);
-
-    data = (char*)stbi_load("Textures/clouds.png", &x, &y, &comp, 4);
-    glTextureStorage2D(m_skyDome.clouds, 1, GL_RGBA8, x, y);
-    glTextureSubImage2D(m_skyDome.clouds, 0, 0, 0, x, y, GL_RGBA,
-        GL_UNSIGNED_BYTE, data);
-    stbi_image_free(data);
+    m_skyDome.topTint = LoadTextureFromFilePath("Textures/topSkyTint.png", false, true);
+    m_skyDome.botTint = LoadTextureFromFilePath("Textures/botSkyTint.png", false, false);
+    m_skyDome.sun     = LoadTextureFromFilePath("Textures/sun.png", false, false);
+    m_skyDome.moon    = LoadTextureFromFilePath("Textures/moon.png", false, false);
+    m_skyDome.clouds  = LoadTextureFromFilePath("Textures/clouds.png", false, false);
 }
 
 Engine::~Engine()

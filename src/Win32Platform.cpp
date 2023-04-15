@@ -447,11 +447,11 @@ u64 RedFoxEngine::Platform::GetTimerFrequency(void)
     return Result.QuadPart;
 }
 
-u64 RedFoxEngine::Platform::GetTimer(void)
+f64 RedFoxEngine::Platform::GetTimer(void)
 {
     LARGE_INTEGER Result;
     QueryPerformanceCounter(&Result);
-    return Result.QuadPart;
+    return Result.QuadPart / (f64)GetTimerFrequency();
 }
 
 
