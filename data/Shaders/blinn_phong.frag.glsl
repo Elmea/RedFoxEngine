@@ -3,7 +3,7 @@
 
 struct ShadowParameters
 {
-    unsigned int depthMapFBO;
+    int index;
     int SHADOW_WIDTH, SHADOW_HEIGHT;
     unsigned int depthMap;
 };
@@ -26,11 +26,6 @@ struct Light {
 
     mat4 lightVp;
     ShadowParameters shadowParameters;
-
-    int index;
-    int padding0;
-    int padding1;
-    int padding2;
 };
 
 struct Material
@@ -94,7 +89,7 @@ float ShadowCalculation(Light light)
     vec3 Normal       = fs_in.Normal;
 
     vec4 fragPosLightSpace = light.lightVp * vec4(FragPosition, 1);
-    sampler2D shadowMap = sampler2D(sb_ShadowMaps.data[0]);
+    sampler2D shadowMap = sampler2D(sb_ShadowMaps.data[0]); //TODO: verify index is correct
 
     // perform perspective divide
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;

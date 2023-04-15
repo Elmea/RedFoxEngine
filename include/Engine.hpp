@@ -14,9 +14,8 @@
 #include "imgui_impl_win32.h"
 #include <ImGuizmo.h>
 
-#include <PhysX/PxConfig.h>
-#include <PhysX/PxPhysicsAPI.h>
-
+#include "ResourceManager.hpp"
+#include "Physics.hpp"
 #include "ObjParser.hpp"
 #include "OpenGLGraphics.hpp"
 #include "GameObject.hpp"
@@ -24,74 +23,62 @@
 
 namespace RedFoxEngine
 {
-    
+
+struct ImGUI
+{
+    //Editor ui
+    GameObject *selectedObject;
+    ImGuiIO* ImGuiIO;
+    ImFont* defaultFont;
+    ImGuizmo::OPERATION gizmoType;
+    ImGuizmo::MODE gizmoMode;
+};
+
+struct TimeManager
+{
+    f64 current;
+    f64 delta;
+};
+
 class Engine
 {
 private:
-    //Memory Arena class
-    Memory m_arenaAllocator = {};
-    Memory m_tempAllocator = {};
-    int m_sceneUsedMemory = 0;
+    ResourcesManager m_memoryManager = {};
 
     //Models/Scene/SceneGraph class
     MyString m_sceneName;
     RedFoxMaths::Mat4 *m_modelMatrices;
-    u64 *m_modelCountIndex;
-    Model *m_models = nullptr;
-    u64 m_modelCount = 0;
+
     //GameState??/Scene/SceneGraph    
     GameObject *m_gameObjects = nullptr;
-    u32 m_gameObjectCount = 0;
-    SkyDome m_skyDome;
-    
-
+    u32         m_gameObjectCount = 0;
+    SkyDome     m_skyDome;
     //GameState
     Input m_input = {};
 
-    HDC m_dc = 0;
+    u64 *m_modelCountIndex;
+    Model *m_models = nullptr;
+    u64 m_modelCount = 0;
+
+    Camera m_editorCamera;// TODO: figure it out
 
     //Game dll, library
-    HINSTANCE m_gameLibrary = 0;
-    FILETIME m_lastTime = {};
-    _updategame *UpdateGame = nullptr;
+    GameLibrary m_game = {};
 
     //Perfect where it is
     Platform m_platform = {};
     Graphics m_graphics = {};
 
-    f64 m_time = 0;    //Pass to gamestate as well ?
-    f64 m_deltaTime = 0;
-
-    //Editor ui
-    GameObject *m_selectedObject = nullptr;
-    Camera m_editorCamera;
-    ImGuiIO* m_ImGuiIO = nullptr;
-    ImFont* m_defaultFont = nullptr;
-    ImGuizmo::OPERATION m_GizmoType;
-    ImGuizmo::MODE m_GizmoMode;
-
+    TimeManager m_time = {};
     RedFoxMaths::Float3 m_editorCameraSpeed;
     bool m_editorCameraEnabled;
     
-    //Physics
-    physx::PxDefaultAllocator m_allocator;
-    physx::PxDefaultErrorCallback m_errorCallback;
-    physx::PxFoundation* m_foundation = nullptr;
-    physx::PxPhysics* m_physics = nullptr;
-    physx::PxDefaultCpuDispatcher* m_dispatcher = nullptr;
-    physx::PxScene* m_scene = nullptr;
-    physx::PxMaterial* m_material = nullptr;
-    physx::PxPvd* m_pvd = nullptr;
-    physx::PxCudaContextManager* m_cudaContextManager = nullptr;
+    ImGUI m_gui = {};
+    Physx m_physx;
 
 public:
     bool isGame = false;
-private:
-    void InitPhysics();
-    void CreateCubeCollider(const physx::PxTransform& t, physx::PxU32 size, physx::PxReal halfExtent);
-    void CreateSphereCollider(const physx::PxTransform& t, physx::PxReal radius);
-    void UpdatePhysics();
-    
+private:    
     void InitSkyDome();
     void DrawIMGUI();
     void DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight);

@@ -10,9 +10,9 @@ namespace RedFoxEngine
 {
 Light::Light(LightType lightType, int _index)
 {
-    lightInfo.index = _index;
+    lightInfo.shadowParameters.index = _index;
     type = lightType;
-    glCreateFramebuffers(1, &lightInfo.shadowParameters.depthMapFBO);
+    glCreateFramebuffers(1, &depthMapFBO);
 
     glGenTextures(1, &lightInfo.shadowParameters.depthMap);
     glBindTexture(GL_TEXTURE_2D, lightInfo.shadowParameters.depthMap);
@@ -21,7 +21,7 @@ Light::Light(LightType lightType, int _index)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, lightInfo.shadowParameters.depthMapFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, lightInfo.shadowParameters.depthMap, 0);
 
     u64 handle = glGetTextureHandleARB(lightInfo.shadowParameters.depthMap);
@@ -42,7 +42,7 @@ Light* LightStorage::CreateLight(LightType type)
     }
 
     Light newLight { type , lightCount };
-    newLight.lightInfo.index = lightCount;
+    newLight.lightInfo.shadowParameters.index = lightCount;
     newLight.SetType(type);
 
     lights[lightCount] = newLight;
@@ -141,9 +141,9 @@ void Graphics::InitLights()
 void Engine::UpdateLights(LightStorage* lightStorage) //TODO: This function or something like this could be in game or in physics
 {
     int dirCount = 0, pointCount = 0, spotCount = 0;
-    LightInfo* dirLights = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * lightStorage->dirLightCount);
-    LightInfo* pointLights = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * lightStorage->pointLightCount);
-    LightInfo* spotLights = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * lightStorage->spotLightCount);
+    LightInfo* dirLights = (LightInfo*)m_memoryManager.TemporaryAllocation(sizeof(LightInfo) * lightStorage->dirLightCount);
+    LightInfo* pointLights = (LightInfo*)m_memoryManager.TemporaryAllocation(sizeof(LightInfo) * lightStorage->pointLightCount);
+    LightInfo* spotLights = (LightInfo*)m_memoryManager.TemporaryAllocation(sizeof(LightInfo) * lightStorage->spotLightCount);
 
     for (int i = 0; i < lightStorage->lightCount; i++)
     {
@@ -173,9 +173,7 @@ void Engine::UpdateLights(LightStorage* lightStorage) //TODO: This function or s
 
         if (update)
         {
-
             RedFoxMaths::Float3 rotation = RedFoxMaths::Float3::DirToEuler(current->lightInfo.direction, { 0.0f, 1.0f, 0.0f });
-
             RedFoxMaths::Mat4 lightView = RedFoxMaths::Mat4::GetTranslation(current->lightInfo.position) * RedFoxMaths::Mat4::GetRotationY(rotation.y) *
                 RedFoxMaths::Mat4::GetRotationX(rotation.x) * RedFoxMaths::Mat4::GetRotationZ(rotation.z);
 

@@ -42,8 +42,9 @@ void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
     glSamplerParameteri(m_textureSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glSamplerParameteri(m_textureSampler, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glSamplerParameteri(m_textureSampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
-   
-    wglSwapIntervalEXT(0);
+
+    //V-SYNC   
+    wglSwapIntervalEXT(1);
 }
 
 void Graphics::InitImGUIFramebuffer(WindowDimension dimension)
@@ -210,6 +211,7 @@ void Graphics::Draw(RedFoxMaths::Mat4 *p_modelMatrices, u64 *p_modelCountIndex, 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glDisable(GL_CULL_FACE);
     DrawSkyDome(p_skyDome, p_time / 500);
+    
     glEnable(GL_CULL_FACE);
     DrawGameObjects(p_modelMatrices, p_modelCountIndex);
     // swap the buffers to show output
@@ -270,8 +272,6 @@ void Graphics::DrawModelInstances(Model *model,
 
     glDrawElementsInstanced(GL_TRIANGLES, model->obj.indexCount,
         GL_UNSIGNED_INT, 0, instanceCount);
-    glFlush();
-    glFinish();
 }
 
 void Graphics::DrawShadowMaps(RedFoxMaths::Mat4 *modelMatrices, u64 *modelCountIndex)
@@ -288,7 +288,7 @@ void Graphics::DrawShadowMaps(RedFoxMaths::Mat4 *modelMatrices, u64 *modelCountI
         if (lightStorage.lights[lightIndex].GetType() == LightType::NONE)
             continue;
 
-        glBindFramebuffer(GL_FRAMEBUFFER, lightStorage.lights[lightIndex].lightInfo.shadowParameters.depthMapFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, lightStorage.lights[lightIndex].depthMapFBO);
         glViewport(0, 0, lightStorage.lights[lightIndex].lightInfo.shadowParameters.SHADOW_WIDTH, 
             lightStorage.lights[lightIndex].lightInfo.shadowParameters.SHADOW_HEIGHT);
         glClear(GL_DEPTH_BUFFER_BIT);

@@ -6,7 +6,7 @@ namespace RedFoxEngine
 {
     struct ShadowParameters
     {
-        unsigned int depthMapFBO = 0;
+        int index;
         static const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
         unsigned int depthMap = 0;
     };
@@ -39,10 +39,6 @@ namespace RedFoxEngine
 
         RedFoxMaths::Mat4 VP;
         ShadowParameters shadowParameters;
-        int index;
-        int padding0;
-        int padding1;
-        int padding2;
 
         void operator=(LightInfo& light);
     };
@@ -53,8 +49,8 @@ namespace RedFoxEngine
         RedFoxMaths::Mat4 projection;
 
         void SetProjection(LightType type);
-
     public:
+        unsigned int depthMapFBO = 0;
         LightInfo lightInfo;
 
         Light::Light(LightType lightType, int index);

@@ -233,6 +233,7 @@
     <ClCompile Include="..\src\ObjParser.cpp" />
     <ClCompile Include="..\src\OpenGLGraphics.cpp" />
     <ClCompile Include="..\src\Physics.cpp" />
+    <ClCompile Include="..\src\ResourceManager.cpp" />
     <ClCompile Include="..\src\SceneGraph.cpp" />
     <ClCompile Include="..\src\Shaders.cpp" />
     <ClCompile Include="..\src\UI.cpp" />

@@ -25,7 +25,13 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
 {
+/* 
+    C++ by default exports functions by name mangeling 
+    Meaning that our function UpdateGame will look like @UpdateGame%int etc...
+    To stop that, we use a macro to export the function as the thing we named it
+ */
 #pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
+
     /*
     for (int i = 0; i < (int)gameObjectCount; i++) // TODO physics code here ?
     {

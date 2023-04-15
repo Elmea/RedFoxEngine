@@ -32,14 +32,14 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
         FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL, nullptr);
     
-    m_sceneName = initStringChar(fileName, 255, &m_arenaAllocator);
+    m_sceneName = initStringChar(fileName, 255, &m_memoryManager.m_memory.arena);
 
     ReadFile(file, &m_gameObjectCount, sizeof(u32), nullptr, nullptr);
     for(int i = 0; i < (int)m_gameObjectCount; i++)
     {
         GameObject *current = &m_gameObjects[i];
         ReadFile(file, &current->name, sizeof(MyString), nullptr, nullptr);
-        current->name.data = (char *)MyMalloc(&m_arenaAllocator, 255);
+        current->name.data = (char *)m_memoryManager.PersistentAllocation(255);
         ReadFile(file, (void*)current->name.data, current->name.size, nullptr, nullptr);
         int parent;
         ReadFile(file, &parent, sizeof(int), nullptr, nullptr);

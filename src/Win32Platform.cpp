@@ -460,10 +460,9 @@ UPDATEGAME(updateStub)
 //NOTE We use an empty function in case our library loading fails, so we don't crash
 }
 
-RedFoxEngine::_updategame *RedFoxEngine::Platform::LoadGameLibrary(const char *functionName, const char *libraryPath, HINSTANCE &gameLibrary,
-    LPFILETIME LastWriteTime, _updategame *functionPointer)
+RedFoxEngine::GameLibrary RedFoxEngine::Platform::LoadGameLibrary(const char *functionName, const char *libraryPath, GameLibrary game)
 {
-    FILETIME temp = *LastWriteTime;
+    FILETIME temp = game.lastTime;
     /*
      * NOTE: On Windows the lowest overhead function to open a file handle
      * is the misnamed function CreateFile.
@@ -481,20 +480,24 @@ RedFoxEngine::_updategame *RedFoxEngine::Platform::LoadGameLibrary(const char *f
                               OPEN_EXISTING,                      // Creation Disposition
                               FILE_ATTRIBUTE_NORMAL,              // Flags and attributes
                               nullptr);                              // Template file
-    GetFileTime(File, nullptr, nullptr, LastWriteTime);
+    GetFileTime(File, nullptr, nullptr, &game.lastTime);
     CloseHandle(File);
-    if (CompareFileTime(&temp, LastWriteTime) != 0)
+    if (CompareFileTime(&temp, &game.lastTime) != 0)
     {
-        if (gameLibrary)
-            FreeLibrary(gameLibrary);
+        if (game.library)
+            FreeLibrary(game.library);
         CopyFileA(libraryPath, "gameCopy.dll", false);
-        gameLibrary = LoadLibraryA("gameCopy.dll");
-        if (gameLibrary)
-            functionPointer = (_updategame *)GetProcAddress(gameLibrary, functionName);
-        if (functionPointer == nullptr)
-            functionPointer = &updateStub;
+        game.library = LoadLibraryA("gameCopy.dll");
+        if (game.library)
+            game.update = (_updategame *)GetProcAddress(game.library, functionName);
+        if (game.update == nullptr)
+            game.update = &updateStub;
     }
-    return ((_updategame*)functionPointer);
+    else if (File == INVALID_HANDLE_VALUE && game.update == nullptr)
+    {
+        game.update = &updateStub;
+    }
+    return (game);
 }
 
 RedFoxEngine::Window RedFoxEngine::Platform::CreateRedFoxWindow(int Width, int Height)
@@ -528,6 +531,13 @@ void RedFoxEngine::Platform::FatalError(const char *message)
     ExitProcess(0);
 }
 
+void RedFoxEngine::Platform::SwapFramebuffers()
+{
+    HDC dc = GetDC(m_window);
+    if (!SwapBuffers(dc))
+        FatalError("Failed to swap OpenGL buffers!");
+    ReleaseDC(m_window, dc);
+}
 void RedFoxEngine::Platform::GetWglFunctions(void)
 {
     // to get WGL funcs we need valid GL context, so create dummy window for dummy GL contetx
