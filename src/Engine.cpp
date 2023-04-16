@@ -30,15 +30,17 @@ Engine::Engine(int width, int height) :
     m_models[m_modelCount].obj = CreateSphere(30, 25, &m_memoryManager.m_memory.arena);
     m_models[m_modelCount].hash = 2;
     m_modelCount++;
-    // ObjModelPush("ts_bot912.obj");
+    ObjModelPush("ts_bot912.obj");
     // ObjModelPush("vortigaunt.obj");
     // ObjModelPush("barbarian.obj");
 
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
-    m_gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(
+    scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(
                                                 sizeof(GameObject) * 100000);
-
+    scene.gameObjects[0] = {};
+    scene.gameObjects[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
+    scene.gameObjects[0].name.capacity = 255;
     m_graphics.lightStorage.lights = (Light*)m_memoryManager.PersistentAllocation(sizeof(Light) * 1000);
     m_graphics.lightStorage.shadowMaps = (unsigned int*)m_memoryManager.PersistentAllocation(sizeof(unsigned int) * 1000);
 
@@ -98,7 +100,7 @@ Engine::Engine(int width, int height) :
     // path into the scene data ? maybe both
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
     m_graphics.InitLights();
-    m_physx.InitPhysics(m_gameObjects, m_gameObjectCount, &m_models[1]);
+    m_physx.InitPhysics(scene.gameObjects, scene.gameObjectCount, &m_models[1]);//TODO pass scene
 }
 
 void Engine::ObjModelPush(const char *path)
@@ -125,21 +127,22 @@ bool Engine::isRunning()
 
 void Engine::initSphericalManyGameObjects(int count) //TODO: remove
 {
-    m_gameObjectCount = count;
-    for (int i = 0; i < (int)m_gameObjectCount; i++)
+    scene.gameObjectCount = count;
+
+    for (int i = 1; i < (int)scene.gameObjectCount; i++)
     {
-        m_gameObjects[i].parent = nullptr;
-        m_gameObjects[i].model = &m_models[i% m_modelCount];
-        if (m_gameObjects[i].model == &m_models[0])
-            m_gameObjects[i].boxExtents = { 0.5, 0.5, 0.5 };
-        else if (m_gameObjects[i].model == &m_models[1])
-            m_gameObjects[i].radius = 1;
-        m_gameObjects[i].scale.x = m_gameObjects[i].scale.y = m_gameObjects[i].scale.z = 1;
-        m_gameObjects[i].orientation.a = 1;
+        scene.gameObjects[i].parent = 0;
+        scene.gameObjects[i].model = &m_models[i% m_modelCount];
+        if (scene.gameObjects[i].model == &m_models[0])
+            scene.gameObjects[i].boxExtents = { 0.5, 0.5, 0.5 };
+        else if (scene.gameObjects[i].model == &m_models[1])
+            scene.gameObjects[i].radius = 1;
+        scene.gameObjects[i].scale.x = scene.gameObjects[i].scale.y = scene.gameObjects[i].scale.z = 1;
+        scene.gameObjects[i].orientation.a = 1;
         char tmp[255];
         int size = snprintf(tmp, 255, "Entity%d", i);
-        m_gameObjects[i].name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
-        m_gameObjects[i].name.capacity = 255;
+        scene.gameObjects[i].name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
+        scene.gameObjects[i].name.capacity = 255;
     }
 
     int countX = (int)sqrtf(count);
@@ -153,21 +156,21 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     {
         for(int j = 0; j < countY; j++)
         {
-            m_gameObjects[index++].position =
+            scene.gameObjects[index++].position =
                 {
                     cosf(longitudeStep * j) * sinf(i * latitudeStep),
                     sinf(longitudeStep * j) * sinf(i * latitudeStep) + 50,
                     cosf(i * latitudeStep - M_PI)
                 };
-            m_gameObjects[index - 1].position =
-                m_gameObjects[index - 1].position * scale;
+            scene.gameObjects[index - 1].position =
+                scene.gameObjects[index - 1].position * scale;
         }
     }
-    m_gameObjects[0].position =
+    scene.gameObjects[0].position =
     {
         0, -10, 0
     };
-    m_gameObjects[0].scale =
+    scene.gameObjects[0].scale =
     {
         1000, 1, 1000
     };
@@ -216,14 +219,14 @@ void Engine::UpdateModelMatrices()
     m_modelCountIndex = (u64 *)m_memoryManager.TemporaryAllocation(sizeof(u64)
                                                          * m_modelCount);
     memset(m_modelCountIndex, 0, sizeof(u64) * m_modelCount);
-    for(int index = 0;index < m_gameObjectCount; index++)
+    for(int index = 0;index < (int)scene.gameObjectCount; index++)
     {
-        if (m_gameObjects[index].model)
+        if (scene.gameObjects[index].model)
         {
-            u64 modelIndex = m_gameObjects[index].model - m_models;
+            u64 modelIndex = scene.gameObjects[index].model - m_models;
             u64 countIndex = m_modelCountIndex[modelIndex];
             m_modelMatrices[countIndex + (batchCount * modelIndex)] =
-                m_gameObjects[index].GetWorldMatrix().GetTransposedMatrix();
+                scene.GetWorldMatrix(index).GetTransposedMatrix();
             m_modelCountIndex[modelIndex]++;
         }
     }
@@ -237,14 +240,14 @@ void Engine::Update()
     UpdateEditorCamera();
 
     UpdateLights(&m_graphics.lightStorage);
-    m_physx.UpdatePhysics(m_gameObjects, m_gameObjectCount);
+    m_physx.UpdatePhysics(scene.gameObjects, scene.gameObjectCount);
     //TODO we'll need to think how we pass the resources,
     // and gameplay structures and objects to this update function
-    m_game.update(m_time.delta, m_input, m_gameObjects, m_gameObjectCount, m_time.current);
+    m_game.update(m_time.delta, m_input, scene.gameObjects, scene.gameObjectCount, m_time.current);
     UpdateModelMatrices();
     UpdateIMGUI();
-    m_skyDome.sunPosition.x = cosf(m_time.current / 500);
-    m_skyDome.sunPosition.y = sinf(m_time.current / 500);
+    scene.skyDome.sunPosition.x = cosf(m_time.current / 500);
+    scene.skyDome.sunPosition.y = sinf(m_time.current / 500);
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 
@@ -252,7 +255,7 @@ void Engine::Draw()
 {
     Camera *currentCamera = &m_editorCamera; //TODO game camera
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
-    m_graphics.Draw(m_modelMatrices, m_modelCountIndex, m_platform.m_windowDimension, m_skyDome, m_time.current);
+    m_graphics.Draw(m_modelMatrices, m_modelCountIndex, m_platform.m_windowDimension, scene.skyDome, m_time.current);
     m_platform.SwapFramebuffers();
     m_time.delta = (Platform::GetTimer() - m_time.current);
     m_memoryManager.m_memory.temp.usedSize = 0;
@@ -270,14 +273,14 @@ u32 Engine::LoadTextureFromFilePath(const char *filePath, bool resident, bool re
 
 void Engine::InitSkyDome()
 {
-    m_skyDome.sunPosition = { 0, 1, 0 };
-    m_skyDome.model = RedFoxMaths::Mat4::GetScale({ 5000, 5000, 5000 });
+    scene.skyDome.sunPosition = { 0, 1, 0 };
+    scene.skyDome.model = RedFoxMaths::Mat4::GetScale({ 5000, 5000, 5000 });
 
-    m_skyDome.topTint = LoadTextureFromFilePath("Textures/topSkyTint.png", false, true);
-    m_skyDome.botTint = LoadTextureFromFilePath("Textures/botSkyTint.png", false, false);
-    m_skyDome.sun     = LoadTextureFromFilePath("Textures/sun.png", false, false);
-    m_skyDome.moon    = LoadTextureFromFilePath("Textures/moon.png", false, false);
-    m_skyDome.clouds  = LoadTextureFromFilePath("Textures/clouds.png", false, false);
+    scene.skyDome.topTint = LoadTextureFromFilePath("Textures/topSkyTint.png", false, true);
+    scene.skyDome.botTint = LoadTextureFromFilePath("Textures/botSkyTint.png", false, false);
+    scene.skyDome.sun     = LoadTextureFromFilePath("Textures/sun.png", false, false);
+    scene.skyDome.moon    = LoadTextureFromFilePath("Textures/moon.png", false, false);
+    scene.skyDome.clouds  = LoadTextureFromFilePath("Textures/clouds.png", false, false);
 }
 
 Engine::~Engine()

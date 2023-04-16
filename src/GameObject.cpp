@@ -10,35 +10,24 @@ namespace RedFoxEngine
             return (RedFoxMaths::Mat4::CreateTransformMatrix(position, orientation, scale));
         }
        
-        RedFoxMaths::Mat4 GameObject::GetWorldMatrix()
-        {
-            if (parent)
-                return GetLocalMatrix() * parent->GetWorldMatrix();
-
-            return GetLocalMatrix();
-        }
-
-        GameObject **GameObject::GetChildren(GameObject *objects, int objectCount, Memory *temp)
-        {
-            GameObject **result = (GameObject **)MyMalloc(temp, sizeof(GameObject **));
-            int count = 0;
-            for (int i = 0; i < objectCount; i++)
-            {
-                if (objects[i].parent == this)
-                    result[count++] = &objects[i];
-            }
-            result[count] = nullptr;
-            return(result);
-        }
-
-        int GameObject::GetChildrenCount(GameObject *objects, int objectCount)
-        {
-            int count = 0;
-            for (int i = 0; i < objectCount; i++)
-            {
-                if (objects[i].parent == this)
-                    count++;
-            }
-            return (count);
-        }
+        // int GameObject::GetChildrenCount(GameObject *objects, int objectCount)
+        // {
+        //     int count = 0;
+        //     for (int i = 0; i < objectCount; i++)
+        //     {
+        //         if (objects[i].parent == this)
+        //             count++;
+        //     }
+        //     return (count);
+        // }
+        // int GameObject::GetChildrenCount(GameObject *objects, int objectCount)
+        // {
+        //     int count = 0;
+        //     for (int i = 0; i < objectCount; i++)
+        //     {
+        //         if (objects[i].parent == this)
+        //             count++;
+        //     }
+        //     return (count);
+        // }
 }

@@ -28,25 +28,22 @@
 
 void RedFoxEngine::Engine::LoadScene(const char *fileName)
 {
+    
     HANDLE file = CreateFile(fileName, GENERIC_READ,
         FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL, nullptr);
     
     m_sceneName = initStringChar(fileName, 255, &m_memoryManager.m_memory.arena);
 
-    ReadFile(file, &m_gameObjectCount, sizeof(u32), nullptr, nullptr);
-    for(int i = 0; i < (int)m_gameObjectCount; i++)
+    ReadFile(file, &scene.gameObjectCount, sizeof(u32), nullptr, nullptr);
+    for(int i = 0; i < (int)scene.gameObjectCount; i++)
     {
-        GameObject *current = &m_gameObjects[i];
+        GameObject *current = &scene.gameObjects[i];
         ReadFile(file, &current->name, sizeof(MyString), nullptr, nullptr);
         current->name.data = (char *)m_memoryManager.PersistentAllocation(255);
         ReadFile(file, (void*)current->name.data, current->name.size, nullptr, nullptr);
         int parent;
         ReadFile(file, &parent, sizeof(int), nullptr, nullptr);
-        if (parent == -1)
-            current->parent = nullptr;
-        else
-            current->parent = &m_gameObjects[parent];
         u64 hash = 0;
         ReadFile(file, &hash, sizeof(u64), nullptr, nullptr);
         current->model = nullptr;
@@ -84,17 +81,14 @@ void RedFoxEngine::Engine::SaveScene(const char *fileName)
         FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS,
         FILE_ATTRIBUTE_NORMAL, nullptr);
 
-    WriteFile(file, &m_gameObjectCount, sizeof(u32), nullptr, nullptr);
-    for(int i = 0; i < (int)m_gameObjectCount; i++)
+    WriteFile(file, &scene.gameObjectCount, sizeof(u32), nullptr, nullptr);
+    for(int i = 0; i < (int)scene.gameObjectCount; i++)
     {
-        GameObject *current = &m_gameObjects[i];
+        GameObject *current = &scene.gameObjects[i];
 
         WriteFile(file, &current->name, sizeof(MyString), nullptr, nullptr);
         WriteFile(file, current->name.data, current->name.size, nullptr, nullptr);
-        int parent = (int)(current->parent - m_gameObjects);
-        if (current->parent == nullptr)
-            parent = -1;
-        WriteFile(file, &parent, sizeof(int), nullptr, nullptr);
+        WriteFile(file, &current->parent, sizeof(int), nullptr, nullptr);
         WriteFile(file, &current->model->hash, sizeof(u64), nullptr, nullptr);
 
         WriteFile(file, &current->position,

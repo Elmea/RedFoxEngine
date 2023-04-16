@@ -61,6 +61,7 @@ struct Shader
 {
     GLuint vertex, fragment, pipeline;
 };
+
 class Graphics
 {
 private:

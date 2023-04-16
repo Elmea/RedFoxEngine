@@ -27,7 +27,7 @@ namespace RedFoxEngine
 struct ImGUI
 {
     //Editor ui
-    GameObject *selectedObject;
+    int selectedObject;
     ImGuiIO* ImGuiIO;
     ImFont* defaultFont;
     ImGuizmo::OPERATION gizmoType;
@@ -40,6 +40,54 @@ struct TimeManager
     f64 delta;
 };
 
+struct SceneNode
+{
+    
+};
+
+struct SceneGraph
+{
+    SceneNode *root;    
+};
+
+struct Scene
+{
+    RedFoxEngine::GameObject *gameObjects = nullptr;
+    u32 gameObjectCount = 0;
+    RedFoxEngine::SkyDome skyDome;
+    SceneGraph graph;
+    RedFoxMaths::Mat4 GetWorldMatrix(int gameObjectindex)
+    {
+        RedFoxEngine::GameObject *current = &gameObjects[gameObjectindex]; 
+        if (current->parent)
+            return current->GetLocalMatrix() * GetWorldMatrix(gameObjects[current->parent].parent);
+        return gameObjects[gameObjectindex].GetLocalMatrix();
+    };
+    int *GetChildren(int gameObjectIndex, Memory *temp)
+    {
+        int *result = (int *)MyMalloc(temp, sizeof(int));
+        int count = 0;
+        for (int i = 0; i < (int)gameObjectCount; i++)
+        {
+            if (gameObjects[i].parent == gameObjectIndex)
+                result[count++] = i;
+        }
+        result[count] = 0;
+        return(result);
+    }
+    int GetChildrenCount(int gameObjectIndex)
+    {
+        int count = 0;
+        for (int i = 0; i < (int)gameObjectCount; i++)
+        {
+            if (gameObjects[i].parent == gameObjectIndex)
+                count++;
+        }
+        return (count);
+    }
+    
+};
+
 class Engine
 {
 private:
@@ -49,10 +97,8 @@ private:
     MyString m_sceneName;
     RedFoxMaths::Mat4 *m_modelMatrices;
 
-    //GameState??/Scene/SceneGraph    
-    GameObject *m_gameObjects = nullptr;
-    u32         m_gameObjectCount = 0;
-    SkyDome     m_skyDome;
+    //GameState??/Scene/SceneGraph
+    Scene scene; 
     //GameState
     Input m_input = {};
 
@@ -74,7 +120,7 @@ private:
     bool m_editorCameraEnabled;
     
     ImGUI m_gui = {};
-    Physx m_physx;
+    Physx m_physx {};
 
 public:
     bool isGame = false;
@@ -83,7 +129,7 @@ private:
     void DrawIMGUI();
     void DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight);
     int  DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
-    void DrawSceneNodes(bool is_child, GameObject* model);
+    void DrawSceneNodes(bool is_child, int index);
     void UpdateIMGUI();
     void UpdateEditorCamera();
     void UpdateModelMatrices();
