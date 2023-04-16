@@ -350,7 +350,7 @@ void Engine::UpdateIMGUI()
     DrawDockSpace(ImGui::GetMainViewport(), dockingFlags, (const ImGuiWindowClass*)0);
 
     ImGui::PushFont(m_gui.defaultFont);
-    static int index = 0;
+    static int index = 1;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
     if (ImGui::Begin("Editor", (bool*)0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
@@ -516,8 +516,8 @@ void Engine::UpdateIMGUI()
                 ImGuiWindowFlags_NoMove;
 
             ImGui::BeginChild("SceneGraphNodes", ImVec2(0, 0), true, sceneGraphFlags);
-            if (index < 0)
-                index = 0;
+            if (index < 1)
+                index = 1;
             else if (index > (int)scene.gameObjectCount - 1)
                 index = scene.gameObjectCount - 1;
 
