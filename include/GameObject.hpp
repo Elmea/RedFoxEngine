@@ -9,8 +9,8 @@ namespace RedFoxEngine
     {
         MyString name;
         int parent;
-        Model *model;
-
+        int modelIndex;
+  
         RedFoxMaths::Float3 position;
         RedFoxMaths::Float3 scale;
         RedFoxMaths::Quaternion orientation;
@@ -19,11 +19,5 @@ namespace RedFoxEngine
         RedFoxMaths::Float3 boxExtents;
 
         RedFoxMaths::Mat4 GetLocalMatrix();
-        // int *GetChildren(GameObject *objects, int objectCount, Memory *temp);
-        // GameObject **GetChildren(GameObject *gameObjects, int modelCount,
-            // Memory *temp);
-        
-
-        // int GetChildrenCount(GameObject *objects, int objectCount);
     };
 }

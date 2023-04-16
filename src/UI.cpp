@@ -156,13 +156,13 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     {
         scene.gameObjectCount = 0;
         m_memoryManager.m_memory.arena.usedSize = m_memoryManager.m_sceneUsedMemory;
-        m_sceneName = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
+        scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
     }
 
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
     if (ImGui::Button("SAVE SCENE", ImVec2(0, buttonHeight)))
-        SaveScene(strcat((char*)m_sceneName.data, ".scene"));
+        SaveScene(strcat((char*)scene.m_name.data, ".scene"));
 
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 32.f);
@@ -191,7 +191,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->name.capacity = 255;
         newGameObject->orientation = { 1,0,0,0 };
         newGameObject->scale = { 1,1,1 };
-        newGameObject->model = nullptr;
+        newGameObject->modelIndex = -1;
     }
 
     ImGui::SameLine();
@@ -206,7 +206,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->name.capacity = 255;
         newGameObject->orientation = { 1,0,0,0 };
         newGameObject->scale = { 1,1,1 };
-        newGameObject->model = &m_models[0];
+        newGameObject->modelIndex = 0;
     }
 
     ImGui::SameLine();
@@ -221,7 +221,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->name.capacity = 255;
         newGameObject->orientation = { 1,0,0,0 };
         newGameObject->scale = { 1,1,1 };
-        newGameObject->model = &m_models[1];
+        newGameObject->modelIndex = 1;
     }
 
     ImGui::PopStyleVar();
@@ -461,7 +461,7 @@ void Engine::UpdateIMGUI()
                 averageFps = (fps[i] + averageFps) / 2.0f;
             }
         }
-        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "%s (%.f fps)(%.4f ms)", m_sceneName.data, averageFps, m_time.delta * 1000))
+        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "%s (%.f fps)(%.4f ms)", scene.m_name.data, averageFps, m_time.delta * 1000))
         {
             static bool scrollButtonHovered = false;
             if (ImGui::BeginPopupContextItem("RenameScenePopup"))
@@ -470,7 +470,7 @@ void Engine::UpdateIMGUI()
                     ImGui::CloseCurrentPopup();
 
                 ImGui::SameLine();
-                ImGui::InputText(" ", (char*)m_sceneName.data, m_sceneName.capacity);
+                ImGui::InputText(" ", (char*)scene.m_name.data, scene.m_name.capacity);
                 ImGui::EndPopup();
             }
             

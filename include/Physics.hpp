@@ -2,7 +2,7 @@
 #include <PhysX/PxPhysicsAPI.h>
 
 #include "GameObject.hpp"
-
+#include "Scene.hpp"
 namespace RedFoxEngine
 {
 
@@ -14,7 +14,7 @@ class Physx
     physx::PxFoundation* foundation = nullptr;
     physx::PxPhysics* physics = nullptr;
     physx::PxDefaultCpuDispatcher* dispatcher = nullptr;
-    physx::PxScene* scene = nullptr;
+    physx::PxScene* m_scene = nullptr;
     physx::PxMaterial* material = nullptr;
     physx::PxPvd* pvd = nullptr;
     physx::PxCudaContextManager* cudaContextManager = nullptr;
@@ -22,7 +22,7 @@ class Physx
     void CreateCubeCollider(const physx::PxTransform& t, physx::PxU32 size, physx::PxReal halfExtent);
     void CreateSphereCollider(const physx::PxTransform& t, physx::PxReal radius);
   public:
-    void InitPhysics(GameObject *p_gameObjects, int p_gameObjectCount, Model *sphere);
+    void InitPhysics(Scene scene, int sphereIndex);
     void UpdatePhysics(GameObject *p_gameObjects, int p_gameObjectCount);
   ~Physx()
   {

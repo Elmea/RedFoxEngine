@@ -15,6 +15,7 @@
 #include <ImGuizmo.h>
 
 #include "ResourceManager.hpp"
+#include "Scene.hpp"
 #include "Physics.hpp"
 #include "ObjParser.hpp"
 #include "OpenGLGraphics.hpp"
@@ -34,74 +35,14 @@ struct ImGUI
     ImGuizmo::MODE gizmoMode;
 };
 
-struct TimeManager
-{
-    f64 current;
-    f64 delta;
-};
-
-struct SceneNode
-{
-    
-};
-
-struct SceneGraph
-{
-    SceneNode *root;    
-};
-
-struct Scene
-{
-    RedFoxEngine::GameObject *gameObjects = nullptr;
-    u32 gameObjectCount = 0;
-    RedFoxEngine::SkyDome skyDome;
-    SceneGraph graph;
-    RedFoxMaths::Mat4 GetWorldMatrix(int gameObjectindex)
-    {
-        RedFoxEngine::GameObject *current = &gameObjects[gameObjectindex]; 
-        if (current->parent)
-            return current->GetLocalMatrix() * GetWorldMatrix(gameObjects[current->parent].parent);
-        return gameObjects[gameObjectindex].GetLocalMatrix();
-    };
-    int *GetChildren(int gameObjectIndex, Memory *temp)
-    {
-        int *result = (int *)MyMalloc(temp, sizeof(int));
-        int count = 0;
-        for (int i = 0; i < (int)gameObjectCount; i++)
-        {
-            if (gameObjects[i].parent == gameObjectIndex)
-                result[count++] = i;
-        }
-        result[count] = 0;
-        return(result);
-    }
-    int GetChildrenCount(int gameObjectIndex)
-    {
-        int count = 0;
-        for (int i = 0; i < (int)gameObjectCount; i++)
-        {
-            if (gameObjects[i].parent == gameObjectIndex)
-                count++;
-        }
-        return (count);
-    }
-    
-};
-
 class Engine
 {
 private:
     ResourcesManager m_memoryManager = {};
 
-    //Models/Scene/SceneGraph class
-    MyString m_sceneName;
-    RedFoxMaths::Mat4 *m_modelMatrices;
-
-    //GameState??/Scene/SceneGraph
     Scene scene; 
     //GameState
     Input m_input = {};
-
     u64 *m_modelCountIndex;
     Model *m_models = nullptr;
     u64 m_modelCount = 0;

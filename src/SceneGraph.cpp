@@ -2,7 +2,6 @@
 
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
-
 /*
     Scene file reference (in progress)
 
@@ -33,7 +32,7 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
         FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL, nullptr);
     
-    m_sceneName = initStringChar(fileName, 255, &m_memoryManager.m_memory.arena);
+    scene.m_name = initStringChar(fileName, 255, &m_memoryManager.m_memory.arena);
 
     ReadFile(file, &scene.gameObjectCount, sizeof(u32), nullptr, nullptr);
     for(int i = 0; i < (int)scene.gameObjectCount; i++)
@@ -46,7 +45,7 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
         ReadFile(file, &parent, sizeof(int), nullptr, nullptr);
         u64 hash = 0;
         ReadFile(file, &hash, sizeof(u64), nullptr, nullptr);
-        current->model = nullptr;
+        current->modelIndex = -1;
         if (hash != 0)
         {
             for (int modelIndex = 0;
@@ -55,7 +54,7 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
             {
                 if (m_models[modelIndex].hash == hash)
                 {
-                    current->model = &m_models[modelIndex];
+                    current->modelIndex = modelIndex;
                     break;
                 }
             }
@@ -89,7 +88,7 @@ void RedFoxEngine::Engine::SaveScene(const char *fileName)
         WriteFile(file, &current->name, sizeof(MyString), nullptr, nullptr);
         WriteFile(file, current->name.data, current->name.size, nullptr, nullptr);
         WriteFile(file, &current->parent, sizeof(int), nullptr, nullptr);
-        WriteFile(file, &current->model->hash, sizeof(u64), nullptr, nullptr);
+        WriteFile(file, &m_models[current->modelIndex].hash, sizeof(u64), nullptr, nullptr);
 
         WriteFile(file, &current->position,
             sizeof(current->position), nullptr, nullptr);

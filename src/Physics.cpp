@@ -12,7 +12,7 @@ void Physx::CreateCubeCollider(const PxTransform& t, PxU32 size, PxReal halfExte
 	PxRigidDynamic* body = physics->createRigidDynamic(t);
 	body->attachShape(*shape);
 	PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
-	scene->addActor(*body);
+	m_scene->addActor(*body);
 	shape->release();
 }
 
@@ -22,11 +22,11 @@ void Physx::CreateSphereCollider(const PxTransform& t, PxReal radius)
 	PxRigidDynamic* body = physics->createRigidDynamic(t);
 	body->attachShape(*shape);
 	PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
-	scene->addActor(*body);
+	m_scene->addActor(*body);
 	shape->release();
 }
 
-void Physx::InitPhysics(GameObject *p_gameObjects, int p_gameObjectCount, Model *sphere)
+void Physx::InitPhysics(Scene scene, int sphereIndex)
 {
 	foundation = PxCreateFoundation(PX_PHYSICS_VERSION, allocator, errorCallback);
 
@@ -52,9 +52,9 @@ void Physx::InitPhysics(GameObject *p_gameObjects, int p_gameObjectCount, Model 
 		sceneDesc.flags |= PxSceneFlag::eENABLE_GPU_DYNAMICS;
 		sceneDesc.broadPhaseType = PxBroadPhaseType::eGPU;
 	}
-	scene = physics->createScene(sceneDesc);
+	m_scene = physics->createScene(sceneDesc);
 
-	PxPvdSceneClient* pvdClient = scene->getScenePvdClient();
+	PxPvdSceneClient* pvdClient = m_scene->getScenePvdClient();
 	if (pvdClient)
 	{
 		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
@@ -65,13 +65,13 @@ void Physx::InitPhysics(GameObject *p_gameObjects, int p_gameObjectCount, Model 
 
 	// TODO: Replace with scene loaded context
 	PxRigidStatic* groundPlane = PxCreatePlane(*physics, PxPlane(0, 1, 0, 10), *material);
-	scene->addActor(*groundPlane);
+	m_scene->addActor(*groundPlane);
 
-	for (u32 i = 0; i < (u32)p_gameObjectCount; i++)
+	for (u32 i = 0; i < (u32)scene.gameObjectCount; i++)
 	{
-		PxTransform gameObjectTransform(p_gameObjects[i].position.x, p_gameObjects[i].position.y, p_gameObjects[i].position.z);
-		if (p_gameObjects[i].model == sphere)
-			CreateSphereCollider(gameObjectTransform, (float)p_gameObjects[i].radius);
+		PxTransform gameObjectTransform(scene.gameObjects[i].position.x, scene.gameObjects[i].position.y, scene.gameObjects[i].position.z);
+		if (scene.gameObjects[i].modelIndex == sphereIndex)
+			CreateSphereCollider(gameObjectTransform, (float)scene.gameObjects[i].radius);
 		else
 			CreateCubeCollider(gameObjectTransform, 1, 0.5);
 	}
@@ -79,14 +79,14 @@ void Physx::InitPhysics(GameObject *p_gameObjects, int p_gameObjectCount, Model 
 
 void Physx::UpdatePhysics(GameObject *p_gameObjects, int p_gameObjectCount)
 {
-	PxU32 nbActors = scene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC);
+	PxU32 nbActors = m_scene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC);
 	if (nbActors)
 	{
-		scene->simulate(1.0f / 60.0f);
-		scene->fetchResults(true);
+		m_scene->simulate(1.0f / 60.0f);
+		m_scene->fetchResults(true);
 		std::vector<physx::PxRigidActor*> actors;
 		actors.resize(nbActors);
-		scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC, reinterpret_cast<PxActor**>(&actors[0]), nbActors);
+		m_scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC, reinterpret_cast<PxActor**>(&actors[0]), nbActors);
 		for (int i = 1; i < p_gameObjectCount; i++)
 		{
 			PxTransform transform = actors[i]->getGlobalPose();

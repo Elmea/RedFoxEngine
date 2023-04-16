@@ -12,7 +12,6 @@
 #include "RedfoxMaths.hpp"
 
 using namespace RedFoxEngine;
-
 using namespace RedFoxMaths;
 
 Engine::Engine(int width, int height) :
@@ -53,7 +52,7 @@ Engine::Engine(int width, int height) :
     LoadScene("Sample Scene.scene");
 #else
     initSphericalManyGameObjects(1000);
-    m_sceneName = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
+    scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
     
     // Some light for testing
     {
@@ -100,7 +99,7 @@ Engine::Engine(int width, int height) :
     // path into the scene data ? maybe both
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
     m_graphics.InitLights();
-    m_physx.InitPhysics(scene.gameObjects, scene.gameObjectCount, &m_models[1]);//TODO pass scene
+    m_physx.InitPhysics(scene, 1);//TODO pass scene
 }
 
 void Engine::ObjModelPush(const char *path)
@@ -132,10 +131,10 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     for (int i = 1; i < (int)scene.gameObjectCount; i++)
     {
         scene.gameObjects[i].parent = 0;
-        scene.gameObjects[i].model = &m_models[i% m_modelCount];
-        if (scene.gameObjects[i].model == &m_models[0])
+        scene.gameObjects[i].modelIndex = i% m_modelCount;
+        if (scene.gameObjects[i].modelIndex == 0)
             scene.gameObjects[i].boxExtents = { 0.5, 0.5, 0.5 };
-        else if (scene.gameObjects[i].model == &m_models[1])
+        else if (scene.gameObjects[i].modelIndex == 1)
             scene.gameObjects[i].radius = 1;
         scene.gameObjects[i].scale.x = scene.gameObjects[i].scale.y = scene.gameObjects[i].scale.z = 1;
         scene.gameObjects[i].orientation.a = 1;
@@ -214,18 +213,18 @@ void Engine::UpdateEditorCamera()
 void Engine::UpdateModelMatrices()
 {
     int batchCount = 100000;
-    m_modelMatrices = (RedFoxMaths::Mat4 *)m_memoryManager.TemporaryAllocation(
+    scene.m_modelMatrices = (RedFoxMaths::Mat4 *)m_memoryManager.TemporaryAllocation(
         sizeof(RedFoxMaths::Mat4) * batchCount * (m_modelCount));
     m_modelCountIndex = (u64 *)m_memoryManager.TemporaryAllocation(sizeof(u64)
                                                          * m_modelCount);
     memset(m_modelCountIndex, 0, sizeof(u64) * m_modelCount);
     for(int index = 0;index < (int)scene.gameObjectCount; index++)
     {
-        if (scene.gameObjects[index].model)
+        if (scene.gameObjects[index].modelIndex != -1)
         {
-            u64 modelIndex = scene.gameObjects[index].model - m_models;
+            u64 modelIndex = scene.gameObjects[index].modelIndex;
             u64 countIndex = m_modelCountIndex[modelIndex];
-            m_modelMatrices[countIndex + (batchCount * modelIndex)] =
+            scene.m_modelMatrices[countIndex + (batchCount * modelIndex)] =
                 scene.GetWorldMatrix(index).GetTransposedMatrix();
             m_modelCountIndex[modelIndex]++;
         }
@@ -255,7 +254,7 @@ void Engine::Draw()
 {
     Camera *currentCamera = &m_editorCamera; //TODO game camera
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
-    m_graphics.Draw(m_modelMatrices, m_modelCountIndex, m_platform.m_windowDimension, scene.skyDome, m_time.current);
+    m_graphics.Draw(scene.m_modelMatrices, m_modelCountIndex, m_platform.m_windowDimension, scene.skyDome, m_time.current);
     m_platform.SwapFramebuffers();
     m_time.delta = (Platform::GetTimer() - m_time.current);
     m_memoryManager.m_memory.temp.usedSize = 0;
