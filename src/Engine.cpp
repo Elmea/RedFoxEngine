@@ -42,6 +42,7 @@ Engine::Engine(int width, int height) :
     scene.gameObjects[0].name.capacity = 255;
     m_graphics.lightStorage.lights = (Light*)m_memoryManager.PersistentAllocation(sizeof(Light) * 1000);
     m_graphics.lightStorage.shadowMaps = (unsigned int*)m_memoryManager.PersistentAllocation(sizeof(unsigned int) * 1000);
+    scene.gameObjectCount++;
 
     //TODO transition to an instance based model 'model'
     for (int i = 0; i < (int)m_modelCount; i++)
@@ -51,8 +52,20 @@ Engine::Engine(int width, int height) :
 #if 0
     LoadScene("Sample Scene.scene");
 #else
-    initSphericalManyGameObjects(1000);
+    //initSphericalManyGameObjects(1000);
+    scene.gameObjects[1].parent = 0;
+    scene.gameObjects[1].modelIndex = 0;
+    scene.gameObjects[1].boxExtents = { 0.5, 0.5, 0.5 };
+    scene.gameObjects[1].radius = 0;
+    scene.gameObjects[1].position = { 0, 3, 0 };
+    scene.gameObjects[1].scale = { 1, 1, 1 };
+    scene.gameObjects[1].orientation.a = 1;
+    char tmp[255];
+    int size = snprintf(tmp, 255, "Entity 1");
+    scene.gameObjects[1].name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
+    scene.gameObjects[1].name.capacity = 255;
     scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
+    scene.gameObjectCount++;
     
     // Some light for testing
     {

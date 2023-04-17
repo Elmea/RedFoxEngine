@@ -380,21 +380,16 @@ void Engine::UpdateIMGUI()
                 mousePos.y * dimension.height / content.y - vMin.y
             };
 
-            RedFoxMaths::Float2 ray_ndc = {
-                (2.0f * mousePosEditor.x) / vMax.x - 1.0f,
-                1.0f - (2.0f * mousePosEditor.y) / vMax.y
-            };
-
-            RedFoxMaths::Float4 ray_clip = {
-                RedFoxMaths::Misc::Clamp(ray_ndc.x, -1, 1),
-                RedFoxMaths::Misc::Clamp(ray_ndc.y, -1, 1),
-                1,
+            RedFoxMaths::Float3 ray_ndc = {
+                (2.0f * mousePosEditor.x) / content.x - 1.0f,
+                1.0f - (2.0f * mousePosEditor.y) / content.y,
                 1
             };
 
+            RedFoxMaths::Float4 ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };
+
             RedFoxMaths::Float4 ray_eye = m_editorCamera.m_projection.GetInverseMatrix() * ray_clip;
-            ray_eye.x = RedFoxMaths::Misc::Clamp(ray_eye.x, -1, 1);
-            ray_eye.y = RedFoxMaths::Misc::Clamp(ray_eye.y, -1, 1);
+            ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };
 
             RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
             ray_world.Normalize();
@@ -406,8 +401,8 @@ void Engine::UpdateIMGUI()
                 physx::PxRaycastHit hitInfo;
 
                 // NOTE(a.perche): I'm not so sure about the math I did here, especially for the rotation
-                physx::PxVec3 origin = { m_editorCamera.position.x + ray_world.x, m_editorCamera.position.y + ray_world.y, m_editorCamera.position.z + ray_world.z };
-                const float* cameraRot = m_editorCamera.GetViewMatrix().AsPtr();
+                physx::PxVec3 origin = { m_editorCamera.position.x + (ray_world.x / 2), m_editorCamera.position.y + (ray_world.y / 2), m_editorCamera.position.z + (ray_world.z / 2) };
+                const float* cameraRot = m_editorCamera.GetViewMatrix().GetTransposedMatrix().AsPtr();
                 physx::PxVec3 unitDir = { cameraRot[2], cameraRot[6], cameraRot[10] };
 
                 const physx::PxHitFlags hitFlags = physx::PxHitFlag::ePOSITION | physx::PxHitFlag::eNORMAL | physx::PxHitFlag::eUV;
