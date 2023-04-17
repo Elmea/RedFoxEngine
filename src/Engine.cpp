@@ -56,28 +56,28 @@ Engine::Engine(int width, int height) :
     
     // Some light for testing
     {
-        Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
+        // Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
 
-        dir->lightInfo.constant = 1.0f;
-        dir->lightInfo.linear = 0.09f;
-        dir->lightInfo.quadratic = 0.032f;
-        dir->lightInfo.position = {0.0f, 0.0f, 0.0f};
-        dir->lightInfo.direction = { 0.0f, -0.5f, -0.0f };
-        dir->lightInfo.ambient = {0.3, 0.3, 0.3};
-        dir->lightInfo.diffuse = {0.6, 0.6, 0.6};
-        dir->lightInfo.specular = {0.1, 0.1, 0.1};
+        // dir->lightInfo.constant = 1.0f;
+        // dir->lightInfo.linear = 0.09f;
+        // dir->lightInfo.quadratic = 0.032f;
+        // dir->lightInfo.position = {0.0f, 0.0f, 0.0f};
+        // dir->lightInfo.direction = { 0.0f, -0.3f, -0.7f };
+        // dir->lightInfo.ambient = {0.3, 0.3, 0.3};
+        // dir->lightInfo.diffuse = {0.6, 0.6, 0.6};
+        // dir->lightInfo.specular = {0.1, 0.1, 0.1};
      
-        // Light* spot = m_graphics.lightStorage.CreateLight(LightType::SPOT);
-        // spot->lightInfo.constant = 1.0f;
-        // spot->lightInfo.linear = 0.09f;
-        // spot->lightInfo.quadratic = 0.032f;
-        // spot->lightInfo.direction = {0.0f, 0.0f, 1.0f};
-        // spot->lightInfo.position = {0.0f, 0.0f, -5.0f};
-        // spot->lightInfo.ambient = {0.3, 0.3, 0.3};
-        // spot->lightInfo.diffuse = {0.6, 0.6, 0.6};
-        // spot->lightInfo.specular = {0.1, 0.1, 0.1};
-        // spot->lightInfo.cutOff = 0.5f;
-        // spot->lightInfo.outerCutOff = 0.1f;
+        Light* spot = m_graphics.lightStorage.CreateLight(LightType::SPOT);
+        spot->lightInfo.constant = 1.0f;
+        spot->lightInfo.linear = 0.09f;
+        spot->lightInfo.quadratic = 0.032f;
+        spot->lightInfo.direction = {0.0f, 0.0f, 1.0f};
+        spot->lightInfo.position = {0.0f, 0.0f, -5.0f};
+        spot->lightInfo.ambient = {0.3, 0.3, 0.3};
+        spot->lightInfo.diffuse = {0.6, 0.6, 0.6};
+        spot->lightInfo.specular = {0.1, 0.1, 0.1};
+        spot->lightInfo.cutOff = 0.5f;
+        spot->lightInfo.outerCutOff = 0.1f;
         
         // Light* point = m_graphics.lightStorage.CreateLight(LightType::POINT);
         // point->lightInfo.constant = 1.0f;
@@ -158,7 +158,7 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
             scene.gameObjects[index++].position =
                 {
                     cosf(longitudeStep * j) * sinf(i * latitudeStep),
-                    sinf(longitudeStep * j) * sinf(i * latitudeStep) + 50,
+                    sinf(longitudeStep * j) * sinf(i * latitudeStep),
                     cosf(i * latitudeStep - M_PI)
                 };
             scene.gameObjects[index - 1].position =
@@ -171,7 +171,7 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     };
     scene.gameObjects[0].scale =
     {
-        1000, 1, 1000
+        1, 1, 1
     };
 
 }
@@ -212,21 +212,24 @@ void Engine::UpdateEditorCamera()
 
 void Engine::UpdateModelMatrices()
 {
-    int batchCount = 100000;
     scene.m_modelMatrices = (RedFoxMaths::Mat4 *)m_memoryManager.TemporaryAllocation(
-        sizeof(RedFoxMaths::Mat4) * batchCount * (m_modelCount));
+        sizeof(RedFoxMaths::Mat4) * scene.gameObjectCount);
     m_modelCountIndex = (u64 *)m_memoryManager.TemporaryAllocation(sizeof(u64)
                                                          * m_modelCount);
     memset(m_modelCountIndex, 0, sizeof(u64) * m_modelCount);
-    for(int index = 0;index < (int)scene.gameObjectCount; index++)
+    int totalIndex = 0;
+    for (int modelIndex = 0; modelIndex < (int)m_modelCount; modelIndex++)
     {
-        if (scene.gameObjects[index].modelIndex != -1)
+        for(int index = 0;index < (int)scene.gameObjectCount; index++)
         {
-            u64 modelIndex = scene.gameObjects[index].modelIndex;
-            u64 countIndex = m_modelCountIndex[modelIndex];
-            scene.m_modelMatrices[countIndex + (batchCount * modelIndex)] =
-                scene.GetWorldMatrix(index).GetTransposedMatrix();
-            m_modelCountIndex[modelIndex]++;
+            if (scene.gameObjects[index].modelIndex == modelIndex)
+            {
+                u64 countIndex = m_modelCountIndex[modelIndex];
+                scene.m_modelMatrices[totalIndex] =
+                    scene.GetWorldMatrix(index).GetTransposedMatrix();
+                m_modelCountIndex[modelIndex]++;
+                totalIndex++;
+            }
         }
     }
 }
@@ -239,7 +242,7 @@ void Engine::Update()
     UpdateEditorCamera();
 
     UpdateLights(&m_graphics.lightStorage);
-    m_physx.UpdatePhysics(scene.gameObjects, scene.gameObjectCount);
+    // m_physx.UpdatePhysics(scene.gameObjects, scene.gameObjectCount);
     //TODO we'll need to think how we pass the resources,
     // and gameplay structures and objects to this update function
     m_game.update(m_time.delta, m_input, scene.gameObjects, scene.gameObjectCount, m_time.current);

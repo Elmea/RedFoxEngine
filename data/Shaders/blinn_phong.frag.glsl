@@ -101,7 +101,7 @@ float ShadowCalculation(Light light)
     // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
     // check whether current frag pos is in shadow
-    float bias = - 0.0000025; // -max(0.00025 * (1.0 - dot(Normal, vec3(fragPosLightSpace))), 0.000025);  
+    float bias = -max(0.00000025 * (1.0 - dot(Normal, vec3(fragPosLightSpace))), 0.0000000025);
 
     float shadow = 0.0;
     vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
@@ -132,7 +132,6 @@ vec3 CalcDirLight(Light light, vec3 normal, vec3 viewDir, vec3 Color)
     vec3 diffuse = light.diffuse * diff * Color;
     vec3 specular = light.specular * spec * specularFloat;
     float shadow = ShadowCalculation(light);
-    shadow = 0;
     return (ambient + (1.0 - shadow) * (diffuse + specular));
 }
 
@@ -153,7 +152,6 @@ vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 C
     diffuse *= attenuation;
     specular *= attenuation;
     float shadow = ShadowCalculation(light);
-    shadow = 0;
     return (ambient + diffuse + specular);
 }
 
@@ -176,7 +174,6 @@ vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 Co
     diffuse  *= attenuation * intensity;
     specular *= attenuation * intensity;
     float shadow = ShadowCalculation(light);
-    shadow = 0;
     return (ambient + (1.0 - shadow) * (diffuse + specular));
 }
 
@@ -187,12 +184,9 @@ void main()
     vec3 Normal       = fs_in.Normal;
 
     mat3 TBN = mat3(1.0f);
-
     if (mat.material[fs_in.materialID].diffuseMap == -1)
     {
         Color = mat.material[fs_in.materialID].diffuse;
-        // o_color = vec4(Color, 1);
-        // return;
     }
     else
     {
@@ -226,5 +220,4 @@ void main()
         result += CalcSpotLight(light, Normal, FragPosition, vec3(0, 0, 0), Color);
     }
     o_color = vec4(result, 1);
-    // o_color = vec4(Color, 1);
 }

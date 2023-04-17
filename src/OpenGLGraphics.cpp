@@ -44,7 +44,7 @@ void Graphics::InitGraphics(Memory *tempArena, WindowDimension dimension)
     glSamplerParameteri(m_textureSampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     //V-SYNC   
-    wglSwapIntervalEXT(1);
+    wglSwapIntervalEXT(0);
 }
 
 void Graphics::InitImGUIFramebuffer(WindowDimension dimension)
@@ -223,16 +223,17 @@ void Graphics::Draw(RedFoxMaths::Mat4 *p_modelMatrices, u64 *p_modelCountIndex, 
 
 void Graphics::DrawGameObjects(RedFoxMaths::Mat4 *modelMatrices, u64 *modelCountIndex)
 {
-    int batchCount = 100000;
     GLint u_matrix = 0; //location inside shader
     glProgramUniformMatrix4fv(m_blinnPhong.vertex, u_matrix, 1, GL_TRUE,
         m_viewProjection.AsPtr());
 
+    int totalCount = 0;
     for (int i = 0; i < (int)m_modelCount; i++)
     {
         if (modelCountIndex[i])
-            DrawModelInstances(&m_models[i], &modelMatrices[batchCount * i],
+            DrawModelInstances(&m_models[i], &modelMatrices[totalCount],
                 modelCountIndex[i]);
+        totalCount += modelCountIndex[i];
     }
 }
 
@@ -265,9 +266,13 @@ void Graphics::DrawModelInstances(Model *model,
     glBindVertexArray(model->vao);
 
     BindLights();
+    glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 3, m_matrixSSBO, 0, instanceCount);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_matrixSSBO);
+    glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 4, m_textureSSBO, 0, m_textures.textureCount);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, m_textureSSBO);
+    glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 5, m_materialSSBO, 0, model->obj.materials.count);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, m_materialSSBO);
+    glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 6, m_shadowMapsSSBO, 0, lightStorage.lightCount);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, m_shadowMapsSSBO);
 
     glDrawElementsInstanced(GL_TRIANGLES, model->obj.indexCount,
@@ -280,7 +285,7 @@ void Graphics::DrawShadowMaps(RedFoxMaths::Mat4 *modelMatrices, u64 *modelCountI
     for (int i = 0; i < (int)m_textures.textureCount; i++)
         textureHandles[i] = glGetTextureSamplerHandleARB(m_textures.textures[i], m_textureSampler);
     glNamedBufferSubData(m_textureSSBO,	0, sizeof(u64) * (m_textures.textureCount), textureHandles);
-    int batchCount = 100000;
+    int totalIndex = 0;
     //glCullFace(GL_FRONT);
 
     for (int lightIndex = 0; lightIndex < lightStorage.lightCount; lightIndex++)
@@ -294,7 +299,6 @@ void Graphics::DrawShadowMaps(RedFoxMaths::Mat4 *modelMatrices, u64 *modelCountI
         glClear(GL_DEPTH_BUFFER_BIT);
 
         GLint u_matrix = 0;
-
         glProgramUniformMatrix4fv(m_shadow.vertex, u_matrix, 1, GL_TRUE,
             lightStorage.lights[lightIndex].lightInfo.VP.AsPtr());
 
@@ -304,8 +308,9 @@ void Graphics::DrawShadowMaps(RedFoxMaths::Mat4 *modelMatrices, u64 *modelCountI
             if (countIndex)
             {
                 glNamedBufferSubData(m_matrixSSBO, 0,
-                    sizeof(RedFoxMaths::Mat4) * countIndex, &modelMatrices[batchCount * i]);
+                    sizeof(RedFoxMaths::Mat4) * countIndex, &modelMatrices[totalIndex]);
                     DrawModelShadowInstances(&m_models[i], countIndex);
+                totalIndex += countIndex;
             }
         }
     }
@@ -318,8 +323,9 @@ void Graphics::DrawShadowMaps(RedFoxMaths::Mat4 *modelMatrices, u64 *modelCountI
 void Graphics::DrawModelShadowInstances(Model* model, int instanceCount)
 {
     // provide vertex input
-    glBindProgramPipeline(m_sky.pipeline);
+    glBindProgramPipeline(m_shadow.pipeline);
     glBindVertexArray(model->vao);
+    glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, m_matrixSSBO, 0, instanceCount);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_matrixSSBO);
     glDrawElementsInstanced(GL_TRIANGLES, model->obj.indexCount, GL_UNSIGNED_INT,
             0, instanceCount);
