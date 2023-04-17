@@ -59,8 +59,8 @@ Engine::Engine(int width, int height) :
         dir->lightInfo.constant = 1.0f;
         dir->lightInfo.linear = 0.09f;
         dir->lightInfo.quadratic = 0.032f;
-        dir->lightInfo.position = {0.0f, 50.0f, 0.0f};
-        dir->lightInfo.direction = { 0.0f, -0.8f, -0.3f };
+        dir->lightInfo.position = {0.0f, 75.0f, 0.0f};
+        dir->lightInfo.direction = { 0.3f, -0.8f, -0.5f };
         dir->lightInfo.ambient = {0.3, 0.3, 0.3};
         dir->lightInfo.diffuse = {0.6, 0.6, 0.6};
         dir->lightInfo.specular = {0.1, 0.1, 0.1};

@@ -309,6 +309,7 @@ void Graphics::DrawModelInstances(Model *model,
 
 void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* temp)
 {
+    glCullFace(GL_FRONT);
     int batchCount = 100000;
     mem = (RedFoxMaths::Mat4 *)MyMalloc(temp,
         sizeof(RedFoxMaths::Mat4) * batchCount * (m_modelCount));
@@ -355,6 +356,7 @@ void Graphics::CalcShadows(GameObject* objects, int gameObjectCount, Memory* tem
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glCullFace(GL_BACK);
 }
 
 void Graphics::DrawModelShadowInstances(Model* model, int instanceCount)
