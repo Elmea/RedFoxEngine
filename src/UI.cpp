@@ -367,6 +367,52 @@ void Engine::UpdateIMGUI()
             ImGui::Image(framebuffer,
                 ImVec2(dimension.width, dimension.height), ImVec2(0, 1), ImVec2(1, 0));
         }
+
+        if (ImGui::IsItemHovered())
+        {
+            ImVec2 vPos = ImGui::GetWindowPos();
+            ImVec2 vMin = ImGui::GetWindowContentRegionMin() + vPos;
+            ImVec2 vMax = ImGui::GetWindowContentRegionMax() + vPos;
+            ImVec2 mousePos = ImGui::GetMousePos();
+            ImVec2 mousePosEditor = {
+                mousePos.x * dimension.width / content.x - vMin.x,
+                mousePos.y * dimension.height / content.y - vMin.y
+            };
+            //TODO(a.perche): NDC according to current editor camera projection ImVec2 ndc = { ... };
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            {
+                physx::PxRaycastHit hitInfo;
+
+                // NOTE(a.perche): I'm not so sure about the math I did here, especially for the rotation
+                physx::PxVec3 origin = { m_editorCamera.position.x, m_editorCamera.position.y, m_editorCamera.position.z };
+                const float* cameraRot = m_editorCamera.GetViewMatrix().AsPtr();
+                physx::PxVec3 unitDir = { cameraRot[2], cameraRot[6], cameraRot[10] };
+
+                const physx::PxHitFlags hitFlags = physx::PxHitFlag::ePOSITION | physx::PxHitFlag::eNORMAL | physx::PxHitFlag::eUV;
+                physx::PxRaycastBuffer hitCalls;
+                if (m_physx.m_scene->raycast(origin, unitDir, m_editorCamera.m_parameters._far, hitCalls))
+                {
+                    printf("%d\n", hitCalls.nbTouches);
+                    /*
+                    if (hitCalls.nbTouches != 0)
+                    {
+                        physx::PxRaycastHit hit = hitCalls.touches[0];
+                        m_gui.selectedObject = hit.actor->getInternalActorIndex();
+                    }
+                    */
+                }
+            /
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
+            {
+                m_input.lockMouse = m_editorCameraEnabled = true;
+            }
+            else
+            {
+                m_editorCameraSpeed = { 0.f, 0.f, 0.f };
+                m_input.lockMouse = m_editorCameraEnabled = false;
+            }
+        }
+
                
         if (m_gui.selectedObject != 0)
         {
