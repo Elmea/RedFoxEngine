@@ -374,17 +374,39 @@ void Engine::UpdateIMGUI()
             ImVec2 vMin = ImGui::GetWindowContentRegionMin() + vPos;
             ImVec2 vMax = ImGui::GetWindowContentRegionMax() + vPos;
             ImVec2 mousePos = ImGui::GetMousePos();
-            ImVec2 mousePosEditor = {
+
+            RedFoxMaths::Float2 mousePosEditor = {
                 mousePos.x * dimension.width / content.x - vMin.x,
                 mousePos.y * dimension.height / content.y - vMin.y
             };
+
+            RedFoxMaths::Float2 ray_ndc = {
+                (2.0f * mousePosEditor.x) / vMax.x - 1.0f,
+                1.0f - (2.0f * mousePosEditor.y) / vMax.y
+            };
+
+            RedFoxMaths::Float4 ray_clip = {
+                RedFoxMaths::Misc::Clamp(ray_ndc.x, -1, 1),
+                RedFoxMaths::Misc::Clamp(ray_ndc.y, -1, 1),
+                1,
+                1
+            };
+
+            RedFoxMaths::Float4 ray_eye = m_editorCamera.m_projection.GetInverseMatrix() * ray_clip;
+            ray_eye.x = RedFoxMaths::Misc::Clamp(ray_eye.x, -1, 1);
+            ray_eye.y = RedFoxMaths::Misc::Clamp(ray_eye.y, -1, 1);
+
+            RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
+            ray_world.Normalize();
+
+
             //TODO(a.perche): NDC according to current editor camera projection ImVec2 ndc = { ... };
-            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-            {
+            /*if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            {*/
                 physx::PxRaycastHit hitInfo;
 
                 // NOTE(a.perche): I'm not so sure about the math I did here, especially for the rotation
-                physx::PxVec3 origin = { m_editorCamera.position.x, m_editorCamera.position.y, m_editorCamera.position.z };
+                physx::PxVec3 origin = { m_editorCamera.position.x + ray_world.x, m_editorCamera.position.y + ray_world.y, m_editorCamera.position.z + ray_world.z };
                 const float* cameraRot = m_editorCamera.GetViewMatrix().AsPtr();
                 physx::PxVec3 unitDir = { cameraRot[2], cameraRot[6], cameraRot[10] };
 
@@ -401,7 +423,8 @@ void Engine::UpdateIMGUI()
                     }
                     */
                 }
-            /
+            //}
+            
             if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
             {
                 m_input.lockMouse = m_editorCameraEnabled = true;
