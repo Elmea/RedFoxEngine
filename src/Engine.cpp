@@ -55,19 +55,17 @@ Engine::Engine(int width, int height) :
     
     // Some light for testing
     {
-        /*
         Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
-
         dir->lightInfo.constant = 1.0f;
         dir->lightInfo.linear = 0.09f;
         dir->lightInfo.quadratic = 0.032f;
-        dir->lightInfo.position = {0.0f, 0.0f, 0.0f};
-        dir->lightInfo.direction = { 0.0f, -0.5f, -0.0f };
+        dir->lightInfo.position = {0.0f, 50.0f, 0.0f};
+        dir->lightInfo.direction = { 0.0f, -0.8f, -0.3f };
         dir->lightInfo.ambient = {0.3, 0.3, 0.3};
         dir->lightInfo.diffuse = {0.6, 0.6, 0.6};
         dir->lightInfo.specular = {0.1, 0.1, 0.1};
-        */
      
+        /*
         Light* spot = m_graphics.lightStorage.CreateLight(LightType::SPOT);
         spot->lightInfo.constant = 1.0f;
         spot->lightInfo.linear = 0.09f;
@@ -79,6 +77,7 @@ Engine::Engine(int width, int height) :
         spot->lightInfo.specular = {0.1, 0.1, 0.1};
         spot->lightInfo.cutOff = 0.5f;
         spot->lightInfo.outerCutOff = 0.1f;
+        */
     }
 
 

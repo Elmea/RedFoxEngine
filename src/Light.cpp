@@ -17,8 +17,8 @@ Light::Light(LightType lightType, int _index)
     glBindTexture(GL_TEXTURE_2D, lightInfo.shadowParameters.depthMap);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
         lightInfo.shadowParameters.SHADOW_WIDTH, lightInfo.shadowParameters.SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
     glBindFramebuffer(GL_FRAMEBUFFER, lightInfo.shadowParameters.depthMapFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, lightInfo.shadowParameters.depthMap, 0);
@@ -34,7 +34,7 @@ void Light::SetProjection(LightType type)
     switch (type)
     {
     case (LightType::DIRECTIONAL):
-        projection = RedFoxMaths::Mat4::GetOrthographicMatrix(-100, 100, -100, 100, 100.0001, 0.0001);
+        projection = RedFoxMaths::Mat4::GetOrthographicMatrix(-100, 100, -100, 100, 1000.0001, 0.0001);
         break;
 
     case (LightType::POINT):
