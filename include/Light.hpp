@@ -7,7 +7,7 @@ namespace RedFoxEngine
     struct ShadowParameters
     {
         unsigned int depthMapFBO = 0;
-        static const unsigned int SHADOW_WIDTH = 5120, SHADOW_HEIGHT = 5120;
+        unsigned int SHADOW_WIDTH = 5120, SHADOW_HEIGHT = 5120;
         unsigned int depthMap = 0;
     };
 
