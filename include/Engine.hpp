@@ -40,7 +40,7 @@ class Engine
 private:
     ResourcesManager m_memoryManager = {};
 
-    Scene scene; 
+    Scene scene;
     //GameState
     Input m_input = {};
     u64 *m_modelCountIndex;

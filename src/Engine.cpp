@@ -100,7 +100,7 @@ Engine::Engine(int width, int height) :
     // path into the scene data ? maybe both
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
     m_graphics.InitLights();
-    m_physx.InitPhysics(scene, 1);//TODO pass scene
+    m_physx.InitPhysics(scene, 0);//TODO pass scene
 }
 
 void Engine::ObjModelPush(const char *path)
@@ -159,7 +159,7 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
             scene.gameObjects[index++].position =
                 {
                     cosf(longitudeStep * j) * sinf(i * latitudeStep),
-                    sinf(longitudeStep * j) * sinf(i * latitudeStep),
+                    sinf(longitudeStep * j) * sinf(i * latitudeStep) + 1,
                     cosf(i * latitudeStep - M_PI)
                 };
             scene.gameObjects[index - 1].position =
@@ -243,10 +243,10 @@ void Engine::Update()
     UpdateEditorCamera();
 
     UpdateLights(&m_graphics.lightStorage);
-    // m_physx.UpdatePhysics(scene.gameObjects, scene.gameObjectCount);
+    m_physx.UpdatePhysics(scene.gameObjects, scene.gameObjectCount, &m_input);
     //TODO we'll need to think how we pass the resources,
     // and gameplay structures and objects to this update function
-    m_game.update(m_time.delta, m_input, scene.gameObjects, scene.gameObjectCount, m_time.current);
+    m_game.update(m_time.delta, m_input, scene.gameObjects, scene.gameObjectCount, m_time.current, (void *)m_physx.m_scene);
     UpdateModelMatrices();
     UpdateIMGUI();
     scene.skyDome.sunPosition.x = cosf(m_time.current / 500);

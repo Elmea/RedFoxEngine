@@ -6,6 +6,8 @@
 #define REDFOXMATHS_IMPLEMENTATION
 #include "RedfoxMaths.hpp"
 
+#include "Physics.hpp"
+
 using namespace RedFoxMaths;
 
 BOOL APIENTRY DllMain(HMODULE hModule,
@@ -23,6 +25,14 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     return TRUE;
 }
 
+static Float3 RotateVectorByQuaternion(Quaternion q, Float3 test)
+{
+    Float4 result = {test, 1};
+    result = q.GetRotationMatrix() * result;
+    return result.GetXYZF3();
+}
+
+
 __declspec(dllexport) UPDATEGAME(UpdateGame)
 {
 /* 
@@ -32,10 +42,88 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
  */
 #pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
 
-    /*
-    for (int i = 0; i < (int)gameObjectCount; i++) // TODO physics code here ?
+physx::PxScene *m_scene = (physx::PxScene *)scene;
+
+    physx::PxU32 nbActors = m_scene->getNbActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC);
+    gameObjects[0].position =
     {
-        gameObjects[i].position += Float3(sinf(time), cosf(time), 0) * 0.001f;
+        0, -11, 0
+    };
+    gameObjects[0].orientation =
+    {
+        1, 0, 0, 0
+    };
+    gameObjects[0].scale =
+    {
+        10000, 2, 10000
+    };
+    if (nbActors)
+    {
+        m_scene->simulate(deltaTime);
+        m_scene->fetchResults(true);
+        physx::PxRigidActor *actors[1000];
+        m_scene->getActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC, (physx::PxActor**)actors, 1000);
+
+        int j = 0;
+        int t = 20;
+        for (int i = 1; i < (int)gameObjectCount; i++)
+        {
+            if (i % 10 == 0)
+            {
+                j++;
+                t -= 10;
+            }
+            physx::PxTransform transform {(float)j * 10, (float)(i+t) * 5, 0};
+            // actors[i]->is<physx::PxRigidDynamic>()->setGlobalPose(transform);
+            if (!actors[i]->is<physx::PxRigidDynamic>()->isSleeping())
+            {
+                transform = actors[i]->getGlobalPose();
+                gameObjects[i].position.x    = transform.p.x;
+                gameObjects[i].position.y    = transform.p.y;
+                gameObjects[i].position.z    = transform.p.z;
+                gameObjects[i].orientation.a = transform.q.w;
+                gameObjects[i].orientation.b = transform.q.x;
+                gameObjects[i].orientation.c = transform.q.y;
+                gameObjects[i].orientation.d = transform.q.z;
+            }
+            else
+            {
+                transform.p.x = gameObjects[i].position.x   ;
+                transform.p.y = gameObjects[i].position.y   ;
+                transform.p.z = gameObjects[i].position.z   ;
+                transform.q.w = gameObjects[i].orientation.a;
+                transform.q.x = gameObjects[i].orientation.b;
+                transform.q.y = gameObjects[i].orientation.c;
+                transform.q.z	= gameObjects[i].orientation.d;
+                actors[i]->is<physx::PxRigidDynamic>()->setGlobalPose(transform);
+            }
     }
-    */
+    if (input.W || input.S || input.A || input.D)
+    {
+        physx::PxRigidActor *player;
+        m_scene->getActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC, (physx::PxActor **)&player, 1, 1);
+        // player->is<physx::PxRigidDynamic>()->setGlobalPose({});
+        Quaternion orientation = {1, 0, 0, 0};
+        float speed = 50;
+        physx::PxVec3 velocity = player->is<physx::PxRigidDynamic>()->getLinearVelocity();
+        Float3 direction = {};
+        if (input.W)
+            direction = {0, 0, 1};
+        if (input.A)
+            direction = {-1, 0, 0};
+        if (input.S)
+            direction = {0, 0, -1};
+        if (input.D)
+            direction = {1, 0, 0};
+        direction = RotateVectorByQuaternion(orientation, direction);
+        velocity.x += speed * deltaTime * direction.x;
+        velocity.y += speed * deltaTime * direction.y;
+        velocity.z += speed * deltaTime * direction.z;
+        player->is<physx::PxRigidDynamic>()->setLinearVelocity(velocity);
+    }
+}
+//for (int i = 0; i < (int)gameObjectCount; i++) // TODO physics code here ?
+//{
+//    gameObjects[i].position += Float3(sinf(time), cosf(time), 0) * 0.001f;        
+//}
 }

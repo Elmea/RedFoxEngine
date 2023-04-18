@@ -53,7 +53,7 @@ namespace RedFoxEngine
     public:
         LightInfo lightInfo;
 
-        Light::Light(LightType lightType, int index);
+        Light(LightType lightType, int index);
         void operator=(Light& light);
         void SetType(LightType type);
         LightType GetType();

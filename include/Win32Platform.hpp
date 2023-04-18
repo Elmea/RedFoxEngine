@@ -97,7 +97,7 @@ struct Input
                                    RedFoxEngine::Input input, \
                                    RedFoxEngine::GameObject *gameObjects, \
                                    u32 gameObjectCount, \
-                                   f32 time)
+                                   f32 time, void *scene)
 #endif
 typedef UPDATEGAME(_updategame);
 

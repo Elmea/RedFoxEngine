@@ -1083,6 +1083,7 @@ ObjModel CreateSphere(int latitudeCount, int longitudeCount, ArenaAllocator *mem
     {
         for (int j = 0; j <= longitudeCount; ++j, v++)
         {
+            //TODO: unit sphere
             result.vertices[v].position = {{cosf(longitudeStep * j) * sinf(i * latitudeStep), cosf(i * latitudeStep - M_PI),
                                      sinf(longitudeStep * j) * sinf(i * latitudeStep)}};
 
