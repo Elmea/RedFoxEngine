@@ -101,6 +101,13 @@ struct Input
 #endif
 typedef UPDATEGAME(_updategame);
 
+struct GameLibrary
+{
+    HINSTANCE library;
+    FILETIME lastTime;
+    _updategame *update;
+};
+
 class Platform
 {
 
@@ -126,8 +133,9 @@ public:
     WindowDimension GetWindowDimension();
     void SetMousePosition(int x, int y);
     static u64 GetTimerFrequency();
-    static u64 GetTimer();
-    _updategame *LoadGameLibrary(const char *functionName, const char *libraryPath, HINSTANCE &gameLibrary, LPFILETIME LastWriteTime, _updategame *functionPointer);
+    static f64 GetTimer();
+    void SwapFramebuffers();
+    GameLibrary LoadGameLibrary(const char *functionName, const char *libraryPath, GameLibrary game);
 };
 } // namespace RedFoxEngine
 

@@ -6,8 +6,6 @@
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_NO_STDIO
 #include <STB_Image/stb_image.h>
 
 /*
@@ -956,6 +954,8 @@ int ParseModel(ObjModel *result, const char *path)
     ElapsedMicroseconds.QuadPart *= 1000000;
     ElapsedMicroseconds.QuadPart /= Frequency.QuadPart;
 
+    snprintf(OutputStringDebug, 254, "Vertex Count %lld, index Count %lld\n", result->vertexCount, result->indexCount);
+    OutputDebugStringA(OutputStringDebug);
     snprintf(OutputStringDebug, 254, "%lld cy, %lld us, %lld ms %s\n", end - start, ElapsedMicroseconds.QuadPart,
              ElapsedMicroseconds.QuadPart / 1000, path);
     OutputDebugStringA(OutputStringDebug);

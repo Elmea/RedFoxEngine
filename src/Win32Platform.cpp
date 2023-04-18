@@ -1,9 +1,6 @@
 #include "Win32Platform.hpp"
 #include "glcorearb.h"
 #include "imgui_impl_win32.h"
-using namespace RedFoxEngine;
-
-int Platform::m_running;
 
 static void FatalError(const char *message)
 {
@@ -150,6 +147,9 @@ static HGLRC Win32InitOpenGL(HWND window)
     return (OpenGLRC);
 }
 
+namespace RedFoxEngine
+{
+ int Platform::m_running;
 Platform::Platform(int width, int height)
 {
     GetWglFunctions();
@@ -221,8 +221,23 @@ void Platform::SetMousePosition(int x, int y)
 {
     SetCursorPos(x, y);
 }
+}
 
-void Platform::MessageProcessing(Input *input)
+static void updateMouse(RedFoxEngine::Window m_window,
+    int mouseX,
+    int mouseY,
+    RedFoxEngine::Input *input)
+{
+    RedFoxEngine::WindowDimension p;
+    p.width = mouseX; p.height = mouseY;
+    ClientToScreen(m_window, (LPPOINT)&p);
+    SetCursor(nullptr);
+    SetCursorPos(p.width, p.height);
+    input->mouseXPosition = mouseX;
+    input->mouseYPosition = mouseY;
+}
+
+void RedFoxEngine::Platform::MessageProcessing(Input *input)
 {
     MSG Message;
     while (PeekMessageA(&Message, nullptr, 0, 0, PM_REMOVE))
@@ -244,13 +259,7 @@ void Platform::MessageProcessing(Input *input)
             input->mouseYDelta = input->mouseYPosition - mouseY;
             if (input->lockMouse)
             {
-                POINT p;
-                p.x = mouseX; p.y = mouseY;
-                ClientToScreen(m_window, &p);
-                SetCursor(nullptr);
-                SetCursorPos(p.x, p.y);
-                input->mouseXPosition = mouseX;
-                input->mouseYPosition = mouseY;
+                updateMouse(m_window, mouseX, mouseY, input);
             }
             else if (input->mouseXDelta == 0 && input->mouseYDelta == 0)
             {
@@ -387,13 +396,13 @@ static LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WPa
             if (hit == HTCLIENT)
             {
                 RECT client;
-                POINT mouse;
-                GetCursorPos(&mouse);
-                ScreenToClient(Window, &mouse);
+                RedFoxEngine::WindowDimension mouse;
+                GetCursorPos((LPPOINT)&mouse);
+                ScreenToClient(Window, (LPPOINT)&mouse);
                 GetClientRect(Window, &client);
                 //NOTE: it would be nice to get the top button rectangles, and check all of
                 // them here;
-                if (mouse.x < client.right - 110 && mouse.y < 22)
+                if (mouse.width < client.right - 110 && mouse.height < 22)
                     hit = HTCAPTION;
             }
             return hit;
@@ -408,19 +417,19 @@ static LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WPa
             params->rgrc[0].right = (params->rgrc[0].right - pixelSize);
         }break;
         case WM_DESTROY: {
-            Platform::m_running = 0;
+            RedFoxEngine::Platform::m_running = 0;
             PostQuitMessage(0);
         }
         break;
 
         case WM_QUIT: {
-            Platform::m_running = 0;
+            RedFoxEngine::Platform::m_running = 0;
             DestroyWindow(Window);
         }
         break;
 
         case WM_CLOSE: {
-            Platform::m_running = 0;
+            RedFoxEngine::Platform::m_running = 0;
         }
         break;
 
@@ -431,18 +440,18 @@ static LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WPa
     return (Result);
 }
 
-u64 Platform::GetTimerFrequency(void)
+u64 RedFoxEngine::Platform::GetTimerFrequency(void)
 {
     LARGE_INTEGER Result;
     QueryPerformanceFrequency(&Result);
     return Result.QuadPart;
 }
 
-u64 Platform::GetTimer(void)
+f64 RedFoxEngine::Platform::GetTimer(void)
 {
     LARGE_INTEGER Result;
     QueryPerformanceCounter(&Result);
-    return Result.QuadPart;
+    return Result.QuadPart / (f64)GetTimerFrequency();
 }
 
 
@@ -451,10 +460,9 @@ UPDATEGAME(updateStub)
 //NOTE We use an empty function in case our library loading fails, so we don't crash
 }
 
-_updategame *Platform::LoadGameLibrary(const char *functionName, const char *libraryPath, HINSTANCE &gameLibrary,
-    LPFILETIME LastWriteTime, _updategame *functionPointer)
+RedFoxEngine::GameLibrary RedFoxEngine::Platform::LoadGameLibrary(const char *functionName, const char *libraryPath, GameLibrary game)
 {
-    FILETIME temp = *LastWriteTime;
+    FILETIME temp = game.lastTime;
     /*
      * NOTE: On Windows the lowest overhead function to open a file handle
      * is the misnamed function CreateFile.
@@ -472,23 +480,27 @@ _updategame *Platform::LoadGameLibrary(const char *functionName, const char *lib
                               OPEN_EXISTING,                      // Creation Disposition
                               FILE_ATTRIBUTE_NORMAL,              // Flags and attributes
                               nullptr);                              // Template file
-    GetFileTime(File, nullptr, nullptr, LastWriteTime);
+    GetFileTime(File, nullptr, nullptr, &game.lastTime);
     CloseHandle(File);
-    if (CompareFileTime(&temp, LastWriteTime) != 0)
+    if (CompareFileTime(&temp, &game.lastTime) != 0)
     {
-        if (gameLibrary)
-            FreeLibrary(gameLibrary);
+        if (game.library)
+            FreeLibrary(game.library);
         CopyFileA(libraryPath, "gameCopy.dll", false);
-        gameLibrary = LoadLibraryA("gameCopy.dll");
-        if (gameLibrary)
-            functionPointer = (_updategame *)GetProcAddress(gameLibrary, functionName);
-        if (functionPointer == nullptr)
-            functionPointer = &updateStub;
+        game.library = LoadLibraryA("gameCopy.dll");
+        if (game.library)
+            game.update = (_updategame *)GetProcAddress(game.library, functionName);
+        if (game.update == nullptr)
+            game.update = &updateStub;
     }
-    return ((_updategame*)functionPointer);
+    else if (File == INVALID_HANDLE_VALUE && game.update == nullptr)
+    {
+        game.update = &updateStub;
+    }
+    return (game);
 }
 
-Window Platform::CreateRedFoxWindow(int Width, int Height)
+RedFoxEngine::Window RedFoxEngine::Platform::CreateRedFoxWindow(int Width, int Height)
 {
     Window window = nullptr;
     WNDCLASS WindowClass = {};
@@ -513,13 +525,20 @@ Window Platform::CreateRedFoxWindow(int Width, int Height)
     return (window);
 }
 
-void Platform::FatalError(const char *message)
+void RedFoxEngine::Platform::FatalError(const char *message)
 {
     MessageBoxA(nullptr, message, "Error", MB_ICONEXCLAMATION);
     ExitProcess(0);
 }
 
-void Platform::GetWglFunctions(void)
+void RedFoxEngine::Platform::SwapFramebuffers()
+{
+    HDC dc = GetDC(m_window);
+    if (!SwapBuffers(dc))
+        FatalError("Failed to swap OpenGL buffers!");
+    ReleaseDC(m_window, dc);
+}
+void RedFoxEngine::Platform::GetWglFunctions(void)
 {
     // to get WGL funcs we need valid GL context, so create dummy window for dummy GL contetx
     HWND dummy = CreateWindowExW(0, L"STATIC", L"DummyWindow", WS_OVERLAPPED, CW_USEDEFAULT, CW_USEDEFAULT,

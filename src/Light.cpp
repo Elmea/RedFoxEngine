@@ -1,3 +1,4 @@
+#include "Light.hpp"
 #include "OpenGLGraphics.hpp"
 #include "Engine.hpp"
 
@@ -9,9 +10,9 @@ namespace RedFoxEngine
 {
 Light::Light(LightType lightType, int _index)
 {
-    lightInfo.index = _index;
+    lightInfo.shadowParameters.index = _index;
     type = lightType;
-    glCreateFramebuffers(1, &lightInfo.shadowParameters.depthMapFBO);
+    glCreateFramebuffers(1, &depthMapFBO);
 
     if (type != LightType::POINT)
     {
@@ -50,6 +51,47 @@ Light::Light(LightType lightType, int _index)
     glMakeTextureHandleResidentARB(handle);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+Light* LightStorage::CreateLight(LightType type)
+{
+    for (int i = 0 ; i < lightCount; i++)
+    {
+        if (lights[i].GetType() == LightType::NONE)
+        {
+            lights[i].SetType(type);
+            return &lights[i];
+        }
+    }
+
+    Light newLight { type , lightCount };
+    newLight.lightInfo.shadowParameters.index = lightCount;
+    newLight.SetType(type);
+
+    lights[lightCount] = newLight;
+    shadowMaps[lightCount] = lights[lightCount].lightInfo.shadowParameters.depthMap;
+    switch(type)
+    {
+        case POINT: pointLightCount++;break;
+        case SPOT: spotLightCount++;break;
+        case DIRECTIONAL: dirLightCount++;break;
+        case NONE: break;
+    }
+    lightCount++;
+
+    return &lights[lightCount-1];
+}
+
+void LightStorage::RemoveLight(int lightIndex)
+{
+    switch(lights[lightIndex].GetType())
+    {
+        case POINT: pointLightCount--;break;
+        case SPOT: spotLightCount--;break;
+        case DIRECTIONAL: dirLightCount--;break;
+        case NONE: break;
+    }
+    lights[lightIndex].SetType(LightType::NONE);
 }
 
 void Light::SetProjection(LightType type)
@@ -107,25 +149,24 @@ void Graphics::InitLights()
     // the amount we actually use without reallocating.
 
     const int maxLightCount = 100;
-    glCreateBuffers(1, &m_pointLightSSBO);
-    glNamedBufferStorage(m_pointLightSSBO, maxLightCount * sizeof(Light), nullptr,
+    glCreateBuffers(1, &lightStorage.pointLightSSBO);
+    glNamedBufferStorage(lightStorage.pointLightSSBO, maxLightCount * sizeof(Light), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
-    glCreateBuffers(1, &m_dirLightSSBO);
-    glNamedBufferStorage(m_dirLightSSBO, maxLightCount * sizeof(Light), nullptr,
+    glCreateBuffers(1, &lightStorage.dirLightSSBO);
+    glNamedBufferStorage(lightStorage.dirLightSSBO, maxLightCount * sizeof(Light), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
 
-    glCreateBuffers(1, &m_spotLightSSBO);
-    glNamedBufferStorage(m_spotLightSSBO, maxLightCount * sizeof(Light), nullptr,
+    glCreateBuffers(1, &lightStorage.spotLightSSBO);
+    glNamedBufferStorage(lightStorage.spotLightSSBO, maxLightCount * sizeof(Light), nullptr,
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
 }
 
-void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This function or something like this could be in game or in physics
+void Engine::UpdateLights(LightStorage* lightStorage) //TODO: This function or something like this could be in game or in physics
 {
     int dirCount = 0, pointCount = 0, spotCount = 0;
-
-    LightInfo* dirligths = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * lightStorage->lightCount);
-    LightInfo* pointLights = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * lightStorage->lightCount);
-    LightInfo* spotlights = (LightInfo*)MyMalloc(&m_tempAllocator, sizeof(LightInfo) * lightStorage->lightCount);
+    LightInfo* dirLights = (LightInfo*)m_memoryManager.TemporaryAllocation(sizeof(LightInfo) * lightStorage->dirLightCount);
+    LightInfo* pointLights = (LightInfo*)m_memoryManager.TemporaryAllocation(sizeof(LightInfo) * lightStorage->pointLightCount);
+    LightInfo* spotLights = (LightInfo*)m_memoryManager.TemporaryAllocation(sizeof(LightInfo) * lightStorage->spotLightCount);
 
     for (int i = 0; i < lightStorage->lightCount; i++)
     {
@@ -134,7 +175,7 @@ void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This f
         switch (current->GetType())
         {
         case (LightType::DIRECTIONAL):
-            dirligths[dirCount] = current->lightInfo;
+            dirLights[dirCount] = current->lightInfo;
             dirCount++;
             break;
 
@@ -144,7 +185,7 @@ void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This f
             break;
 
         case (LightType::SPOT):
-            spotlights[spotCount] = current->lightInfo;
+            spotLights[spotCount] = current->lightInfo;
             spotCount++;
             break;
 
@@ -164,64 +205,37 @@ void Engine::UpdateLights(float time, LightStorage* lightStorage) //TODO: This f
             current->lightInfo.VP = (lightStorage->lights[i].GetProjection() * lightView.GetInverseMatrix()).GetTransposedMatrix();
         }
     }
-
-    m_graphics.SetLightsCount(dirCount, pointCount, spotCount);
-    m_graphics.FillLightBuffer(pointLights, LightType::POINT);
-    m_graphics.FillLightBuffer(dirligths, LightType::DIRECTIONAL);
-    m_graphics.FillLightBuffer(spotlights, LightType::SPOT);
+    glNamedBufferSubData(lightStorage->pointLightSSBO, 0, lightStorage->pointLightCount * sizeof(LightInfo), pointLights);
+    glNamedBufferSubData(lightStorage->dirLightSSBO, 0, lightStorage->dirLightCount * sizeof(LightInfo), dirLights);
+    glNamedBufferSubData(lightStorage->spotLightSSBO, 0, lightStorage->spotLightCount * sizeof(LightInfo), spotLights);
 }
 
 void Graphics::BindLights()
 {
     GLuint bindingPoint = 0;
-    if (m_pointLightCount)
+    if (lightStorage.pointLightCount)
     {
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_pointLightSSBO, 0, m_pointLightCount);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, m_pointLightSSBO);
+        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingPoint, lightStorage.pointLightSSBO, 0, lightStorage.pointLightCount);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, lightStorage.pointLightSSBO);
     }
     else
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, 0);
     GLuint bindingDir = 1;
-    if (m_dirLightCount)
+    if (lightStorage.dirLightCount)
     {
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingDir, m_dirLightSSBO, 0, m_dirLightCount);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingDir, m_dirLightSSBO);
+        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingDir, lightStorage.dirLightSSBO, 0, lightStorage.dirLightCount);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingDir, lightStorage.dirLightSSBO);
     }
     else
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingDir, 0);
     GLuint bindingSpot = 2;
-    if (m_spotLightCount)
+    if (lightStorage.spotLightCount)
     {
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingSpot, m_spotLightSSBO, 0, m_spotLightCount);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingSpot, m_spotLightSSBO);
+        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingSpot, lightStorage.spotLightSSBO, 0, lightStorage.spotLightCount);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingSpot, lightStorage.spotLightSSBO);
     }
     else  
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingSpot, 0);
 }
 
-void Graphics::FillLightBuffer(LightInfo* lights, LightType type)
-{
-    GLuint lightBuffer = 0;
-    int lightCount = 0;
-    switch (type)
-    {
-    case RedFoxEngine::NONE:
-        return;
-    case RedFoxEngine::DIRECTIONAL:
-        lightBuffer = m_dirLightSSBO;
-        lightCount = m_dirLightCount;
-        break;
-    case RedFoxEngine::POINT:
-        lightBuffer = m_pointLightSSBO;
-        lightCount = m_pointLightCount;
-        break;
-    case RedFoxEngine::SPOT:
-        lightBuffer = m_spotLightSSBO;
-        lightCount = m_spotLightCount;
-        break;
-    default:
-        break;
-    }
-    glNamedBufferSubData(lightBuffer, 0, lightCount * sizeof(LightInfo), lights);
-}
 }

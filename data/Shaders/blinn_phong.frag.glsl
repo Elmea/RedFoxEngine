@@ -3,7 +3,7 @@
 
 struct ShadowParameters
 {
-    unsigned int depthMapFBO;
+    int index;
     int SHADOW_WIDTH, SHADOW_HEIGHT;
     unsigned int depthMap;
 };
@@ -26,11 +26,6 @@ struct Light {
 
     mat4 lightVp;
     ShadowParameters shadowParameters;
-
-    int index;
-    int padding0;
-    int padding1;
-    int padding2;
 };
 
 struct Material
@@ -156,7 +151,7 @@ vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 C
     ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
-    ShadowCalculation(light);
+    // float shadow = ShadowCalculation(light);
     return (ambient + diffuse + specular);
 }
 
@@ -189,12 +184,9 @@ void main()
     vec3 Normal       = fs_in.Normal;
 
     mat3 TBN = mat3(1.0f);
-
     if (mat.material[fs_in.materialID].diffuseMap == -1)
     {
         Color = mat.material[fs_in.materialID].diffuse;
-        // o_color = vec4(Color, 1);
-        // return;
     }
     else
     {
@@ -228,5 +220,4 @@ void main()
         result += CalcSpotLight(light, Normal, FragPosition, vec3(0, 0, 0), Color);
     }
     o_color = vec4(result, 1);
-    // o_color = vec4(Color, 1);
 }
