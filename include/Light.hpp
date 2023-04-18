@@ -51,7 +51,6 @@ namespace RedFoxEngine
 
         void SetProjection(LightType type);
     public:
-        unsigned int depthMapFBO = 0;
         LightInfo lightInfo;
 
         Light::Light(LightType lightType, int index);

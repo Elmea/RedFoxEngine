@@ -79,17 +79,18 @@ Engine::Engine(int width, int height) :
         spot->lightInfo.cutOff = 0.5f;
         spot->lightInfo.outerCutOff = 0.1f;
         
-        // Light* point = m_graphics.lightStorage.CreateLight(LightType::POINT);
-        // point->lightInfo.constant = 1.0f;
-        // point->lightInfo.linear = 0.1f;
-        // point->lightInfo.quadratic = 0.1f;
-        // point->lightInfo.direction = {0.0f, 0.0f, 1.0f};
-        // point->lightInfo.position = {0.0f, 0.0f, -5.0f};
-        // point->lightInfo.ambient = {0.3, 0.3, 0.3};
-        // point->lightInfo.diffuse = {0.6, 0.6, 0.6};
-        // point->lightInfo.specular = {0.1, 0.1, 0.1};
-        // point->lightInfo.cutOff = 0.5f;
-        // point->lightInfo.outerCutOff = 0.1f;
+        Light* point = m_graphics.lightStorage.CreateLight(LightType::POINT);
+        point->lightInfo.constant = 1.0f;
+        point->lightInfo.linear = 0.1f;
+        point->lightInfo.quadratic = 0.1f;
+        point->lightInfo.direction = {0.0f, 0.0f, 1.0f};
+        point->lightInfo.position = {0.0f, 0.0f, -5.0f};
+        point->lightInfo.ambient = {0.3, 0.3, 0.3};
+        point->lightInfo.diffuse = {0.6, 0.6, 0.6};
+        point->lightInfo.specular = {0.1, 0.1, 0.1};
+        point->lightInfo.cutOff = 0.5f;
+        point->lightInfo.outerCutOff = 0.1f;
+        */
     }
 
 
