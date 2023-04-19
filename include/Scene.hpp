@@ -1,4 +1,5 @@
 #pragma once
+#include "Camera.hpp"
 #include "OpenGLGraphics.hpp"
 #include "GameObject.hpp"
 
@@ -31,6 +32,10 @@ public:
     u32 gameObjectCount = 0;
     SkyDome skyDome;
     SceneGraph graph;
+    Camera m_gameCamera;
+    int m_width, m_height;
+    Scene(int width, int height):m_gameCamera(projectionType::PERSPECTIVE,
+        width / (f32)height){};
     RedFoxMaths::Mat4 GetWorldMatrix(int gameObjectindex)
     {
         GameObject *current = &gameObjects[gameObjectindex]; 

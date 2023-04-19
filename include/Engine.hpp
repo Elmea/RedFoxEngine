@@ -40,15 +40,14 @@ class Engine
 private:
     ResourcesManager m_memoryManager = {};
 
-    Scene scene;
+    Scene m_scene;
     //GameState
     Input m_input = {};
     u64 *m_modelCountIndex;
     Model *m_models = nullptr;
     u64 m_modelCount = 0;
 
-    Camera m_editorCamera;// TODO: figure it out
-
+    Camera m_editorCamera;
     //Game dll, library
     GameLibrary m_game = {};
 

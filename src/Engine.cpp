@@ -15,6 +15,7 @@ using namespace RedFoxEngine;
 using namespace RedFoxMaths;
 
 Engine::Engine(int width, int height) :
+    m_scene(width, height),
     m_editorCamera(projectionType::PERSPECTIVE, width / (f32)height),
     m_platform(width, height)
 {
@@ -35,11 +36,11 @@ Engine::Engine(int width, int height) :
 
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
-    scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(
+    m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(
                                                 sizeof(GameObject) * 100000);
-    scene.gameObjects[0] = {};
-    scene.gameObjects[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
-    scene.gameObjects[0].name.capacity = 255;
+    m_scene.gameObjects[0] = {};
+    m_scene.gameObjects[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
+    m_scene.gameObjects[0].name.capacity = 255;
     m_graphics.lightStorage.lights = (Light*)m_memoryManager.PersistentAllocation(sizeof(Light) * 1000);
     m_graphics.lightStorage.shadowMaps = (unsigned int*)m_memoryManager.PersistentAllocation(sizeof(unsigned int) * 1000);
 
@@ -52,7 +53,7 @@ Engine::Engine(int width, int height) :
     LoadScene("Sample Scene.scene");
 #else
     initSphericalManyGameObjects(1000);
-    scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
+    m_scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
     
     // Some light for testing
     {
@@ -100,7 +101,7 @@ Engine::Engine(int width, int height) :
     // path into the scene data ? maybe both
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
     m_graphics.InitLights();
-    m_physx.InitPhysics(scene, 0);//TODO pass scene
+    m_physx.InitPhysics(m_scene, 0);//TODO pass scene
 }
 
 void Engine::ObjModelPush(const char *path)
@@ -127,22 +128,22 @@ bool Engine::isRunning()
 
 void Engine::initSphericalManyGameObjects(int count) //TODO: remove
 {
-    scene.gameObjectCount = count;
+    m_scene.gameObjectCount = count;
 
-    for (int i = 1; i < (int)scene.gameObjectCount; i++)
+    for (int i = 1; i < (int)m_scene.gameObjectCount; i++)
     {
-        scene.gameObjects[i].parent = 0;
-        scene.gameObjects[i].modelIndex = i% m_modelCount;
-        if (scene.gameObjects[i].modelIndex == 0)
-            scene.gameObjects[i].boxExtents = { 0.5, 0.5, 0.5 };
-        else if (scene.gameObjects[i].modelIndex == 1)
-            scene.gameObjects[i].radius = 1;
-        scene.gameObjects[i].scale.x = scene.gameObjects[i].scale.y = scene.gameObjects[i].scale.z = 1;
-        scene.gameObjects[i].orientation.a = 1;
+        m_scene.gameObjects[i].parent = 0;
+        m_scene.gameObjects[i].modelIndex = i% m_modelCount;
+        if (m_scene.gameObjects[i].modelIndex == 0)
+            m_scene.gameObjects[i].boxExtents = { 0.5, 0.5, 0.5 };
+        else if (m_scene.gameObjects[i].modelIndex == 1)
+            m_scene.gameObjects[i].radius = 1;
+        m_scene.gameObjects[i].scale.x = m_scene.gameObjects[i].scale.y = m_scene.gameObjects[i].scale.z = 1;
+        m_scene.gameObjects[i].orientation.a = 1;
         char tmp[255];
         int size = snprintf(tmp, 255, "Entity%d", i);
-        scene.gameObjects[i].name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
-        scene.gameObjects[i].name.capacity = 255;
+        m_scene.gameObjects[i].name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
+        m_scene.gameObjects[i].name.capacity = 255;
     }
 
     int countX = (int)sqrtf(count);
@@ -156,21 +157,21 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     {
         for(int j = 0; j < countY; j++)
         {
-            scene.gameObjects[index++].position =
+            m_scene.gameObjects[index++].position =
                 {
                     cosf(longitudeStep * j) * sinf(i * latitudeStep),
                     sinf(longitudeStep * j) * sinf(i * latitudeStep) + 1,
                     cosf(i * latitudeStep - M_PI)
                 };
-            scene.gameObjects[index - 1].position =
-                scene.gameObjects[index - 1].position * scale;
+            m_scene.gameObjects[index - 1].position =
+                m_scene.gameObjects[index - 1].position * scale;
         }
     }
-    scene.gameObjects[0].position =
+    m_scene.gameObjects[0].position =
     {
         0, -10, 0
     };
-    scene.gameObjects[0].scale =
+    m_scene.gameObjects[0].scale =
     {
         1, 1, 1
     };
@@ -213,21 +214,21 @@ void Engine::UpdateEditorCamera()
 
 void Engine::UpdateModelMatrices()
 {
-    scene.m_modelMatrices = (RedFoxMaths::Mat4 *)m_memoryManager.TemporaryAllocation(
-        sizeof(RedFoxMaths::Mat4) * scene.gameObjectCount);
+    m_scene.m_modelMatrices = (RedFoxMaths::Mat4 *)m_memoryManager.TemporaryAllocation(
+        sizeof(RedFoxMaths::Mat4) * m_scene.gameObjectCount);
     m_modelCountIndex = (u64 *)m_memoryManager.TemporaryAllocation(sizeof(u64)
                                                          * m_modelCount);
     memset(m_modelCountIndex, 0, sizeof(u64) * m_modelCount);
     int totalIndex = 0;
     for (int modelIndex = 0; modelIndex < (int)m_modelCount; modelIndex++)
     {
-        for(int index = 0;index < (int)scene.gameObjectCount; index++)
+        for(int index = 0;index < (int)m_scene.gameObjectCount; index++)
         {
-            if (scene.gameObjects[index].modelIndex == modelIndex)
+            if (m_scene.gameObjects[index].modelIndex == modelIndex)
             {
                 u64 countIndex = m_modelCountIndex[modelIndex];
-                scene.m_modelMatrices[totalIndex] =
-                    scene.GetWorldMatrix(index).GetTransposedMatrix();
+                m_scene.m_modelMatrices[totalIndex] =
+                    m_scene.GetWorldMatrix(index).GetTransposedMatrix();
                 m_modelCountIndex[modelIndex]++;
                 totalIndex++;
             }
@@ -243,22 +244,21 @@ void Engine::Update()
     UpdateEditorCamera();
 
     UpdateLights(&m_graphics.lightStorage);
-    m_physx.UpdatePhysics(scene.gameObjects, scene.gameObjectCount, &m_input);
-    //TODO we'll need to think how we pass the resources,
-    // and gameplay structures and objects to this update function
-    m_game.update(m_time.delta, m_input, scene.gameObjects, scene.gameObjectCount, m_time.current, (void *)m_physx.m_scene);
+    m_physx.UpdatePhysics(m_time.delta, m_memoryManager);
+    m_game.update(&m_scene, &m_physx, m_input, m_time.delta);
     UpdateModelMatrices();
     UpdateIMGUI();
-    scene.skyDome.sunPosition.x = cosf(m_time.current / 500);
-    scene.skyDome.sunPosition.y = sinf(m_time.current / 500);
+    m_scene.skyDome.sunPosition.x = cosf(m_time.current / 500);
+    m_scene.skyDome.sunPosition.y = sinf(m_time.current / 500);
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 
 void Engine::Draw()
 {
+    // Camera *currentCamera = &m_scene.m_gameCamera; //TODO game camera
     Camera *currentCamera = &m_editorCamera; //TODO game camera
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
-    m_graphics.Draw(scene.m_modelMatrices, m_modelCountIndex, m_platform.m_windowDimension, scene.skyDome, m_time.current);
+    m_graphics.Draw(m_scene.m_modelMatrices, m_modelCountIndex, m_platform.m_windowDimension, m_scene.skyDome, m_time.current);
     m_platform.SwapFramebuffers();
     m_time.delta = (Platform::GetTimer() - m_time.current);
     m_memoryManager.m_memory.temp.usedSize = 0;
@@ -276,14 +276,14 @@ u32 Engine::LoadTextureFromFilePath(const char *filePath, bool resident, bool re
 
 void Engine::InitSkyDome()
 {
-    scene.skyDome.sunPosition = { 0, 1, 0 };
-    scene.skyDome.model = RedFoxMaths::Mat4::GetScale({ 5000, 5000, 5000 });
+    m_scene.skyDome.sunPosition = { 0, 1, 0 };
+    m_scene.skyDome.model = RedFoxMaths::Mat4::GetScale({ 5000, 5000, 5000 });
 
-    scene.skyDome.topTint = LoadTextureFromFilePath("Textures/topSkyTint.png", false, true);
-    scene.skyDome.botTint = LoadTextureFromFilePath("Textures/botSkyTint.png", false, false);
-    scene.skyDome.sun     = LoadTextureFromFilePath("Textures/sun.png", false, false);
-    scene.skyDome.moon    = LoadTextureFromFilePath("Textures/moon.png", false, false);
-    scene.skyDome.clouds  = LoadTextureFromFilePath("Textures/clouds.png", false, false);
+    m_scene.skyDome.topTint = LoadTextureFromFilePath("Textures/topSkyTint.png", false, true);
+    m_scene.skyDome.botTint = LoadTextureFromFilePath("Textures/botSkyTint.png", false, false);
+    m_scene.skyDome.sun     = LoadTextureFromFilePath("Textures/sun.png", false, false);
+    m_scene.skyDome.moon    = LoadTextureFromFilePath("Textures/moon.png", false, false);
+    m_scene.skyDome.clouds  = LoadTextureFromFilePath("Textures/clouds.png", false, false);
 }
 
 Engine::~Engine()

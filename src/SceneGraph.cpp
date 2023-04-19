@@ -32,12 +32,12 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
         FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL, nullptr);
     
-    scene.m_name = initStringChar(fileName, 255, &m_memoryManager.m_memory.arena);
+    m_scene.m_name = initStringChar(fileName, 255, &m_memoryManager.m_memory.arena);
 
-    ReadFile(file, &scene.gameObjectCount, sizeof(u32), nullptr, nullptr);
-    for(int i = 0; i < (int)scene.gameObjectCount; i++)
+    ReadFile(file, &m_scene.gameObjectCount, sizeof(u32), nullptr, nullptr);
+    for(int i = 0; i < (int)m_scene.gameObjectCount; i++)
     {
-        GameObject *current = &scene.gameObjects[i];
+        GameObject *current = &m_scene.gameObjects[i];
         ReadFile(file, &current->name, sizeof(MyString), nullptr, nullptr);
         current->name.data = (char *)m_memoryManager.PersistentAllocation(255);
         ReadFile(file, (void*)current->name.data, current->name.size, nullptr, nullptr);
@@ -80,10 +80,10 @@ void RedFoxEngine::Engine::SaveScene(const char *fileName)
         FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS,
         FILE_ATTRIBUTE_NORMAL, nullptr);
 
-    WriteFile(file, &scene.gameObjectCount, sizeof(u32), nullptr, nullptr);
-    for(int i = 0; i < (int)scene.gameObjectCount; i++)
+    WriteFile(file, &m_scene.gameObjectCount, sizeof(u32), nullptr, nullptr);
+    for(int i = 0; i < (int)m_scene.gameObjectCount; i++)
     {
-        GameObject *current = &scene.gameObjects[i];
+        GameObject *current = &m_scene.gameObjects[i];
 
         WriteFile(file, &current->name, sizeof(MyString), nullptr, nullptr);
         WriteFile(file, current->name.data, current->name.size, nullptr, nullptr);

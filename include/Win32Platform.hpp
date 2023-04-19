@@ -93,11 +93,8 @@ struct Input
 };
 
 #ifndef UPDATEGAME
-#define UPDATEGAME(name) void name(float deltaTime, \
-                                   RedFoxEngine::Input input, \
-                                   RedFoxEngine::GameObject *gameObjects, \
-                                   u32 gameObjectCount, \
-                                   f32 time, void *scene)
+#define UPDATEGAME(name) void name(void *s, \
+                                   void *p, RedFoxEngine::Input input, float deltaTime)
 #endif
 typedef UPDATEGAME(_updategame);
 

@@ -1,3 +1,4 @@
+#pragma once
 #include "MyMemory.hpp"
 
 namespace RedFoxEngine

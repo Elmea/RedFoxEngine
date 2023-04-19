@@ -7,6 +7,7 @@
 #include "RedfoxMaths.hpp"
 
 #include "Physics.hpp"
+#include "Scene.hpp"
 
 using namespace RedFoxMaths;
 
@@ -42,9 +43,11 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
  */
 #pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
 
-physx::PxScene *m_scene = (physx::PxScene *)scene;
-
-    physx::PxU32 nbActors = m_scene->getNbActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC);
+    RedFoxEngine::Physx *physx = (RedFoxEngine::Physx *)p;
+    RedFoxEngine::Scene *scene = (RedFoxEngine::Scene *)s;
+    RedFoxEngine::GameObject *gameObjects = scene->gameObjects;
+    int gameObjectCount = scene->gameObjectCount;
+    physx::PxRigidActor **actors = physx->actors;
     gameObjects[0].position =
     {
         0, -11, 0
@@ -57,12 +60,9 @@ physx::PxScene *m_scene = (physx::PxScene *)scene;
     {
         10000, 2, 10000
     };
-    if (nbActors)
+    if (physx->actorCount)
     {
-        m_scene->simulate(deltaTime);
-        m_scene->fetchResults(true);
-        physx::PxRigidActor *actors[1000];
-        m_scene->getActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC, (physx::PxActor**)actors, 1000);
+        physx->m_scene->fetchResults(true);
 
         int j = 0;
         int t = 20;
@@ -98,14 +98,15 @@ physx::PxScene *m_scene = (physx::PxScene *)scene;
                 actors[i]->is<physx::PxRigidDynamic>()->setGlobalPose(transform);
             }
     }
+    scene->m_gameCamera.position = {gameObjects[1].position.x, gameObjects[1].position.y + 1, gameObjects[1].position.z + 4};
+        
     if (input.W || input.S || input.A || input.D)
-    {
-        physx::PxRigidActor *player;
-        m_scene->getActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC, (physx::PxActor **)&player, 1, 1);
-        // player->is<physx::PxRigidDynamic>()->setGlobalPose({});
+    {        
+        physx::PxRigidActor *player = actors[1];
         Quaternion orientation = {1, 0, 0, 0};
         float speed = 50;
         physx::PxVec3 velocity = player->is<physx::PxRigidDynamic>()->getLinearVelocity();
+        
         Float3 direction = {};
         if (input.W)
             direction = {0, 0, 1};
