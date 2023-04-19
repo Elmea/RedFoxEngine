@@ -352,9 +352,6 @@ void Engine::UpdateIMGUI()
     ImGui::PushFont(m_gui.defaultFont);
     static int index = 1;
 
-    RedFoxMaths::Float3 ray_ndc;
-    RedFoxMaths::Float4 ray_clip, ray_eye, ray_world;
-
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
     if (ImGui::Begin("Editor", (bool*)0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
     {
@@ -383,51 +380,36 @@ void Engine::UpdateIMGUI()
                 mousePos.y * dimension.height / content.y - vMin.y
             };
 
-            ray_ndc = {
+            RedFoxMaths::Float3 ray_ndc = {
                 (2.0f * mousePosEditor.x) / content.x - 1.0f,
                 1.0f - (2.0f * mousePosEditor.y) / content.y,
                 1
             };
 
-            ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };
+            RedFoxMaths::Float4 ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };
 
-            ray_eye = m_editorCamera.m_projection.GetInverseMatrix() * ray_clip;
+            RedFoxMaths::Float4 ray_eye = m_editorCamera.m_projection.GetInverseMatrix() * ray_clip;
             ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };
 
-            ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
+            RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
             ray_world.Normalize(); 
 
-
-            //TODO(a.perche): NDC according to current editor camera projection ImVec2 ndc = { ... };
-            /*if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-            {*/
-                physx::PxRaycastHit hitInfo;
-
-                // NOTE(a.perche): I'm not so sure about the math I did here, especially for the rotation
-                const float* cameraRot = m_editorCamera.GetViewMatrix().GetTransposedMatrix().AsPtr();
-                RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix();
-                RedFoxMaths::Float4 position = { 0, 0, 0, 1};
-                position = view * position;
-
-                physx::PxVec3 origin = { -position.x, -position.y, -position.z };
-                physx::PxVec3 unitDir = { ray_world.x/*cameraRot[2]*/, ray_world.y /*-cameraRot[6]*/, ray_world.z /*cameraRot[10]*/ };
-
-                const physx::PxHitFlags hitFlags = physx::PxHitFlag::ePOSITION | physx::PxHitFlag::eNORMAL | physx::PxHitFlag::eUV;
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            {
+                RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
+                physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
+                physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
                 physx::PxRaycastBuffer hitCalls;
                 m_physx.m_scene->flushQueryUpdates();
                 if (m_physx.m_scene->raycast(origin, unitDir, 100, hitCalls, physx::PxHitFlag::eANY_HIT))
                 {
-                    int kappa = hitCalls.getNbTouches();
-                    printf("%d\n", hitCalls.getNbTouches());
-                    /*
-                    if (hitCalls.nbTouches != 0)
+                    if (hitCalls.hasAnyHits() && hitCalls.nbTouches != 0)
                     {
-                        physx::PxRaycastHit hit = hitCalls.touches[0];
+                        physx::PxRaycastHit hit = hitCalls.block;
                         m_gui.selectedObject = hit.actor->getInternalActorIndex();
                     }
-                    */
                 }
-            //}
+            }
             
             if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
             {
@@ -675,53 +657,6 @@ void Engine::UpdateIMGUI()
                 ImGui::EndTable();
             }
         }
-
-        if (ImGui::CollapsingHeader("Mouse Picking", propertiesFlags))
-        {
-            ImGuiTableFlags tableFlags =
-                ImGuiTableFlags_RowBg |
-                ImGuiTableFlags_SizingStretchSame |
-                ImGuiTableFlags_Resizable |
-                ImGuiTableFlags_BordersOuter;
-
-            if (ImGui::BeginTable("CameraTransformTable", 2, tableFlags))
-            {
-                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-                ImGui::TableNextRow();
-
-                ImGui::TableSetColumnIndex(0);
-                ImGui::Text("ray_ndc");
-                ImGui::TableSetColumnIndex(1);
-                ImGui::SetNextItemWidth(-FLT_MIN);
-                ImGui::DragFloat3("RayNdc", &ray_ndc.x, 1.0f, -32767.f, 32767.f);
-                ImGui::TableNextRow();
-
-                ImGui::TableSetColumnIndex(0);
-                ImGui::Text("ray_clip");
-                ImGui::TableSetColumnIndex(1);
-                ImGui::SetNextItemWidth(-FLT_MIN);
-                ImGui::DragFloat4("RayClip", &ray_clip.x, 1.0f, -32767.f, 32767.f);
-                ImGui::TableNextRow();
-
-                ImGui::TableSetColumnIndex(0);
-                ImGui::Text("ray_eye");
-                ImGui::TableSetColumnIndex(1);
-                ImGui::SetNextItemWidth(-FLT_MIN);
-                ImGui::DragFloat4("RayEye", &ray_eye.x, 1.0f, -32767.f, 32767.f);
-                ImGui::TableNextRow();
-
-                ImGui::TableSetColumnIndex(0);
-                ImGui::Text("ray_world");
-                ImGui::TableSetColumnIndex(1);
-                ImGui::SetNextItemWidth(-FLT_MIN);
-                ImGui::DragFloat4("RayWorld", &ray_world.x, 1.0f, -32767.f, 32767.f);
-                ImGui::TableNextRow();
-
-                ImGui::EndTable();
-            }
-        }
-
 
         if (m_gui.selectedObject != 0)
         {
