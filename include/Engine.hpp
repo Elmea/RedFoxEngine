@@ -28,8 +28,14 @@ namespace RedFoxEngine
 struct ImGUI
 {
     //Editor ui
+    bool editorMenuOpen = false;
+    bool sceneGraphScrollButtonHovered = false;
     int selectedObject;
     int nodeIndex = 1;
+    int sceneGraphScrollStrength = 1;
+    int currentFrame = 0;
+    float fps[255];
+    float averageFps;
     ImGuiIO* ImGuiIO;
     ImFont* defaultFont;
     ImGuizmo::OPERATION gizmoType;
