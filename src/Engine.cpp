@@ -114,7 +114,7 @@ Engine::Engine(int width, int height) :
     // path into the scene data ? maybe both
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
     m_graphics.InitLights();
-    m_physx.InitPhysics(m_scene, 0);
+    m_physx.InitPhysics(m_scene, 1);
 }
 
 void Engine::ObjModelPush(const char *path)

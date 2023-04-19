@@ -26,8 +26,8 @@ class Physx
     int actorCount = 0;
   private:
   public:
-    void CreateCubeCollider(const physx::PxTransform& t, physx::PxU32 size, physx::PxReal halfExtent);
-    void CreateSphereCollider(const physx::PxTransform& t, physx::PxReal radius);
+    void CreateCubeCollider(RedFoxMaths::Float3 position, physx::PxU32 size, physx::PxReal halfExtent);
+    void CreateSphereCollider(RedFoxMaths::Float3 position, physx::PxReal radius);
     void InitPhysics(Scene scene, int sphereIndex);
     void UpdatePhysics(f32 deltaTime, ResourcesManager m, bool isPaused);
 

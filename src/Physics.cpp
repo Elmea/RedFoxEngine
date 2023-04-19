@@ -7,8 +7,9 @@
 using namespace RedFoxEngine;
 using namespace physx;
 
-void Physx::CreateCubeCollider(const PxTransform& t, PxU32 size, PxReal halfExtent)
+void Physx::CreateCubeCollider(RedFoxMaths::Float3 position, PxU32 size, PxReal halfExtent)
 {
+	PxTransform t(position.x, position.y, position.z);
 	PxShape* shape = physics->createShape(PxBoxGeometry(halfExtent, halfExtent, halfExtent), *material);
 	PxRigidDynamic* body = physics->createRigidDynamic(t);
 	body->attachShape(*shape);
@@ -17,8 +18,9 @@ void Physx::CreateCubeCollider(const PxTransform& t, PxU32 size, PxReal halfExte
 	shape->release();
 }
 
-void Physx::CreateSphereCollider(const PxTransform& t, PxReal radius)
+void Physx::CreateSphereCollider(RedFoxMaths::Float3 position, PxReal radius)
 {
+	PxTransform t(position.x, position.y, position.z);
 	PxShape* shape = physics->createShape(PxSphereGeometry(radius), *material);
 	PxRigidDynamic* body = physics->createRigidDynamic(t);
 	body->attachShape(*shape);
@@ -72,11 +74,10 @@ void Physx::InitPhysics(Scene scene, int sphereIndex)
 
 	for (u32 i = 0; i < (u32)scene.gameObjectCount; i++)
 	{
-		PxTransform gameObjectTransform(scene.gameObjects[i].position.x, scene.gameObjects[i].position.y, scene.gameObjects[i].position.z);
 		if (scene.gameObjects[i].modelIndex == sphereIndex)
-			CreateSphereCollider(gameObjectTransform, (float)0.5);
+			CreateSphereCollider(scene.gameObjects[i].position, scene.gameObjects[i].radius);
 		else
-			CreateCubeCollider(gameObjectTransform, 1, 0.5);
+			CreateCubeCollider(scene.gameObjects[i].position, 1, 0.5);
 	}
 }
 
