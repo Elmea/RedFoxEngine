@@ -2,6 +2,7 @@
 
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
+
 /*
     Scene file reference (in progress)
 
@@ -25,21 +26,17 @@
     }
 */
 
-void RedFoxEngine::Engine::LoadScene(const char *fileName)
+static void ReadStringFromFile(HANDLE file, MyString *string, RedFoxEngine::ResourcesManager m)
 {
-    
-    HANDLE file = CreateFile(fileName, GENERIC_READ,
-        FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL, nullptr);
-    
-    m_scene.m_name = initStringChar(fileName, 255, &m_memoryManager.m_memory.arena);
+    ReadFile(file, string, sizeof(MyString), nullptr, nullptr);
+    string->data = (char *)m.PersistentAllocation(string->capacity);
+    ReadFile(file, (void *)string->data, string->size, nullptr, nullptr);
+}
 
-    ReadFile(file, &m_scene.gameObjectCount, sizeof(u32), nullptr, nullptr);
-    for(int i = 0; i < (int)m_scene.gameObjectCount; i++)
-    {
-        GameObject *current = &m_scene.gameObjects[i];
+static void ReadGameObjectFromFile(HANDLE file, RedFoxEngine::GameObject *current, RedFoxEngine::Model *m_models, int m_modelCount, RedFoxEngine::ResourcesManager m)
+{
         ReadFile(file, &current->name, sizeof(MyString), nullptr, nullptr);
-        current->name.data = (char *)m_memoryManager.PersistentAllocation(255);
+        current->name.data = (char *)m.PersistentAllocation(255);
         ReadFile(file, (void*)current->name.data, current->name.size, nullptr, nullptr);
         int parent;
         ReadFile(file, &parent, sizeof(int), nullptr, nullptr);
@@ -63,39 +60,109 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
             sizeof(current->position), nullptr, nullptr);
         ReadFile(file, &current->scale,
             sizeof(current->scale), nullptr, nullptr);
-        // current->scale.y = current->scale.z = 1;
         ReadFile(file, &current->orientation,
             sizeof(current->orientation), nullptr, nullptr);
-        // current->orientation.a = 1;
-        // current->orientation.b = current->orientation.c = current->orientation.d = 0;
-    }
-    CloseHandle(file);
-
-    
 }
 
-void RedFoxEngine::Engine::SaveScene(const char *fileName)
+void RedFoxEngine::Engine::LoadScene(const char *fileName)
+{
+    HANDLE file = CreateFile(fileName, GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL, nullptr);
+
+    printf("%lld\n", sizeof(MyString) + sizeof(SkyDome) + sizeof(Camera) + sizeof(SceneGraph) + sizeof(int) + sizeof(u32) + sizeof(int) + sizeof(bool)); 
+    ReadFile(file, &m_scene, 309, nullptr, nullptr);
+    ReadStringFromFile(file, &m_scene.m_name, m_memoryManager);
+    ReadFile(file, &m_scene.gameObjectCount, sizeof(u32), nullptr, nullptr);
+    for(int i = 0; i < (int)m_scene.gameObjectCount; i++)
+    {
+        ReadGameObjectFromFile(file, &m_scene.gameObjects[i], m_models, m_modelCount, m_memoryManager);
+    }
+    CloseHandle(file);
+}
+
+// void RedFoxEngine::Engine::LoadScene(const char *fileName)
+// {
+    
+//     HANDLE file = CreateFile(fileName, GENERIC_READ,
+//         FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
+//         FILE_ATTRIBUTE_NORMAL, nullptr);
+    
+//     m_scene.m_name = initStringChar(fileName, 255, &m_memoryManager.m_memory.arena);
+
+//     ReadFile(file, &m_scene.gameObjectCount, sizeof(u32), nullptr, nullptr);
+//     for(int i = 0; i < (int)m_scene.gameObjectCount; i++)
+//     {
+//         GameObject *current = &m_scene.gameObjects[i];
+//         ReadFile(file, &current->name, sizeof(MyString), nullptr, nullptr);
+//         current->name.data = (char *)m_memoryManager.PersistentAllocation(255);
+//         ReadFile(file, (void*)current->name.data, current->name.size, nullptr, nullptr);
+//         int parent;
+//         ReadFile(file, &parent, sizeof(int), nullptr, nullptr);
+//         u64 hash = 0;
+//         ReadFile(file, &hash, sizeof(u64), nullptr, nullptr);
+//         current->modelIndex = -1;
+//         if (hash != 0)
+//         {
+//             for (int modelIndex = 0;
+//             modelIndex < (int)m_modelCount;
+//             modelIndex++)
+//             {
+//                 if (m_models[modelIndex].hash == hash)
+//                 {
+//                     current->modelIndex = modelIndex;
+//                     break;
+//                 }
+//             }
+//         }
+//         ReadFile(file, &current->position,
+//             sizeof(current->position), nullptr, nullptr);
+//         ReadFile(file, &current->scale,
+//             sizeof(current->scale), nullptr, nullptr);
+//         // current->scale.y = current->scale.z = 1;
+//         ReadFile(file, &current->orientation,
+//             sizeof(current->orientation), nullptr, nullptr);
+//         // current->orientation.a = 1;
+//         // current->orientation.b = current->orientation.c = current->orientation.d = 0;
+//     }
+//     CloseHandle(file);
+
+    
+// }
+
+static void WriteStringToFile(HANDLE file, MyString string)
+{
+    WriteFile(file, &string, sizeof(MyString), nullptr, nullptr);
+    WriteFile(file, string.data, string.size, nullptr, nullptr);
+}
+
+static void WriteGameObjectToFile(HANDLE file, RedFoxEngine::GameObject *current, RedFoxEngine::Model *m_models)
+{
+    WriteStringToFile(file, current->name);
+    WriteFile(file, &current->parent, sizeof(int), nullptr, nullptr);
+    WriteFile(file, &m_models[current->modelIndex].hash, sizeof(u64), nullptr, nullptr);
+
+    WriteFile(file, &current->position,
+        sizeof(current->position), nullptr, nullptr);
+    WriteFile(file, &current->scale,
+        sizeof(current->scale), nullptr, nullptr);
+    WriteFile(file, &current->orientation,
+        sizeof(current->orientation), nullptr, nullptr);
+}
+
+void RedFoxEngine::Engine::SaveScene(const char *fileName, Scene scene)
 {
     HANDLE file = CreateFile(fileName, GENERIC_WRITE,
         FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS,
         FILE_ATTRIBUTE_NORMAL, nullptr);
 
+    WriteFile(file, &scene, 309, nullptr, nullptr);
+    WriteStringToFile(file, scene.m_name);    
     WriteFile(file, &m_scene.gameObjectCount, sizeof(u32), nullptr, nullptr);
     for(int i = 0; i < (int)m_scene.gameObjectCount; i++)
     {
         GameObject *current = &m_scene.gameObjects[i];
-
-        WriteFile(file, &current->name, sizeof(MyString), nullptr, nullptr);
-        WriteFile(file, current->name.data, current->name.size, nullptr, nullptr);
-        WriteFile(file, &current->parent, sizeof(int), nullptr, nullptr);
-        WriteFile(file, &m_models[current->modelIndex].hash, sizeof(u64), nullptr, nullptr);
-
-        WriteFile(file, &current->position,
-            sizeof(current->position), nullptr, nullptr);
-        WriteFile(file, &current->scale,
-            sizeof(current->scale), nullptr, nullptr);
-        WriteFile(file, &current->orientation,
-            sizeof(current->orientation), nullptr, nullptr);
+        WriteGameObjectToFile(file, current, m_models);
     }
     CloseHandle(file);
 }

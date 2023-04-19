@@ -76,7 +76,7 @@ private:
     void ObjModelPush(const char *objPath);
     void InitIMGUI();
     void LoadScene(const char *fileName);
-    void SaveScene(const char *fileName);
+    void SaveScene(const char *fileName, Scene scene);
     void UpdateLights(LightStorage* lightStorage);
     void initSphericalManyGameObjects(int count); //TODO: remove
     u32 LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat);

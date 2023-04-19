@@ -25,11 +25,11 @@ class Physx
     physx::PxRigidActor **actors;
     int actorCount = 0;
   private:
+  public:
     void CreateCubeCollider(const physx::PxTransform& t, physx::PxU32 size, physx::PxReal halfExtent);
     void CreateSphereCollider(const physx::PxTransform& t, physx::PxReal radius);
-  public:
     void InitPhysics(Scene scene, int sphereIndex);
-    void UpdatePhysics(f32 deltaTime, ResourcesManager m);
+    void UpdatePhysics(f32 deltaTime, ResourcesManager m, bool isPaused);
 
   ~Physx()
   {

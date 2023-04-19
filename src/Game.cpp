@@ -48,21 +48,12 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     RedFoxEngine::GameObject *gameObjects = scene->gameObjects;
     int gameObjectCount = scene->gameObjectCount;
     physx::PxRigidActor **actors = physx->actors;
-    gameObjects[0].position =
-    {
-        0, -11, 0
-    };
-    gameObjects[0].orientation =
-    {
-        1, 0, 0, 0
-    };
-    gameObjects[0].scale =
-    {
-        10000, 2, 10000
-    };
     if (physx->actorCount)
     {
-        physx->m_scene->fetchResults(true);
+        scene->isPaused = true;
+        scene->isPaused = false;
+        if (!scene->isPaused)
+            physx->m_scene->fetchResults(true);
         physx::PxRigidActor *player = actors[1];
         physx::PxTransform transform;
         transform = player->is<physx::PxRigidDynamic>()->getGlobalPose();
@@ -81,7 +72,7 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
             }
             physx::PxTransform transform {(float)j * 10, (float)(i+t) * 5, 0};
             // actors[i]->is<physx::PxRigidDynamic>()->setGlobalPose(transform);
-            if (!actors[i]->is<physx::PxRigidDynamic>()->isSleeping())
+            if (!scene->isPaused && !actors[i]->is<physx::PxRigidDynamic>()->isSleeping())
             {
                 transform = actors[i]->getGlobalPose();
                 gameObjects[i].position.x    = transform.p.x;

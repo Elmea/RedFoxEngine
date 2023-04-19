@@ -80,12 +80,14 @@ void Physx::InitPhysics(Scene scene, int sphereIndex)
 	}
 }
 
-void Physx::UpdatePhysics(f32 deltaTime, ResourcesManager m)
+void Physx::UpdatePhysics(f32 deltaTime, ResourcesManager m, bool isPaused)
 {
 	int temp = m_scene->getNbActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC);
 	if (temp)
 	{
-		m_scene->simulate(deltaTime);
+		if(!isPaused)
+			m_scene->simulate(deltaTime);
+		
 		actorCount = temp;			
 		actors = (PxRigidActor **)m.TemporaryAllocation(sizeof(actors) * actorCount);
 		m_scene->getActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC, (physx::PxActor**)actors, actorCount);

@@ -41,6 +41,18 @@ Engine::Engine(int width, int height) :
     m_scene.gameObjects[0] = {};
     m_scene.gameObjects[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
     m_scene.gameObjects[0].name.capacity = 255;
+    m_scene.gameObjects[0].position =
+    {
+        0, -11, 0
+    };
+    m_scene.gameObjects[0].orientation =
+    {
+        1, 0, 0, 0
+    };
+    m_scene.gameObjects[0].scale =
+    {
+        10000, 2, 10000
+    };
     m_graphics.lightStorage.lights = (Light*)m_memoryManager.PersistentAllocation(sizeof(Light) * 1000);
     m_graphics.lightStorage.shadowMaps = (unsigned int*)m_memoryManager.PersistentAllocation(sizeof(unsigned int) * 1000);
     m_scene.gameObjectCount++;
@@ -102,7 +114,7 @@ Engine::Engine(int width, int height) :
     // path into the scene data ? maybe both
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
     m_graphics.InitLights();
-    m_physx.InitPhysics(m_scene, 0);//TODO pass scene
+    m_physx.InitPhysics(m_scene, 0);
 }
 
 void Engine::ObjModelPush(const char *path)
@@ -245,7 +257,7 @@ void Engine::Update()
     UpdateEditorCamera();
 
     UpdateLights(&m_graphics.lightStorage);
-    m_physx.UpdatePhysics(m_time.delta, m_memoryManager);
+    m_physx.UpdatePhysics(m_time.delta, m_memoryManager, m_scene.isPaused);
     m_game.update(&m_scene, &m_physx, m_input, m_time.delta);
     UpdateModelMatrices();
     UpdateIMGUI();
