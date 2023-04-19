@@ -29,6 +29,7 @@ struct ImGUI
 {
     //Editor ui
     int selectedObject;
+    int nodeIndex = 1;
     ImGuiIO* ImGuiIO;
     ImFont* defaultFont;
     ImGuizmo::OPERATION gizmoType;
@@ -56,7 +57,8 @@ private:
     Graphics m_graphics = {};
 
     TimeManager m_time = {};
-    RedFoxMaths::Float3 m_editorCameraSpeed;
+    float m_editorCameraSpeed;
+    RedFoxMaths::Float3 m_editorCameraVelocity;
     bool m_editorCameraEnabled;
     
     ImGUI m_gui = {};

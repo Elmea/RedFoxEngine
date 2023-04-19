@@ -22,6 +22,7 @@ Engine::Engine(int width, int height) :
     m_graphics.InitGraphics(&m_memoryManager.m_memory.temp, m_platform.m_windowDimension);
     InitIMGUI();
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
+    m_editorCameraSpeed = 1;
 
     m_models = (Model *)m_memoryManager.PersistentAllocation(sizeof(Model) * 100);
     m_models[m_modelCount].obj = CreateCube(&m_memoryManager.m_memory.arena);
@@ -206,9 +207,9 @@ void Engine::UpdateEditorCamera()
         inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
         inputDirection.Normalize();
         inputDirection = inputDirection * 200.f;
-        m_editorCamera.position += m_editorCameraSpeed * dt32 + inputDirection * (dt32 * dt32 * 0.5f);
-        m_editorCameraSpeed += inputDirection * dt32 * 0.5f;
-        m_editorCameraSpeed *= exp(dt32 * -3.f); // Drag
+        m_editorCamera.position += m_editorCameraVelocity * dt32 + inputDirection * (dt32 * dt32 * 0.5f);
+        m_editorCameraVelocity += inputDirection * m_editorCameraSpeed * dt32 * 0.5f;
+        m_editorCameraVelocity *= exp(dt32 * -3.f); // Drag
     }
     m_editorCamera.m_parameters.aspect = m_platform.m_windowDimension.width / (f32)m_platform.m_windowDimension.height;
 }

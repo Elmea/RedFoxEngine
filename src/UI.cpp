@@ -340,7 +340,6 @@ void Engine::DrawSceneNodes(bool is_child, int index)
 
 void Engine::UpdateIMGUI()
 {
-    static int nodeIndex = 1;
     int mousePickNodeIndexTmp = -1;
 
     ImGuiDockNodeFlags dockingFlags =
@@ -375,16 +374,23 @@ void Engine::UpdateIMGUI()
                 ImVec2(dimension.width, dimension.height), ImVec2(0, 1), ImVec2(1, 0));
         }
 
-        if (ImGui::IsItemHovered())
+        ImVec2 vPos = ImGui::GetWindowPos();
+        ImVec2 vMin = ImGui::GetWindowContentRegionMin() + vPos;
+        ImVec2 vMax = ImGui::GetWindowContentRegionMax() + vPos;
+        
+        ImGui::SetCursorPos(vMin);
+        ImGui::SliderFloat("CameraSpeed", &m_editorCameraSpeed, 1, 4);
+        ImGui::SetItemAllowOverlap();
+        
+
+        ImVec2 mousePos = ImGui::GetMousePos();
+        RedFoxMaths::Float2 mousePosEditor = {
+            mousePos.x * dimension.width / content.x - vMin.x,
+            mousePos.y * dimension.height / content.y - vMin.y
+        };
+
+        if (mousePosEditor.x > 0 && mousePosEditor.x < content.x && mousePosEditor.y > 0 && mousePosEditor.y < content.y)
         {
-            ImVec2 vPos = ImGui::GetWindowPos();
-            ImVec2 vMin = ImGui::GetWindowContentRegionMin() + vPos;
-            ImVec2 vMax = ImGui::GetWindowContentRegionMax() + vPos;
-            ImVec2 mousePos = ImGui::GetMousePos();
-            RedFoxMaths::Float2 mousePosEditor = {
-                mousePos.x * dimension.width / content.x - vMin.x,
-                mousePos.y * dimension.height / content.y - vMin.y
-            };
             RedFoxMaths::Float3 ray_ndc = {
                 (2.0f * mousePosEditor.x) / content.x - 1.0f,
                 1.0f - (2.0f * mousePosEditor.y) / content.y,
@@ -396,13 +402,12 @@ void Engine::UpdateIMGUI()
             RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
             ray_world.Normalize(); 
 
-            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            if (m_input.mouseLClick)
             {
                 RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
                 physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
                 physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
                 physx::PxRaycastBuffer hitCalls;
-                m_physx.m_scene->flushQueryUpdates();
                 if (m_physx.m_scene->raycast(origin, unitDir, m_editorCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
                 {
                     physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
@@ -418,24 +423,19 @@ void Engine::UpdateIMGUI()
                 }
             }
             
-            if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
+            if (m_input.mouseRClick)
             {
                 m_input.lockMouse = m_editorCameraEnabled = true;
             }
             else
             {
-                m_editorCameraSpeed = { 0.f, 0.f, 0.f };
+                m_editorCameraVelocity = { 0.f, 0.f, 0.f };
                 m_input.lockMouse = m_editorCameraEnabled = false;
             }
         }
-
-               
+      
         if (m_gui.selectedObject != 0)
         {
-            ImGuizmo::SetDrawlist();
-            ImGui::GetCurrentWindow();
-            ImGuizmo::SetRect(windowPos.x, windowPos.y, content.x, content.y);
-
             RedFoxMaths::Mat4 cameraProjection = m_editorCamera.m_projection.GetTransposedMatrix();
             RedFoxMaths::Mat4 cameraView = m_editorCamera.GetViewMatrix().GetTransposedMatrix();
             RedFoxMaths::Mat4 transformMat = m_scene.GetWorldMatrix(m_gui.selectedObject).GetTransposedMatrix();
@@ -479,16 +479,6 @@ void Engine::UpdateIMGUI()
                 m_scene.gameObjects[m_gui.selectedObject].scale.y = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.y, 0.01, 10000);
                 m_scene.gameObjects[m_gui.selectedObject].scale.z = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.z, 0.01, 10000);
             }
-        }
-
-        if (ImGui::IsMouseDown(ImGuiMouseButton_Right) && ImGui::IsItemHovered())
-        {
-            m_input.lockMouse = m_editorCameraEnabled = true;
-        }
-        else
-        {
-            m_editorCameraSpeed = { 0.f, 0.f, 0.f };
-            m_input.lockMouse = m_editorCameraEnabled = false;
         }
 
         if (m_input.Escape)
@@ -578,42 +568,42 @@ void Engine::UpdateIMGUI()
                 ImGuiWindowFlags_NoMove;
 
             ImGui::BeginChild("SceneGraphNodes", ImVec2(0, 0), true, sceneGraphFlags);
-            if (nodeIndex < 1)
-                nodeIndex = 1;
-            else if (nodeIndex > (int)m_scene.gameObjectCount - 1)
-                nodeIndex = m_scene.gameObjectCount - 1;
+            if (m_gui.nodeIndex < 1)
+                m_gui.nodeIndex = 1;
+            else if (m_gui.nodeIndex > (int)m_scene.gameObjectCount - 1)
+                m_gui.nodeIndex = m_scene.gameObjectCount - 1;
 
             int maxItems = (int)ImGui::GetMainViewport()->Size.y / 16;
-            for (int i = 0; i + nodeIndex < (int)m_scene.gameObjectCount && i < maxItems; i++)
+            for (int i = 0; i + m_gui.nodeIndex < (int)m_scene.gameObjectCount && i < maxItems; i++)
             {
                 if (mousePickNodeIndexTmp != -1)
                 {
-                    nodeIndex = mousePickNodeIndexTmp;
-                    ImGui::SetScrollY(mousePickNodeIndexTmp - nodeIndex);
+                    m_gui.nodeIndex = mousePickNodeIndexTmp;
+                    ImGui::SetScrollY(mousePickNodeIndexTmp - m_gui.nodeIndex);
                     mousePickNodeIndexTmp = -1;
                 }
 
-                if (i == 0 && nodeIndex > 1 && ImGui::GetScrollY() == 0)
+                if (i == 0 && m_gui.nodeIndex > 1 && ImGui::GetScrollY() == 0)
                 {
                     ImGui::SetScrollY(1);
-                    nodeIndex -= scrollStrength;
+                    m_gui.nodeIndex -= scrollStrength;
                 }
 
                 float scrollMax = ImGui::GetScrollMaxY();
-                if (i == maxItems - 1 && nodeIndex + i < (int)m_scene.gameObjectCount - 1 &&
+                if (i == maxItems - 1 && m_gui.nodeIndex + i < (int)m_scene.gameObjectCount - 1 &&
                     scrollMax == ImGui::GetScrollY() && scrollMax != 0)
                 {
                     ImGui::SetScrollY(scrollMax - 1);
-                    nodeIndex += scrollStrength;
+                    m_gui.nodeIndex += scrollStrength;
                 }
 
-                if (nodeIndex + i < 1)
-                    nodeIndex = 1;
-                else if (nodeIndex + i > (int)m_scene.gameObjectCount - 1)
-                    nodeIndex = m_scene.gameObjectCount - i - 1;
+                if (m_gui.nodeIndex + i < 1)
+                    m_gui.nodeIndex = 1;
+                else if (m_gui.nodeIndex + i > (int)m_scene.gameObjectCount - 1)
+                    m_gui.nodeIndex = m_scene.gameObjectCount - i - 1;
 
-                if (m_scene.gameObjects[i + nodeIndex].parent == 0)
-                    DrawSceneNodes(false, i + nodeIndex);
+                if (m_scene.gameObjects[i + m_gui.nodeIndex].parent == 0)
+                    DrawSceneNodes(false, i + m_gui.nodeIndex);
             }
             ImGui::EndChild();
         }
