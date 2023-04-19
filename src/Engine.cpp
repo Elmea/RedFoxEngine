@@ -43,6 +43,7 @@ Engine::Engine(int width, int height) :
     m_scene.gameObjects[0].name.capacity = 255;
     m_graphics.lightStorage.lights = (Light*)m_memoryManager.PersistentAllocation(sizeof(Light) * 1000);
     m_graphics.lightStorage.shadowMaps = (unsigned int*)m_memoryManager.PersistentAllocation(sizeof(unsigned int) * 1000);
+    m_scene.gameObjectCount++;
 
     //TODO transition to an instance based model 'model'
     for (int i = 0; i < (int)m_modelCount; i++)
@@ -67,7 +68,7 @@ Engine::Engine(int width, int height) :
         dir->lightInfo.diffuse = {0.6, 0.6, 0.6};
         dir->lightInfo.specular = {0.1, 0.1, 0.1};
      
-        /*
+        /**/
         Light* spot = m_graphics.lightStorage.CreateLight(LightType::SPOT);
         spot->lightInfo.constant = 1.0f;
         spot->lightInfo.linear = 0.09f;
@@ -79,7 +80,7 @@ Engine::Engine(int width, int height) :
         spot->lightInfo.specular = {0.1, 0.1, 0.1};
         spot->lightInfo.cutOff = 0.5f;
         spot->lightInfo.outerCutOff = 0.1f;
-        
+        /*
         Light* point = m_graphics.lightStorage.CreateLight(LightType::POINT);
         point->lightInfo.constant = 1.0f;
         point->lightInfo.linear = 0.1f;

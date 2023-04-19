@@ -201,7 +201,9 @@ namespace RedFoxEngine
 
     void Graphics::Draw(RedFoxMaths::Mat4* p_modelMatrices, u64* p_modelCountIndex, WindowDimension p_windowDimension, SkyDome p_skyDome, float p_time)
     {
-        DrawShadowMaps(p_modelMatrices, p_modelCountIndex);
+        static int test = 0;
+        if (test % 1 == 0)
+            DrawShadowMaps(p_modelMatrices, p_modelCountIndex);
 
         glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
         glCullFace(GL_BACK);
@@ -219,6 +221,7 @@ namespace RedFoxEngine
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        test++;
     }
 
     void Graphics::DrawGameObjects(RedFoxMaths::Mat4* modelMatrices, u64* modelCountIndex)
@@ -285,11 +288,11 @@ namespace RedFoxEngine
         for (int i = 0; i < (int)m_textures.textureCount; i++)
             textureHandles[i] = glGetTextureSamplerHandleARB(m_textures.textures[i], m_textureSampler);
         glNamedBufferSubData(m_textureSSBO, 0, sizeof(u64) * (m_textures.textureCount), textureHandles);
-        int totalIndex = 0;
         glCullFace(GL_FRONT);
 
         for (int lightIndex = 0; lightIndex < lightStorage.lightCount; lightIndex++)
         {
+            int totalIndex = 0;
             if (lightStorage.lights[lightIndex].GetType() == LightType::NONE)
                 continue;
 

@@ -63,6 +63,12 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     if (physx->actorCount)
     {
         physx->m_scene->fetchResults(true);
+        physx::PxRigidActor *player = actors[1];
+        physx::PxTransform transform;
+        transform = player->is<physx::PxRigidDynamic>()->getGlobalPose();
+        transform.q.w = 1;
+        transform.q.x = transform.q.y = transform.q.z = 0;
+        player->is<physx::PxRigidDynamic>()->setGlobalPose(transform);
 
         int j = 0;
         int t = 20;
@@ -121,6 +127,7 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
         velocity.y += speed * deltaTime * direction.y;
         velocity.z += speed * deltaTime * direction.z;
         player->is<physx::PxRigidDynamic>()->setLinearVelocity(velocity);
+        physx::PxTransform transform;
     }
 }
 //for (int i = 0; i < (int)gameObjectCount; i++) // TODO physics code here ?

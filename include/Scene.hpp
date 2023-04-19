@@ -34,6 +34,7 @@ public:
     SceneGraph graph;
     Camera m_gameCamera;
     int m_width, m_height;
+    bool isPaused = true;
     Scene(int width, int height):m_gameCamera(projectionType::PERSPECTIVE,
         width / (f32)height){};
     RedFoxMaths::Mat4 GetWorldMatrix(int gameObjectindex)

@@ -8,7 +8,7 @@ namespace RedFoxEngine
     {
         int index;
         unsigned int depthMapFBO = 0;
-        unsigned int SHADOW_WIDTH = 5120, SHADOW_HEIGHT = 5120;
+        static const unsigned int SHADOW_WIDTH = 5120, SHADOW_HEIGHT = 5120;
         unsigned int depthMap = 0;
     };
 

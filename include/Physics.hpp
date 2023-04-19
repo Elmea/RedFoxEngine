@@ -14,15 +14,14 @@ class Physx
   private:
     physx::PxDefaultAllocator allocator;
     physx::PxDefaultErrorCallback errorCallback;
-    physx::PxFoundation* foundation = nullptr;
-    physx::PxPhysics* physics = nullptr;
-    physx::PxDefaultCpuDispatcher* dispatcher = nullptr;
-    physx::PxControllerManager* m_manager; 
-    physx::PxMaterial* material = nullptr;
-    physx::PxPvd* pvd = nullptr;
-    physx::PxCudaContextManager* cudaContextManager = nullptr;
+    physx::PxFoundation *foundation = nullptr;
+    physx::PxPhysics *physics = nullptr;
+    physx::PxDefaultCpuDispatcher *dispatcher = nullptr;
+    physx::PxMaterial *material = nullptr;
+    physx::PxPvd *pvd = nullptr;
+    physx::PxCudaContextManager *cudaContextManager = nullptr;
   public:
-    physx::PxScene* m_scene = nullptr;
+    physx::PxScene *m_scene = nullptr;
     physx::PxRigidActor **actors;
     int actorCount = 0;
   private:

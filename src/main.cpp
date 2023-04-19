@@ -2,7 +2,7 @@
 
 int main()
 {
-    RedFoxEngine::Engine engine(1920, 1080);
+    RedFoxEngine::Engine engine(1280, 720);
 
     while (engine.isRunning())
     {

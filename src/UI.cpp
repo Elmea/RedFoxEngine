@@ -280,7 +280,7 @@ void Engine::DrawSceneNodes(bool is_child, int index)
         flags = ImGuiTreeNodeFlags_Bullet;
     else
         flags = (childrenCount == 0) ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_OpenOnArrow;
-    if (index == m_gui.selectedObject)
+    if (index == m_gui.selectedObject && m_gui.selectedObject != 0)
         flags |= ImGuiTreeNodeFlags_Selected;
     flags |= ImGuiTreeNodeFlags_SpanFullWidth;
 
@@ -367,6 +367,60 @@ void Engine::UpdateIMGUI()
             ImGui::Image(framebuffer,
                 ImVec2(dimension.width, dimension.height), ImVec2(0, 1), ImVec2(1, 0));
         }
+
+        if (ImGui::IsItemHovered())
+        {
+            ImVec2 vPos = ImGui::GetWindowPos();
+            ImVec2 vMin = ImGui::GetWindowContentRegionMin() + vPos;
+            ImVec2 vMax = ImGui::GetWindowContentRegionMax() + vPos;
+            ImVec2 mousePos = ImGui::GetMousePos();
+            RedFoxMaths::Float2 mousePosEditor = {
+                mousePos.x * dimension.width / content.x - vMin.x,
+                mousePos.y * dimension.height / content.y - vMin.y
+            };
+            RedFoxMaths::Float3 ray_ndc = {
+                (2.0f * mousePosEditor.x) / content.x - 1.0f,
+                1.0f - (2.0f * mousePosEditor.y) / content.y,
+                1
+            };
+            RedFoxMaths::Float4 ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };
+            RedFoxMaths::Float4 ray_eye = m_editorCamera.m_projection.GetInverseMatrix() * ray_clip;
+            ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };
+            RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
+            ray_world.Normalize(); 
+
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            {
+                RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
+                physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
+                physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
+                physx::PxRaycastBuffer hitCalls;
+                m_physx.m_scene->flushQueryUpdates();
+                if (m_physx.m_scene->raycast(origin, unitDir, 100, hitCalls, physx::PxHitFlag::eANY_HIT))
+                {
+                    physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
+                    if (hit.actor)
+                    {
+                        int index = hit.actor->getInternalActorIndex();
+                        if (index < m_scene.gameObjectCount && index > 0)
+                        {
+                            m_gui.selectedObject = index;
+                        }
+                    }
+                }
+            }
+            
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
+            {
+                m_input.lockMouse = m_editorCameraEnabled = true;
+            }
+            else
+            {
+                m_editorCameraSpeed = { 0.f, 0.f, 0.f };
+                m_input.lockMouse = m_editorCameraEnabled = false;
+            }
+        }
+
                
         if (m_gui.selectedObject != 0)
         {

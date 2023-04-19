@@ -31,11 +31,11 @@ void Physx::InitPhysics(Scene scene, int sphereIndex)
 {
 	foundation = PxCreateFoundation(PX_PHYSICS_VERSION, allocator, errorCallback);
 
-	pvd = PxCreatePvd(*foundation);
 	PxPvdTransport* transport = PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
+	pvd = PxCreatePvd(*foundation);
 	pvd->connect(*transport, PxPvdInstrumentationFlag::eALL);
 
-	physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, PxTolerancesScale());
+	physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, PxTolerancesScale(), true, pvd);
 
 	PxCudaContextManagerDesc cudaContextManagerDesc;
 	cudaContextManager = PxCreateCudaContextManager(*foundation, cudaContextManagerDesc, PxGetProfilerCallback());
@@ -54,7 +54,9 @@ void Physx::InitPhysics(Scene scene, int sphereIndex)
 		sceneDesc.broadPhaseType = PxBroadPhaseType::eGPU;
 	}
 	m_scene = physics->createScene(sceneDesc);
-	
+	m_scene->setVisualizationParameter(PxVisualizationParameter::eACTOR_AXES, 1);
+	m_scene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1);
+
 	PxPvdSceneClient* pvdClient = m_scene->getScenePvdClient();
 	if (pvdClient)
 	{
