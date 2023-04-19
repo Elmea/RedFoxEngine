@@ -280,7 +280,7 @@ void Engine::DrawSceneNodes(bool is_child, int index)
         flags = ImGuiTreeNodeFlags_Bullet;
     else
         flags = (childrenCount == 0) ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_OpenOnArrow;
-    if (index == m_gui.selectedObject)
+    if (index == m_gui.selectedObject && m_gui.selectedObject != 0)
         flags |= ImGuiTreeNodeFlags_Selected;
     flags |= ImGuiTreeNodeFlags_SpanFullWidth;
 
@@ -374,23 +374,18 @@ void Engine::UpdateIMGUI()
             ImVec2 vMin = ImGui::GetWindowContentRegionMin() + vPos;
             ImVec2 vMax = ImGui::GetWindowContentRegionMax() + vPos;
             ImVec2 mousePos = ImGui::GetMousePos();
-
             RedFoxMaths::Float2 mousePosEditor = {
                 mousePos.x * dimension.width / content.x - vMin.x,
                 mousePos.y * dimension.height / content.y - vMin.y
             };
-
             RedFoxMaths::Float3 ray_ndc = {
                 (2.0f * mousePosEditor.x) / content.x - 1.0f,
                 1.0f - (2.0f * mousePosEditor.y) / content.y,
                 1
             };
-
             RedFoxMaths::Float4 ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };
-
             RedFoxMaths::Float4 ray_eye = m_editorCamera.m_projection.GetInverseMatrix() * ray_clip;
             ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };
-
             RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
             ray_world.Normalize(); 
 
@@ -403,10 +398,14 @@ void Engine::UpdateIMGUI()
                 m_physx.m_scene->flushQueryUpdates();
                 if (m_physx.m_scene->raycast(origin, unitDir, 100, hitCalls, physx::PxHitFlag::eANY_HIT))
                 {
-                    if (hitCalls.hasAnyHits() && hitCalls.nbTouches != 0)
+                    physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
+                    if (hit.actor)
                     {
-                        physx::PxRaycastHit hit = hitCalls.block;
-                        m_gui.selectedObject = hit.actor->getInternalActorIndex();
+                        int index = hit.actor->getInternalActorIndex();
+                        if (index < scene.gameObjectCount)
+                        {
+                            m_gui.selectedObject = index;
+                        }
                     }
                 }
             }
