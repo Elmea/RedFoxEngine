@@ -335,6 +335,9 @@ void Engine::DrawSceneNodes(bool is_child, int index)
 
 void Engine::UpdateIMGUI()
 {
+    static int nodeIndex = 1;
+    int mousePickNodeIndexTmp = -1;
+
     ImGuiDockNodeFlags dockingFlags =
         ImGuiDockNodeFlags_NoWindowMenuButton |
         ImGuiDockNodeFlags_NoCloseButton;
@@ -395,15 +398,16 @@ void Engine::UpdateIMGUI()
                 physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
                 physx::PxRaycastBuffer hitCalls;
                 m_physx.m_scene->flushQueryUpdates();
-                if (m_physx.m_scene->raycast(origin, unitDir, 100, hitCalls, physx::PxHitFlag::eANY_HIT))
+                if (m_physx.m_scene->raycast(origin, unitDir, m_editorCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
                 {
                     physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
                     if (hit.actor)
                     {
-                        int index = hit.actor->getInternalActorIndex();
-                        if (index < m_scene.gameObjectCount && index > 0)
+                        int hitIndex = hit.actor->getInternalActorIndex();
+                        if (hitIndex < m_scene.gameObjectCount && hitIndex > 0 && hitIndex != m_gui.selectedObject)
                         {
-                            m_gui.selectedObject = index;
+                            m_gui.selectedObject = hitIndex;
+                            mousePickNodeIndexTmp = hitIndex;
                         }
                     }
                 }
@@ -569,36 +573,42 @@ void Engine::UpdateIMGUI()
                 ImGuiWindowFlags_NoMove;
 
             ImGui::BeginChild("SceneGraphNodes", ImVec2(0, 0), true, sceneGraphFlags);
-            static int index = 1;
-            if (index < 1)
-                index = 1;
-            else if (index > (int)m_scene.gameObjectCount - 1)
-                index = m_scene.gameObjectCount - 1;
+            if (nodeIndex < 1)
+                nodeIndex = 1;
+            else if (nodeIndex > (int)m_scene.gameObjectCount - 1)
+                nodeIndex = m_scene.gameObjectCount - 1;
 
             int maxItems = (int)ImGui::GetMainViewport()->Size.y / 16;
-            for (int i = 0; i + index < (int)m_scene.gameObjectCount && i < maxItems; i++)
+            for (int i = 0; i + nodeIndex < (int)m_scene.gameObjectCount && i < maxItems; i++)
             {
-                if (i == 0 && index > 1 && ImGui::GetScrollY() == 0)
+                if (mousePickNodeIndexTmp != -1)
+                {
+                    nodeIndex = mousePickNodeIndexTmp;
+                    ImGui::SetScrollY(mousePickNodeIndexTmp - nodeIndex);
+                    mousePickNodeIndexTmp = -1;
+                }
+
+                if (i == 0 && nodeIndex > 1 && ImGui::GetScrollY() == 0)
                 {
                     ImGui::SetScrollY(1);
-                    index -= scrollStrength;
+                    nodeIndex -= scrollStrength;
                 }
 
-                float scrollMax = 0;
-                if (i == maxItems - 1 && index + i < (int)m_scene.gameObjectCount - 1 &&
-                    (scrollMax = ImGui::GetScrollMaxY()) == ImGui::GetScrollY() && scrollMax != 0)
+                float scrollMax = ImGui::GetScrollMaxY();
+                if (i == maxItems - 1 && nodeIndex + i < (int)m_scene.gameObjectCount - 1 &&
+                    scrollMax == ImGui::GetScrollY() && scrollMax != 0)
                 {
                     ImGui::SetScrollY(scrollMax - 1);
-                    index += scrollStrength;
+                    nodeIndex += scrollStrength;
                 }
 
-                if (index + i < 1)
-                    index = i;
-                else if (index + i > (int)m_scene.gameObjectCount - 1)
-                    index = m_scene.gameObjectCount - i - 1;
+                if (nodeIndex + i < 1)
+                    nodeIndex = 1;
+                else if (nodeIndex + i > (int)m_scene.gameObjectCount - 1)
+                    nodeIndex = m_scene.gameObjectCount - i - 1;
 
-                if (m_scene.gameObjects[i + index].parent == 0)
-                    DrawSceneNodes(false, i + index);
+                if (m_scene.gameObjects[i + nodeIndex].parent == 0)
+                    DrawSceneNodes(false, i + nodeIndex);
             }
             ImGui::EndChild();
         }
@@ -607,62 +617,23 @@ void Engine::UpdateIMGUI()
 
     if (ImGui::Begin("Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
-        ImGuiTreeNodeFlags propertiesFlags = 
+        ImGuiTreeNodeFlags propertiesFlags =
             ImGuiTreeNodeFlags_DefaultOpen |
-            ImGuiTreeNodeFlags_OpenOnArrow | 
+            ImGuiTreeNodeFlags_OpenOnArrow |
             ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
-        if (ImGui::CollapsingHeader("Camera", propertiesFlags))
-        {
-            ImGuiTableFlags tableFlags =
-                ImGuiTableFlags_RowBg |
-                ImGuiTableFlags_SizingStretchSame |
-                ImGuiTableFlags_Resizable |
-                ImGuiTableFlags_BordersOuter;
-
-            if (ImGui::BeginTable("CameraTransformTable", 2, tableFlags))
-            {
-                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                ImGui::Text("Position");
-                ImGui::TableSetColumnIndex(1);
-                ImGui::SetNextItemWidth(-FLT_MIN);
-                ImGui::DragFloat3("TransformPosition", &m_editorCamera.position.x, 1.0f, -32767.f, 32767.f);
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                ImGui::Text("Rotation");
-                ImGui::TableSetColumnIndex(1);
-                ImGui::SetNextItemWidth(-FLT_MIN);
-
-                static RedFoxMaths::Float3 rotation;
-                if (ImGui::DragFloat3("TransformRotation", &rotation.x, 1.0f, -360, 360.f))
-                {
-                    rotation.x = RedFoxMaths::Misc::Clamp(rotation.x, -360, 360);
-                    rotation.y = RedFoxMaths::Misc::Clamp(rotation.y, -360, 360);
-                    rotation.z = RedFoxMaths::Misc::Clamp(rotation.z, -360, 360);
-                    rotation *= DEG2RAD;
-                    //TODO: still pretty janky
-                    {
-                        using namespace RedFoxMaths;
-                        m_editorCamera.orientation = 
-                            Quaternion::SLerp(m_editorCamera.orientation, 
-                                Quaternion::FromEuler(rotation * 2), 1);
-                    }
-                    m_editorCamera.orientation.Normalize();
-                    rotation *= RAD2DEG;
-                }
-                ImGui::EndTable();
-            }
-        }
+        ImGuiTableFlags tableFlags =
+            ImGuiTableFlags_RowBg |
+            ImGuiTableFlags_SizingStretchSame |
+            ImGuiTableFlags_Resizable |
+            ImGuiTableFlags_BordersOuter;
 
         if (m_gui.selectedObject != 0)
         {
             if (ImGui::CollapsingHeader("Transform", propertiesFlags))
             {
                 //TODO(a.perche) : Drag speed according to user param.
-                ImGuiTableFlags tableFlags = 
+                ImGuiTableFlags tableFlags =
                     ImGuiTableFlags_RowBg |
                     ImGuiTableFlags_SizingStretchSame |
                     ImGuiTableFlags_Resizable |
@@ -676,7 +647,7 @@ void Engine::UpdateIMGUI()
                     ImGui::TableSetColumnIndex(0);
                     ImGui::Text("Position");
                     ImGui::TableSetColumnIndex(1);
-                   ImGui::SetNextItemWidth(-FLT_MIN);
+                    ImGui::SetNextItemWidth(-FLT_MIN);
                     ImGui::DragFloat3("TransformPosition", &m_scene.gameObjects[m_gui.selectedObject].position.x, 1.f, -32767.f, 32767.f);
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
@@ -692,10 +663,10 @@ void Engine::UpdateIMGUI()
                         rotation.z = RedFoxMaths::Misc::Clamp(rotation.z, -360, 360);
                         rotation *= DEG2RAD;
                         {
-                        using namespace RedFoxMaths;
-                        m_scene.gameObjects[m_gui.selectedObject].orientation =
-                                 Quaternion::SLerp(m_scene.gameObjects[m_gui.selectedObject].orientation,
-                            Quaternion::FromEuler(rotation), 0.5);
+                            using namespace RedFoxMaths;
+                            m_scene.gameObjects[m_gui.selectedObject].orientation =
+                                Quaternion::SLerp(m_scene.gameObjects[m_gui.selectedObject].orientation,
+                                    Quaternion::FromEuler(rotation), 0.5);
                         }
                         m_scene.gameObjects[m_gui.selectedObject].orientation.Normalize();
                         rotation *= RAD2DEG;
@@ -710,7 +681,7 @@ void Engine::UpdateIMGUI()
                 }
             }
         }
+        ImGui::End();
+        ImGui::PopFont();
     }
-    ImGui::End();
-    ImGui::PopFont();
 }
