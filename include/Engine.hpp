@@ -34,9 +34,12 @@ struct ImGUI
     int nodeIndex = 1;
     int sceneGraphScrollStrength = 1;
     int currentFrame = 0;
+    int translateSnap = 1;
+    int rotateSnap = 45;
+    int scaleSnap = 1;
     ImTextureID icons[10];
-    float fps[255];
     float averageFps;
+    float fps[255];
     ImGuizmo::OPERATION gizmoType;
     ImGuizmo::MODE gizmoMode;
     ImGuiIO* io;

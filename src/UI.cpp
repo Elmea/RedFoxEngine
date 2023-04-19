@@ -440,10 +440,20 @@ void Engine::UpdateIMGUI()
             if (m_editorCameraEnabled)
                 m_gui.editorMenuOpen = false;
             SeparatorText("Camera");
-            Text("Speed");
-            SameLine();
+            Text("Speed"); SameLine();
             SetNextItemWidth(-FLT_MIN);
             SliderFloat("CameraSpeed", &m_editorCameraSpeed, 1, 4);
+            SeparatorText("Grid");
+            Text("Translation snap"); SameLine();
+            SetNextItemWidth(-FLT_MIN);
+            DragInt("TSnap", &m_gui.translateSnap, 10, 1, 1000);
+            Text("Rotation snap"); SameLine();
+            SetNextItemWidth(-FLT_MIN);
+            DragInt("RSnap", &m_gui.rotateSnap, 10, 1, 180);
+            Text("Scale snap"); SameLine();
+            SetNextItemWidth(-FLT_MIN);
+            DragInt("SSnap", &m_gui.scaleSnap, 10, 1, 1000);
+
             EndChild();
         }
         SetItemAllowOverlap();
@@ -507,20 +517,39 @@ void Engine::UpdateIMGUI()
             float* cameraProjectionPtr = (float*)cameraProjection.AsPtr();
             float* transformMatPtr = (float*)transformMat.AsPtr();
             float* deltaMatPtr = (float*)deltaMat.AsPtr();
-            float snapValue = 0.5;
-            bool snap = m_input.LControl;
-            if (m_gui.gizmoType == ImGuizmo::OPERATION::ROTATE)
-                snapValue = 45.0f;
-            if (m_input.Q) // TODO: What are the unity or unreal buttons for this
-                m_gui.gizmoType = ImGuizmo::OPERATION::SCALE;
-            else if (m_input.W)
+            float snap3[3] = { 0, 0, 0 };
+            if (m_input.W)
                 m_gui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
             else if (m_input.R)
                 m_gui.gizmoType = ImGuizmo::OPERATION::ROTATE;
-            float snapValues[3] = { snapValue, snapValue, snapValue };
-                        
+            else if (m_input.E)
+                m_gui.gizmoType = ImGuizmo::OPERATION::SCALE;
+            
+            switch (m_gui.gizmoType)
+            {
+            case ImGuizmo::OPERATION::TRANSLATE:
+                snap3[0] = (float)m_gui.translateSnap;
+                snap3[1] = (float)m_gui.translateSnap;
+                snap3[2] = (float)m_gui.translateSnap;
+                break;
+            case ImGuizmo::OPERATION::ROTATE:
+                snap3[0] = (float)m_gui.rotateSnap;
+                snap3[1] = (float)m_gui.rotateSnap;
+                snap3[2] = (float)m_gui.rotateSnap;
+                break;
+            case ImGuizmo::OPERATION::SCALE:
+                snap3[0] = (float)m_gui.scaleSnap;
+                snap3[1] = (float)m_gui.scaleSnap;
+                snap3[2] = (float)m_gui.scaleSnap;
+                break;
+            default:
+                break;
+            }
+            
+            bool snapping = m_input.LControl;
             ImGuizmo::Manipulate(cameraViewPtr, cameraProjectionPtr,
-                m_gui.gizmoType, m_gui.gizmoMode, transformMatPtr, deltaMatPtr, snap ? &snapValues[0] : nullptr);
+                m_gui.gizmoType, m_gui.gizmoMode, transformMatPtr, deltaMatPtr, 
+                snapping ? snap3 : nullptr);
 
             if (ImGuizmo::IsUsing())
             {
