@@ -436,6 +436,9 @@ void Engine::UpdateIMGUI()
       
         if (m_gui.selectedObject != 0)
         {
+            ImGuizmo::SetDrawlist();
+            ImGui::GetCurrentWindow();
+            ImGuizmo::SetRect(windowPos.x, windowPos.y, content.x, content.y);
             RedFoxMaths::Mat4 cameraProjection = m_editorCamera.m_projection.GetTransposedMatrix();
             RedFoxMaths::Mat4 cameraView = m_editorCamera.GetViewMatrix().GetTransposedMatrix();
             RedFoxMaths::Mat4 transformMat = m_scene.GetWorldMatrix(m_gui.selectedObject).GetTransposedMatrix();
