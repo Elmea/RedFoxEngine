@@ -162,7 +162,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
     if (ImGui::Button("SAVE SCENE", ImVec2(0, buttonHeight)))
-        SaveScene(strcat((char*)m_scene.m_name.data, ".scene"));
+        SaveScene(strcat((char*)m_scene.m_name.data, ".scene"), m_scene);
 
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 32.f);

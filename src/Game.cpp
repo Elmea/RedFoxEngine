@@ -47,11 +47,21 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     RedFoxEngine::Scene *scene = (RedFoxEngine::Scene *)s;
     RedFoxEngine::GameObject *gameObjects = scene->gameObjects;
     int gameObjectCount = scene->gameObjectCount;
+    gameObjects[0].position =
+    {
+        0, -11, 0
+    };
+    gameObjects[0].orientation =
+    {
+        1, 0, 0, 0
+    };
+    gameObjects[0].scale =
+    {
+        10000, 2, 10000
+    };
     physx::PxRigidActor **actors = physx->actors;
     if (physx->actorCount)
     {
-        scene->isPaused = true;
-        scene->isPaused = false;
         if (!scene->isPaused)
             physx->m_scene->fetchResults(true);
         physx::PxRigidActor *player = actors[1];
