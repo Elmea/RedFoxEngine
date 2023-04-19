@@ -350,7 +350,6 @@ void Engine::UpdateIMGUI()
     DrawDockSpace(ImGui::GetMainViewport(), dockingFlags, (const ImGuiWindowClass*)0);
 
     ImGui::PushFont(m_gui.defaultFont);
-    static int index = 1;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
     if (ImGui::Begin("Editor", (bool*)0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
@@ -539,8 +538,8 @@ void Engine::UpdateIMGUI()
                 {
                     if (payload->IsDelivery())
                     {
-                        GameObject* movedGameobject = *(GameObject**)payload->Data;
-                        movedGameobject->parent = 0;
+                        int* movedGameobject = (int*)payload->Data;
+                        m_scene.gameObjects[*movedGameobject].parent = 0;
                     }
                     ImGui::EndDragDropTarget();
                 }
@@ -570,6 +569,7 @@ void Engine::UpdateIMGUI()
                 ImGuiWindowFlags_NoMove;
 
             ImGui::BeginChild("SceneGraphNodes", ImVec2(0, 0), true, sceneGraphFlags);
+            static int index = 1;
             if (index < 1)
                 index = 1;
             else if (index > (int)m_scene.gameObjectCount - 1)
@@ -578,7 +578,7 @@ void Engine::UpdateIMGUI()
             int maxItems = (int)ImGui::GetMainViewport()->Size.y / 16;
             for (int i = 0; i + index < (int)m_scene.gameObjectCount && i < maxItems; i++)
             {
-                if (i == 0 && index > 0 && ImGui::GetScrollY() == 0)
+                if (i == 0 && index > 1 && ImGui::GetScrollY() == 0)
                 {
                     ImGui::SetScrollY(1);
                     index -= scrollStrength;
@@ -592,7 +592,7 @@ void Engine::UpdateIMGUI()
                     index += scrollStrength;
                 }
 
-                if (index + i < 0)
+                if (index + i < 1)
                     index = i;
                 else if (index + i > (int)m_scene.gameObjectCount - 1)
                     index = m_scene.gameObjectCount - i - 1;
