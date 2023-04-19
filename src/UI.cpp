@@ -25,9 +25,9 @@ void Engine::InitIMGUI()
     IMGUI_CHECKVERSION();
 
     CreateContext();
-    m_gui.ImGuiIO = &GetIO();
-    m_gui.ImGuiIO->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    m_gui.ImGuiIO->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    m_gui.io = &GetIO();
+    m_gui.io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    m_gui.io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 #pragma region RedFox_Style_Definition
     ImGuiStyle& style = GetStyle();
@@ -96,7 +96,7 @@ void Engine::InitIMGUI()
     style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
     style.Colors[ImGuiCol_DragDropTarget] = RF_ORANGE;
     style.Colors[ImGuiCol_NavHighlight] = ImVec4(0.26f, 0.59f, 0.98f, 1.f);
-    m_gui.defaultFont = m_gui.ImGuiIO->Fonts->AddFontFromFileTTF("D-DIN.otf", 14);
+    m_gui.defaultFont = m_gui.io->Fonts->AddFontFromFileTTF("D-DIN.otf", 14);
 #pragma endregion
 
     ImGui_ImplWin32_Init(m_platform.m_window);
@@ -104,6 +104,17 @@ void Engine::InitIMGUI()
 
     m_gui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
     m_gui.gizmoMode = ImGuizmo::MODE::LOCAL;
+
+    m_gui.icons[0] = (void*)LoadTextureFromFilePath("Textures/new_scene.png", false, false);
+    m_gui.icons[1] = (void*)LoadTextureFromFilePath("Textures/save_scene.png", false, false);
+    m_gui.icons[2] = (void*)LoadTextureFromFilePath("Textures/pause.png", false, false);
+    m_gui.icons[3] = (void*)LoadTextureFromFilePath("Textures/resume.png", false, false);
+    m_gui.icons[4] = (void*)LoadTextureFromFilePath("Textures/translate.png", false, false);
+    m_gui.icons[5] = (void*)LoadTextureFromFilePath("Textures/rotate.png", false, false);
+    m_gui.icons[6] = (void*)LoadTextureFromFilePath("Textures/scale.png", false, false);
+    m_gui.icons[7] = (void*)LoadTextureFromFilePath("Textures/new_entity.png", false, false);
+    m_gui.icons[8] = (void*)LoadTextureFromFilePath("Textures/new_cube.png", false, false);
+    m_gui.icons[9] = (void*)LoadTextureFromFilePath("Textures/new_sphere.png", false, false);
 }
 
 void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight)
@@ -152,8 +163,8 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     PopStyleColor();
     
     PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
-
-    if (Button("NEW SCENE", ImVec2(0, buttonHeight)))
+    
+    if (ImageButton("NEW SCENE", m_gui.icons[0], ImVec2(buttonHeight, buttonHeight)))
     {
         m_scene.gameObjectCount = 0;
         m_memoryManager.m_memory.arena.usedSize = m_memoryManager.m_sceneUsedMemory;
@@ -162,32 +173,35 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
 
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
-    if (Button("SAVE SCENE", ImVec2(0, buttonHeight)))
+    if (ImageButton("SAVE SCENE", m_gui.icons[1], ImVec2(buttonHeight, buttonHeight)))
         SaveScene(strcat((char*)m_scene.m_name.data, ".scene"));
 
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
-    if (Button(m_scene.isPaused ? "||" : ">", ImVec2(buttonHeight, buttonHeight)))
+    if (ImageButton("PAUSE", m_scene.isPaused ? m_gui.icons[2] : m_gui.icons[3], ImVec2(buttonHeight, buttonHeight)))
         m_scene.isPaused = !m_scene.isPaused;
 
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
-    if (Button("TRANSLATE", ImVec2(0, buttonHeight)))
+    if (ImageButton("TRANSLATE", m_gui.icons[4], ImVec2(buttonHeight, buttonHeight), ImVec2(0,0), ImVec2(1,1),
+        m_gui.gizmoType == ImGuizmo::OPERATION::TRANSLATE ? RF_LIGHTGRAYBLUE : RF_DARKORANGE))
         m_gui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
 
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
-    if (Button("ROTATE", ImVec2(0, buttonHeight)))
+    if (ImageButton("ROTATE", m_gui.icons[5], ImVec2(buttonHeight, buttonHeight), ImVec2(0, 0), ImVec2(1, 1),
+        m_gui.gizmoType == ImGuizmo::OPERATION::ROTATE ? RF_LIGHTGRAYBLUE : RF_DARKORANGE))
         m_gui.gizmoType = ImGuizmo::OPERATION::ROTATE;
 
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
-    if (Button("SCALE", ImVec2(0, buttonHeight)))
+    if (ImageButton("SCALE", m_gui.icons[6], ImVec2(buttonHeight, buttonHeight), ImVec2(0, 0), ImVec2(1, 1),
+        m_gui.gizmoType == ImGuizmo::OPERATION::SCALE ? RF_LIGHTGRAYBLUE : RF_DARKORANGE))
         m_gui.gizmoType = ImGuizmo::OPERATION::SCALE;
     
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
-    if (Button("ADD ENTITY", ImVec2(0, buttonHeight)))
+    if (ImageButton("ADD ENTITY", m_gui.icons[7], ImVec2(buttonHeight, buttonHeight)))
     {
         GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
         *newGameObject = { };
@@ -202,7 +216,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
 
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
-    if (Button("ADD CUBE", ImVec2(0, buttonHeight)))
+    if (ImageButton("ADD CUBE", m_gui.icons[8], ImVec2(buttonHeight, buttonHeight)))
     {
         GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
         *newGameObject = { };
@@ -217,7 +231,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
 
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
-    if (Button("ADD SPHERE", ImVec2(0, buttonHeight)))
+    if (ImageButton("ADD SPHERE", m_gui.icons[9], ImVec2(buttonHeight, buttonHeight)))
     {
         GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
         *newGameObject = { };
@@ -241,9 +255,9 @@ int Engine::DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dock
     
     const ImGuiWindow* window = GetCurrentWindow();
     const float titleBarHeight = window->TitleBarHeight();
-    const float toolbarSize = 46.f;
+    const float toolbarSize = 44.f;
     const float totalHeight = titleBarHeight + toolbarSize;
-    const float buttonHeight = toolbarSize - 8.f;
+    const float buttonHeight = 32.f;
 
     
     SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + totalHeight + 8.f));
@@ -413,7 +427,7 @@ void Engine::UpdateIMGUI()
         if (m_gui.editorMenuOpen == true)
         {
             ImVec2 menuPos = vMin + ImVec2(0, 20);
-            ImVec2 menuSize = ImVec2(300, 200);
+            ImVec2 menuSize = ImVec2(200, 175);
             ImVec2 menuAbsSize = menuPos + menuSize;
             SetNextWindowPos(menuPos);
             BeginChild("Editor settings", menuSize);
@@ -423,6 +437,8 @@ void Engine::UpdateIMGUI()
             {
                 m_gui.editorMenuOpen = false;
             }
+            if (m_editorCameraEnabled)
+                m_gui.editorMenuOpen = false;
             SeparatorText("Camera");
             Text("Speed");
             SameLine();
@@ -446,7 +462,7 @@ void Engine::UpdateIMGUI()
             RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
             ray_world.Normalize(); 
 
-            if (m_input.mouseLClick)
+            if (IsMouseClicked(ImGuiMouseButton_Left))
             {
                 RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
                 physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };

@@ -238,20 +238,27 @@ void Engine::UpdateModelMatrices()
     }
 }
 
+void Engine::UpdateSkyDome()
+{
+    m_scene.skyDome.model.mat16[3] = m_editorCamera.position.x;
+    m_scene.skyDome.model.mat16[7] = m_editorCamera.position.y;
+    m_scene.skyDome.model.mat16[11] = m_editorCamera.position.z;
+    m_scene.skyDome.sunPosition.x = cosf(m_time.current / 500);
+    m_scene.skyDome.sunPosition.y = sinf(m_time.current / 500);
+}
+
 void Engine::Update()
 {
     ProcessInputs();
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
-
     UpdateEditorCamera();
-
+    UpdateSkyDome();
     UpdateLights(&m_graphics.lightStorage);
     m_physx.UpdatePhysics(m_time.delta, m_memoryManager);
     m_game.update(&m_scene, &m_physx, m_input, m_time.delta);
     UpdateModelMatrices();
     UpdateIMGUI();
-    m_scene.skyDome.sunPosition.x = cosf(m_time.current / 500);
-    m_scene.skyDome.sunPosition.y = sinf(m_time.current / 500);
+    
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 
@@ -279,7 +286,9 @@ u32 Engine::LoadTextureFromFilePath(const char *filePath, bool resident, bool re
 void Engine::InitSkyDome()
 {
     m_scene.skyDome.sunPosition = { 0, 1, 0 };
-    m_scene.skyDome.model = RedFoxMaths::Mat4::GetScale({ 5000, 5000, 5000 });
+    float skyDrawDistance = m_editorCamera.m_parameters._far / 1.5;
+    m_scene.skyDome.model = RedFoxMaths::Mat4::GetScale({ skyDrawDistance,
+        skyDrawDistance, skyDrawDistance });
 
     m_scene.skyDome.topTint = LoadTextureFromFilePath("Textures/topSkyTint.png", false, true);
     m_scene.skyDome.botTint = LoadTextureFromFilePath("Textures/botSkyTint.png", false, false);
