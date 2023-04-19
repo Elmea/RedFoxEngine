@@ -166,6 +166,11 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
 
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 32.f);
+    if (ImGui::Button(m_scene.isPaused ? "||" : ">", ImVec2(buttonHeight, buttonHeight)))
+        m_scene.isPaused = !m_scene.isPaused;
+
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 32.f);
     if (ImGui::Button("TRANSLATE", ImVec2(0, buttonHeight)))
         m_gui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
 
@@ -291,7 +296,7 @@ void Engine::DrawSceneNodes(bool is_child, int index)
         m_gui.selectedObject = index;
     }
 
-    //TODO(a.perche): Fix maths
+    // TODO(a.perche): Double click to focus object or press F (lerp position)
     /*
     if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered())
     {
