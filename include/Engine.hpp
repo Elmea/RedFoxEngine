@@ -39,6 +39,7 @@ struct ImGUI
     int scaleSnap = 1;
     ImTextureID icons[10];
     float averageFps;
+    float dragSpeed = 1.f;
     float fps[255];
     ImGuizmo::OPERATION gizmoType;
     ImGuizmo::MODE gizmoMode;

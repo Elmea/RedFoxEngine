@@ -443,16 +443,22 @@ void Engine::UpdateIMGUI()
             Text("Speed"); SameLine();
             SetNextItemWidth(-FLT_MIN);
             SliderFloat("CameraSpeed", &m_editorCameraSpeed, 1, 4);
+
             SeparatorText("Grid");
             Text("Translation snap"); SameLine();
             SetNextItemWidth(-FLT_MIN);
-            DragInt("TSnap", &m_gui.translateSnap, 10, 1, 1000);
+            DragInt("TSnap", &m_gui.translateSnap, 10, 1, 1000, "%d", ImGuiSliderFlags_AlwaysClamp);
             Text("Rotation snap"); SameLine();
             SetNextItemWidth(-FLT_MIN);
-            DragInt("RSnap", &m_gui.rotateSnap, 10, 1, 180);
+            DragInt("RSnap", &m_gui.rotateSnap, 10, 1, 180, "%d", ImGuiSliderFlags_AlwaysClamp);
             Text("Scale snap"); SameLine();
             SetNextItemWidth(-FLT_MIN);
-            DragInt("SSnap", &m_gui.scaleSnap, 10, 1, 1000);
+            DragInt("SSnap", &m_gui.scaleSnap, 10, 1, 1000, "%d", ImGuiSliderFlags_AlwaysClamp);
+
+            SeparatorText("Editor UI");
+            Text("Drag speed"); SameLine();
+            SetNextItemWidth(-FLT_MIN);
+            DragFloat("Drag speed", &m_gui.dragSpeed, 10, 1, 1000, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 
             EndChild();
         }
@@ -722,7 +728,7 @@ void Engine::UpdateIMGUI()
                     Text("Position");
                     TableSetColumnIndex(1);
                     SetNextItemWidth(-FLT_MIN);
-                    DragFloat3("TransformPosition", &m_scene.gameObjects[m_gui.selectedObject].position.x, 1.f, -32767.f, 32767.f);
+                    DragFloat3("TransformPosition", &m_scene.gameObjects[m_gui.selectedObject].position.x, m_gui.dragSpeed, - 32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                     TableNextRow();
                     TableSetColumnIndex(0);
                     Text("Rotation");
@@ -730,27 +736,48 @@ void Engine::UpdateIMGUI()
                     SetNextItemWidth(-FLT_MIN);
 
                     static RedFoxMaths::Float3 rotation;
-                    if (DragFloat3("TransformRotation", &rotation.x, 1.f, -360.f, 360.f))
+                    if (DragFloat3("TransformRotation", &rotation.x, m_gui.dragSpeed, -360.f, 360.f, "%.3f", ImGuiSliderFlags_AlwaysClamp))
                     {
+                        /*
                         rotation.x = RedFoxMaths::Misc::Clamp(rotation.x, -360, 360);
                         rotation.y = RedFoxMaths::Misc::Clamp(rotation.y, -360, 360);
                         rotation.z = RedFoxMaths::Misc::Clamp(rotation.z, -360, 360);
+                        */
                         rotation *= DEG2RAD;
-                        {
-                            using namespace RedFoxMaths;
-                            m_scene.gameObjects[m_gui.selectedObject].orientation =
-                                Quaternion::SLerp(m_scene.gameObjects[m_gui.selectedObject].orientation,
-                                    Quaternion::FromEuler(rotation), 0.5);
-                        }
+                        m_scene.gameObjects[m_gui.selectedObject].orientation =
+                            RedFoxMaths::Quaternion::SLerp(m_scene.gameObjects[m_gui.selectedObject].orientation,
+                                RedFoxMaths::Quaternion::FromEuler(rotation), 0.5);
                         m_scene.gameObjects[m_gui.selectedObject].orientation.Normalize();
                         rotation *= RAD2DEG;
                     }
+
                     TableNextRow();
                     TableSetColumnIndex(0);
                     Text("Scale");
                     TableSetColumnIndex(1);
                     SetNextItemWidth(-FLT_MIN);
-                    DragFloat3("TransformScale", &m_scene.gameObjects[m_gui.selectedObject].scale.x, 1.f, 0.00001f, 32767.f);
+                    DragFloat3("TransformScale", &m_scene.gameObjects[m_gui.selectedObject].scale.x, m_gui.dragSpeed, 0.00001f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    EndTable();
+                }
+            }
+            if (CollapsingHeader("Render", propertiesFlags))
+            {
+                SeparatorText("Model");
+
+                SeparatorText("Material");
+                if (BeginTable("MaterialTable", 2, tableFlags))
+                {
+                    TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                    TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+                    TableNextRow();
+                    int modelId = m_scene.gameObjects[m_gui.selectedObject].modelIndex;
+                    TableSetColumnIndex(0);
+                    Text("Color");
+                    TableSetColumnIndex(1);
+                    SetNextItemWidth(-FLT_MIN);
+                    ColorPicker3("MaterialColor",
+                        &m_models[modelId].obj.materials.material->diffuse.x,
+                        ImGuiColorEditFlags_PickerHueWheel);
                     EndTable();
                 }
             }
