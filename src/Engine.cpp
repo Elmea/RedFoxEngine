@@ -22,6 +22,7 @@ Engine::Engine(int width, int height) :
     m_graphics.InitGraphics(&m_memoryManager.m_memory.temp, m_platform.m_windowDimension);
     InitIMGUI();
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
+    m_editorCameraSpeed = 1;
 
     m_models = (Model *)m_memoryManager.PersistentAllocation(sizeof(Model) * 100);
     m_models[m_modelCount].obj = CreateCube(&m_memoryManager.m_memory.arena);
@@ -218,9 +219,9 @@ void Engine::UpdateEditorCamera()
         inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
         inputDirection.Normalize();
         inputDirection = inputDirection * 200.f;
-        m_editorCamera.position += m_editorCameraSpeed * dt32 + inputDirection * (dt32 * dt32 * 0.5f);
-        m_editorCameraSpeed += inputDirection * dt32 * 0.5f;
-        m_editorCameraSpeed *= exp(dt32 * -3.f); // Drag
+        m_editorCamera.position += m_editorCameraVelocity * dt32 + inputDirection * (dt32 * dt32 * 0.5f);
+        m_editorCameraVelocity += inputDirection * m_editorCameraSpeed * dt32 * 0.5f;
+        m_editorCameraVelocity *= exp(dt32 * -3.f); // Drag
     }
     m_editorCamera.m_parameters.aspect = m_platform.m_windowDimension.width / (f32)m_platform.m_windowDimension.height;
 }
@@ -249,27 +250,38 @@ void Engine::UpdateModelMatrices()
     }
 }
 
+void Engine::UpdateSkyDome()
+{
+    m_scene.skyDome.model.mat16[3] = m_editorCamera.position.x;
+    m_scene.skyDome.model.mat16[7] = m_editorCamera.position.y;
+    m_scene.skyDome.model.mat16[11] = m_editorCamera.position.z;
+    m_scene.skyDome.sunPosition.x = cosf(m_time.current / 500);
+    m_scene.skyDome.sunPosition.y = sinf(m_time.current / 500);
+}
+
 void Engine::Update()
 {
     ProcessInputs();
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
-
     UpdateEditorCamera();
-
+    UpdateSkyDome();
     UpdateLights(&m_graphics.lightStorage);
     m_physx.UpdatePhysics(m_time.delta, m_memoryManager, m_scene.isPaused);
     m_game.update(&m_scene, &m_physx, m_input, m_time.delta);
     UpdateModelMatrices();
     UpdateIMGUI();
-    m_scene.skyDome.sunPosition.x = cosf(m_time.current / 500);
-    m_scene.skyDome.sunPosition.y = sinf(m_time.current / 500);
+    
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 
 void Engine::Draw()
 {
     // Camera *currentCamera = &m_scene.m_gameCamera; //TODO game camera
-    Camera *currentCamera = &m_editorCamera; //TODO game camera
+    Camera *currentCamera;
+    if (m_scene.isPaused)
+        currentCamera = &m_editorCamera; //TODO game camera
+    else
+        currentCamera = &m_scene.m_gameCamera;
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
     m_graphics.Draw(m_scene.m_modelMatrices, m_modelCountIndex, m_platform.m_windowDimension, m_scene.skyDome, m_time.current);
     m_platform.SwapFramebuffers();
@@ -290,7 +302,9 @@ u32 Engine::LoadTextureFromFilePath(const char *filePath, bool resident, bool re
 void Engine::InitSkyDome()
 {
     m_scene.skyDome.sunPosition = { 0, 1, 0 };
-    m_scene.skyDome.model = RedFoxMaths::Mat4::GetScale({ 5000, 5000, 5000 });
+    float skyDrawDistance = m_editorCamera.m_parameters._far / 1.5;
+    m_scene.skyDome.model = RedFoxMaths::Mat4::GetScale({ skyDrawDistance,
+        skyDrawDistance, skyDrawDistance });
 
     m_scene.skyDome.topTint = LoadTextureFromFilePath("Textures/topSkyTint.png", false, true);
     m_scene.skyDome.botTint = LoadTextureFromFilePath("Textures/botSkyTint.png", false, false);

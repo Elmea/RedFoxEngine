@@ -4,6 +4,7 @@
 #include "Engine.hpp"
 
 using namespace RedFoxEngine;
+using namespace ImGui;
 
 #pragma region RedFox_Style_Color_Palette_Declaration
 #define RF_BLACK         ImVec4(0.00f, 0.00f, 0.00f, 1.00f)
@@ -23,13 +24,13 @@ void Engine::InitIMGUI()
 {
     IMGUI_CHECKVERSION();
 
-    ImGui::CreateContext();
-    m_gui.ImGuiIO = &ImGui::GetIO();
-    m_gui.ImGuiIO->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    m_gui.ImGuiIO->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    CreateContext();
+    m_gui.io = &GetIO();
+    m_gui.io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    m_gui.io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 #pragma region RedFox_Style_Definition
-    ImGuiStyle& style = ImGui::GetStyle();
+    ImGuiStyle& style = GetStyle();
     style.WindowPadding = ImVec2(4.f, 4.f);
     style.FramePadding = ImVec2(4.f, 2.f);
     style.CellPadding = ImVec2(4.f, 2.f);
@@ -95,7 +96,7 @@ void Engine::InitIMGUI()
     style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
     style.Colors[ImGuiCol_DragDropTarget] = RF_ORANGE;
     style.Colors[ImGuiCol_NavHighlight] = ImVec4(0.26f, 0.59f, 0.98f, 1.f);
-    m_gui.defaultFont = m_gui.ImGuiIO->Fonts->AddFontFromFileTTF("D-DIN.otf", 14);
+    m_gui.defaultFont = m_gui.io->Fonts->AddFontFromFileTTF("D-DIN.otf", 14);
 #pragma endregion
 
     ImGui_ImplWin32_Init(m_platform.m_window);
@@ -103,6 +104,17 @@ void Engine::InitIMGUI()
 
     m_gui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
     m_gui.gizmoMode = ImGuizmo::MODE::LOCAL;
+
+    m_gui.icons[0] = (void*)LoadTextureFromFilePath("Textures/new_scene.png", false, false);
+    m_gui.icons[1] = (void*)LoadTextureFromFilePath("Textures/save_scene.png", false, false);
+    m_gui.icons[2] = (void*)LoadTextureFromFilePath("Textures/pause.png", false, false);
+    m_gui.icons[3] = (void*)LoadTextureFromFilePath("Textures/resume.png", false, false);
+    m_gui.icons[4] = (void*)LoadTextureFromFilePath("Textures/translate.png", false, false);
+    m_gui.icons[5] = (void*)LoadTextureFromFilePath("Textures/rotate.png", false, false);
+    m_gui.icons[6] = (void*)LoadTextureFromFilePath("Textures/scale.png", false, false);
+    m_gui.icons[7] = (void*)LoadTextureFromFilePath("Textures/new_entity.png", false, false);
+    m_gui.icons[8] = (void*)LoadTextureFromFilePath("Textures/new_cube.png", false, false);
+    m_gui.icons[9] = (void*)LoadTextureFromFilePath("Textures/new_sphere.png", false, false);
 }
 
 void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight)
@@ -115,78 +127,84 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         | ImGuiWindowFlags_NoScrollbar
         | ImGuiWindowFlags_NoSavedSettings;
     
-    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y));
-    ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, titleBarHeight));
-    ImGui::SetNextWindowViewport(viewport->ID);
+    SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y));
+    SetNextWindowSize(ImVec2(viewport->Size.x, titleBarHeight));
+    SetNextWindowViewport(viewport->ID);
 
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.15f, 0.15, 0.15f, 1.f));
-    ImGui::Begin("Topbar", (bool*)0, window_flags | ImGuiWindowFlags_NoBringToFrontOnFocus);
-    ImGui::PopStyleColor();
+    PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.15f, 0.15, 0.15f, 1.f));
+    Begin("Topbar", (bool*)0, window_flags | ImGuiWindowFlags_NoBringToFrontOnFocus);
+    PopStyleColor();
 
     // TODO(a.perche): Project name here
-    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Project Name").x) / 2.f);
-    ImGui::Text("Project Name");
+    SetCursorPosX((GetWindowWidth() - CalcTextSize("Project Name").x) / 2.f);
+    Text("Project Name");
 
-    ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetWindowWidth() - buttonHeight - 5.f);
-    if (ImGui::Button("X", ImVec2(buttonHeight, titleBarHeight)))
+    SameLine();
+    SetCursorPosX(GetWindowWidth() - buttonHeight - 5.f);
+    if (Button("X", ImVec2(buttonHeight, titleBarHeight)))
         m_platform.m_running = 0;
 
-    ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetWindowWidth() - (buttonHeight * 2.f) - 10.f);
-    if (ImGui::Button("[__]", ImVec2(buttonHeight, titleBarHeight)))
+    SameLine();
+    SetCursorPosX(GetWindowWidth() - (buttonHeight * 2.f) - 10.f);
+    if (Button("[__]", ImVec2(buttonHeight, titleBarHeight)))
         m_platform.Maximize();
 
-    ImGui::End();  
+    End();  
     
-    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + titleBarHeight + 8.f));
-    ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, toolbarSize));
-    ImGui::SetNextWindowViewport(viewport->ID);
+    SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + titleBarHeight + 8.f));
+    SetNextWindowSize(ImVec2(viewport->Size.x, toolbarSize));
+    SetNextWindowViewport(viewport->ID);
 
-    ImGui::PushStyleColor(ImGuiCol_Border, (const ImVec4)RF_GRAY);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 4.f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.f);
-    ImGui::Begin("Toolbar", (bool*)0, window_flags); 
-    ImGui::PopStyleVar(2);
-    ImGui::PopStyleColor();
+    PushStyleColor(ImGuiCol_Border, (const ImVec4)RF_GRAY);
+    PushStyleVar(ImGuiStyleVar_WindowBorderSize, 4.f);
+    PushStyleVar(ImGuiStyleVar_WindowRounding, 4.f);
+    Begin("Toolbar", (bool*)0, window_flags); 
+    PopStyleVar(2);
+    PopStyleColor();
     
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
-
-    if (ImGui::Button("NEW SCENE", ImVec2(0, buttonHeight)))
+    PushStyleVar(ImGuiStyleVar_FrameRounding, 4.f);
+    
+    if (ImageButton("NEW SCENE", m_gui.icons[0], ImVec2(buttonHeight, buttonHeight)))
     {
         m_scene.gameObjectCount = 0;
         m_memoryManager.m_memory.arena.usedSize = m_memoryManager.m_sceneUsedMemory;
         m_scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
     }
 
-    ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
-    if (ImGui::Button("SAVE SCENE", ImVec2(0, buttonHeight)))
-        SaveScene(strcat((char*)m_scene.m_name.data, ".scene"), m_scene);
+    SameLine();
+    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
+    if (ImageButton("SAVE SCENE", m_gui.icons[1], ImVec2(buttonHeight, buttonHeight)))
+    {
+        strncat_s((char*)m_scene.m_name.data, 7, ".scene", m_scene.m_name.capacity);
+        SaveScene(m_scene.m_name.data, m_scene);
+    }
 
-    ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 32.f);
-    if (ImGui::Button(m_scene.isPaused ? "||" : ">", ImVec2(buttonHeight, buttonHeight)))
+    SameLine();
+    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
+    if (ImageButton("PAUSE", m_scene.isPaused ? m_gui.icons[3] : m_gui.icons[2], ImVec2(buttonHeight, buttonHeight)))
         m_scene.isPaused = !m_scene.isPaused;
 
-    ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 32.f);
-    if (ImGui::Button("TRANSLATE", ImVec2(0, buttonHeight)))
+    SameLine();
+    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
+    if (ImageButton("TRANSLATE", m_gui.icons[4], ImVec2(buttonHeight, buttonHeight), ImVec2(0,0), ImVec2(1,1),
+        m_gui.gizmoType == ImGuizmo::OPERATION::TRANSLATE ? RF_LIGHTGRAYBLUE : RF_DARKORANGE))
         m_gui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
 
-    ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
-    if (ImGui::Button("ROTATE", ImVec2(0, buttonHeight)))
+    SameLine();
+    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
+    if (ImageButton("ROTATE", m_gui.icons[5], ImVec2(buttonHeight, buttonHeight), ImVec2(0, 0), ImVec2(1, 1),
+        m_gui.gizmoType == ImGuizmo::OPERATION::ROTATE ? RF_LIGHTGRAYBLUE : RF_DARKORANGE))
         m_gui.gizmoType = ImGuizmo::OPERATION::ROTATE;
 
-    ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
-    if (ImGui::Button("SCALE", ImVec2(0, buttonHeight)))
+    SameLine();
+    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
+    if (ImageButton("SCALE", m_gui.icons[6], ImVec2(buttonHeight, buttonHeight), ImVec2(0, 0), ImVec2(1, 1),
+        m_gui.gizmoType == ImGuizmo::OPERATION::SCALE ? RF_LIGHTGRAYBLUE : RF_DARKORANGE))
         m_gui.gizmoType = ImGuizmo::OPERATION::SCALE;
     
-    ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 32.f);
-    if (ImGui::Button("ADD ENTITY", ImVec2(0, buttonHeight)))
+    SameLine();
+    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
+    if (ImageButton("ADD ENTITY", m_gui.icons[7], ImVec2(buttonHeight, buttonHeight)))
     {
         GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
         *newGameObject = { };
@@ -199,9 +217,9 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->modelIndex = -1;
     }
 
-    ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
-    if (ImGui::Button("ADD CUBE", ImVec2(0, buttonHeight)))
+    SameLine();
+    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
+    if (ImageButton("ADD CUBE", m_gui.icons[8], ImVec2(buttonHeight, buttonHeight)))
     {
         GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
         *newGameObject = { };
@@ -212,12 +230,11 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->orientation = { 1,0,0,0 };
         newGameObject->scale = { 1,1,1 };
         newGameObject->modelIndex = 0;
-        m_physx.CreateCubeCollider({}, 1, 0.5);
     }
 
-    ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().x + 10.f);
-    if (ImGui::Button("ADD SPHERE", ImVec2(0, buttonHeight)))
+    SameLine();
+    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
+    if (ImageButton("ADD SPHERE", m_gui.icons[9], ImVec2(buttonHeight, buttonHeight)))
     {
         GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
         *newGameObject = { };
@@ -228,29 +245,27 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->orientation = { 1,0,0,0 };
         newGameObject->scale = { 1,1,1 };
         newGameObject->modelIndex = 1;
-        newGameObject->radius = 1;
-        m_physx.CreateSphereCollider({}, newGameObject->radius);
     }
 
-    ImGui::PopStyleVar();
-    ImGui::End();
+    PopStyleVar();
+    End();
 }
 
 int Engine::DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class)
 {
     if (viewport == NULL)
-        viewport = ImGui::GetMainViewport();
+        viewport = GetMainViewport();
     
-    const ImGuiWindow* window = ImGui::GetCurrentWindow();
+    const ImGuiWindow* window = GetCurrentWindow();
     const float titleBarHeight = window->TitleBarHeight();
-    const float toolbarSize = 46.f;
+    const float toolbarSize = 44.f;
     const float totalHeight = titleBarHeight + toolbarSize;
-    const float buttonHeight = toolbarSize - 8.f;
+    const float buttonHeight = 32.f;
 
     
-    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + totalHeight + 8.f));
-    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, viewport->WorkSize.y - totalHeight - 8.f));
-    ImGui::SetNextWindowViewport(viewport->ID);
+    SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + totalHeight + 8.f));
+    SetNextWindowSize(ImVec2(viewport->WorkSize.x, viewport->WorkSize.y - totalHeight - 8.f));
+    SetNextWindowViewport(viewport->ID);
     
     ImGuiWindowFlags host_window_flags = 0;
     host_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | 
@@ -262,17 +277,17 @@ int Engine::DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dock
         host_window_flags |= ImGuiWindowFlags_NoBackground;
 
     char label[32];
-    ImFormatString(label, IM_ARRAYSIZE(label), "DockSpaceViewport_%08X", viewport->ID);
+    ImFormatString(label, 32, "DockSpaceViewport_%08X", viewport->ID);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-    ImGui::Begin(label, NULL, host_window_flags);
-    ImGui::PopStyleVar(3);
+    PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    Begin(label, NULL, host_window_flags);
+    PopStyleVar(3);
 
-    ImGuiID dockspace_id = ImGui::GetID("DockSpace");
-    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags, window_class);
-    ImGui::End();
+    ImGuiID dockspace_id = GetID("DockSpace");
+    DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags, window_class);
+    End();
 
     DrawTopBar(viewport, titleBarHeight, toolbarSize, totalHeight, buttonHeight);
 
@@ -292,16 +307,16 @@ void Engine::DrawSceneNodes(bool is_child, int index)
         flags |= ImGuiTreeNodeFlags_Selected;
     flags |= ImGuiTreeNodeFlags_SpanFullWidth;
 
-    bool nodeOpen = ImGui::TreeNodeEx((char*)m_scene.gameObjects[index].name.data, flags, "%s", (char*)m_scene.gameObjects[index].name.data);
-    if ((ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) || 
-        ImGui::IsItemFocused())
+    bool nodeOpen = TreeNodeEx((char*)m_scene.gameObjects[index].name.data, flags, "%s", (char*)m_scene.gameObjects[index].name.data);
+    if ((IsItemClicked() && !IsItemToggledOpen()) || 
+        IsItemFocused())
     {
         m_gui.selectedObject = index;
     }
 
     // TODO(a.perche): Double click to focus object or press F (lerp position)
     /*
-    if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered())
+    if (IsMouseDoubleClicked(ImGuiMouseButton_Left) && IsItemHovered())
     {
         m_editorCamera.position = m_selectedObject->position;
         const RedFoxMaths::Float3 up(0, 1, 0);
@@ -309,23 +324,23 @@ void Engine::DrawSceneNodes(bool is_child, int index)
     }
     */
 
-    if (ImGui::BeginDragDropSource())
+    if (BeginDragDropSource())
     {
-        ImGui::SetDragDropPayload("_SCENENODE", &index, sizeof(index));
-        ImGui::Text("Moving %s", m_scene.gameObjects[index].name.data);
-        ImGui::EndDragDropSource();
+        SetDragDropPayload("_SCENENODE", &index, sizeof(index));
+        Text("Moving %s", m_scene.gameObjects[index].name.data);
+        EndDragDropSource();
     }
 
-    if (ImGui::BeginDragDropTarget())
+    if (BeginDragDropTarget())
     {
-        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_SCENENODE"))
+        if (const ImGuiPayload* payload = AcceptDragDropPayload("_SCENENODE"))
         {
             if (payload->IsDelivery())
             {
                 int movedIndex = *(int*)payload->Data;
                 m_scene.gameObjects[movedIndex].parent = index;
             }
-            ImGui::EndDragDropTarget();
+            EndDragDropTarget();
         }
     }
 
@@ -337,13 +352,12 @@ void Engine::DrawSceneNodes(bool is_child, int index)
             for (int i = 0; i < childrenCount; i++)
                 DrawSceneNodes(true, children[i]);
         }
-        ImGui::TreePop();
+        TreePop();
     }
 }
 
 void Engine::UpdateIMGUI()
 {
-    static int nodeIndex = 1;
     int mousePickNodeIndexTmp = -1;
 
     ImGuiDockNodeFlags dockingFlags =
@@ -352,42 +366,108 @@ void Engine::UpdateIMGUI()
 
     ImGui_ImplWin32_NewFrame();
     ImGui_ImplOpenGL3_NewFrame();
-    ImGui::NewFrame();
+    NewFrame();
 
     ImGuizmo::SetOrthographic(false);
     ImGuizmo::BeginFrame();
     
     // TODO(a.perche) : Build dockspace at runtime
-    DrawDockSpace(ImGui::GetMainViewport(), dockingFlags, (const ImGuiWindowClass*)0);
+    DrawDockSpace(GetMainViewport(), dockingFlags, (const ImGuiWindowClass*)0);
 
-    ImGui::PushFont(m_gui.defaultFont);
+    PushFont(m_gui.defaultFont);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
-    if (ImGui::Begin("Editor", (bool*)0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
+    PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
+    if (Begin("Editor", (bool*)0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
     {
         WindowDimension &dimension = m_platform.m_windowDimension;
-        ImVec2 content = ImGui::GetContentRegionAvail();
-        ImVec2 windowPos = ImGui::GetWindowPos();
+        ImVec2 content = GetContentRegionAvail();
+        ImVec2 windowPos = GetWindowPos();
 
         if (content.x != 0 && content.y != 0)
         {
             if (content.x != dimension.width || content.y != dimension.height)
                 m_graphics.UpdateImGUIFrameBuffer(dimension, {(int)content.x, (int)content.y});
             void *framebuffer = (void*)((u64)m_graphics.m_imguiTexture);
-            ImGui::Image(framebuffer,
+            Image(framebuffer,
                 ImVec2(dimension.width, dimension.height), ImVec2(0, 1), ImVec2(1, 0));
         }
 
-        if (ImGui::IsItemHovered())
+        ImVec2 vPos = GetWindowPos();
+        ImVec2 vMin = GetWindowContentRegionMin() + vPos;
+        ImVec2 vMax = GetWindowContentRegionMax() + vPos;
+        ImVec2 mousePos = GetMousePos();
+        RedFoxMaths::Float2 mousePosEditor = {
+            mousePos.x * dimension.width / content.x - vMin.x,
+            mousePos.y * dimension.height / content.y - vMin.y
+        };
+        
+        if (m_time.delta)
         {
-            ImVec2 vPos = ImGui::GetWindowPos();
-            ImVec2 vMin = ImGui::GetWindowContentRegionMin() + vPos;
-            ImVec2 vMax = ImGui::GetWindowContentRegionMax() + vPos;
-            ImVec2 mousePos = ImGui::GetMousePos();
-            RedFoxMaths::Float2 mousePosEditor = {
-                mousePos.x * dimension.width / content.x - vMin.x,
-                mousePos.y * dimension.height / content.y - vMin.y
-            };
+            m_gui.fps[m_gui.currentFrame++] = (1.0f / m_time.delta);
+            if (m_gui.currentFrame >= (int)(1 / m_time.delta))
+            {
+                m_gui.currentFrame = 0;
+                for (int i = 0; i < (int)(1 / m_time.delta); i += 2)
+                    m_gui.averageFps = (m_gui.fps[i] + m_gui.averageFps) / 2.0f;
+            }
+        }
+        
+        SetCursorPos(ImVec2(vMax.x - vPos.x - 115, vMin.y - vPos.y));
+        PushStyleColor(ImGuiCol_WindowBg, RF_DARKGRAY);
+        BeginChild("Fps counter", ImVec2(vMax.x - vPos.x - 115, vMin.y - vPos.y));
+        PushStyleColor(ImGuiCol_Text, RF_ORANGE);
+        Text(" %.f FPS | %.2f ms", m_gui.averageFps, m_time.delta * 1000);
+        PopStyleColor();
+        EndChild();
+        PopStyleColor();
+        SetItemAllowOverlap();
+
+        SetCursorPos(GetWindowContentRegionMin());
+        if (ArrowButton("Editor settings button", ImGuiDir_Down))
+            m_gui.editorMenuOpen = !m_gui.editorMenuOpen;
+        if (m_gui.editorMenuOpen == true)
+        {
+            ImVec2 menuPos = vMin + ImVec2(0, 20);
+            ImVec2 menuSize = ImVec2(200, 175);
+            ImVec2 menuAbsSize = menuPos + menuSize;
+            SetNextWindowPos(menuPos);
+            BeginChild("Editor settings", menuSize);
+            if (IsMouseClicked(ImGuiMouseButton_Left) &&
+                !(mousePos.x + 1 > menuPos.x && mousePos.x < menuAbsSize.x &&
+                    mousePos.y > menuPos.y && mousePos.y < menuAbsSize.y))
+            {
+                m_gui.editorMenuOpen = false;
+            }
+            if (m_editorCameraEnabled)
+                m_gui.editorMenuOpen = false;
+            SeparatorText("Camera");
+            Text("Speed"); SameLine();
+            SetNextItemWidth(-FLT_MIN);
+            SliderFloat("CameraSpeed", &m_editorCameraSpeed, 1, 4);
+
+            SeparatorText("Grid");
+            Text("Translation snap"); SameLine();
+            SetNextItemWidth(-FLT_MIN);
+            DragInt("TSnap", &m_gui.translateSnap, 10, 1, 1000, "%d", ImGuiSliderFlags_AlwaysClamp);
+            Text("Rotation snap"); SameLine();
+            SetNextItemWidth(-FLT_MIN);
+            DragInt("RSnap", &m_gui.rotateSnap, 10, 1, 180, "%d", ImGuiSliderFlags_AlwaysClamp);
+            Text("Scale snap"); SameLine();
+            SetNextItemWidth(-FLT_MIN);
+            DragInt("SSnap", &m_gui.scaleSnap, 10, 1, 1000, "%d", ImGuiSliderFlags_AlwaysClamp);
+
+            SeparatorText("Editor UI");
+            Text("Drag speed"); SameLine();
+            SetNextItemWidth(-FLT_MIN);
+            DragFloat("Drag speed", &m_gui.dragSpeed, 10, 1, 1000, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+
+            EndChild();
+        }
+        SetItemAllowOverlap();
+
+        if (mousePosEditor.x > 0 && mousePosEditor.x < content.x &&
+            mousePosEditor.y > 0 && mousePosEditor.y < content.y)
+        {
             RedFoxMaths::Float3 ray_ndc = {
                 (2.0f * mousePosEditor.x) / content.x - 1.0f,
                 1.0f - (2.0f * mousePosEditor.y) / content.y,
@@ -399,13 +479,12 @@ void Engine::UpdateIMGUI()
             RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
             ray_world.Normalize(); 
 
-            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            if (IsMouseClicked(ImGuiMouseButton_Left))
             {
                 RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
                 physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
                 physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
                 physx::PxRaycastBuffer hitCalls;
-                m_physx.m_scene->flushQueryUpdates();
                 if (m_physx.m_scene->raycast(origin, unitDir, m_editorCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
                 {
                     physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
@@ -420,25 +499,23 @@ void Engine::UpdateIMGUI()
                     }
                 }
             }
-            
-            if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
+
+            if (m_input.mouseRClick)
             {
                 m_input.lockMouse = m_editorCameraEnabled = true;
             }
             else
             {
-                m_editorCameraSpeed = { 0.f, 0.f, 0.f };
+                m_editorCameraVelocity = { 0.f, 0.f, 0.f };
                 m_input.lockMouse = m_editorCameraEnabled = false;
             }
         }
-
-               
+      
         if (m_gui.selectedObject != 0)
         {
             ImGuizmo::SetDrawlist();
-            ImGui::GetCurrentWindow();
+            GetCurrentWindow();
             ImGuizmo::SetRect(windowPos.x, windowPos.y, content.x, content.y);
-
             RedFoxMaths::Mat4 cameraProjection = m_editorCamera.m_projection.GetTransposedMatrix();
             RedFoxMaths::Mat4 cameraView = m_editorCamera.GetViewMatrix().GetTransposedMatrix();
             RedFoxMaths::Mat4 transformMat = m_scene.GetWorldMatrix(m_gui.selectedObject).GetTransposedMatrix();
@@ -447,20 +524,39 @@ void Engine::UpdateIMGUI()
             float* cameraProjectionPtr = (float*)cameraProjection.AsPtr();
             float* transformMatPtr = (float*)transformMat.AsPtr();
             float* deltaMatPtr = (float*)deltaMat.AsPtr();
-            float snapValue = 0.5;
-            bool snap = m_input.LControl;
-            if (m_gui.gizmoType == ImGuizmo::OPERATION::ROTATE)
-                snapValue = 45.0f;
-            if (m_input.Q) // TODO: What are the unity or unreal buttons for this
-                m_gui.gizmoType = ImGuizmo::OPERATION::SCALE;
-            else if (m_input.W)
+            float snap3[3] = { 0, 0, 0 };
+            if (m_input.W)
                 m_gui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
             else if (m_input.R)
                 m_gui.gizmoType = ImGuizmo::OPERATION::ROTATE;
-            float snapValues[3] = { snapValue, snapValue, snapValue };
-                        
+            else if (m_input.E)
+                m_gui.gizmoType = ImGuizmo::OPERATION::SCALE;
+            
+            switch (m_gui.gizmoType)
+            {
+            case ImGuizmo::OPERATION::TRANSLATE:
+                snap3[0] = (float)m_gui.translateSnap;
+                snap3[1] = (float)m_gui.translateSnap;
+                snap3[2] = (float)m_gui.translateSnap;
+                break;
+            case ImGuizmo::OPERATION::ROTATE:
+                snap3[0] = (float)m_gui.rotateSnap;
+                snap3[1] = (float)m_gui.rotateSnap;
+                snap3[2] = (float)m_gui.rotateSnap;
+                break;
+            case ImGuizmo::OPERATION::SCALE:
+                snap3[0] = (float)m_gui.scaleSnap;
+                snap3[1] = (float)m_gui.scaleSnap;
+                snap3[2] = (float)m_gui.scaleSnap;
+                break;
+            default:
+                break;
+            }
+            
+            bool snapping = m_input.LControl;
             ImGuizmo::Manipulate(cameraViewPtr, cameraProjectionPtr,
-                m_gui.gizmoType, m_gui.gizmoMode, transformMatPtr, deltaMatPtr, snap ? &snapValues[0] : nullptr);
+                m_gui.gizmoType, m_gui.gizmoMode, transformMatPtr, deltaMatPtr, 
+                snapping ? snap3 : nullptr);
 
             if (ImGuizmo::IsUsing())
             {
@@ -484,26 +580,16 @@ void Engine::UpdateIMGUI()
             }
         }
 
-        if (ImGui::IsMouseDown(ImGuiMouseButton_Right) && ImGui::IsItemHovered())
-        {
-            m_input.lockMouse = m_editorCameraEnabled = true;
-        }
-        else
-        {
-            m_editorCameraSpeed = { 0.f, 0.f, 0.f };
-            m_input.lockMouse = m_editorCameraEnabled = false;
-        }
-
         if (m_input.Escape)
         {
             m_gui.selectedObject = 0;
         }
     }
-    ImGui::End();
-    ImGui::PopStyleVar();
+    End();
+    PopStyleVar();
 
-    ImGui::SameLine();
-    if (ImGui::Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
+    SameLine();
+    if (Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
         ImGuiTreeNodeFlags rootNodeFlags = 
             ImGuiTreeNodeFlags_Framed |
@@ -512,66 +598,53 @@ void Engine::UpdateIMGUI()
             ImGuiTreeNodeFlags_DefaultOpen |
             ImGuiTreeNodeFlags_SpanFullWidth;
 
-        static int scrollStrength = 1;
-        static int currentFrame = 0;
-        static float fps[255];
-        static float averageFps;
-        if (m_time.delta)
-            fps[currentFrame++] = (1.0f / m_time.delta);
-        if (currentFrame >= (int)(1 / m_time.delta))
+        if (TreeNodeEx("_TREENODE", rootNodeFlags, " %s", m_scene.m_name.data))
         {
-            currentFrame = 0;
-            for (int i = 0; i < (int)(1 / m_time.delta); i += 2)
-            {
-                averageFps = (fps[i] + averageFps) / 2.0f;
-            }
-        }
-        if (ImGui::TreeNodeEx("_TREENODE", rootNodeFlags, "%s (%.f fps)(%.4f ms)", m_scene.m_name.data, averageFps, m_time.delta * 1000))
-        {
-            static bool scrollButtonHovered = false;
-            if (ImGui::BeginPopupContextItem("RenameScenePopup"))
+            if (BeginPopupContextItem("RenameScenePopup"))
             {
                 if (m_input.Enter)
-                    ImGui::CloseCurrentPopup();
+                    CloseCurrentPopup();
 
-                ImGui::SameLine();
-                ImGui::InputText(" ", (char*)m_scene.m_name.data, m_scene.m_name.capacity);
-                ImGui::EndPopup();
-            }
-            
-            if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) && ImGui::IsItemHovered() && !scrollButtonHovered)
-            {
-                ImGui::OpenPopup("RenameScenePopup");
+                SameLine();
+                InputText(" ", (char*)m_scene.m_name.data, m_scene.m_name.capacity);
+                EndPopup();
             }
 
-            if (ImGui::BeginDragDropTarget())
+            if (IsMouseDoubleClicked(ImGuiMouseButton_Left) && IsItemHovered() && !m_gui.sceneGraphScrollButtonHovered)
             {
-                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_SCENENODE"))
+                OpenPopup("RenameScenePopup");
+            }
+
+            if (BeginDragDropTarget())
+            {
+                if (const ImGuiPayload* payload = AcceptDragDropPayload("_SCENENODE"))
                 {
                     if (payload->IsDelivery())
                     {
                         int* movedGameobject = (int*)payload->Data;
                         m_scene.gameObjects[*movedGameobject].parent = 0;
                     }
-                    ImGui::EndDragDropTarget();
-                }
-            }            
-            const int buttonWidth = 50;
-            if (buttonWidth < ImGui::GetContentRegionAvail().x)
-            {
-                char tempString[32] = {};
-                snprintf(tempString, 32, "%d", scrollStrength);
-                ImGui::SameLine(ImGui::GetContentRegionAvail().x - (f32)buttonWidth / 2);
-                if (ImGui::Button(tempString, ImVec2(buttonWidth, 0)))
-                {
-                    scrollStrength *= 10;
-                    if (scrollStrength > 1000)
-                        scrollStrength = 1;
+                    EndDragDropTarget();
                 }
             }
-            scrollButtonHovered = ImGui::IsItemHovered();
+            
+            float sceneGraphWidth = GetContentRegionAvail().x;
+            int buttonWidth = 50;
+            if (buttonWidth < sceneGraphWidth)
+            {
+                char tempString[32] = {};
+                snprintf(tempString, 32, "%d", m_gui.sceneGraphScrollStrength);
+                SameLine(sceneGraphWidth - (float)buttonWidth / 2);
+                if (Button(tempString, ImVec2(buttonWidth, 0)))
+                {
+                    m_gui.sceneGraphScrollStrength *= 10;
+                    if (m_gui.sceneGraphScrollStrength > 1000)
+                        m_gui.sceneGraphScrollStrength = 1;
+                }
+            }
+            m_gui.sceneGraphScrollButtonHovered = IsItemHovered();
         }
-        ImGui::TreePop();
+        TreePop();
 
         if (m_scene.gameObjectCount > 0)
         {
@@ -580,50 +653,50 @@ void Engine::UpdateIMGUI()
                 ImGuiWindowFlags_AlwaysVerticalScrollbar |
                 ImGuiWindowFlags_NoMove;
 
-            ImGui::BeginChild("SceneGraphNodes", ImVec2(0, 0), true, sceneGraphFlags);
-            if (nodeIndex < 1)
-                nodeIndex = 1;
-            else if (nodeIndex > (int)m_scene.gameObjectCount - 1)
-                nodeIndex = m_scene.gameObjectCount - 1;
+            BeginChild("SceneGraphNodes", ImVec2(0, 0), true, sceneGraphFlags);
+            if (m_gui.nodeIndex < 1)
+                m_gui.nodeIndex = 1;
+            else if (m_gui.nodeIndex > (int)m_scene.gameObjectCount - 1)
+                m_gui.nodeIndex = m_scene.gameObjectCount - 1;
 
-            int maxItems = (int)ImGui::GetMainViewport()->Size.y / 16;
-            for (int i = 0; i + nodeIndex < (int)m_scene.gameObjectCount && i < maxItems; i++)
+            int maxItems = (int)GetMainViewport()->Size.y / 16;
+            for (int i = 0; i + m_gui.nodeIndex < (int)m_scene.gameObjectCount && i < maxItems; i++)
             {
                 if (mousePickNodeIndexTmp != -1)
                 {
-                    nodeIndex = mousePickNodeIndexTmp;
-                    ImGui::SetScrollY(mousePickNodeIndexTmp - nodeIndex);
+                    m_gui.nodeIndex = mousePickNodeIndexTmp;
+                    SetScrollY(mousePickNodeIndexTmp - m_gui.nodeIndex);
                     mousePickNodeIndexTmp = -1;
                 }
 
-                if (i == 0 && nodeIndex > 1 && ImGui::GetScrollY() == 0)
+                if (i == 0 && m_gui.nodeIndex > 1 && GetScrollY() == 0)
                 {
-                    ImGui::SetScrollY(1);
-                    nodeIndex -= scrollStrength;
+                    SetScrollY(1);
+                    m_gui.nodeIndex -= m_gui.sceneGraphScrollStrength;
                 }
 
-                float scrollMax = ImGui::GetScrollMaxY();
-                if (i == maxItems - 1 && nodeIndex + i < (int)m_scene.gameObjectCount - 1 &&
-                    scrollMax == ImGui::GetScrollY() && scrollMax != 0)
+                float scrollMax = GetScrollMaxY();
+                if (i == maxItems - 1 && m_gui.nodeIndex + i < (int)m_scene.gameObjectCount - 1 &&
+                    scrollMax == GetScrollY() && scrollMax != 0)
                 {
-                    ImGui::SetScrollY(scrollMax - 1);
-                    nodeIndex += scrollStrength;
+                    SetScrollY(scrollMax - 1);
+                    m_gui.nodeIndex += m_gui.sceneGraphScrollStrength;
                 }
 
-                if (nodeIndex + i < 1)
-                    nodeIndex = 1;
-                else if (nodeIndex + i > (int)m_scene.gameObjectCount - 1)
-                    nodeIndex = m_scene.gameObjectCount - i - 1;
+                if (m_gui.nodeIndex + i < 1)
+                    m_gui.nodeIndex = 1;
+                else if (m_gui.nodeIndex + i > (int)m_scene.gameObjectCount - 1)
+                    m_gui.nodeIndex = m_scene.gameObjectCount - i - 1;
 
-                if (m_scene.gameObjects[i + nodeIndex].parent == 0)
-                    DrawSceneNodes(false, i + nodeIndex);
+                if (m_scene.gameObjects[i + m_gui.nodeIndex].parent == 0)
+                    DrawSceneNodes(false, i + m_gui.nodeIndex);
             }
-            ImGui::EndChild();
+            EndChild();
         }
     }
-    ImGui::End();
+    End();
 
-    if (ImGui::Begin("Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
+    if (Begin("Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
         ImGuiTreeNodeFlags propertiesFlags =
             ImGuiTreeNodeFlags_DefaultOpen |
@@ -638,7 +711,7 @@ void Engine::UpdateIMGUI()
 
         if (m_gui.selectedObject != 0)
         {
-            if (ImGui::CollapsingHeader("Transform", propertiesFlags))
+            if (CollapsingHeader("Transform", propertiesFlags))
             {
                 //TODO(a.perche) : Drag speed according to user param.
                 ImGuiTableFlags tableFlags =
@@ -647,49 +720,70 @@ void Engine::UpdateIMGUI()
                     ImGuiTableFlags_Resizable |
                     ImGuiTableFlags_BordersOuter;
 
-                if (ImGui::BeginTable("TransformTable", 2, tableFlags))
+                if (BeginTable("TransformTable", 2, tableFlags))
                 {
-                    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-                    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
-                    ImGui::Text("Position");
-                    ImGui::TableSetColumnIndex(1);
-                    ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::DragFloat3("TransformPosition", &m_scene.gameObjects[m_gui.selectedObject].position.x, 1.f, -32767.f, 32767.f);
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
-                    ImGui::Text("Rotation");
-                    ImGui::TableSetColumnIndex(1);
-                    ImGui::SetNextItemWidth(-FLT_MIN);
+                    TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                    TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+                    TableNextRow();
+                    TableSetColumnIndex(0);
+                    Text("Position");
+                    TableSetColumnIndex(1);
+                    SetNextItemWidth(-FLT_MIN);
+                    DragFloat3("TransformPosition", &m_scene.gameObjects[m_gui.selectedObject].position.x, m_gui.dragSpeed, - 32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    TableNextRow();
+                    TableSetColumnIndex(0);
+                    Text("Rotation");
+                    TableSetColumnIndex(1);
+                    SetNextItemWidth(-FLT_MIN);
 
                     static RedFoxMaths::Float3 rotation;
-                    if (ImGui::DragFloat3("TransformRotation", &rotation.x, 1.f, -360.f, 360.f))
+                    if (DragFloat3("TransformRotation", &rotation.x, m_gui.dragSpeed, -360.f, 360.f, "%.3f", ImGuiSliderFlags_AlwaysClamp))
                     {
+                        /*
                         rotation.x = RedFoxMaths::Misc::Clamp(rotation.x, -360, 360);
                         rotation.y = RedFoxMaths::Misc::Clamp(rotation.y, -360, 360);
                         rotation.z = RedFoxMaths::Misc::Clamp(rotation.z, -360, 360);
+                        */
                         rotation *= DEG2RAD;
-                        {
-                            using namespace RedFoxMaths;
-                            m_scene.gameObjects[m_gui.selectedObject].orientation =
-                                Quaternion::SLerp(m_scene.gameObjects[m_gui.selectedObject].orientation,
-                                    Quaternion::FromEuler(rotation), 0.5);
-                        }
+                        m_scene.gameObjects[m_gui.selectedObject].orientation =
+                            RedFoxMaths::Quaternion::SLerp(m_scene.gameObjects[m_gui.selectedObject].orientation,
+                                RedFoxMaths::Quaternion::FromEuler(rotation), 0.5);
                         m_scene.gameObjects[m_gui.selectedObject].orientation.Normalize();
                         rotation *= RAD2DEG;
                     }
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
-                    ImGui::Text("Scale");
-                    ImGui::TableSetColumnIndex(1);
-                    ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::DragFloat3("TransformScale", &m_scene.gameObjects[m_gui.selectedObject].scale.x, 1.f, 0.00001f, 32767.f);
-                    ImGui::EndTable();
+
+                    TableNextRow();
+                    TableSetColumnIndex(0);
+                    Text("Scale");
+                    TableSetColumnIndex(1);
+                    SetNextItemWidth(-FLT_MIN);
+                    DragFloat3("TransformScale", &m_scene.gameObjects[m_gui.selectedObject].scale.x, m_gui.dragSpeed, 0.00001f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    EndTable();
+                }
+            }
+            if (CollapsingHeader("Render", propertiesFlags))
+            {
+                SeparatorText("Model");
+
+                SeparatorText("Material");
+                if (BeginTable("MaterialTable", 2, tableFlags))
+                {
+                    TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                    TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+                    TableNextRow();
+                    int modelId = m_scene.gameObjects[m_gui.selectedObject].modelIndex;
+                    TableSetColumnIndex(0);
+                    Text("Color");
+                    TableSetColumnIndex(1);
+                    SetNextItemWidth(-FLT_MIN);
+                    ColorPicker3("MaterialColor",
+                        &m_models[modelId].obj.materials.material->diffuse.x,
+                        ImGuiColorEditFlags_PickerHueWheel);
+                    EndTable();
                 }
             }
         }
-        ImGui::End();
-        ImGui::PopFont();
+        End();
+        PopFont();
     }
 }

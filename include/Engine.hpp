@@ -28,11 +28,23 @@ namespace RedFoxEngine
 struct ImGUI
 {
     //Editor ui
+    bool editorMenuOpen = false;
+    bool sceneGraphScrollButtonHovered = false;
     int selectedObject;
-    ImGuiIO* ImGuiIO;
-    ImFont* defaultFont;
+    int nodeIndex = 1;
+    int sceneGraphScrollStrength = 1;
+    int currentFrame = 0;
+    int translateSnap = 1;
+    int rotateSnap = 45;
+    int scaleSnap = 1;
+    ImTextureID icons[10];
+    float averageFps;
+    float dragSpeed = 1.f;
+    float fps[255];
     ImGuizmo::OPERATION gizmoType;
     ImGuizmo::MODE gizmoMode;
+    ImGuiIO* io;
+    ImFont* defaultFont;
 };
 
 class Engine
@@ -56,8 +68,9 @@ private:
     Graphics m_graphics = {};
 
     TimeManager m_time = {};
-    RedFoxMaths::Float3 m_editorCameraSpeed;
-    bool m_editorCameraEnabled;
+    float m_editorCameraSpeed;
+    RedFoxMaths::Float3 m_editorCameraVelocity;
+    bool m_editorCameraEnabled = false;
     
     ImGUI m_gui = {};
     Physx m_physx {};
@@ -66,6 +79,7 @@ public:
     bool isGame = false;
 private:    
     void InitSkyDome();
+    void UpdateSkyDome();
     void DrawIMGUI();
     void DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight);
     int  DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
