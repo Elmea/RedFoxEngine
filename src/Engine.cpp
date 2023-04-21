@@ -60,7 +60,7 @@ Engine::Engine(int width, int height) :
 
     //TODO transition to an instance based model 'model'
     for (int i = 0; i < (int)m_modelCount; i++)
-        m_graphics.InitModel(&m_models[i]);
+        m_graphics.InitModel(&m_models[i], &m_memoryManager);
     InitSkyDome();
     m_memoryManager.m_sceneUsedMemory = m_memoryManager.m_memory.arena.usedSize;
 #if 0
@@ -283,7 +283,7 @@ void Engine::Draw()
     else
         currentCamera = &m_scene.m_gameCamera;
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
-    m_graphics.Draw(m_scene.m_modelMatrices, m_modelCountIndex, m_platform.m_windowDimension, m_scene.skyDome, m_time.current);
+    m_graphics.Draw(m_scene.m_modelMatrices, m_modelCountIndex, m_platform.m_windowDimension, m_scene.skyDome, m_time.current, &m_memoryManager);
     m_platform.SwapFramebuffers();
     m_time.delta = (Platform::GetTimer() - m_time.current);
     m_memoryManager.m_memory.temp.usedSize = 0;

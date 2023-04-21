@@ -10,6 +10,7 @@
 #include "ObjParser.hpp"
 #include "imgui.h"
 #include "Light.hpp"
+#include "ResourceManager.hpp"
 
 namespace RedFoxEngine
 {
@@ -42,21 +43,6 @@ struct Textures
     u32 textureCount; 
 };
 
-struct Material
-{
-    vec3 ambient;
-    float Opaqueness;
-
-    vec3 diffuse;
-    float Shininess;
-
-    vec3 specular;
-    int diffuseMap;
-
-    vec3 emissive;
-    int normalMap;
-};
-
 struct Shader
 {
     GLuint vertex, fragment, pipeline;
@@ -86,7 +72,7 @@ public:
     u32    m_modelCount;
     LightStorage lightStorage;
     
-    void InitModel(Model *model);
+    void InitModel(Model *model, RedFoxEngine::ResourcesManager *m);
     void InitLights();
     void InitModelTextures(ObjModel *model);
     u32 InitTexture(void *data, int width, int height, bool resident, bool repeat);
@@ -99,12 +85,12 @@ public:
     void FillLightBuffer(LightInfo* lights, LightType type);
     void UpdateImGUIFrameBuffer(WindowDimension& dimension, WindowDimension content);
     void UpdateModelMatrices(GameObject* objects, int gameObjectCount, Memory* temp);
-    void Draw(RedFoxMaths::Mat4 *p_modelMatrices, u64 *p_modelCountIndex, WindowDimension p_windowDimension, SkyDome p_skyDome, float p_deltaTime);
+    void Draw(RedFoxMaths::Mat4 *p_modelMatrices, u64 *p_modelCountIndex, WindowDimension p_windowDimension, SkyDome p_skyDome, float p_deltaTime, RedFoxEngine::ResourcesManager *m);
     void DrawShadowMaps(RedFoxMaths::Mat4 *modelMatrices, u64 *modelCountIndex);
     void DrawSkyDome(SkyDome skyDome, float dt);
-    void DrawGameObjects(RedFoxMaths::Mat4 *modelMatrices, u64 *modelCountIndex);
-    void DrawModelInstances(Model *model, RedFoxMaths::Mat4 *modelMatrices,
-        int instanceCount);
+    void DrawGameObjects(RedFoxMaths::Mat4* modelMatrices, u64* modelCountIndex, RedFoxEngine::ResourcesManager *m);
+    void DrawModelInstances(Model* model,
+        RedFoxMaths::Mat4* modelMatrices, int instanceCount, RedFoxEngine::ResourcesManager *m);
     void DrawModelShadowInstances(Model* model, int instanceCount);
 };
 } // namespace RedFoxEngine

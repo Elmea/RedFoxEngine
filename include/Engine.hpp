@@ -14,13 +14,13 @@
 #include "imgui_impl_win32.h"
 #include <ImGuizmo.h>
 
-#include "ResourceManager.hpp"
 #include "Scene.hpp"
 #include "Physics.hpp"
 #include "ObjParser.hpp"
 #include "OpenGLGraphics.hpp"
 #include "GameObject.hpp"
 #include "Camera.hpp"
+#include "ResourceManager.hpp"
 
 namespace RedFoxEngine
 {
