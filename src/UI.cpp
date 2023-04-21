@@ -411,7 +411,7 @@ void Engine::UpdateIMGUI()
         
         SetCursorPos(ImVec2(vMax.x - vPos.x - 115, vMin.y - vPos.y));
         PushStyleColor(ImGuiCol_WindowBg, RF_DARKGRAY);
-        BeginChild("Fps counter", ImVec2(vMax.x - vPos.x - 115, vMin.y - vPos.y));
+        BeginChild("Fps counter", ImVec2(115, vMin.y - vPos.y));
         PushStyleColor(ImGuiCol_Text, RF_ORANGE);
         Text(" %.f FPS | %.2f ms", m_gui.averageFps, m_time.delta * 1000);
         PopStyleColor();
