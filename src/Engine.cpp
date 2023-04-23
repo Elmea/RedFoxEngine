@@ -11,6 +11,8 @@
 #define REDFOXMATHS_IMPLEMENTATION
 #include "RedfoxMaths.hpp"
 
+#include <timeapi.h>
+
 using namespace RedFoxEngine;
 using namespace RedFoxMaths;
 
@@ -274,11 +276,9 @@ void Engine::Update()
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 
-#include <timeapi.h>
-
 void Engine::Draw()
 {
-    if (m_time.delta < 0.03)
+    if (m_time.delta < 0.03f)
     {
         timeBeginPeriod(1);
         Sleep(3);

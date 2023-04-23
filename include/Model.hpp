@@ -18,7 +18,6 @@ namespace RedFoxEngine
     };
     struct Model
     {
-        // u32 vao;
         u32 vertexOffset;
         u32 indexOffset;
         u32 indexCount;

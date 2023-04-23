@@ -162,7 +162,7 @@ vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 Co
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(viewDir, halfwayDir), 0.0), mat.material[fs_in.materialID].Shininess);
     float distance    = length(light.position - fragPos);
-    float attenuation = 1.0; // / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
     float theta       = dot(lightDir, normalize(-light.direction)); 
     float epsilon     = light.cutOff - light.outerCutOff;
     float intensity   = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
