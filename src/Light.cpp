@@ -12,8 +12,7 @@ Light::Light(LightType lightType, int _index)
 {
     lightInfo.shadowParameters.index = _index;
     type = lightType;
-    glCreateFramebuffers(1, &lightInfo.shadowParameters.depthMap);
-    lightInfo.shadowParameters.depthMapFBO = lightInfo.shadowParameters.depthMap;
+    glCreateFramebuffers(1, &depthMapFBO);
 
     if (type != LightType::POINT)
     {
@@ -47,7 +46,7 @@ Light::Light(LightType lightType, int _index)
         glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, lightInfo.shadowParameters.depthMapFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, lightInfo.shadowParameters.depthMap, 0);
 
     u64 handle = glGetTextureHandleARB(lightInfo.shadowParameters.depthMap);
@@ -217,26 +216,17 @@ void Graphics::BindLights()
 {
     GLuint bindingPoint = 0;
     if (lightStorage.pointLightCount)
-    {
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingPoint, lightStorage.pointLightSSBO, 0, lightStorage.pointLightCount);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, lightStorage.pointLightSSBO);
-    }
+        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingPoint, lightStorage.pointLightSSBO, 0, lightStorage.pointLightCount * sizeof(LightInfo));
     else
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, 0);
     GLuint bindingDir = 1;
     if (lightStorage.dirLightCount)
-    {
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingDir, lightStorage.dirLightSSBO, 0, lightStorage.dirLightCount);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingDir, lightStorage.dirLightSSBO);
-    }
+        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingDir, lightStorage.dirLightSSBO, 0, (lightStorage.dirLightCount) * sizeof(LightInfo));
     else
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingDir, 0);
     GLuint bindingSpot = 2;
     if (lightStorage.spotLightCount)
-    {
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingSpot, lightStorage.spotLightSSBO, 0, lightStorage.spotLightCount);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingSpot, lightStorage.spotLightSSBO);
-    }
+        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingSpot, lightStorage.spotLightSSBO, 0, lightStorage.spotLightCount * sizeof(LightInfo));
     else  
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingSpot, 0);
 }

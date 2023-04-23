@@ -62,6 +62,12 @@ private:
 
     GLuint m_imguiFramebuffer;
 
+    u32    m_indexCount = 0;
+    u32    m_vertexCount = 0;
+    u32    m_vertexBufferObject;
+    u32    m_vertexArrayObject;
+    u32    m_ebo;
+
     u32    m_materialSSBO;
     u32    m_matrixSSBO;
     u32    m_textureSSBO;
@@ -85,12 +91,12 @@ public:
     void FillLightBuffer(LightInfo* lights, LightType type);
     void UpdateImGUIFrameBuffer(WindowDimension& dimension, WindowDimension content);
     void UpdateModelMatrices(GameObject* objects, int gameObjectCount, Memory* temp);
-    void Draw(RedFoxMaths::Mat4 *p_modelMatrices, u64 *p_modelCountIndex, WindowDimension p_windowDimension, SkyDome p_skyDome, float p_deltaTime, RedFoxEngine::ResourcesManager *m);
-    void DrawShadowMaps(RedFoxMaths::Mat4 *modelMatrices, u64 *modelCountIndex);
+    void Draw(RedFoxMaths::Mat4 *p_modelMatrices, u64 *p_modelCountIndex, int totalCount, WindowDimension p_windowDimension, SkyDome p_skyDome, float time, float p_deltaTime, RedFoxEngine::ResourcesManager *m);
+    void DrawShadowMaps(u64* modelCountIndex);
     void DrawSkyDome(SkyDome skyDome, float dt);
-    void DrawGameObjects(RedFoxMaths::Mat4* modelMatrices, u64* modelCountIndex, RedFoxEngine::ResourcesManager *m);
+    void DrawGameObjects(u64* modelCountIndex, ResourcesManager *m);
     void DrawModelInstances(Model* model,
-        RedFoxMaths::Mat4* modelMatrices, int instanceCount, RedFoxEngine::ResourcesManager *m);
+        RedFoxMaths::Mat4* modelMatrices, int instanceCount);
     void DrawModelShadowInstances(Model* model, int instanceCount);
 };
 } // namespace RedFoxEngine

@@ -52,6 +52,7 @@ namespace RedFoxEngine
         ResourcesManager();
         void *PersistentAllocation(u64 size);
         void *TemporaryAllocation(u64 size);
+        
         int AddMaterial(Material newMtl)
         {
             u64 hashSlot = MeowU64From(MeowHash(MeowDefaultSeed, sizeof(Material), &newMtl), 0);

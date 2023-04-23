@@ -105,16 +105,16 @@ void Engine::InitIMGUI()
     m_gui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
     m_gui.gizmoMode = ImGuizmo::MODE::LOCAL;
 
-    m_gui.icons[0] = (void*)LoadTextureFromFilePath("Textures/new_scene.png", false, false);
-    m_gui.icons[1] = (void*)LoadTextureFromFilePath("Textures/save_scene.png", false, false);
-    m_gui.icons[2] = (void*)LoadTextureFromFilePath("Textures/pause.png", false, false);
-    m_gui.icons[3] = (void*)LoadTextureFromFilePath("Textures/resume.png", false, false);
-    m_gui.icons[4] = (void*)LoadTextureFromFilePath("Textures/translate.png", false, false);
-    m_gui.icons[5] = (void*)LoadTextureFromFilePath("Textures/rotate.png", false, false);
-    m_gui.icons[6] = (void*)LoadTextureFromFilePath("Textures/scale.png", false, false);
-    m_gui.icons[7] = (void*)LoadTextureFromFilePath("Textures/new_entity.png", false, false);
-    m_gui.icons[8] = (void*)LoadTextureFromFilePath("Textures/new_cube.png", false, false);
-    m_gui.icons[9] = (void*)LoadTextureFromFilePath("Textures/new_sphere.png", false, false);
+    m_gui.icons[0] = (void*)(u64)LoadTextureFromFilePath("Textures/new_scene.png", false, false);
+    m_gui.icons[1] = (void*)(u64)LoadTextureFromFilePath("Textures/save_scene.png", false, false);
+    m_gui.icons[2] = (void*)(u64)LoadTextureFromFilePath("Textures/pause.png", false, false);
+    m_gui.icons[3] = (void*)(u64)LoadTextureFromFilePath("Textures/resume.png", false, false);
+    m_gui.icons[4] = (void*)(u64)LoadTextureFromFilePath("Textures/translate.png", false, false);
+    m_gui.icons[5] = (void*)(u64)LoadTextureFromFilePath("Textures/rotate.png", false, false);
+    m_gui.icons[6] = (void*)(u64)LoadTextureFromFilePath("Textures/scale.png", false, false);
+    m_gui.icons[7] = (void*)(u64)LoadTextureFromFilePath("Textures/new_entity.png", false, false);
+    m_gui.icons[8] = (void*)(u64)LoadTextureFromFilePath("Textures/new_cube.png", false, false);
+    m_gui.icons[9] = (void*)(u64)LoadTextureFromFilePath("Textures/new_sphere.png", false, false);
 }
 
 void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight)
@@ -416,7 +416,9 @@ void Engine::UpdateIMGUI()
         PushStyleColor(ImGuiCol_WindowBg, RF_DARKGRAY);
         BeginChild("Fps counter", ImVec2(vMax.x - vPos.x - 115, vMin.y - vPos.y));
         PushStyleColor(ImGuiCol_Text, RF_ORANGE);
-        Text(" %.f FPS | %.2f ms", m_gui.averageFps, m_time.delta * 1000);
+        m_gui.averageFps = RedFoxMaths::Misc::Clamp(m_gui.averageFps, 0, 1000);
+        float deltaTime = RedFoxMaths::Misc::Clamp(m_time.delta, 0, 1);
+        Text(" %.f FPS | %.2f ms", m_gui.averageFps, deltaTime * 1000);
         PopStyleColor();
         EndChild();
         PopStyleColor();

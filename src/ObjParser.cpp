@@ -1045,6 +1045,7 @@ ObjModel CreateCube(Memory *memory)
 
     for (int i = 0; i < (int)tmp->indexCount; i++)
         result.indices[i] = triangleIndices[i];
+    result.materials = {};
     result.materials.count = 1;
     result.materials.material = (ObjMaterial *)MyMalloc(memory, sizeof(ObjMaterial));
     result.materials.material->ambient = {1, 1, 1};
@@ -1119,6 +1120,7 @@ ObjModel CreateSphere(int latitudeCount, int longitudeCount, ArenaAllocator *mem
         result.indices[i++] = v + longitudeCount + 1;
         result.indices[i++] = v + 1;
     }
+    result.materials = {};
     result.materials.count = 1;
     result.materials.material = (ObjMaterial *)MyMalloc(memory, sizeof(ObjMaterial));
     result.materials.material->ambient = {1, 1, 1};

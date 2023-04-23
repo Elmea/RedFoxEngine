@@ -10,6 +10,7 @@ namespace RedFoxEngine
         MyString name;
         int parent;
         int modelIndex;
+        int materialIndex;
   
         RedFoxMaths::Float3 position;
         RedFoxMaths::Float3 scale;
