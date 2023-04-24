@@ -12,6 +12,8 @@
 #include "Light.hpp"
 #include "ResourceManager.hpp"
 
+#include "imstb_truetype.h"
+
 namespace RedFoxEngine
 {
 
@@ -59,6 +61,7 @@ private:
     Shader m_blinnPhong;
     Shader m_shadow;
     Shader m_sky;
+    Shader m_fontPipeline;
 
     GLuint m_imguiFramebuffer;
 
@@ -72,6 +75,12 @@ private:
     u32    m_matrixSSBO;
     u32    m_textureSSBO;
     u32    m_shadowMapsSSBO;
+
+    stbtt_bakedchar cdata[96];
+    GLuint m_quadVAO;
+    GLuint m_quadVBO;
+    GLuint m_gFontTexture;
+
 public:
     GLuint m_imguiTexture;
     Model* m_models = nullptr;
@@ -86,6 +95,7 @@ public:
     void InitShaders(Memory *tempArena);
     void InitGraphics(Memory *tempArena, WindowDimension dimension);
     void InitImGUIFramebuffer(WindowDimension dimension);
+    void InitFont(Memory* temp);
     void BindLights();
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
     void FillLightBuffer(LightInfo* lights, LightType type);
@@ -98,8 +108,9 @@ public:
     void DrawModelInstances(Model* model,
         RedFoxMaths::Mat4* modelMatrices, int instanceCount);
     void DrawModelShadowInstances(Model* model, int instanceCount);
+    void RenderText(char* text, float x, float y, float scale);
 };
-} // namespace RedFoxEngine
+}
 
 extern PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
 extern PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;

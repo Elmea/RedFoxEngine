@@ -61,4 +61,11 @@ void RedFoxEngine::Graphics::InitShaders(Memory *tempArena)
     CompileShader(vertexShaderSource.data, fragmentShaderSource.data,
         m_sky);
     tempArena->usedSize = tempSize;
+    vertexShaderSource = OpenAndReadEntireFile(
+        "Shaders\\font.vert", tempArena);
+    fragmentShaderSource = OpenAndReadEntireFile(
+        "Shaders\\font.frag", tempArena);
+    CompileShader(vertexShaderSource.data, fragmentShaderSource.data,
+        m_fontPipeline);
+    tempArena->usedSize = tempSize;
 }

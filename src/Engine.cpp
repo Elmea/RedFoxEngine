@@ -50,47 +50,13 @@ Engine::Engine(int width, int height) :
     for (int i = 1; i < (int)m_scene.gameUICount; i++)
         m_scene.gameUIs[i].parent = 0;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(
-                                                sizeof(GameObject) * 100000);
+    m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);
     m_scene.gameObjects[0] = {};
     m_scene.gameObjects[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
     m_scene.gameObjects[0].name.capacity = 255;
-    m_scene.gameObjects[0].position =
-    {
-        0, -11, 0
-    };
-    m_scene.gameObjects[0].orientation =
-    {
-        1, 0, 0, 0
-    };
-    m_scene.gameObjects[0].scale =
-    {
-        10000, 2, 10000
-    };
+    m_scene.gameObjects[0].position = { 0, -11, 0 };
+    m_scene.gameObjects[0].orientation = { 1, 0, 0, 0 };
+    m_scene.gameObjects[0].scale = { 10000, 2, 10000 };
     m_graphics.lightStorage.lights = (Light*)m_memoryManager.PersistentAllocation(sizeof(Light) * 1000);
     m_graphics.lightStorage.shadowMaps = (unsigned int*)m_memoryManager.PersistentAllocation(sizeof(unsigned int) * 1000);
     m_scene.gameObjectCount++;
@@ -319,14 +285,18 @@ void Engine::Draw()
         Sleep(3);
         timeEndPeriod(1);
     }
-    // Camera *currentCamera = &m_scene.m_gameCamera; //TODO game camera
     Camera *currentCamera;
     if (m_scene.isPaused)
-        currentCamera = &m_editorCamera; //TODO game camera
+        currentCamera = &m_editorCamera;
     else
         currentCamera = &m_scene.m_gameCamera;
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
     m_graphics.Draw(m_scene.m_modelMatrices, m_modelCountIndex, m_scene.gameObjectCount, m_platform.m_windowDimension, m_scene.skyDome, m_time.current, m_time.delta, &m_memoryManager);
+
+    for (int i = 1; i < m_scene.gameUICount; i++)
+        if (m_scene.gameUIs[i].text.data != "")
+            m_graphics.RenderText((char*)&m_scene.gameUIs[i].text.data, m_scene.gameUIs[i].screenPosition.x, -m_scene.gameUIs[i].screenPosition.y, 20);
+
     m_platform.SwapFramebuffers();
     m_time.delta = (Platform::GetTimer() - m_time.current);
     m_memoryManager.m_memory.temp.usedSize = 0;

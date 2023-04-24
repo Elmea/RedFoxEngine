@@ -5,6 +5,9 @@
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
 
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "imstb_truetype.h"
+
 namespace RedFoxEngine
 {
 
@@ -18,6 +21,8 @@ namespace RedFoxEngine
             glEnable(GL_DEPTH_TEST);
             glEnable(GL_CULL_FACE);
         }
+
+        InitFont(tempArena);
 
         InitImGUIFramebuffer(dimension);
         {
@@ -360,4 +365,61 @@ namespace RedFoxEngine
             0, instanceCount);
     }
 
-} // namespace RedFoxEngine
+    void Graphics::InitFont(Memory* temp)
+    {
+        unsigned char* temp_bitmap = (unsigned char*)MyMalloc(temp, 512 * 512);
+        unsigned char* ttf_buffer = (unsigned char*)MyMalloc(temp, 1 << 20);
+
+        fread(ttf_buffer, 1, 1 << 20, fopen("VictorMono-Bold.ttf", "rb"));
+        stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, 512, 512, 32, 96, cdata); // no guarantee this fits!
+        glGenTextures(1, &m_gFontTexture);
+        glBindTexture(GL_TEXTURE_2D, m_gFontTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, temp_bitmap);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    }
+
+    void Graphics::RenderText(char* text, float x, float y, float scale)
+    {
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBindProgramPipeline(m_fontPipeline.pipeline);
+        while (*text) {
+            if (*text >= 32)
+            {
+                stbtt_aligned_quad q;
+                stbtt_GetBakedQuad(cdata, 512, 512, *text - 32, &x, &y, &q, 1);//1=opengl & d3d10+,0=d3d9
+
+                int width = 1080;
+                int height = 512;
+                float vertices[] = {
+                     q.x0 / width + x / (1920) + -1.f / width, -q.y0 / height + 1.f / height, q.s0, q.t0,
+                     q.x0 / width + x / (1920) + -1.f / width, -q.y1 / height + -1.f / height, q.s0, q.t1,
+                     q.x1 / width + x / (1920) + 1.f / width, -q.y0 / height + 1.f / height, q.s1, q.t0,
+                     q.x1 / width + x / (1920) + 1.f / width, -q.y1 / height + -1.f / height, q.s1, q.t1,
+                };
+                // update content of VBO memory
+                glNamedBufferSubData(m_quadVBO, 0,
+                    sizeof(vertices), vertices);
+                glBindTextureUnit(0, m_gFontTexture);
+                glBindVertexArray(m_quadVAO);
+                // render quad
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            }
+            ++text;
+        }
+        float vertices[] = {
+            // positions  // texture Coords
+            -1.0f,  1.0f,  0.0f, 1.0f,
+            -1.0f, -1.0f,  0.0f, 0.0f,
+             1.0f,  1.0f,  1.0f, 1.0f,
+             1.0f, -1.0f,  1.0f, 0.0f,
+        };
+        glNamedBufferSubData(m_quadVBO, 0,
+            sizeof(vertices), vertices);
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+
+    }
+}

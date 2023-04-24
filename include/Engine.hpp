@@ -76,7 +76,6 @@ private:
     
     ImGUI m_gui = {};
     Physx m_physx {};
-
 public:
     bool isGame = false;
 private:    
