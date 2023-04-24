@@ -414,7 +414,7 @@ void Engine::UpdateIMGUI()
         
         SetCursorPos(ImVec2(vMax.x - vPos.x - 115, vMin.y - vPos.y));
         PushStyleColor(ImGuiCol_WindowBg, RF_DARKGRAY);
-        BeginChild("Fps counter", ImVec2(vMax.x - vPos.x - 115, vMin.y - vPos.y));
+        BeginChild("Fps counter", ImVec2(115, vMin.y - vPos.y));
         PushStyleColor(ImGuiCol_Text, RF_ORANGE);
         m_gui.averageFps = RedFoxMaths::Misc::Clamp(m_gui.averageFps, 0, 1000);
         float deltaTime = RedFoxMaths::Misc::Clamp(m_time.delta, 0, 1);
@@ -467,6 +467,75 @@ void Engine::UpdateIMGUI()
         }
         SetItemAllowOverlap();
 
+        if (m_gui.selectedObject != 0 && !m_editorCameraEnabled && m_scene.isPaused)
+        {
+            ImGuizmo::SetDrawlist();
+            GetCurrentWindow();
+            ImGuizmo::SetRect(windowPos.x, windowPos.y, content.x, content.y);
+            RedFoxMaths::Mat4 cameraProjection = m_editorCamera.m_projection.GetTransposedMatrix();
+            RedFoxMaths::Mat4 cameraView = m_editorCamera.GetViewMatrix().GetTransposedMatrix();
+            RedFoxMaths::Mat4 transformMat = m_scene.GetWorldMatrix(m_gui.selectedObject).GetTransposedMatrix();
+            RedFoxMaths::Mat4 deltaMat = { };
+            float* cameraViewPtr = (float*)cameraView.AsPtr();
+            float* cameraProjectionPtr = (float*)cameraProjection.AsPtr();
+            float* transformMatPtr = (float*)transformMat.AsPtr();
+            float* deltaMatPtr = (float*)deltaMat.AsPtr();
+            float snap3[3] = { 0, 0, 0 };
+            if (m_input.W)
+                m_gui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
+            else if (m_input.R)
+                m_gui.gizmoType = ImGuizmo::OPERATION::ROTATE;
+            else if (m_input.E)
+                m_gui.gizmoType = ImGuizmo::OPERATION::SCALE;
+
+            switch (m_gui.gizmoType)
+            {
+            case ImGuizmo::OPERATION::TRANSLATE:
+                snap3[0] = (float)m_gui.translateSnap;
+                snap3[1] = (float)m_gui.translateSnap;
+                snap3[2] = (float)m_gui.translateSnap;
+                break;
+            case ImGuizmo::OPERATION::ROTATE:
+                snap3[0] = (float)m_gui.rotateSnap;
+                snap3[1] = (float)m_gui.rotateSnap;
+                snap3[2] = (float)m_gui.rotateSnap;
+                break;
+            case ImGuizmo::OPERATION::SCALE:
+                snap3[0] = (float)m_gui.scaleSnap;
+                snap3[1] = (float)m_gui.scaleSnap;
+                snap3[2] = (float)m_gui.scaleSnap;
+                break;
+            default:
+                break;
+            }
+
+            bool snapping = m_input.LControl;
+            m_gui.manipulatingGizmo = ImGuizmo::Manipulate(cameraViewPtr, cameraProjectionPtr,
+                m_gui.gizmoType, m_gui.gizmoMode, transformMatPtr, deltaMatPtr,
+                snapping ? snap3 : nullptr);
+
+            if (ImGuizmo::IsUsing())
+            {
+                using namespace RedFoxMaths;
+                Float3 translation, rotation, scale;
+                Float3 scaleUnit = { 1, 1, 1 };
+                ImGuizmo::DecomposeMatrixToComponents(deltaMat.AsPtr(),
+                    (float*)&translation.x, (float*)&rotation.x, (float*)&scale.x);
+
+                m_scene.gameObjects[m_gui.selectedObject].orientation =
+                    Quaternion::Hamilton(Quaternion::FromEuler(rotation * DEG2RAD),
+                        m_scene.gameObjects[m_gui.selectedObject].orientation);
+                if (m_gui.gizmoType != ImGuizmo::OPERATION::ROTATE)
+                {
+                    m_scene.gameObjects[m_gui.selectedObject].position += translation;
+                    m_scene.gameObjects[m_gui.selectedObject].scale += scale - scaleUnit;
+                }
+                m_scene.gameObjects[m_gui.selectedObject].scale.x = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.x, 1, 10000);
+                m_scene.gameObjects[m_gui.selectedObject].scale.y = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.y, 1, 10000);
+                m_scene.gameObjects[m_gui.selectedObject].scale.z = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.z, 1, 10000);
+            }
+        }
+
         if (mousePosEditor.x > 0 && mousePosEditor.x < content.x &&
             mousePosEditor.y > 0 && mousePosEditor.y < content.y)
         {
@@ -481,7 +550,7 @@ void Engine::UpdateIMGUI()
             RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
             ray_world.Normalize(); 
 
-            if (IsMouseClicked(ImGuiMouseButton_Left))
+            if (IsMouseClicked(ImGuiMouseButton_Left) && !m_gui.manipulatingGizmo)
             {
                 RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
                 physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
@@ -513,75 +582,6 @@ void Engine::UpdateIMGUI()
             }
         }
       
-        if (m_gui.selectedObject != 0)
-        {
-            ImGuizmo::SetDrawlist();
-            GetCurrentWindow();
-            ImGuizmo::SetRect(windowPos.x, windowPos.y, content.x, content.y);
-            RedFoxMaths::Mat4 cameraProjection = m_editorCamera.m_projection.GetTransposedMatrix();
-            RedFoxMaths::Mat4 cameraView = m_editorCamera.GetViewMatrix().GetTransposedMatrix();
-            RedFoxMaths::Mat4 transformMat = m_scene.GetWorldMatrix(m_gui.selectedObject).GetTransposedMatrix();
-            RedFoxMaths::Mat4 deltaMat = { };
-            float* cameraViewPtr = (float*)cameraView.AsPtr();
-            float* cameraProjectionPtr = (float*)cameraProjection.AsPtr();
-            float* transformMatPtr = (float*)transformMat.AsPtr();
-            float* deltaMatPtr = (float*)deltaMat.AsPtr();
-            float snap3[3] = { 0, 0, 0 };
-            if (m_input.W)
-                m_gui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
-            else if (m_input.R)
-                m_gui.gizmoType = ImGuizmo::OPERATION::ROTATE;
-            else if (m_input.E)
-                m_gui.gizmoType = ImGuizmo::OPERATION::SCALE;
-            
-            switch (m_gui.gizmoType)
-            {
-            case ImGuizmo::OPERATION::TRANSLATE:
-                snap3[0] = (float)m_gui.translateSnap;
-                snap3[1] = (float)m_gui.translateSnap;
-                snap3[2] = (float)m_gui.translateSnap;
-                break;
-            case ImGuizmo::OPERATION::ROTATE:
-                snap3[0] = (float)m_gui.rotateSnap;
-                snap3[1] = (float)m_gui.rotateSnap;
-                snap3[2] = (float)m_gui.rotateSnap;
-                break;
-            case ImGuizmo::OPERATION::SCALE:
-                snap3[0] = (float)m_gui.scaleSnap;
-                snap3[1] = (float)m_gui.scaleSnap;
-                snap3[2] = (float)m_gui.scaleSnap;
-                break;
-            default:
-                break;
-            }
-            
-            bool snapping = m_input.LControl;
-            ImGuizmo::Manipulate(cameraViewPtr, cameraProjectionPtr,
-                m_gui.gizmoType, m_gui.gizmoMode, transformMatPtr, deltaMatPtr, 
-                snapping ? snap3 : nullptr);
-
-            if (ImGuizmo::IsUsing())
-            {
-                using namespace RedFoxMaths;
-                Float3 translation, rotation, scale;
-                Float3 scaleUnit = {1, 1, 1};
-                ImGuizmo::DecomposeMatrixToComponents(deltaMat.AsPtr(),
-                    (float*)&translation.x, (float*)&rotation.x, (float*)&scale.x);
-
-                m_scene.gameObjects[m_gui.selectedObject].orientation = 
-                    Quaternion::Hamilton(Quaternion::FromEuler(rotation*DEG2RAD),
-                    m_scene.gameObjects[m_gui.selectedObject].orientation);
-                if(m_gui.gizmoType != ImGuizmo::OPERATION::ROTATE)
-                {
-                    m_scene.gameObjects[m_gui.selectedObject].position += translation;
-                    m_scene.gameObjects[m_gui.selectedObject].scale += scale - scaleUnit;
-                }
-                m_scene.gameObjects[m_gui.selectedObject].scale.x = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.x, 0.01, 10000);
-                m_scene.gameObjects[m_gui.selectedObject].scale.y = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.y, 0.01, 10000);
-                m_scene.gameObjects[m_gui.selectedObject].scale.z = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.z, 0.01, 10000);
-            }
-        }
-
         if (m_input.Escape)
         {
             m_gui.selectedObject = 0;
