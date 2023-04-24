@@ -206,7 +206,7 @@ void Engine::ProcessInputs()
 
 void Engine::UpdateEditorCamera()
 {
-    if (m_editorCameraEnabled)
+    if (m_editorCameraEnabled && m_scene.isPaused)
     {
         const f32 dt32 = (f32)m_time.delta;
         static Float3 cameraRotation;

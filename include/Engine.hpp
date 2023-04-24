@@ -27,7 +27,7 @@ namespace RedFoxEngine
 
 struct ImGUI
 {
-    //Editor ui
+    bool manipulatingGizmo = false;
     bool editorMenuOpen = false;
     bool sceneGraphScrollButtonHovered = false;
     int selectedObject;
@@ -37,7 +37,6 @@ struct ImGUI
     int translateSnap = 1;
     int rotateSnap = 45;
     int scaleSnap = 1;
-    ImTextureID icons[10];
     float averageFps;
     float dragSpeed = 1.f;
     float fps[255];
@@ -45,6 +44,7 @@ struct ImGUI
     ImGuizmo::MODE gizmoMode;
     ImGuiIO* io;
     ImFont* defaultFont;
+    ImTextureID icons[10];
 };
 
 class Engine
