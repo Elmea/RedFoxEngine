@@ -14,13 +14,13 @@
 #include "imgui_impl_win32.h"
 #include <ImGuizmo.h>
 
-#include "ResourceManager.hpp"
 #include "Scene.hpp"
 #include "Physics.hpp"
 #include "ObjParser.hpp"
 #include "OpenGLGraphics.hpp"
 #include "GameObject.hpp"
 #include "Camera.hpp"
+#include "ResourceManager.hpp"
 
 namespace RedFoxEngine
 {
@@ -90,7 +90,7 @@ private:
     void ObjModelPush(const char *objPath);
     void InitIMGUI();
     void LoadScene(const char *fileName);
-    void SaveScene(const char *fileName);
+    void SaveScene(const char *fileName, Scene scene);
     void UpdateLights(LightStorage* lightStorage);
     void initSphericalManyGameObjects(int count); //TODO: remove
     u32 LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat);

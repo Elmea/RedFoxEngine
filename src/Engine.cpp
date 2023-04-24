@@ -11,6 +11,8 @@
 #define REDFOXMATHS_IMPLEMENTATION
 #include "RedfoxMaths.hpp"
 
+#include <timeapi.h>
+
 using namespace RedFoxEngine;
 using namespace RedFoxMaths;
 
@@ -42,13 +44,25 @@ Engine::Engine(int width, int height) :
     m_scene.gameObjects[0] = {};
     m_scene.gameObjects[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
     m_scene.gameObjects[0].name.capacity = 255;
+    m_scene.gameObjects[0].position =
+    {
+        0, -11, 0
+    };
+    m_scene.gameObjects[0].orientation =
+    {
+        1, 0, 0, 0
+    };
+    m_scene.gameObjects[0].scale =
+    {
+        10000, 2, 10000
+    };
     m_graphics.lightStorage.lights = (Light*)m_memoryManager.PersistentAllocation(sizeof(Light) * 1000);
     m_graphics.lightStorage.shadowMaps = (unsigned int*)m_memoryManager.PersistentAllocation(sizeof(unsigned int) * 1000);
     m_scene.gameObjectCount++;
 
     //TODO transition to an instance based model 'model'
     for (int i = 0; i < (int)m_modelCount; i++)
-        m_graphics.InitModel(&m_models[i]);
+        m_graphics.InitModel(&m_models[i], &m_memoryManager);
     InitSkyDome();
     m_memoryManager.m_sceneUsedMemory = m_memoryManager.m_memory.arena.usedSize;
 #if 0
@@ -56,7 +70,7 @@ Engine::Engine(int width, int height) :
 #else
     initSphericalManyGameObjects(1000);
     m_scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
-    
+
     // Some light for testing
     {
         Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
@@ -103,7 +117,7 @@ Engine::Engine(int width, int height) :
     // path into the scene data ? maybe both
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
     m_graphics.InitLights();
-    m_physx.InitPhysics(m_scene, 0);//TODO pass scene
+    m_physx.InitPhysics(m_scene, 1);
 }
 
 void Engine::ObjModelPush(const char *path)
@@ -135,7 +149,7 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     for (int i = 1; i < (int)m_scene.gameObjectCount; i++)
     {
         m_scene.gameObjects[i].parent = 0;
-        m_scene.gameObjects[i].modelIndex = i% m_modelCount;
+        m_scene.gameObjects[i].modelIndex = i % m_modelCount;
         if (m_scene.gameObjects[i].modelIndex == 0)
             m_scene.gameObjects[i].boxExtents = { 0.5, 0.5, 0.5 };
         else if (m_scene.gameObjects[i].modelIndex == 1)
@@ -254,7 +268,7 @@ void Engine::Update()
     UpdateEditorCamera();
     UpdateSkyDome();
     UpdateLights(&m_graphics.lightStorage);
-    m_physx.UpdatePhysics(m_time.delta, m_memoryManager);
+    m_physx.UpdatePhysics(m_time.delta, m_memoryManager, m_scene.isPaused);
     m_game.update(&m_scene, &m_physx, m_input, m_time.delta);
     UpdateModelMatrices();
     UpdateIMGUI();
@@ -264,10 +278,20 @@ void Engine::Update()
 
 void Engine::Draw()
 {
+    if (m_time.delta < 0.03f)
+    {
+        timeBeginPeriod(1);
+        Sleep(3);
+        timeEndPeriod(1);
+    }
     // Camera *currentCamera = &m_scene.m_gameCamera; //TODO game camera
-    Camera *currentCamera = &m_editorCamera; //TODO game camera
+    Camera *currentCamera;
+    if (m_scene.isPaused)
+        currentCamera = &m_editorCamera; //TODO game camera
+    else
+        currentCamera = &m_scene.m_gameCamera;
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
-    m_graphics.Draw(m_scene.m_modelMatrices, m_modelCountIndex, m_platform.m_windowDimension, m_scene.skyDome, m_time.current);
+    m_graphics.Draw(m_scene.m_modelMatrices, m_modelCountIndex, m_scene.gameObjectCount, m_platform.m_windowDimension, m_scene.skyDome, m_time.current, m_time.delta, &m_memoryManager);
     m_platform.SwapFramebuffers();
     m_time.delta = (Platform::GetTimer() - m_time.current);
     m_memoryManager.m_memory.temp.usedSize = 0;

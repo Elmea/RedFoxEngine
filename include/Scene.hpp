@@ -27,21 +27,23 @@ class Scene
 {
 public:
     MyString m_name;
-    RedFoxMaths::Mat4 *m_modelMatrices;
-    GameObject *gameObjects = nullptr;
     u32 gameObjectCount = 0;
     SkyDome skyDome;
-    SceneGraph graph;
     Camera m_gameCamera;
+    SceneGraph graph;
     int m_width, m_height;
     bool isPaused = true;
+    RedFoxMaths::Mat4 *m_modelMatrices;
+    GameObject *gameObjects = nullptr;
     Scene(int width, int height):m_gameCamera(projectionType::PERSPECTIVE,
         width / (f32)height){};
     RedFoxMaths::Mat4 GetWorldMatrix(int gameObjectindex)
     {
-        GameObject *current = &gameObjects[gameObjectindex]; 
+        GameObject *current = &gameObjects[gameObjectindex];
         if (current->parent)
-            return current->GetLocalMatrix() * GetWorldMatrix(gameObjects[current->parent].parent);
+        {
+            return current->GetLocalMatrix() * GetWorldMatrix(current->parent);
+        }
         return gameObjects[gameObjectindex].GetLocalMatrix();
     };
     int *GetChildren(int gameObjectIndex, Memory *temp)

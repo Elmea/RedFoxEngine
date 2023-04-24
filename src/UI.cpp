@@ -105,16 +105,16 @@ void Engine::InitIMGUI()
     m_gui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
     m_gui.gizmoMode = ImGuizmo::MODE::LOCAL;
 
-    m_gui.icons[0] = (void*)LoadTextureFromFilePath("Textures/new_scene.png", false, false);
-    m_gui.icons[1] = (void*)LoadTextureFromFilePath("Textures/save_scene.png", false, false);
-    m_gui.icons[2] = (void*)LoadTextureFromFilePath("Textures/pause.png", false, false);
-    m_gui.icons[3] = (void*)LoadTextureFromFilePath("Textures/resume.png", false, false);
-    m_gui.icons[4] = (void*)LoadTextureFromFilePath("Textures/translate.png", false, false);
-    m_gui.icons[5] = (void*)LoadTextureFromFilePath("Textures/rotate.png", false, false);
-    m_gui.icons[6] = (void*)LoadTextureFromFilePath("Textures/scale.png", false, false);
-    m_gui.icons[7] = (void*)LoadTextureFromFilePath("Textures/new_entity.png", false, false);
-    m_gui.icons[8] = (void*)LoadTextureFromFilePath("Textures/new_cube.png", false, false);
-    m_gui.icons[9] = (void*)LoadTextureFromFilePath("Textures/new_sphere.png", false, false);
+    m_gui.icons[0] = (void*)(u64)LoadTextureFromFilePath("Textures/new_scene.png", false, false);
+    m_gui.icons[1] = (void*)(u64)LoadTextureFromFilePath("Textures/save_scene.png", false, false);
+    m_gui.icons[2] = (void*)(u64)LoadTextureFromFilePath("Textures/pause.png", false, false);
+    m_gui.icons[3] = (void*)(u64)LoadTextureFromFilePath("Textures/resume.png", false, false);
+    m_gui.icons[4] = (void*)(u64)LoadTextureFromFilePath("Textures/translate.png", false, false);
+    m_gui.icons[5] = (void*)(u64)LoadTextureFromFilePath("Textures/rotate.png", false, false);
+    m_gui.icons[6] = (void*)(u64)LoadTextureFromFilePath("Textures/scale.png", false, false);
+    m_gui.icons[7] = (void*)(u64)LoadTextureFromFilePath("Textures/new_entity.png", false, false);
+    m_gui.icons[8] = (void*)(u64)LoadTextureFromFilePath("Textures/new_cube.png", false, false);
+    m_gui.icons[9] = (void*)(u64)LoadTextureFromFilePath("Textures/new_sphere.png", false, false);
 }
 
 void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight)
@@ -174,11 +174,14 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
     if (ImageButton("SAVE SCENE", m_gui.icons[1], ImVec2(buttonHeight, buttonHeight)))
-        SaveScene(strcat((char*)m_scene.m_name.data, ".scene"));
+    {
+        strncat_s((char*)m_scene.m_name.data, 7, ".scene", m_scene.m_name.capacity);
+        SaveScene(m_scene.m_name.data, m_scene);
+    }
 
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
-    if (ImageButton("PAUSE", m_scene.isPaused ? m_gui.icons[2] : m_gui.icons[3], ImVec2(buttonHeight, buttonHeight)))
+    if (ImageButton("PAUSE", m_scene.isPaused ? m_gui.icons[3] : m_gui.icons[2], ImVec2(buttonHeight, buttonHeight)))
         m_scene.isPaused = !m_scene.isPaused;
 
     SameLine();
@@ -399,13 +402,13 @@ void Engine::UpdateIMGUI()
         };
         
         if (m_time.delta)
-            m_gui.fps[m_gui.currentFrame++] = (1.0f / m_time.delta);
-        if (m_gui.currentFrame >= (int)(1 / m_time.delta))
         {
-            m_gui.currentFrame = 0;
-            for (int i = 0; i < (int)(1 / m_time.delta); i += 2)
+            m_gui.fps[m_gui.currentFrame++] = (1.0f / m_time.delta);
+            if (m_gui.currentFrame >= (int)(1 / m_time.delta))
             {
-                m_gui.averageFps = (m_gui.fps[i] + m_gui.averageFps) / 2.0f;
+                m_gui.currentFrame = 0;
+                for (int i = 0; i < (int)(1 / m_time.delta); i += 2)
+                    m_gui.averageFps = (m_gui.fps[i] + m_gui.averageFps) / 2.0f;
             }
         }
         
@@ -413,17 +416,17 @@ void Engine::UpdateIMGUI()
         PushStyleColor(ImGuiCol_WindowBg, RF_DARKGRAY);
         BeginChild("Fps counter", ImVec2(115, vMin.y - vPos.y));
         PushStyleColor(ImGuiCol_Text, RF_ORANGE);
-        Text(" %.f FPS | %.2f ms", m_gui.averageFps, m_time.delta * 1000);
+        m_gui.averageFps = RedFoxMaths::Misc::Clamp(m_gui.averageFps, 0, 1000);
+        float deltaTime = RedFoxMaths::Misc::Clamp(m_time.delta, 0, 1);
+        Text(" %.f FPS | %.2f ms", m_gui.averageFps, deltaTime * 1000);
         PopStyleColor();
         EndChild();
         PopStyleColor();
         SetItemAllowOverlap();
-        
+
         SetCursorPos(GetWindowContentRegionMin());
         if (ArrowButton("Editor settings button", ImGuiDir_Down))
-        {
             m_gui.editorMenuOpen = !m_gui.editorMenuOpen;
-        }
         if (m_gui.editorMenuOpen == true)
         {
             ImVec2 menuPos = vMin + ImVec2(0, 20);
@@ -498,7 +501,7 @@ void Engine::UpdateIMGUI()
                     }
                 }
             }
-            
+
             if (m_input.mouseRClick)
             {
                 m_input.lockMouse = m_editorCameraEnabled = true;

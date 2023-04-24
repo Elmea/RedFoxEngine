@@ -47,7 +47,6 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     RedFoxEngine::Scene *scene = (RedFoxEngine::Scene *)s;
     RedFoxEngine::GameObject *gameObjects = scene->gameObjects;
     int gameObjectCount = scene->gameObjectCount;
-    physx::PxRigidActor **actors = physx->actors;
     gameObjects[0].position =
     {
         0, -11, 0
@@ -60,9 +59,11 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     {
         10000, 2, 10000
     };
+    physx::PxRigidActor **actors = physx->actors;
     if (physx->actorCount)
     {
-        physx->m_scene->fetchResults(true);
+        if (!scene->isPaused)
+            physx->m_scene->fetchResults(true);
         physx::PxRigidActor *player = actors[1];
         physx::PxTransform transform;
         transform = player->is<physx::PxRigidDynamic>()->getGlobalPose();
@@ -81,7 +82,7 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
             }
             physx::PxTransform transform {(float)j * 10, (float)(i+t) * 5, 0};
             // actors[i]->is<physx::PxRigidDynamic>()->setGlobalPose(transform);
-            if (!actors[i]->is<physx::PxRigidDynamic>()->isSleeping())
+            if (!scene->isPaused && !actors[i]->is<physx::PxRigidDynamic>()->isSleeping())
             {
                 transform = actors[i]->getGlobalPose();
                 gameObjects[i].position.x    = transform.p.x;
@@ -104,30 +105,37 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
                 actors[i]->is<physx::PxRigidDynamic>()->setGlobalPose(transform);
             }
     }
-    scene->m_gameCamera.position = {gameObjects[1].position.x, gameObjects[1].position.y + 1, gameObjects[1].position.z + 4};
+    scene->m_gameCamera.position = {gameObjects[1].position.x, gameObjects[1].position.y, gameObjects[1].position.z};
+    static Float3 cameraRotation;
+    cameraRotation += {(f32)input.mouseYDelta * deltaTime, (f32)input.mouseXDelta * deltaTime, 0}; 
+    scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
         
+    Float3 inputDirection(0, 0, 0);
+    if (input.W || input.Up)    inputDirection.z += -1;
+    if (input.S || input.Down)  inputDirection.z +=  1;
+    if (input.A || input.Left)  inputDirection.x += -1;
+    if (input.D || input.Right) inputDirection.x +=  1;
     if (input.W || input.S || input.A || input.D)
-    {        
+    {
+        inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
+        inputDirection.Normalize();
+        inputDirection = inputDirection * 200.f;
         physx::PxRigidActor *player = actors[1];
         Quaternion orientation = {1, 0, 0, 0};
-        float speed = 50;
-        physx::PxVec3 velocity = player->is<physx::PxRigidDynamic>()->getLinearVelocity();
-        
-        Float3 direction = {};
-        if (input.W)
-            direction = {0, 0, 1};
-        if (input.A)
-            direction = {-1, 0, 0};
-        if (input.S)
-            direction = {0, 0, -1};
-        if (input.D)
-            direction = {1, 0, 0};
-        direction = RotateVectorByQuaternion(orientation, direction);
-        velocity.x += speed * deltaTime * direction.x;
-        velocity.y += speed * deltaTime * direction.y;
-        velocity.z += speed * deltaTime * direction.z;
-        player->is<physx::PxRigidDynamic>()->setLinearVelocity(velocity);
-        physx::PxTransform transform;
+        float speed = 5;
+        physx::PxRigidDynamic *tPlayer = player->is<physx::PxRigidDynamic>();
+        physx::PxVec3 velocity;
+        if (tPlayer)
+        {
+            velocity = tPlayer->getLinearVelocity();
+
+            velocity.x = speed * deltaTime * inputDirection.x;
+            velocity.y = speed * deltaTime * inputDirection.y;
+            velocity.z = speed * deltaTime * inputDirection.z;
+            tPlayer->setLinearVelocity(velocity);
+            physx::PxTransform transform;
+            // transform = tPlayer->getGlobalPose();
+        }
     }
 }
 //for (int i = 0; i < (int)gameObjectCount; i++) // TODO physics code here ?

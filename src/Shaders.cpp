@@ -16,7 +16,7 @@ static void CompileShader(const char *vertexShaderSource,
     GLint linked;
     glGetProgramiv(shader.vertex, GL_LINK_STATUS, &linked);
     if (!linked)
-    {
+    { 
         char message[1024];
         glGetProgramInfoLog(shader.vertex, sizeof(message), nullptr, message);
         OutputDebugStringA(message);
