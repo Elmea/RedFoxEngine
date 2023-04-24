@@ -2,6 +2,7 @@
 #include "Camera.hpp"
 #include "OpenGLGraphics.hpp"
 #include "GameObject.hpp"
+#include "GameUI.hpp"
 
 namespace RedFoxEngine
 {
@@ -28,6 +29,7 @@ class Scene
 public:
     MyString m_name;
     u32 gameObjectCount = 0;
+    u32 gameUICount = 0;
     SkyDome skyDome;
     Camera m_gameCamera;
     SceneGraph graph;
@@ -35,6 +37,8 @@ public:
     bool isPaused = true;
     RedFoxMaths::Mat4 *m_modelMatrices;
     GameObject *gameObjects = nullptr;
+    GameUI* gameUIs = nullptr;
+
     Scene(int width, int height):m_gameCamera(projectionType::PERSPECTIVE,
         width / (f32)height){};
     RedFoxMaths::Mat4 GetWorldMatrix(int gameObjectindex)
@@ -46,6 +50,7 @@ public:
         }
         return gameObjects[gameObjectindex].GetLocalMatrix();
     };
+
     int *GetChildren(int gameObjectIndex, Memory *temp)
     {
         int *result = (int *)MyMalloc(temp, sizeof(int));
@@ -58,6 +63,7 @@ public:
         result[count] = 0;
         return(result);
     }
+    
     int GetChildrenCount(int gameObjectIndex)
     {
         int count = 0;
@@ -68,6 +74,31 @@ public:
         }
         return (count);
     }
+
+    int* GetChildrenUI(int gameUIIndex, Memory* temp)
+    {
+        int* result = (int*)MyMalloc(temp, sizeof(int));
+        int count = 0;
+        for (int i = 0; i < (int)gameObjectCount; i++)
+        {
+            if (gameObjects[i].parent == gameUIIndex)
+                result[count++] = i;
+        }
+        result[count] = 0;
+        return(result);
+    }
+
+    int GetChildrenCountUI(int gameUIIndex)
+    {
+        int count = 0;
+        for (int i = 0; i < (int)gameObjectCount; i++)
+        {
+            if (gameObjects[i].parent == gameUIIndex)
+                count++;
+        }
+        return (count);
+    }
+
 };
 
 }
