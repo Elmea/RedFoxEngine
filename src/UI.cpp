@@ -247,6 +247,21 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->modelIndex = 1;
     }
 
+    ImGui::SameLine();
+    if (ImGui::Button("ADD UI", ImVec2(0, buttonHeight)))
+    {
+        GameUI* newGameUI = &m_scene.gameUIs[m_scene.gameUICount++];
+        *newGameUI = {};
+        char tmp[255];
+        int size = snprintf(tmp, 255, "New UI #%d", m_scene.gameUICount - 1);
+
+        newGameUI->name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
+
+        newGameUI->name.capacity = 255;
+        newGameUI->scale = { 1, 1 };
+        newGameUI->text.data = "hello world";
+    }
+
     PopStyleVar();
     End();
 }
@@ -308,10 +323,11 @@ void Engine::DrawSceneNodes(bool is_child, int index)
     flags |= ImGuiTreeNodeFlags_SpanFullWidth;
 
     bool nodeOpen = TreeNodeEx((char*)m_scene.gameObjects[index].name.data, flags, "%s", (char*)m_scene.gameObjects[index].name.data);
-    if ((IsItemClicked() && !IsItemToggledOpen()) || 
+    if ((IsItemClicked() && !IsItemToggledOpen()) ||
         IsItemFocused())
     {
         m_gui.selectedObject = index;
+        m_gui.selectedUI = 0;
     }
 
     // TODO(a.perche): Double click to focus object or press F (lerp position)
@@ -351,6 +367,69 @@ void Engine::DrawSceneNodes(bool is_child, int index)
             int* children = m_scene.GetChildren(index, &m_memoryManager.m_memory.temp);
             for (int i = 0; i < childrenCount; i++)
                 DrawSceneNodes(true, children[i]);
+        }
+        TreePop();
+    }
+}
+
+void Engine::DrawSceneNodesUI(bool is_child, int index)
+{
+    int childrenCount = m_scene.GetChildrenCount(index);
+
+    ImGuiTreeNodeFlags flags;
+    if (is_child && childrenCount == 0)
+        flags = ImGuiTreeNodeFlags_Bullet;
+    else
+        flags = (childrenCount == 0) ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_OpenOnArrow;
+    if (index == m_gui.selectedUI && m_gui.selectedUI != 0)
+        flags |= ImGuiTreeNodeFlags_Selected;
+    flags |= ImGuiTreeNodeFlags_SpanFullWidth;
+
+    bool nodeOpen = TreeNodeEx((char*)m_scene.gameUIs[index].name.data, flags, "%s", (char*)m_scene.gameUIs[index].name.data);
+    if ((IsItemClicked() && !IsItemToggledOpen()) || 
+        IsItemFocused())
+    {
+        m_gui.selectedUI = index;
+        m_gui.selectedObject = 0;
+    }
+
+    // TODO(a.perche): Double click to focus object or press F (lerp position)
+    /*
+    if (IsMouseDoubleClicked(ImGuiMouseButton_Left) && IsItemHovered())
+    {
+        m_editorCamera.position = m_selectedObject->position;
+        const RedFoxMaths::Float3 up(0, 1, 0);
+        m_editorCamera.SetViewLookAt(m_selectedObject->position, up);
+    }
+    */
+
+    if (BeginDragDropSource())
+    {
+        SetDragDropPayload("_SCENENODE", &index, sizeof(index));
+        Text("Moving %s", m_scene.gameUIs[index].name.data);
+        EndDragDropSource();
+    }
+
+    if (BeginDragDropTarget())
+    {
+        if (const ImGuiPayload* payload = AcceptDragDropPayload("_SCENENODE"))
+        {
+            if (payload->IsDelivery())
+            {
+                int movedIndex = *(int*)payload->Data;
+                m_scene.gameUIs[movedIndex].parent = index;
+            }
+            EndDragDropTarget();
+        }
+    }
+
+    if (nodeOpen)
+    {
+        if (childrenCount)
+        {
+            int* children = m_scene.GetChildren(index, &m_memoryManager.m_memory.temp);
+            for (int i = 0; i < childrenCount; i++)
+                DrawSceneNodesUI(true, children[i]);
         }
         TreePop();
     }
@@ -648,7 +727,7 @@ void Engine::UpdateIMGUI()
         }
         TreePop();
 
-        if (m_scene.gameObjectCount > 0)
+        if (m_scene.gameObjectCount > 1)
         {
             ImGuiWindowFlags sceneGraphFlags =
                 ImGuiWindowFlags_AlwaysHorizontalScrollbar |
@@ -697,6 +776,116 @@ void Engine::UpdateIMGUI()
         }
     }
     End();
+
+    
+    SameLine();
+    if (Begin("UI Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
+    {
+        ImGuiTreeNodeFlags rootNodeFlags =
+            ImGuiTreeNodeFlags_Framed |
+            ImGuiTreeNodeFlags_Leaf |
+            ImGuiTreeNodeFlags_AllowItemOverlap |
+            ImGuiTreeNodeFlags_DefaultOpen |
+            ImGuiTreeNodeFlags_SpanFullWidth;
+
+        if (TreeNodeEx("_TREENODE", rootNodeFlags, " %s", m_scene.m_name.data))
+        {
+            if (BeginPopupContextItem("RenameScenePopup"))
+            {
+                if (m_input.Enter)
+                    CloseCurrentPopup();
+
+                SameLine();
+                InputText(" ", (char*)m_scene.m_name.data, m_scene.m_name.capacity);
+                EndPopup();
+            }
+
+            if (IsMouseDoubleClicked(ImGuiMouseButton_Left) && IsItemHovered() && !m_gui.sceneGraphScrollButtonHovered)
+            {
+                OpenPopup("RenameScenePopup");
+            }
+
+            if (BeginDragDropTarget())
+            {
+                if (const ImGuiPayload* payload = AcceptDragDropPayload("_SCENENODE"))
+                {
+                    if (payload->IsDelivery())
+                    {
+                        int* movedGameobject = (int*)payload->Data;
+                        m_scene.gameUIs[*movedGameobject].parent = 0;
+                    }
+                    EndDragDropTarget();
+                }
+            }
+
+            float sceneGraphWidth = GetContentRegionAvail().x;
+            int buttonWidth = 50;
+            if (buttonWidth < sceneGraphWidth)
+            {
+                char tempString[32] = {};
+                snprintf(tempString, 32, "%d", m_gui.sceneGraphScrollStrength);
+                SameLine(sceneGraphWidth - (float)buttonWidth / 2);
+                if (Button(tempString, ImVec2(buttonWidth, 0)))
+                {
+                    m_gui.sceneGraphScrollStrength *= 10;
+                    if (m_gui.sceneGraphScrollStrength > 1000)
+                        m_gui.sceneGraphScrollStrength = 1;
+                }
+            }
+            m_gui.sceneGraphScrollButtonHovered = IsItemHovered();
+        }
+        TreePop();
+
+        if (m_scene.gameUICount > 1)
+        {
+            ImGuiWindowFlags sceneGraphFlags =
+                ImGuiWindowFlags_AlwaysHorizontalScrollbar |
+                ImGuiWindowFlags_AlwaysVerticalScrollbar |
+                ImGuiWindowFlags_NoMove;
+
+            BeginChild("SceneGraphNodes", ImVec2(0, 0), true, sceneGraphFlags);
+            if (m_gui.uiIndex < 1)
+                m_gui.uiIndex = 1;
+            else if (m_gui.uiIndex > (int)m_scene.gameUICount - 1)
+                m_gui.uiIndex = m_scene.gameUICount - 1;
+
+            int maxItems = (int)GetMainViewport()->Size.y / 16;
+            for (int i = 0; i + m_gui.uiIndex < (int)m_scene.gameUICount && i < maxItems; i++)
+            {
+                if (mousePickNodeIndexTmp != -1)
+                {
+                    m_gui.uiIndex = mousePickNodeIndexTmp;
+                    SetScrollY(mousePickNodeIndexTmp - m_gui.uiIndex);
+                    mousePickNodeIndexTmp = -1;
+                }
+
+                if (i == 0 && m_gui.uiIndex > 1 && GetScrollY() == 0)
+                {
+                    SetScrollY(1);
+                    m_gui.uiIndex -= m_gui.sceneGraphScrollStrength;
+                }
+
+                float scrollMax = GetScrollMaxY();
+                if (i == maxItems - 1 && m_gui.uiIndex + i < (int)m_scene.gameUICount - 1 &&
+                    scrollMax == GetScrollY() && scrollMax != 0)
+                {
+                    SetScrollY(scrollMax - 1);
+                    m_gui.uiIndex += m_gui.sceneGraphScrollStrength;
+                }
+
+                if (m_gui.uiIndex + i < 1)
+                    m_gui.uiIndex = 1;
+                else if (m_gui.uiIndex + i > (int)m_scene.gameUICount - 1)
+                    m_gui.uiIndex = m_scene.gameUICount - i - 1;
+
+                if (m_scene.gameUIs[i + m_gui.uiIndex].parent == 0)
+                    DrawSceneNodesUI(false, i + m_gui.uiIndex);
+            }
+            EndChild();
+        }
+    }
+    End();
+    
 
     if (Begin("Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
@@ -784,6 +973,42 @@ void Engine::UpdateIMGUI()
                     EndTable();
                 }
             }
+        }
+  
+        if (m_gui.selectedUI != 0)
+        {
+            if (ImGui::CollapsingHeader("Transform", propertiesFlags))
+            {
+                //TODO(a.perche) : Drag speed according to user param.
+                ImGuiTableFlags tableFlags =
+                    ImGuiTableFlags_RowBg |
+                    ImGuiTableFlags_SizingStretchSame |
+                    ImGuiTableFlags_Resizable |
+                    ImGuiTableFlags_BordersOuter;
+
+                if (ImGui::BeginTable("TransformTable", 2, tableFlags))
+                {
+                    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+
+                    ImGui::Text("Position");
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::SetNextItemWidth(-FLT_MIN);
+                    DragFloat2("TransformPosition", &m_scene.gameUIs[m_gui.selectedUI].screenPosition.x, m_gui.dragSpeed, 0, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+
+                    ImGui::Text("Scale");
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::SetNextItemWidth(-FLT_MIN);
+                    DragFloat2("TransformScale", &m_scene.gameUIs[m_gui.selectedUI].scale.x, m_gui.dragSpeed, 0, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    ImGui::EndTable();
+                }
+            }
+            if (ImGui::CollapsingHeader("Text", propertiesFlags))
+                ImGui::InputText((char*)&m_scene.gameUIs[m_gui.selectedUI].name, (char*)&m_scene.gameUIs[m_gui.selectedUI].text, 256, 0, 0, 0);
         }
         End();
         PopFont();

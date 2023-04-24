@@ -39,6 +39,41 @@ Engine::Engine(int width, int height) :
 
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
+
+    m_scene.gameUIs = (GameUI*)m_memoryManager.PersistentAllocation(sizeof(GameUI) * 100);
+    m_scene.gameUIs[0] = {};
+    m_scene.gameUIs[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
+    m_scene.gameUIs[0].name.capacity = 255;
+    m_scene.gameUIs[0].screenPosition = {0, 0};
+    m_scene.gameUIs[0].scale = {1,1};
+    m_scene.gameUICount++;
+    for (int i = 1; i < (int)m_scene.gameUICount; i++)
+        m_scene.gameUIs[i].parent = 0;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(
                                                 sizeof(GameObject) * 100000);
     m_scene.gameObjects[0] = {};
