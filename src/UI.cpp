@@ -166,7 +166,8 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     
     if (ImageButton("NEW SCENE", m_gui.icons[0], ImVec2(buttonHeight, buttonHeight)))
     {
-        m_scene.gameObjectCount = 0;
+        m_scene.gameObjectCount = 1;
+        m_gui.selectedObject = 0;
         m_memoryManager.m_memory.arena.usedSize = m_memoryManager.m_sceneUsedMemory;
         m_scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
     }
@@ -669,7 +670,113 @@ void Engine::UpdateIMGUI()
     End();
     PopStyleVar();
 
-    SameLine();
+    if (Begin("UI Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
+    {
+        ImGuiTreeNodeFlags rootNodeFlags =
+            ImGuiTreeNodeFlags_Framed |
+            ImGuiTreeNodeFlags_Leaf |
+            ImGuiTreeNodeFlags_AllowItemOverlap |
+            ImGuiTreeNodeFlags_DefaultOpen |
+            ImGuiTreeNodeFlags_SpanFullWidth;
+
+        if (TreeNodeEx("_TREENODE", rootNodeFlags, " %s", m_scene.m_name.data))
+        {
+            if (BeginPopupContextItem("RenameScenePopup"))
+            {
+                if (m_input.Enter)
+                    CloseCurrentPopup();
+
+                SameLine();
+                InputText(" ", (char*)m_scene.m_name.data, m_scene.m_name.capacity);
+                EndPopup();
+            }
+
+            if (IsMouseDoubleClicked(ImGuiMouseButton_Left) && IsItemHovered() && !m_gui.sceneGraphScrollButtonHovered)
+            {
+                OpenPopup("RenameScenePopup");
+            }
+
+            if (BeginDragDropTarget())
+            {
+                if (const ImGuiPayload* payload = AcceptDragDropPayload("_SCENENODE"))
+                {
+                    if (payload->IsDelivery())
+                    {
+                        int* movedGameobject = (int*)payload->Data;
+                        m_scene.gameUIs[*movedGameobject].parent = 0;
+                    }
+                    EndDragDropTarget();
+                }
+            }
+
+            float sceneGraphWidth = GetContentRegionAvail().x;
+            int buttonWidth = 50;
+            if (buttonWidth < sceneGraphWidth)
+            {
+                char tempString[32] = {};
+                snprintf(tempString, 32, "%d", m_gui.sceneGraphScrollStrength);
+                SameLine(sceneGraphWidth - (float)buttonWidth / 2);
+                if (Button(tempString, ImVec2(buttonWidth, 0)))
+                {
+                    m_gui.sceneGraphScrollStrength *= 10;
+                    if (m_gui.sceneGraphScrollStrength > 1000)
+                        m_gui.sceneGraphScrollStrength = 1;
+                }
+            }
+            m_gui.sceneGraphScrollButtonHovered = IsItemHovered();
+        }
+        TreePop();
+
+        if (m_scene.gameUICount > 1)
+        {
+            ImGuiWindowFlags sceneGraphFlags =
+                ImGuiWindowFlags_AlwaysHorizontalScrollbar |
+                ImGuiWindowFlags_AlwaysVerticalScrollbar |
+                ImGuiWindowFlags_NoMove;
+
+            BeginChild("SceneGraphNodes", ImVec2(0, 0), true, sceneGraphFlags);
+            if (m_gui.uiIndex < 1)
+                m_gui.uiIndex = 1;
+            else if (m_gui.uiIndex > (int)m_scene.gameUICount - 1)
+                m_gui.uiIndex = m_scene.gameUICount - 1;
+
+            int maxItems = (int)GetMainViewport()->Size.y / 16;
+            for (int i = 0; i + m_gui.uiIndex < (int)m_scene.gameUICount && i < maxItems; i++)
+            {
+                if (mousePickNodeIndexTmp != -1)
+                {
+                    m_gui.uiIndex = mousePickNodeIndexTmp;
+                    SetScrollY(mousePickNodeIndexTmp - m_gui.uiIndex);
+                    mousePickNodeIndexTmp = -1;
+                }
+
+                if (i == 0 && m_gui.uiIndex > 1 && GetScrollY() == 0)
+                {
+                    SetScrollY(1);
+                    m_gui.uiIndex -= m_gui.sceneGraphScrollStrength;
+                }
+
+                float scrollMax = GetScrollMaxY();
+                if (i == maxItems - 1 && m_gui.uiIndex + i < (int)m_scene.gameUICount - 1 &&
+                    scrollMax == GetScrollY() && scrollMax != 0)
+                {
+                    SetScrollY(scrollMax - 1);
+                    m_gui.uiIndex += m_gui.sceneGraphScrollStrength;
+                }
+
+                if (m_gui.uiIndex + i < 1)
+                    m_gui.uiIndex = 1;
+                else if (m_gui.uiIndex + i > (int)m_scene.gameUICount - 1)
+                    m_gui.uiIndex = m_scene.gameUICount - i - 1;
+
+                if (m_scene.gameUIs[i + m_gui.uiIndex].parent == 0)
+                    DrawSceneNodesUI(false, i + m_gui.uiIndex);
+            }
+            EndChild();
+        }
+    }
+    End();
+
     if (Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
         ImGuiTreeNodeFlags rootNodeFlags = 
@@ -778,113 +885,7 @@ void Engine::UpdateIMGUI()
     End();
 
     
-    SameLine();
-    if (Begin("UI Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
-    {
-        ImGuiTreeNodeFlags rootNodeFlags =
-            ImGuiTreeNodeFlags_Framed |
-            ImGuiTreeNodeFlags_Leaf |
-            ImGuiTreeNodeFlags_AllowItemOverlap |
-            ImGuiTreeNodeFlags_DefaultOpen |
-            ImGuiTreeNodeFlags_SpanFullWidth;
-
-        if (TreeNodeEx("_TREENODE", rootNodeFlags, " %s", m_scene.m_name.data))
-        {
-            if (BeginPopupContextItem("RenameScenePopup"))
-            {
-                if (m_input.Enter)
-                    CloseCurrentPopup();
-
-                SameLine();
-                InputText(" ", (char*)m_scene.m_name.data, m_scene.m_name.capacity);
-                EndPopup();
-            }
-
-            if (IsMouseDoubleClicked(ImGuiMouseButton_Left) && IsItemHovered() && !m_gui.sceneGraphScrollButtonHovered)
-            {
-                OpenPopup("RenameScenePopup");
-            }
-
-            if (BeginDragDropTarget())
-            {
-                if (const ImGuiPayload* payload = AcceptDragDropPayload("_SCENENODE"))
-                {
-                    if (payload->IsDelivery())
-                    {
-                        int* movedGameobject = (int*)payload->Data;
-                        m_scene.gameUIs[*movedGameobject].parent = 0;
-                    }
-                    EndDragDropTarget();
-                }
-            }
-
-            float sceneGraphWidth = GetContentRegionAvail().x;
-            int buttonWidth = 50;
-            if (buttonWidth < sceneGraphWidth)
-            {
-                char tempString[32] = {};
-                snprintf(tempString, 32, "%d", m_gui.sceneGraphScrollStrength);
-                SameLine(sceneGraphWidth - (float)buttonWidth / 2);
-                if (Button(tempString, ImVec2(buttonWidth, 0)))
-                {
-                    m_gui.sceneGraphScrollStrength *= 10;
-                    if (m_gui.sceneGraphScrollStrength > 1000)
-                        m_gui.sceneGraphScrollStrength = 1;
-                }
-            }
-            m_gui.sceneGraphScrollButtonHovered = IsItemHovered();
-        }
-        TreePop();
-
-        if (m_scene.gameUICount > 1)
-        {
-            ImGuiWindowFlags sceneGraphFlags =
-                ImGuiWindowFlags_AlwaysHorizontalScrollbar |
-                ImGuiWindowFlags_AlwaysVerticalScrollbar |
-                ImGuiWindowFlags_NoMove;
-
-            BeginChild("SceneGraphNodes", ImVec2(0, 0), true, sceneGraphFlags);
-            if (m_gui.uiIndex < 1)
-                m_gui.uiIndex = 1;
-            else if (m_gui.uiIndex > (int)m_scene.gameUICount - 1)
-                m_gui.uiIndex = m_scene.gameUICount - 1;
-
-            int maxItems = (int)GetMainViewport()->Size.y / 16;
-            for (int i = 0; i + m_gui.uiIndex < (int)m_scene.gameUICount && i < maxItems; i++)
-            {
-                if (mousePickNodeIndexTmp != -1)
-                {
-                    m_gui.uiIndex = mousePickNodeIndexTmp;
-                    SetScrollY(mousePickNodeIndexTmp - m_gui.uiIndex);
-                    mousePickNodeIndexTmp = -1;
-                }
-
-                if (i == 0 && m_gui.uiIndex > 1 && GetScrollY() == 0)
-                {
-                    SetScrollY(1);
-                    m_gui.uiIndex -= m_gui.sceneGraphScrollStrength;
-                }
-
-                float scrollMax = GetScrollMaxY();
-                if (i == maxItems - 1 && m_gui.uiIndex + i < (int)m_scene.gameUICount - 1 &&
-                    scrollMax == GetScrollY() && scrollMax != 0)
-                {
-                    SetScrollY(scrollMax - 1);
-                    m_gui.uiIndex += m_gui.sceneGraphScrollStrength;
-                }
-
-                if (m_gui.uiIndex + i < 1)
-                    m_gui.uiIndex = 1;
-                else if (m_gui.uiIndex + i > (int)m_scene.gameUICount - 1)
-                    m_gui.uiIndex = m_scene.gameUICount - i - 1;
-
-                if (m_scene.gameUIs[i + m_gui.uiIndex].parent == 0)
-                    DrawSceneNodesUI(false, i + m_gui.uiIndex);
-            }
-            EndChild();
-        }
-    }
-    End();
+    
     
 
     if (Begin("Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
@@ -954,23 +955,41 @@ void Engine::UpdateIMGUI()
             }
             if (CollapsingHeader("Render", propertiesFlags))
             {
+                int* modelIndex = &m_scene.gameObjects[m_gui.selectedObject].modelIndex;
                 SeparatorText("Model");
-
-                SeparatorText("Material");
-                if (BeginTable("MaterialTable", 2, tableFlags))
+                SetNextItemWidth(-FLT_MIN);
+                if (ImGui::BeginCombo("ModelList", (*modelIndex != -1) ? (char*)m_models[*modelIndex].name.data : "Select model"))
                 {
-                    TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-                    TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-                    TableNextRow();
-                    int modelId = m_scene.gameObjects[m_gui.selectedObject].modelIndex;
-                    TableSetColumnIndex(0);
-                    Text("Color");
-                    TableSetColumnIndex(1);
-                    SetNextItemWidth(-FLT_MIN);
-                    ColorPicker3("MaterialColor",
-                        &m_models[modelId].obj.materials.material->diffuse.x,
-                        ImGuiColorEditFlags_PickerHueWheel);
-                    EndTable();
+                    for (int i = 0; i < m_modelCount; i++)
+                    {
+                        bool is_selected = (*modelIndex == i);
+                        if (ImGui::Selectable((char*)m_models[i].name.data, is_selected))
+                            *modelIndex = i;
+
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+
+                // TODO: Refactor this when materials will be for each game objects
+                SeparatorText("Material");
+                if (*modelIndex != -1)
+                {
+                    if (BeginTable("MaterialTable", 2, tableFlags))
+                    {
+                        TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                        TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+                        TableNextRow();
+                        TableSetColumnIndex(0);
+                        Text("Color");
+                        TableSetColumnIndex(1);
+                        SetNextItemWidth(-FLT_MIN);
+                        ColorPicker3("MaterialColor",
+                            &m_models[*modelIndex].obj.materials.material->diffuse.x,
+                            ImGuiColorEditFlags_PickerHueWheel);
+                        EndTable();
+                    }
                 }
             }
         }

@@ -268,6 +268,8 @@
   <ItemGroup>
     <None Include="Shaders\blinn_phong.frag.glsl" />
     <None Include="Shaders\blinn_phong.vert.glsl" />
+    <None Include="Shaders\font.frag" />
+    <None Include="Shaders\font.vert" />
     <None Include="Shaders\ShadowShader.frag" />
     <None Include="Shaders\ShadowShader.vert" />
     <None Include="Shaders\skydome.frag" />
