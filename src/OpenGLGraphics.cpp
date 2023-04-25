@@ -277,7 +277,7 @@ namespace RedFoxEngine
             if (*text >= 32)
             {
                 stbtt_aligned_quad q;
-                stbtt_GetBakedQuad(cdata, 512, 512, *text - 32, &x, &y, &q, 1);//1=opengl & d3d10+,0=d3d9
+                stbtt_GetBakedQuad(cdata, 512, 512, *text - 32, &x, &y, &q, 1);
 
                 int width = 1080;
                 int height = 512;

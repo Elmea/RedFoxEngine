@@ -13,8 +13,10 @@ namespace RedFoxEngine
         RedFoxMaths::Float2 scale;
 
         MyString text;
-/*
+        MyString imagePath;
+        MyString buttonName;
         GLuint image;
+/*
         void* callbackFunction;
 */
         bool isPressed = false;

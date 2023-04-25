@@ -300,7 +300,7 @@ void Engine::Draw()
    
     for (int i = 0; i < m_scene.gameUICount; i++)
     {
-        if (m_scene.gameUIs[i].text.data != nullptr)
+        if (m_scene.gameUIs[i].text.data != "")
             m_graphics.RenderText((char*)&m_scene.gameUIs[i].text, m_scene.gameUIs[i].screenPosition.x * 5, -m_scene.gameUIs[i].screenPosition.y * 5, 20);
     }
     
