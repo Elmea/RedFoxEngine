@@ -815,6 +815,25 @@ void Engine::UpdateIMGUI()
                     EndDragDropTarget();
                 }
             }
+
+            if (IsKeyPressed(ImGuiKey_Delete, false))
+            {
+                if (m_scene.gameObjectCount - 1 > 1 && m_gui.selectedObject != 0)
+                {
+                    int* children = m_scene.GetChildren(m_gui.selectedObject, &m_memoryManager.m_memory.temp);
+                    if (children != nullptr)
+                    {
+                        int childrenCount = m_scene.GetChildrenCount(m_gui.selectedObject);
+                        for (int i = 0; i < childrenCount; i++)
+                            m_scene.gameObjects[*children + i].parent = 0;
+                    }
+                    m_scene.gameObjects[m_gui.selectedObject] = m_scene.gameObjects[m_scene.gameObjectCount - 1];
+                }
+                if (m_scene.gameObjectCount > 1)
+                    m_scene.gameObjectCount--;
+
+                m_gui.selectedObject = 0;
+            }
             
             float sceneGraphWidth = GetContentRegionAvail().x;
             int buttonWidth = 50;
@@ -882,11 +901,7 @@ void Engine::UpdateIMGUI()
             EndChild();
         }
     }
-    End();
-
-    
-    
-    
+    End();  
 
     if (Begin("Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {

@@ -93,10 +93,10 @@
     <ClCompile Include="..\external\ImGuizmo.cpp">
       <Filter>Source Files\External\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Win32Platform.cpp">
-      <Filter>Source Files\External</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\GameUI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Win32Platform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -164,11 +164,11 @@
     <ClInclude Include="..\external\include\wglext.h">
       <Filter>Header Files\External</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\Win32Platform.hpp">
-      <Filter>Header Files\External</Filter>
-    </ClInclude>
     <ClInclude Include="..\external\include\stb_image\stb_image.h">
       <Filter>Header Files\External\stb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Win32Platform.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
