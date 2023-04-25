@@ -55,7 +55,6 @@ private:
     Scene m_scene;
     //GameState
     Input m_input = {};
-    u64 *m_modelCountIndex;
     Model *m_models = nullptr;
     u64 m_modelCount = 0;
 

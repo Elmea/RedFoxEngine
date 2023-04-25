@@ -35,7 +35,7 @@ Engine::Engine(int width, int height) :
     m_modelCount++;
     ObjModelPush("ts_bot912.obj");
     // ObjModelPush("vortigaunt.obj");
-    // ObjModelPush("barbarian.obj");
+    ObjModelPush("barbarian.obj");
 
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
@@ -62,7 +62,7 @@ Engine::Engine(int width, int height) :
 
     //TODO transition to an instance based model 'model'
     for (int i = 0; i < (int)m_modelCount; i++)
-        m_graphics.InitModel(&m_models[i], &m_memoryManager);
+        m_graphics.InitModel(&m_models[i]);
     InitSkyDome();
     m_memoryManager.m_sceneUsedMemory = m_memoryManager.m_memory.arena.usedSize;
 #if 0
@@ -232,24 +232,49 @@ void Engine::UpdateModelMatrices()
 {
     m_scene.m_modelMatrices = (RedFoxMaths::Mat4 *)m_memoryManager.TemporaryAllocation(
         sizeof(RedFoxMaths::Mat4) * m_scene.gameObjectCount);
-    m_modelCountIndex = (u64 *)m_memoryManager.TemporaryAllocation(sizeof(u64)
+    m_scene.m_modelCountIndex = (u64 *)m_memoryManager.TemporaryAllocation(sizeof(u64)
                                                          * m_modelCount);
-    memset(m_modelCountIndex, 0, sizeof(u64) * m_modelCount);
+    memset(m_scene.m_modelCountIndex, 0, sizeof(u64) * m_modelCount);
     int totalIndex = 0;
+    
+    Material *materials = (Material *)m_memoryManager.TemporaryAllocation(sizeof(Material) * m_scene.gameObjectCount);
     for (int modelIndex = 0; modelIndex < (int)m_modelCount; modelIndex++)
     {
         for(int index = 0;index < (int)m_scene.gameObjectCount; index++)
         {
             if (m_scene.gameObjects[index].modelIndex == modelIndex)
             {
-                u64 countIndex = m_modelCountIndex[modelIndex];
+                Model *model = &m_models[modelIndex];
+                Material *material = &materials[totalIndex];
+                for (int i = 0; i < (int)model->obj.materials.count; i++)
+                {
+                    Float3 zero = {};
+                    if (memcmp(&m_scene.gameObjects[index].Color, &zero, sizeof(Float3)))
+                        material->diffuse = m_scene.gameObjects[index].Color;
+                    else 
+                        material->diffuse = {model->obj.materials.material[i].diffuse.x, 
+                                                model->obj.materials.material[i].diffuse.y,
+                                                model->obj.materials.material[i].diffuse.z};
+                    material->Shininess = model->obj.materials.material[i].Shininess;
+                    if (model->obj.materials.material[i].hasTexture == 0)
+                        material->diffuseMap = -1;
+                    else
+                        material->diffuseMap = model->obj.materials.material[i].diffuseMap.index0;
+                    if (model->obj.materials.material[i].hasNormal == 0)
+                        material->normalMap = -1;
+                    else
+                        material->normalMap = model->obj.materials.material[i].normalMap.index0;
+                }
+                
                 m_scene.m_modelMatrices[totalIndex] =
                     m_scene.GetWorldMatrix(index).GetTransposedMatrix();
-                m_modelCountIndex[modelIndex]++;
+                m_scene.m_modelCountIndex[modelIndex]++;
                 totalIndex++;
             }
         }
     }
+    m_graphics.PushMaterial(materials, totalIndex);
+    
 }
 
 void Engine::UpdateSkyDome()
@@ -291,7 +316,7 @@ void Engine::Draw()
     else
         currentCamera = &m_scene.m_gameCamera;
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
-    m_graphics.Draw(m_scene.m_modelMatrices, m_modelCountIndex, m_scene.gameObjectCount, m_platform.m_windowDimension, m_scene.skyDome, m_time.current, m_time.delta, &m_memoryManager);
+    m_graphics.Draw(&m_scene, m_platform.m_windowDimension, m_time.current, m_time.delta);
     m_platform.SwapFramebuffers();
     m_time.delta = (Platform::GetTimer() - m_time.current);
     m_memoryManager.m_memory.temp.usedSize = 0;

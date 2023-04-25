@@ -49,6 +49,7 @@ in FS_IN
     vec3 Normal;
     vec2 TexCoord;
     flat unsigned int materialID;
+    vec3 Color;
 } fs_in;
 
 layout (location=0)
@@ -186,7 +187,7 @@ void main()
     mat3 TBN = mat3(1.0f);
     if (mat.material[fs_in.materialID].diffuseMap == -1)
     {
-        Color = mat.material[fs_in.materialID].diffuse;
+        Color = fs_in.Color;
     }
     else
     {

@@ -773,13 +773,13 @@ void Engine::UpdateIMGUI()
                     TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
                     TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
                     TableNextRow();
-                    int modelId = m_scene.gameObjects[m_gui.selectedObject].modelIndex;
                     TableSetColumnIndex(0);
                     Text("Color");
                     TableSetColumnIndex(1);
                     SetNextItemWidth(-FLT_MIN);
+
                     ColorPicker3("MaterialColor",
-                        &m_models[modelId].obj.materials.material->diffuse.x,
+                        &m_scene.gameObjects[m_gui.selectedObject].Color.x,
                         ImGuiColorEditFlags_PickerHueWheel);
                     EndTable();
                 }

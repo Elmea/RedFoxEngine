@@ -10,10 +10,25 @@
 #include "ObjParser.hpp"
 #include "imgui.h"
 #include "Light.hpp"
-#include "ResourceManager.hpp"
+#include "Scene.hpp"
 
 namespace RedFoxEngine
 {
+
+struct Material
+{
+    RedFoxMaths::Float3 ambient;
+    float Opaqueness;
+
+    RedFoxMaths::Float3 diffuse;
+    float Shininess;
+
+    RedFoxMaths::Float3 specular;
+    int diffuseMap;
+
+    RedFoxMaths::Float3 emissive;
+    int normalMap;
+};
 
 struct LightStorage
 {
@@ -28,13 +43,6 @@ struct LightStorage
     unsigned int* shadowMaps;
     Light* CreateLight(LightType type);
     void RemoveLight(int lightIndex);
-};
-
-struct SkyDome
-{
-    RedFoxMaths::Float3 sunPosition;
-    GLuint topTint, botTint, sun, moon, clouds;
-    RedFoxMaths::Mat4 model;
 };
 
 struct Textures
@@ -53,7 +61,7 @@ class Graphics
 private:
     GLuint m_textureSampler;
     Textures m_textures = {};
-
+    u32 m_materialCount;
     RedFoxMaths::Mat4 m_viewProjection;
 
     Shader m_blinnPhong;
@@ -78,7 +86,7 @@ public:
     u32    m_modelCount;
     LightStorage lightStorage;
     
-    void InitModel(Model *model, RedFoxEngine::ResourcesManager *m);
+    void InitModel(Model *model);
     void InitLights();
     void InitModelTextures(ObjModel *model);
     u32 InitTexture(void *data, int width, int height, bool resident, bool repeat);
@@ -91,10 +99,11 @@ public:
     void FillLightBuffer(LightInfo* lights, LightType type);
     void UpdateImGUIFrameBuffer(WindowDimension& dimension, WindowDimension content);
     void UpdateModelMatrices(GameObject* objects, int gameObjectCount, Memory* temp);
-    void Draw(RedFoxMaths::Mat4 *p_modelMatrices, u64 *p_modelCountIndex, int totalCount, WindowDimension p_windowDimension, SkyDome p_skyDome, float time, float p_deltaTime, RedFoxEngine::ResourcesManager *m);
+    void PushMaterial(Material *materials, int count);
+    void Draw(Scene *m_scene, WindowDimension p_windowDimension, float p_time, float p_delta);
     void DrawShadowMaps(u64* modelCountIndex);
     void DrawSkyDome(SkyDome skyDome, float dt);
-    void DrawGameObjects(u64* modelCountIndex, ResourcesManager *m);
+    void DrawGameObjects(u64* modelCountIndex);
     void DrawModelInstances(Model* model,
         RedFoxMaths::Mat4* modelMatrices, int instanceCount);
     void DrawModelShadowInstances(Model* model, int instanceCount);

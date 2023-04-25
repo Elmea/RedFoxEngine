@@ -1,6 +1,5 @@
 #pragma once
 #include "Camera.hpp"
-#include "OpenGLGraphics.hpp"
 #include "GameObject.hpp"
 
 namespace RedFoxEngine
@@ -22,6 +21,12 @@ struct TimeManager
     f64 delta;
 };
 
+struct SkyDome
+{
+    RedFoxMaths::Float3 sunPosition;
+    u32 topTint, botTint, sun, moon, clouds;
+    RedFoxMaths::Mat4 model;
+};
 
 class Scene
 {
@@ -33,8 +38,12 @@ public:
     SceneGraph graph;
     int m_width, m_height;
     bool isPaused = true;
+    
     RedFoxMaths::Mat4 *m_modelMatrices;
+    u64 *m_modelCountIndex;
+
     GameObject *gameObjects = nullptr;
+
     Scene(int width, int height):m_gameCamera(projectionType::PERSPECTIVE,
         width / (f32)height){};
     RedFoxMaths::Mat4 GetWorldMatrix(int gameObjectindex)

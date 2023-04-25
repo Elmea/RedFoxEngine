@@ -28,8 +28,8 @@ namespace RedFoxEngine
 
             glCreateBuffers(1, &m_materialSSBO);
             glNamedBufferStorage(m_materialSSBO,
-                100 * sizeof(ObjMaterial),
-                nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
+                100100 * sizeof(Material),
+                nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT | GL_MAP_READ_BIT);
 
             glCreateBuffers(1, &m_textureSSBO);
             glNamedBufferStorage(m_textureSSBO, 10000 * sizeof(u64), nullptr, GL_DYNAMIC_STORAGE_BIT);
@@ -122,24 +122,26 @@ namespace RedFoxEngine
         InitImGUIFramebuffer(dimension);
     }
 
-    void Graphics::InitModel(Model* model, ResourcesManager *m)
+    void Graphics::InitModel(Model* model)
     {
         // vertex buffer containing triangle vertices
         model->vertexOffset = m_vertexCount;
         model->indexOffset = m_indexCount;
-        model->mesh.count = model->obj.meshCount;
+        // model->mesh.count = model->obj.meshCount;
         model->indexCount = model->obj.indexCount;
-        int temp = m->materialCount;
-        Material materials[100] = {};
         InitModelTextures(&model->obj);
+        
+        Material materials[100] = {};
+
+        int temp = m_materialCount;
+        for (int i = 0; i < (int)model->obj.vertexCount; i++)
+           model->obj.vertices[i].materialID += m_materialCount;
         for (int i = 0; i < (int)model->obj.materials.count; i++)
         {
-            materials[i].ambient = model->obj.materials.material[i].ambient;
-            materials[i].Opaqueness = model->obj.materials.material[i].Opaqueness;
-            materials[i].diffuse = model->obj.materials.material[i].diffuse;
+            materials[i].diffuse = {model->obj.materials.material[i].diffuse.x, 
+                                    model->obj.materials.material[i].diffuse.y,
+                                    model->obj.materials.material[i].diffuse.z};
             materials[i].Shininess = model->obj.materials.material[i].Shininess;
-            materials[i].specular = model->obj.materials.material[i].specular;
-            materials[i].emissive = model->obj.materials.material[i].emissive;
             if (model->obj.materials.material[i].hasTexture == 0)
                 materials[i].diffuseMap = -1;
             else
@@ -148,16 +150,10 @@ namespace RedFoxEngine
                 materials[i].normalMap = -1;
             else
                 materials[i].normalMap = model->obj.materials.material[i].normalMap.index0;
-            m->AddMaterial(materials[i]);
+            m_materialCount++;
         }
-        if (temp != m->materialCount)
-        {
-            for (int i = 0; i < (int)model->obj.vertexCount; i++)
-                model->obj.vertices[i].materialID += temp;
-            int size = m->materialCount - temp;
-            glNamedBufferSubData(m_materialSSBO, sizeof(Material) * temp, sizeof(Material) * (m->materialCount - temp), &m->materials[temp]);
-        }
-        
+
+        glNamedBufferSubData(m_materialSSBO, temp * sizeof(Material), (model->obj.materials.count) * sizeof(Material), materials);
         {
             // (GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data);
             glNamedBufferSubData(m_vertexBufferObject, m_vertexCount * sizeof(ObjVertex), 
@@ -236,11 +232,11 @@ namespace RedFoxEngine
         glDrawElements(GL_TRIANGLES, m_models[1].obj.indexCount, GL_UNSIGNED_INT, 0);
     }
 
-    void Graphics::Draw(RedFoxMaths::Mat4* p_modelMatrices, u64* p_modelCountIndex, int totalCount, WindowDimension p_windowDimension, SkyDome p_skyDome, float p_time, float p_delta, ResourcesManager *m)
+    void Graphics::Draw(Scene *m_scene, WindowDimension p_windowDimension, float p_time, float p_delta)
     {
         glBindVertexArray(m_vertexArrayObject);
         //
-        glNamedBufferSubData(m_matrixSSBO, 0, sizeof(RedFoxMaths::Mat4) * totalCount, p_modelMatrices);
+        glNamedBufferSubData(m_matrixSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_scene->gameObjectCount, m_scene->m_modelMatrices);
         GLuint64 textureHandles[128];
         for (int i = 0; i < (int)m_textures.textureCount; i++)
             textureHandles[i] = glGetTextureSamplerHandleARB(m_textures.textures[i], m_textureSampler);
@@ -249,7 +245,7 @@ namespace RedFoxEngine
         static float test;
         if (test > 0.016)
         {
-            DrawShadowMaps(p_modelCountIndex);
+            DrawShadowMaps(m_scene->m_modelCountIndex);
             test = 0;
         }
         test += p_delta;
@@ -261,10 +257,10 @@ namespace RedFoxEngine
         glClearColor(0, 0, 0, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         glDisable(GL_CULL_FACE);
-        DrawSkyDome(p_skyDome, p_time / 500);
+        DrawSkyDome(m_scene->skyDome, p_time / 500);
 
         glEnable(GL_CULL_FACE);
-        DrawGameObjects(p_modelCountIndex, m);
+        DrawGameObjects(m_scene->m_modelCountIndex);
         // swap the buffers to show output
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -280,7 +276,7 @@ namespace RedFoxEngine
             glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, 0);    
     }
 
-    void Graphics::DrawGameObjects(u64* modelCountIndex, ResourcesManager *m)
+    void Graphics::DrawGameObjects(u64* modelCountIndex)
     {
         GLint u_matrix = 0; //location inside shader
         glProgramUniformMatrix4fv(m_blinnPhong.vertex, u_matrix, 1, GL_TRUE,
@@ -291,7 +287,7 @@ namespace RedFoxEngine
 
         BindLights();
         bindBuffer(4, m_textureSSBO, m_textures.textureCount * sizeof(u64));
-        bindBuffer(5, m_materialSSBO, m->materialCount * sizeof(Material));
+        // bindBuffer(5, m_materialSSBO, materialCount * sizeof(Material));
         bindBuffer(6, m_shadowMapsSSBO, lightStorage.lightCount * sizeof(u64));
 
         int totalCount = 0;
@@ -301,8 +297,12 @@ namespace RedFoxEngine
             {
                 Model *model = &m_models[i];
                 int instanceCount = modelCountIndex[i];
-                // (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount, GLint basevertex, GLuint baseinstance)
+                if (model->obj.materials.material->hasTexture)
+                    glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 5, m_materialSSBO, 0, m_materialCount * sizeof(Material));
+                else
+                    glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 5, m_materialSSBO, (totalCount + m_materialCount) * sizeof(Material), instanceCount * sizeof(Material));
                 glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 3, m_matrixSSBO, totalCount * sizeof(RedFoxMaths::Mat4), instanceCount * sizeof(RedFoxMaths::Mat4));
+                // (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount, GLint basevertex, GLuint baseinstance)
                 glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, model->indexCount,
                     GL_UNSIGNED_INT, (void *)(model->indexOffset * sizeof(u32)), instanceCount, model->vertexOffset, 0);
             }
@@ -347,6 +347,11 @@ namespace RedFoxEngine
         for (int i = 0; i < (int)lightStorage.lightCount; i++)
             shadowMapsHandles[i] = glGetTextureHandleARB(lightStorage.lights[i].lightInfo.shadowParameters.depthMap);
         glNamedBufferSubData(m_shadowMapsSSBO, 0, sizeof(u64) * (lightStorage.lightCount), shadowMapsHandles);
+    }
+
+    void Graphics::PushMaterial(Material *materials, int count)
+    {
+        glNamedBufferSubData(m_materialSSBO, m_materialCount * sizeof(Material), sizeof(Material) * count, materials);
     }
 
     void Graphics::DrawModelShadowInstances(Model* model, int instanceCount)

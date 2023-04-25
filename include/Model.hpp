@@ -21,7 +21,7 @@ namespace RedFoxEngine
         u32 vertexOffset;
         u32 indexOffset;
         u32 indexCount;
-        Meshes mesh;
+        // Meshes mesh;
         ObjModel obj;
         u64 hash;
     };
