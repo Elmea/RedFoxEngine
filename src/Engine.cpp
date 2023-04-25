@@ -40,6 +40,7 @@ Engine::Engine(int width, int height) :
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
 
+    //Init GameUI
     m_scene.gameUIs = (GameUI*)m_memoryManager.PersistentAllocation(sizeof(GameUI) * 100);
     m_scene.gameUIs[0] = {};
     m_scene.gameUIs[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
@@ -50,13 +51,14 @@ Engine::Engine(int width, int height) :
     for (int i = 1; i < (int)m_scene.gameUICount; i++)
         m_scene.gameUIs[i].parent = 0;
 
+    //Init GameObject
     m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);
     m_scene.gameObjects[0] = {};
     m_scene.gameObjects[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
     m_scene.gameObjects[0].name.capacity = 255;
-    m_scene.gameObjects[0].position = { 0, -11, 0 };
-    m_scene.gameObjects[0].orientation = { 1, 0, 0, 0 };
-    m_scene.gameObjects[0].scale = { 10000, 2, 10000 };
+    m_scene.gameObjects[0].position ={0, -11, 0};
+    m_scene.gameObjects[0].orientation ={1, 0, 0, 0};
+    m_scene.gameObjects[0].scale ={10000, 2, 10000};
     m_graphics.lightStorage.lights = (Light*)m_memoryManager.PersistentAllocation(sizeof(Light) * 1000);
     m_graphics.lightStorage.shadowMaps = (unsigned int*)m_memoryManager.PersistentAllocation(sizeof(unsigned int) * 1000);
     m_scene.gameObjectCount++;
@@ -118,7 +120,9 @@ Engine::Engine(int width, int height) :
     // path into the scene data ? maybe both
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
     m_graphics.InitLights();
+    m_graphics.InitQuad();
     m_physx.InitPhysics(m_scene, 1);
+    m_graphics.InitFont(&m_memoryManager.m_memory.temp);
 }
 
 void Engine::ObjModelPush(const char *path)
@@ -285,18 +289,21 @@ void Engine::Draw()
         Sleep(3);
         timeEndPeriod(1);
     }
+    // Camera *currentCamera = &m_scene.m_gameCamera; //TODO game camera
     Camera *currentCamera;
     if (m_scene.isPaused)
-        currentCamera = &m_editorCamera;
+        currentCamera = &m_editorCamera; //TODO game camera
     else
         currentCamera = &m_scene.m_gameCamera;
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
     m_graphics.Draw(m_scene.m_modelMatrices, m_modelCountIndex, m_scene.gameObjectCount, m_platform.m_windowDimension, m_scene.skyDome, m_time.current, m_time.delta, &m_memoryManager);
-
-    for (int i = 1; i < m_scene.gameUICount; i++)
-        if (m_scene.gameUIs[i].text.data != "")
-            m_graphics.RenderText((char*)&m_scene.gameUIs[i].text.data, m_scene.gameUIs[i].screenPosition.x, -m_scene.gameUIs[i].screenPosition.y, 20);
-
+   
+    for (int i = 0; i < m_scene.gameUICount; i++)
+    {
+        if (m_scene.gameUIs[i].text.data != nullptr)
+            m_graphics.RenderText((char*)&m_scene.gameUIs[i].text, m_scene.gameUIs[i].screenPosition.x * 5, -m_scene.gameUIs[i].screenPosition.y * 5, 20);
+    }
+    
     m_platform.SwapFramebuffers();
     m_time.delta = (Platform::GetTimer() - m_time.current);
     m_memoryManager.m_memory.temp.usedSize = 0;

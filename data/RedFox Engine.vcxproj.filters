@@ -16,19 +16,19 @@
     <Filter Include="Resource Files\Shaders">
       <UniqueIdentifier>{a9df4008-93d1-4f91-97a4-0ff093938d33}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\External">
+    <Filter Include="Header Files\extern">
       <UniqueIdentifier>{54913677-3133-4e51-8a76-a91013d4eb4b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\External\Imgui">
+    <Filter Include="Header Files\extern\Imgui">
       <UniqueIdentifier>{27d80de5-6b7c-4321-b934-c0855ed09d53}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\External\stb">
+    <Filter Include="Header Files\extern\stb">
       <UniqueIdentifier>{6e59c0de-1a23-4ce0-b2b1-f91159b570aa}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\External">
+    <Filter Include="Source Files\extern">
       <UniqueIdentifier>{90a67174-c792-43ea-b5fa-d9aab8662d3e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\External\Imgui">
+    <Filter Include="Source Files\extern\Imgui">
       <UniqueIdentifier>{06587ad5-e37c-45c7-bc45-ff4c1e99c25b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -70,31 +70,31 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\external\imgui.cpp">
-      <Filter>Source Files\External\Imgui</Filter>
+      <Filter>Source Files\extern\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\external\imgui_demo.cpp">
-      <Filter>Source Files\External\Imgui</Filter>
+      <Filter>Source Files\extern\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\external\imgui_draw.cpp">
-      <Filter>Source Files\External\Imgui</Filter>
+      <Filter>Source Files\extern\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\external\imgui_impl_opengl3.cpp">
-      <Filter>Source Files\External\Imgui</Filter>
+      <Filter>Source Files\extern\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\external\imgui_impl_win32.cpp">
-      <Filter>Source Files\External\Imgui</Filter>
+      <Filter>Source Files\extern\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\external\imgui_tables.cpp">
-      <Filter>Source Files\External\Imgui</Filter>
+      <Filter>Source Files\extern\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\external\imgui_widgets.cpp">
-      <Filter>Source Files\External\Imgui</Filter>
+      <Filter>Source Files\extern\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\external\ImGuizmo.cpp">
-      <Filter>Source Files\External\Imgui</Filter>
+      <Filter>Source Files\extern\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Win32Platform.cpp">
-      <Filter>Source Files\External</Filter>
+      <Filter>Source Files\extern</Filter>
     </ClCompile>
     <ClCompile Include="..\src\GameUI.cpp">
       <Filter>Source Files</Filter>
@@ -132,43 +132,46 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\external\include\imconfig.h">
-      <Filter>Header Files\External\Imgui</Filter>
+      <Filter>Header Files\extern\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\external\include\imgui.h">
-      <Filter>Header Files\External\Imgui</Filter>
+      <Filter>Header Files\extern\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\external\include\imgui_impl_opengl3.h">
-      <Filter>Header Files\External\Imgui</Filter>
+      <Filter>Header Files\extern\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\external\include\imgui_internal.h">
-      <Filter>Header Files\External\Imgui</Filter>
+      <Filter>Header Files\extern\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\external\include\ImGuizmo.h">
-      <Filter>Header Files\External\Imgui</Filter>
+      <Filter>Header Files\extern\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\external\include\imstb_rectpack.h">
-      <Filter>Header Files\External\stb</Filter>
+      <Filter>Header Files\extern\stb</Filter>
     </ClInclude>
     <ClInclude Include="..\external\include\imstb_textedit.h">
-      <Filter>Header Files\External\stb</Filter>
+      <Filter>Header Files\extern\stb</Filter>
     </ClInclude>
     <ClInclude Include="..\external\include\imstb_truetype.h">
-      <Filter>Header Files\External\stb</Filter>
+      <Filter>Header Files\extern\stb</Filter>
     </ClInclude>
     <ClInclude Include="..\external\include\glcorearb.h">
-      <Filter>Header Files\External</Filter>
+      <Filter>Header Files\extern</Filter>
     </ClInclude>
     <ClInclude Include="..\external\include\khr\khrplatform.h">
-      <Filter>Header Files\External</Filter>
+      <Filter>Header Files\extern</Filter>
     </ClInclude>
     <ClInclude Include="..\external\include\wglext.h">
-      <Filter>Header Files\External</Filter>
+      <Filter>Header Files\extern</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Win32Platform.hpp">
-      <Filter>Header Files\External</Filter>
+      <Filter>Header Files\extern</Filter>
     </ClInclude>
     <ClInclude Include="..\external\include\stb_image\stb_image.h">
-      <Filter>Header Files\External\stb</Filter>
+      <Filter>Header Files\extern\stb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\GameUI.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

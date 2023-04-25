@@ -61,7 +61,7 @@ private:
     Shader m_blinnPhong;
     Shader m_shadow;
     Shader m_sky;
-    Shader m_fontPipeline;
+    Shader m_font;
 
     GLuint m_imguiFramebuffer;
 
@@ -77,9 +77,10 @@ private:
     u32    m_shadowMapsSSBO;
 
     stbtt_bakedchar cdata[96];
-    GLuint m_quadVAO;
-    GLuint m_quadVBO;
     GLuint m_gFontTexture;
+
+    GLuint m_quadVAO;
+    unsigned int m_quadVBO;
 
 public:
     GLuint m_imguiTexture;
@@ -89,13 +90,14 @@ public:
     
     void InitModel(Model *model, RedFoxEngine::ResourcesManager *m);
     void InitLights();
+    void InitFont(Memory* temp);
+    void InitQuad();
     void InitModelTextures(ObjModel *model);
     u32 InitTexture(void *data, int width, int height, bool resident, bool repeat);
     void InitFramebuffer();
     void InitShaders(Memory *tempArena);
     void InitGraphics(Memory *tempArena, WindowDimension dimension);
     void InitImGUIFramebuffer(WindowDimension dimension);
-    void InitFont(Memory* temp);
     void BindLights();
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
     void FillLightBuffer(LightInfo* lights, LightType type);
@@ -109,8 +111,9 @@ public:
         RedFoxMaths::Mat4* modelMatrices, int instanceCount);
     void DrawModelShadowInstances(Model* model, int instanceCount);
     void RenderText(char* text, float x, float y, float scale);
+
 };
-}
+} // namespace RedFoxEngine
 
 extern PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
 extern PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
