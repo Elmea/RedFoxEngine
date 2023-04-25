@@ -238,6 +238,7 @@
     <ClCompile Include="..\src\Shaders.cpp" />
     <ClCompile Include="..\src\UI.cpp" />
     <ClCompile Include="..\src\Win32Platform.cpp" />
+    <ClCompile Include="SoundManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\include\glcorearb.h" />
