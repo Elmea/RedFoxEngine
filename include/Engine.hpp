@@ -21,6 +21,7 @@
 #include "OpenGLGraphics.hpp"
 #include "GameObject.hpp"
 #include "Camera.hpp"
+#include "SoundManager.hpp"
 
 namespace RedFoxEngine
 {
@@ -74,6 +75,8 @@ private:
     
     ImGUI m_gui = {};
     Physx m_physx {};
+    SoundManager m_soundManager;
+    Sound* m_testMusic;
 
 public:
     bool isGame = false;

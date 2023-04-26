@@ -77,9 +77,9 @@ Engine::Engine(int width, int height) :
         dir->lightInfo.quadratic = 0.032f;
         dir->lightInfo.position = {0.0f, 75.0f, 0.0f};
         dir->lightInfo.direction = { 0.3f, -0.8f, -0.5f };
-        dir->lightInfo.ambient = {0.3, 0.3, 0.3};
-        dir->lightInfo.diffuse = {0.6, 0.6, 0.6};
-        dir->lightInfo.specular = {0.1, 0.1, 0.1};
+        dir->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
+        dir->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
+        dir->lightInfo.specular = {0.1f, 0.1f, 0.1f};
      
         /**/
         Light* spot = m_graphics.lightStorage.CreateLight(LightType::SPOT);
@@ -88,9 +88,9 @@ Engine::Engine(int width, int height) :
         spot->lightInfo.quadratic = 0.032f;
         spot->lightInfo.direction = {0.0f, 0.0f, 1.0f};
         spot->lightInfo.position = {0.0f, 0.0f, -5.0f};
-        spot->lightInfo.ambient = {0.3, 0.3, 0.3};
-        spot->lightInfo.diffuse = {0.6, 0.6, 0.6};
-        spot->lightInfo.specular = {0.1, 0.1, 0.1};
+        spot->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
+        spot->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
+        spot->lightInfo.specular = {0.1f, 0.1f, 0.1f};
         spot->lightInfo.cutOff = 0.5f;
         spot->lightInfo.outerCutOff = 0.1f;
         /*
@@ -100,14 +100,13 @@ Engine::Engine(int width, int height) :
         point->lightInfo.quadratic = 0.1f;
         point->lightInfo.direction = {0.0f, 0.0f, 1.0f};
         point->lightInfo.position = {0.0f, 0.0f, -5.0f};
-        point->lightInfo.ambient = {0.3, 0.3, 0.3};
-        point->lightInfo.diffuse = {0.6, 0.6, 0.6};
-        point->lightInfo.specular = {0.1, 0.1, 0.1};
+        point->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
+        point->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
+        point->lightInfo.specular = {0.1f, 0.1f, 0.1f};
         point->lightInfo.cutOff = 0.5f;
         point->lightInfo.outerCutOff = 0.1f;
         */
     }
-
 
 #endif
     m_input = {};
@@ -116,6 +115,15 @@ Engine::Engine(int width, int height) :
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
     m_graphics.InitLights();
     m_physx.InitPhysics(m_scene, 1);
+
+    m_soundManager.Init(&m_memoryManager.m_memory.arena);
+    m_soundManager.SetMasterVolume(1);
+    
+    m_testMusic = m_soundManager.CreateSound("Sounds/VEGASWORD-Unnammed-Tears.ogg");
+    m_testMusic->SetVolume(1);
+    m_testMusic->SetLoop(true);
+    m_testMusic->position = {0.f, 10.f, 0.f};
+    m_testMusic->Play3D();
 }
 
 void Engine::ObjModelPush(const char *path)
@@ -265,6 +273,7 @@ void Engine::Update()
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
     UpdateEditorCamera();
     UpdateSkyDome();
+    m_soundManager.UpdateListener(m_editorCamera.position, m_editorCamera.orientation.ToEuler());
     UpdateLights(&m_graphics.lightStorage);
     m_physx.UpdatePhysics(m_time.delta, m_memoryManager, m_scene.isPaused);
     m_game.update(&m_scene, &m_physx, m_input, m_time.delta);

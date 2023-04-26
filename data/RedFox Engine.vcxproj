@@ -236,9 +236,9 @@
     <ClCompile Include="..\src\ResourceManager.cpp" />
     <ClCompile Include="..\src\SceneGraph.cpp" />
     <ClCompile Include="..\src\Shaders.cpp" />
+    <ClCompile Include="..\src\SoundManager.cpp" />
     <ClCompile Include="..\src\UI.cpp" />
     <ClCompile Include="..\src\Win32Platform.cpp" />
-    <ClCompile Include="SoundManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\external\include\glcorearb.h" />
@@ -262,6 +262,7 @@
     <ClInclude Include="..\include\OpenGLFunctions.hpp" />
     <ClInclude Include="..\include\OpenGLGraphics.hpp" />
     <ClInclude Include="..\include\RedFoxMaths\RedfoxMaths.hpp" />
+    <ClInclude Include="..\include\SoundManager.hpp" />
     <ClInclude Include="..\include\Win32Platform.hpp" />
   </ItemGroup>
   <ItemGroup>
