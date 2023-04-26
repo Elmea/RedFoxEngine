@@ -10,9 +10,27 @@
 #include "ObjParser.hpp"
 #include "imgui.h"
 #include "Light.hpp"
+#include "Scene.hpp"
+
+#include "imstb_truetype.h"
 
 namespace RedFoxEngine
 {
+
+struct Material
+{
+    RedFoxMaths::Float3 ambient;
+    float Opaqueness;
+
+    RedFoxMaths::Float3 diffuse;
+    float Shininess;
+
+    RedFoxMaths::Float3 specular;
+    int diffuseMap;
+
+    RedFoxMaths::Float3 emissive;
+    int normalMap;
+};
 
 struct LightStorage
 {
@@ -29,32 +47,10 @@ struct LightStorage
     void RemoveLight(int lightIndex);
 };
 
-struct SkyDome
-{
-    RedFoxMaths::Float3 sunPosition;
-    GLuint topTint, botTint, sun, moon, clouds;
-    RedFoxMaths::Mat4 model;
-};
-
 struct Textures
 {
     GLuint textures[128];
     u32 textureCount; 
-};
-
-struct Material
-{
-    vec3 ambient;
-    float Opaqueness;
-
-    vec3 diffuse;
-    float Shininess;
-
-    vec3 specular;
-    int diffuseMap;
-
-    vec3 emissive;
-    int normalMap;
 };
 
 struct Shader
@@ -67,19 +63,33 @@ class Graphics
 private:
     GLuint m_textureSampler;
     Textures m_textures = {};
-
+    u32 m_materialCount;
     RedFoxMaths::Mat4 m_viewProjection;
 
     Shader m_blinnPhong;
     Shader m_shadow;
     Shader m_sky;
+    Shader m_font;
 
     GLuint m_imguiFramebuffer;
+
+    u32    m_indexCount = 0;
+    u32    m_vertexCount = 0;
+    u32    m_vertexBufferObject;
+    u32    m_vertexArrayObject;
+    u32    m_ebo;
 
     u32    m_materialSSBO;
     u32    m_matrixSSBO;
     u32    m_textureSSBO;
     u32    m_shadowMapsSSBO;
+
+    stbtt_bakedchar cdata[96];
+    GLuint m_gFontTexture;
+
+    GLuint m_quadVAO;
+    unsigned int m_quadVBO;
+
 public:
     GLuint m_imguiTexture;
     Model* m_models = nullptr;
@@ -88,6 +98,8 @@ public:
     
     void InitModel(Model *model);
     void InitLights();
+    void InitFont(Memory* temp);
+    void InitQuad();
     void InitModelTextures(ObjModel *model);
     u32 InitTexture(void *data, int width, int height, bool resident, bool repeat);
     void InitFramebuffer();
@@ -99,13 +111,16 @@ public:
     void FillLightBuffer(LightInfo* lights, LightType type);
     void UpdateImGUIFrameBuffer(WindowDimension& dimension, WindowDimension content);
     void UpdateModelMatrices(GameObject* objects, int gameObjectCount, Memory* temp);
-    void Draw(RedFoxMaths::Mat4 *p_modelMatrices, u64 *p_modelCountIndex, WindowDimension p_windowDimension, SkyDome p_skyDome, float p_deltaTime);
-    void DrawShadowMaps(RedFoxMaths::Mat4 *modelMatrices, u64 *modelCountIndex);
+    void PushMaterial(Material *materials, int count);
+    void Draw(Scene *m_scene, WindowDimension p_windowDimension, float p_time, float p_delta);
+    void DrawShadowMaps(u64* modelCountIndex);
     void DrawSkyDome(SkyDome skyDome, float dt);
-    void DrawGameObjects(RedFoxMaths::Mat4 *modelMatrices, u64 *modelCountIndex);
-    void DrawModelInstances(Model *model, RedFoxMaths::Mat4 *modelMatrices,
-        int instanceCount);
+    void DrawGameObjects(u64* modelCountIndex);
+    void DrawModelInstances(Model* model,
+        RedFoxMaths::Mat4* modelMatrices, int instanceCount);
     void DrawModelShadowInstances(Model* model, int instanceCount);
+    void RenderText(char* text, float x, float y, float scale);
+
 };
 } // namespace RedFoxEngine
 

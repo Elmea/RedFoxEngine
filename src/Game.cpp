@@ -131,7 +131,7 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
 
             velocity.x = speed * deltaTime * inputDirection.x;
             velocity.y = speed * deltaTime * inputDirection.y;
-            velocity.z = speed * deltaTime * inputDirection.z;
+            //velocity.z = speed * deltaTime * inputDirection.z;
             tPlayer->setLinearVelocity(velocity);
             physx::PxTransform transform;
             // transform = tPlayer->getGlobalPose();

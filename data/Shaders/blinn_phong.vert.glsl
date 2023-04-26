@@ -10,6 +10,26 @@ layout(std430, binding = 3) buffer MatrixBlock
     mat4 worldMatrix[];
 };
 
+struct Material
+{
+    vec3 ambient;
+    float Opaqueness;
+
+    vec3 diffuse;
+    float Shininess;
+
+    vec3 specular;
+    int diffuseMap;
+
+    vec3 emissive;
+    int normalMap;
+};
+
+layout(std430, binding = 5) buffer Materials
+{
+    readonly Material material[];
+} mat;
+
 layout (location = 0) uniform mat4 vp;
 
 out VS_OUT
@@ -18,6 +38,7 @@ out VS_OUT
     vec3 Normal;
     vec2 TexCoords;
     flat unsigned int materialID;
+    vec3 Color;
 } vs_out;
 
 out gl_PerVertex { vec4 gl_Position; };
@@ -30,5 +51,6 @@ void main()
     vs_out.Normal   = normalize((transpose(inverse(worldMatrix[gl_InstanceID])) *
                                  vec4(aNormal, 1)).rgb);
     vs_out.materialID = aMaterialID;
+    vs_out.Color = mat.material[gl_InstanceID].diffuse;
     gl_Position = vp * worldPosition;
 }

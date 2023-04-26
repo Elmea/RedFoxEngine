@@ -11,6 +11,8 @@
 #define REDFOXMATHS_IMPLEMENTATION
 #include "RedfoxMaths.hpp"
 
+#include <timeapi.h>
+
 using namespace RedFoxEngine;
 using namespace RedFoxMaths;
 
@@ -27,9 +29,13 @@ Engine::Engine(int width, int height) :
     m_models = (Model *)m_memoryManager.PersistentAllocation(sizeof(Model) * 100);
     m_models[m_modelCount].obj = CreateCube(&m_memoryManager.m_memory.arena);
     m_models[m_modelCount].hash = 1;
+    m_models[m_modelCount].name = initStringChar("Cube", 4, &m_memoryManager.m_memory.arena);
+    m_models[m_modelCount].name.capacity = 4;
     m_modelCount++;
     m_models[m_modelCount].obj = CreateSphere(30, 25, &m_memoryManager.m_memory.arena);
     m_models[m_modelCount].hash = 2;
+    m_models[m_modelCount].name = initStringChar("Sphere", 6, &m_memoryManager.m_memory.arena);
+    m_models[m_modelCount].name.capacity = 6;
     m_modelCount++;
     ObjModelPush("ts_bot912.obj");
     // ObjModelPush("vortigaunt.obj");
@@ -37,23 +43,28 @@ Engine::Engine(int width, int height) :
 
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
-    m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(
-                                                sizeof(GameObject) * 100000);
+
+    //Init GameUI
+    m_scene.gameUIs = (GameUI*)m_memoryManager.PersistentAllocation(sizeof(GameUI) * 100);
+    m_scene.gameUIs[0] = {};
+    m_scene.gameUIs[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
+    m_scene.gameUIs[0].name.capacity = 255;
+    m_scene.gameUIs[0].screenPosition = {0, 0};
+    m_scene.gameUIs[0].scale = {1,1};
+    m_scene.gameUICount++;
+    for (int i = 1; i < (int)m_scene.gameUICount; i++)
+        m_scene.gameUIs[i].parent = 0;
+
+    //Init GameObject
+    m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);
     m_scene.gameObjects[0] = {};
     m_scene.gameObjects[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
     m_scene.gameObjects[0].name.capacity = 255;
-    m_scene.gameObjects[0].position =
-    {
-        0, -11, 0
-    };
-    m_scene.gameObjects[0].orientation =
-    {
-        1, 0, 0, 0
-    };
-    m_scene.gameObjects[0].scale =
-    {
-        10000, 2, 10000
-    };
+    m_scene.gameObjects[0].position = { 0, 0, 0 };
+    m_scene.gameObjects[0].orientation = { 1, 0, 0, 0 };
+    m_scene.gameObjects[0].scale = { 1, 1, 1 };
+    m_scene.gameObjects->modelIndex = -1;
+
     m_graphics.lightStorage.lights = (Light*)m_memoryManager.PersistentAllocation(sizeof(Light) * 1000);
     m_graphics.lightStorage.shadowMaps = (unsigned int*)m_memoryManager.PersistentAllocation(sizeof(unsigned int) * 1000);
     m_scene.gameObjectCount++;
@@ -68,7 +79,7 @@ Engine::Engine(int width, int height) :
 #else
     initSphericalManyGameObjects(1000);
     m_scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
-    
+
     // Some light for testing
     {
         Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
@@ -114,6 +125,7 @@ Engine::Engine(int width, int height) :
     // path into the scene data ? maybe both
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
     m_graphics.InitLights();
+    m_graphics.InitQuad();
     m_physx.InitPhysics(m_scene, 1);
 
     m_soundManager.Init(&m_memoryManager.m_memory.arena);
@@ -123,7 +135,9 @@ Engine::Engine(int width, int height) :
     m_testMusic->SetVolume(1);
     m_testMusic->SetLoop(true);
     m_testMusic->position = {0.f, 10.f, 0.f};
-    m_testMusic->Play3D();
+    m_testMusic->Play();
+    //m_testMusic->Play3D();
+    m_graphics.InitFont(&m_memoryManager.m_memory.temp);
 }
 
 void Engine::ObjModelPush(const char *path)
@@ -141,6 +155,11 @@ void Engine::ObjModelPush(const char *path)
         length++;
     m_models[m_modelCount - 1].hash = MeowU64From(MeowHash(MeowDefaultSeed,
         (u64)length, (void *)path), 0);
+    
+    u64 len = strlen(path) - 4;
+    //MyString name = initStringChar(path, len, &m_memoryManager.m_memory.arena);
+    m_models[m_modelCount - 1].name = initStringChar(path, len, &m_memoryManager.m_memory.arena);
+    m_models[m_modelCount - 1].name.capacity = len;
 }
 
 bool Engine::isRunning()
@@ -155,7 +174,7 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     for (int i = 1; i < (int)m_scene.gameObjectCount; i++)
     {
         m_scene.gameObjects[i].parent = 0;
-        m_scene.gameObjects[i].modelIndex = i% m_modelCount;
+        m_scene.gameObjects[i].modelIndex = i % m_modelCount;
         if (m_scene.gameObjects[i].modelIndex == 0)
             m_scene.gameObjects[i].boxExtents = { 0.5, 0.5, 0.5 };
         else if (m_scene.gameObjects[i].modelIndex == 1)
@@ -189,14 +208,9 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
                 m_scene.gameObjects[index - 1].position * scale;
         }
     }
-    m_scene.gameObjects[0].position =
-    {
-        0, -10, 0
-    };
-    m_scene.gameObjects[0].scale =
-    {
-        1, 1, 1
-    };
+    m_scene.gameObjects[1].modelIndex = 0;
+    m_scene.gameObjects[1].position = { 0, -10, 0 };
+    m_scene.gameObjects[1].scale = { 1, 1, 1 };
 
 }
 
@@ -212,7 +226,7 @@ void Engine::ProcessInputs()
 
 void Engine::UpdateEditorCamera()
 {
-    if (m_editorCameraEnabled)
+    if (m_editorCameraEnabled && m_scene.isPaused)
     {
         const f32 dt32 = (f32)m_time.delta;
         static Float3 cameraRotation;
@@ -238,24 +252,49 @@ void Engine::UpdateModelMatrices()
 {
     m_scene.m_modelMatrices = (RedFoxMaths::Mat4 *)m_memoryManager.TemporaryAllocation(
         sizeof(RedFoxMaths::Mat4) * m_scene.gameObjectCount);
-    m_modelCountIndex = (u64 *)m_memoryManager.TemporaryAllocation(sizeof(u64)
+    m_scene.m_modelCountIndex = (u64 *)m_memoryManager.TemporaryAllocation(sizeof(u64)
                                                          * m_modelCount);
-    memset(m_modelCountIndex, 0, sizeof(u64) * m_modelCount);
+    memset(m_scene.m_modelCountIndex, 0, sizeof(u64) * m_modelCount);
     int totalIndex = 0;
+    
+    Material *materials = (Material *)m_memoryManager.TemporaryAllocation(sizeof(Material) * m_scene.gameObjectCount);
     for (int modelIndex = 0; modelIndex < (int)m_modelCount; modelIndex++)
     {
         for(int index = 0;index < (int)m_scene.gameObjectCount; index++)
         {
             if (m_scene.gameObjects[index].modelIndex == modelIndex)
             {
-                u64 countIndex = m_modelCountIndex[modelIndex];
+                Model *model = &m_models[modelIndex];
+                Material *material = &materials[totalIndex];
+                for (int i = 0; i < (int)model->obj.materials.count; i++)
+                {
+                    Float3 zero = {};
+                    if (memcmp(&m_scene.gameObjects[index].Color, &zero, sizeof(Float3)))
+                        material->diffuse = m_scene.gameObjects[index].Color;
+                    else 
+                        material->diffuse = {model->obj.materials.material[i].diffuse.x, 
+                                                model->obj.materials.material[i].diffuse.y,
+                                                model->obj.materials.material[i].diffuse.z};
+                    material->Shininess = model->obj.materials.material[i].Shininess;
+                    if (model->obj.materials.material[i].hasTexture == 0)
+                        material->diffuseMap = -1;
+                    else
+                        material->diffuseMap = model->obj.materials.material[i].diffuseMap.index0;
+                    if (model->obj.materials.material[i].hasNormal == 0)
+                        material->normalMap = -1;
+                    else
+                        material->normalMap = model->obj.materials.material[i].normalMap.index0;
+                }
+                
                 m_scene.m_modelMatrices[totalIndex] =
                     m_scene.GetWorldMatrix(index).GetTransposedMatrix();
-                m_modelCountIndex[modelIndex]++;
+                m_scene.m_modelCountIndex[modelIndex]++;
                 totalIndex++;
             }
         }
     }
+    m_graphics.PushMaterial(materials, totalIndex);
+    
 }
 
 void Engine::UpdateSkyDome()
@@ -285,6 +324,12 @@ void Engine::Update()
 
 void Engine::Draw()
 {
+    if (m_time.delta < 0.03f)
+    {
+        timeBeginPeriod(1);
+        Sleep(3);
+        timeEndPeriod(1);
+    }
     // Camera *currentCamera = &m_scene.m_gameCamera; //TODO game camera
     Camera *currentCamera;
     if (m_scene.isPaused)
@@ -292,7 +337,13 @@ void Engine::Draw()
     else
         currentCamera = &m_scene.m_gameCamera;
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
-    m_graphics.Draw(m_scene.m_modelMatrices, m_modelCountIndex, m_platform.m_windowDimension, m_scene.skyDome, m_time.current);
+    m_graphics.Draw(&m_scene, m_platform.m_windowDimension, m_time.current, m_time.delta);
+   
+    for (int i = 0; i < m_scene.gameUICount; i++)
+    {
+        if (m_scene.gameUIs[i].text.data != "")
+            m_graphics.RenderText((char*)&m_scene.gameUIs[i].text, m_scene.gameUIs[i].screenPosition.x * 5, -m_scene.gameUIs[i].screenPosition.y * 5, 20);
+    }
     m_platform.SwapFramebuffers();
     m_time.delta = (Platform::GetTimer() - m_time.current);
     m_memoryManager.m_memory.temp.usedSize = 0;

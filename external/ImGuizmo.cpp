@@ -2502,17 +2502,16 @@ namespace IMGUIZMO_NAMESPACE
 
       // --
       int type = MT_NONE;
-      bool manipulated = false;
       if (gContext.mbEnable)
       {
          if (!gContext.mbUsingBounds)
          {
-            manipulated = HandleTranslation(matrix, deltaMatrix, operation, type, snap) ||
-                          HandleScale(matrix, deltaMatrix, operation, type, snap) ||
-                          HandleRotation(matrix, deltaMatrix, operation, type, snap);
+             HandleTranslation(matrix, deltaMatrix, operation, type, snap);
+             HandleScale(matrix, deltaMatrix, operation, type, snap);
+             HandleRotation(matrix, deltaMatrix, operation, type, snap);
          }
       }
-
+      
       if (localBounds && !gContext.mbUsing)
       {
          HandleAndDrawLocalBounds(localBounds, (matrix_t*)matrix, boundsSnap, operation);
@@ -2526,7 +2525,7 @@ namespace IMGUIZMO_NAMESPACE
          DrawScaleGizmo(operation, type);
          DrawScaleUniveralGizmo(operation, type);
       }
-      return manipulated;
+      return gContext.mbUsing;
    }
 
    void SetGizmoSizeClipSpace(float value)

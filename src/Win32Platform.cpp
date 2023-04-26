@@ -38,7 +38,7 @@ static void APIENTRY DebugCallback(GLenum source, GLenum type, GLuint id, GLenum
     {
         if (IsDebuggerPresent())
         {
-            Assert(!"OpenGL error - check the callstack in debugger");
+           Assert(!"OpenGL error - check the callstack in debugger");
         }
         //FatalError("OpenGL API usage error! Use debugger to examine call stack!");
     }
@@ -370,6 +370,7 @@ void RedFoxEngine::Platform::MessageProcessing(Input *input)
                 case 0x4b: input->Left = IsDown; break; // Left
                 case 0x4d: input->Right = IsDown; break; // Right
                 case 0x50: input->Down = IsDown; break; // Down
+                case 0x53: input->Delete = IsDown; break;
                 default: { }
             }
         }

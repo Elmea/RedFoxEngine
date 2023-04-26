@@ -1,5 +1,6 @@
 #pragma once
 #include "MyMemory.hpp"
+#include "meow_hash_x64_aesni.h"
 
 namespace RedFoxEngine
 {
@@ -8,8 +9,10 @@ namespace RedFoxEngine
         Memory arena;
         Memory temp;
     };
+
     class ResourcesManager
     {
+        public:
         public:
         int m_sceneUsedMemory;
         Allocators m_memory;

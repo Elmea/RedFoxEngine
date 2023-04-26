@@ -892,45 +892,39 @@ int ParseModel(ObjModel *result, const char *path)
         else
         {
             VertexKey *current = key;
-            while (current->next != nullptr)
+            while (current != nullptr)
             {
                 if (memcmp(&current->key, &tempParser.vertexIndices[i], sizeof(ObjVertexIndex)) == 0)
                 {
-                    tempIndex = current->index;
                     deduplicates++;
+                    tempIndex = current->index;
                     break;
                 }
-                current = current->next;
-            }
-            if (current->next == nullptr &&
-                memcmp(&current->key, &tempParser.vertexIndices[i], sizeof(ObjVertexIndex)) != 0)
-            {
-                u32 materialId = 0;
-                for (int j = 0; j < result->meshCount; j++)
+                else if (current->next == nullptr)
                 {
-                    if (i >= result->meshes[j].indexStart &&
-                        i <= result->meshes[j].indexCount +
-                             result->meshes[j].indexStart)
+                    u32 materialId = 0;
+                    for (int j = 0; j < result->meshCount; j++)
                     {
-                        materialId = result->meshes[j].materialIndex;
+                        if (i >= result->meshes[j].indexStart &&
+                            i <= result->meshes[j].indexCount +
+                                 result->meshes[j].indexStart)
+                        {
+                            materialId = result->meshes[j].materialIndex;
+                        }
                     }
+                    ObjVertex tempVrtx = {tempParser.position[tempParser.vertexIndices[i].positionIndex],
+                                          tempParser.normal[tempParser.vertexIndices[i].normalIndex],
+                                          tempParser.textureUV[tempParser.vertexIndices[i].textureIndex],
+                                          materialId};
+                    current->next = tempNext + listCount;
+                    current->next->key = tempParser.vertexIndices[i];
+                    current->next->index = tempCount;
+                    listCount++;
+                    result->vertices[tempCount] = tempVrtx;
+                    tempIndex = tempCount;
+                    tempCount++;
                 }
-                ObjVertex tempVrtx = {tempParser.position[tempParser.vertexIndices[i].positionIndex],
-                                      tempParser.normal[tempParser.vertexIndices[i].normalIndex],
-                                      tempParser.textureUV[tempParser.vertexIndices[i].textureIndex],
-                                      materialId};
-                current->next = tempNext + listCount;
-                current->next->key = tempParser.vertexIndices[i];
-                current->next->index = tempCount;
-                listCount++;
-                result->vertices[tempCount] = tempVrtx;
-                tempIndex = tempCount;
-                tempCount++;
-            }
-            else if (memcmp(&current->key, &tempParser.vertexIndices[i], sizeof(ObjVertexIndex)) == 0)
-            {
-                deduplicates++;
-                tempIndex = current->index;
+                current = current->next;
             }
         }
         result->indices[i] = tempIndex;
@@ -1051,6 +1045,7 @@ ObjModel CreateCube(Memory *memory)
 
     for (int i = 0; i < (int)tmp->indexCount; i++)
         result.indices[i] = triangleIndices[i];
+    result.materials = {};
     result.materials.count = 1;
     result.materials.material = (ObjMaterial *)MyMalloc(memory, sizeof(ObjMaterial));
     result.materials.material->ambient = {1, 1, 1};
@@ -1125,6 +1120,7 @@ ObjModel CreateSphere(int latitudeCount, int longitudeCount, ArenaAllocator *mem
         result.indices[i++] = v + longitudeCount + 1;
         result.indices[i++] = v + 1;
     }
+    result.materials = {};
     result.materials.count = 1;
     result.materials.material = (ObjMaterial *)MyMalloc(memory, sizeof(ObjMaterial));
     result.materials.material->ambient = {1, 1, 1};
