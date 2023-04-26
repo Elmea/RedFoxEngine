@@ -7,19 +7,18 @@ namespace RedFoxEngine
     struct GameUI
     {
         MyString name;
-        int parent;
+        int      parent;
 
         RedFoxMaths::Float2 screenPosition;
         RedFoxMaths::Float2 scale;
 
         MyString text;
-        MyString imagePath;
-        MyString buttonName;
-        u32 image;
+        u32 image = 0;
 /*
         void* callbackFunction;
 */
         bool isPressed = false;
+        bool isHovered = false;
 
     };
 }

@@ -11,8 +11,9 @@
 namespace RedFoxEngine
 {
 
-    void Graphics::InitGraphics(Memory* tempArena, WindowDimension dimension)
+    void Graphics::InitGraphics(Memory* tempArena, WindowDimension p_dimension)
     {
+        dimension = p_dimension;
         InitShaders(tempArena);
         // setup global GL state
         {
@@ -208,10 +209,9 @@ namespace RedFoxEngine
     void Graphics::InitFont(Memory* temp)
     {
         unsigned char* temp_bitmap = (unsigned char*)MyMalloc(temp, 512 * 512);
-        unsigned char* ttf_buffer = (unsigned char*)MyMalloc(temp, 1 << 20);
 
-        fread(ttf_buffer, 1, 1 << 20, fopen("Fonts\\VictorMono-Bold.ttf", "rb"));
-        stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, 512, 512, 32, 96, cdata); // no guarantee this fits!
+        MyString file = OpenAndReadEntireFile("Fonts\\VictorMono-Bold.ttf", temp);
+        stbtt_BakeFontBitmap((const unsigned char *)file.data, 0, 32.0, temp_bitmap, 512, 512, 32, 96, cdata); // no guarantee this fits!
         glGenTextures(1, &m_gFontTexture);
         glBindTexture(GL_TEXTURE_2D, m_gFontTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, temp_bitmap);
@@ -265,41 +265,67 @@ namespace RedFoxEngine
 
     void Graphics::RenderText(char* text, float x, float y, float scale)
     {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glBindProgramPipeline(m_font.pipeline);
+        glBindVertexArray(m_quadVAO);
+        if (*text)
+        {
+            RedFoxMaths::Mat4 mat = RedFoxMaths::Mat4::GetOrthographicMatrix(dimension.width, 0, dimension.height, 0, 1, -1);
+            float xOffset = (x / 100) * dimension.width;
+            float yOffset = (y / 100) * dimension.height;
+            RedFoxMaths::Float2 scale0 = {      + xOffset - scale / 2,       + yOffset - scale / 2};
+            RedFoxMaths::Float2 scale1 = {scale + xOffset - scale / 2, scale + yOffset - scale / 2};
+            RedFoxMaths::Float4 vertices[4] = 
+            {
+                // positions  // texture Coords
+                {scale0.x, scale1.y,  0.0f, 1.0f},
+                {scale0.x, scale0.y,  0.0f, 0.0f},
+                {scale1.x, scale1.y,  1.0f, 1.0f},
+                {scale1.x, scale0.y,  1.0f, 0.0f},
+            };
+            glNamedBufferSubData(m_quadVBO, 0, sizeof(vertices), &vertices[0].x);
+            glBindTextureUnit(0, m_textures.textures[3]);
+            glProgramUniform1i(m_font.fragment, 1, 0);
+            glProgramUniformMatrix4fv(m_font.vertex, 0, 1, GL_TRUE, mat.mat16);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        }
+        float xOffset = (x / 100 * 2) - 1.0f;
+        float yOffset = (y / 100 * 2) - 1.0f;
         while (*text) {
             if (*text >= 32)
             {
                 stbtt_aligned_quad q;
                 stbtt_GetBakedQuad(cdata, 512, 512, *text - 32, &x, &y, &q, 1);
-
                 int width = 1080;
                 int height = 512;
+                
                 float vertices[] = {
-                     q.x0 / width + x / (1920) + -1.f / width, -q.y0 / height + 1.f / height, q.s0, q.t0,
-                     q.x0 / width + x / (1920) + -1.f / width, -q.y1 / height + -1.f / height, q.s0, q.t1,
-                     q.x1 / width + x / (1920) + 1.f / width, -q.y0 / height + 1.f / height, q.s1, q.t0,
-                     q.x1 / width + x / (1920) + 1.f / width, -q.y1 / height + -1.f / height, q.s1, q.t1,
+                     (q.x0 - 1.f) / width + xOffset, -q.y0 / height +  1.f / height + yOffset, q.s0, q.t0,
+                     (q.x0 - 1.f) / width + xOffset, -q.y1 / height + -1.f / height + yOffset, q.s0, q.t1,
+                     (q.x1 + 1.f) / width + xOffset, -q.y0 / height +  1.f / height + yOffset, q.s1, q.t0,
+                     (q.x1 + 1.f) / width + xOffset, -q.y1 / height + -1.f / height + yOffset, q.s1, q.t1,
                 };
                 // update content of VBO memory
-                glNamedBufferSubData(m_quadVBO, 0,
-                    sizeof(vertices), vertices);
+                glNamedBufferSubData(m_quadVBO, 0, sizeof(vertices), vertices);
                 glBindTextureUnit(0, m_gFontTexture);
-                glBindVertexArray(m_quadVAO);
+                RedFoxMaths::Float3 color(1, 0, 1);
+                RedFoxMaths::Mat4 mat = RedFoxMaths::Mat4::GetIdentityMatrix();
+                glProgramUniformMatrix4fv(m_font.vertex, 0, 1, GL_TRUE, mat.mat16);
+                glProgramUniform3fv(m_font.fragment, 0, 1, &color.x);
+                glProgramUniform1i(m_font.fragment, 1, 1);
                 // render quad
                 glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
             }
             ++text;
         }
-        
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
-
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
-
 
     void Graphics::DrawSkyDome(SkyDome skyDome, float time)
     {
@@ -322,6 +348,7 @@ namespace RedFoxEngine
 
     void Graphics::Draw(Scene *m_scene, WindowDimension p_windowDimension, float p_time, float p_delta)
     {
+        dimension = p_windowDimension;
         glBindVertexArray(m_vertexArrayObject);
         //
         glNamedBufferSubData(m_matrixSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_scene->gameObjectCount, m_scene->m_modelMatrices);
@@ -350,10 +377,7 @@ namespace RedFoxEngine
         glEnable(GL_CULL_FACE);
         DrawGameObjects(m_scene->m_modelCountIndex);
         // swap the buffers to show output
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);    
     }
 
     static void bindBuffer(int bindingPoint, GLuint buffer, int size)

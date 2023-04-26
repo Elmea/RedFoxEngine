@@ -91,6 +91,7 @@ private:
     unsigned int m_quadVBO;
 
 public:
+    WindowDimension dimension;
     GLuint m_imguiTexture;
     Model* m_models = nullptr;
     u32    m_modelCount;

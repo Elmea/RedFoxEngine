@@ -1024,7 +1024,7 @@ void Engine::UpdateIMGUI()
                     ImGui::Text("Position");
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    DragFloat2("TransformPosition", &m_scene.gameUIs[m_gui.selectedUI].screenPosition.x, m_gui.dragSpeed, -150.f, 150.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    DragFloat2("TransformPosition", &m_scene.gameUIs[m_gui.selectedUI].screenPosition.x, m_gui.dragSpeed, 0, 100.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
 
@@ -1047,7 +1047,7 @@ void Engine::UpdateIMGUI()
                     ImGui::Text("Text");
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::InputText("Text", (char*)&m_scene.gameUIs[m_gui.selectedUI].text, 256, 0, 0, 0);
+                    ImGui::InputText("Text", (char*)&m_scene.gameUIs[m_gui.selectedUI].text, 254, 0, 0, 0);
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
 
