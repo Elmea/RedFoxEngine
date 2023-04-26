@@ -1051,22 +1051,6 @@ void Engine::UpdateIMGUI()
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
 
-                    ImGui::Text("Image path");
-                    ImGui::TableSetColumnIndex(1);
-                    ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::InputText("Image path", (char*)&m_scene.gameUIs[m_gui.selectedUI].imagePath, 256, 0, 0, 0);
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
-
-
-                    int modelId = m_scene.gameObjects[m_gui.selectedObject].modelIndex;
-                    Text("Color");
-                    TableSetColumnIndex(1);
-                    SetNextItemWidth(-FLT_MIN);
-                    ColorPicker3("MaterialColor",
-                        &m_models[modelId].obj.materials.material->diffuse.x,
-                        ImGuiColorEditFlags_PickerHueWheel);
-
                     ImGui::EndTable();
                 }
             }
