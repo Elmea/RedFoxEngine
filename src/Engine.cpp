@@ -39,7 +39,7 @@ Engine::Engine(int width, int height) :
     m_modelCount++;
     ObjModelPush("ts_bot912.obj");
     // ObjModelPush("vortigaunt.obj");
-    ObjModelPush("barbarian.obj");
+    // ObjModelPush("barbarian.obj");
 
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
