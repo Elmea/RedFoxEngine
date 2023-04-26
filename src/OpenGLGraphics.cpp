@@ -5,6 +5,9 @@
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
 
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "imstb_truetype.h"
+
 namespace RedFoxEngine
 {
 
@@ -84,6 +87,40 @@ namespace RedFoxEngine
         }
         //V-SYNC
         wglSwapIntervalEXT(0);
+    }
+
+    void Graphics::InitQuad()
+    {
+        float vertices[] = {
+            // positions  // texture Coords
+            -1.0f,  1.0f,  0.0f, 1.0f,
+            -1.0f, -1.0f,  0.0f, 0.0f,
+             1.0f,  1.0f,  1.0f, 1.0f,
+             1.0f, -1.0f,  1.0f, 0.0f,
+        };
+        {
+            glCreateBuffers(1, &m_quadVBO);
+            glNamedBufferStorage(m_quadVBO, sizeof(vertices), vertices, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
+        }
+        // vertex input
+        {
+            glCreateVertexArrays(1, &m_quadVAO);
+
+            int vbuf_index = 0;
+            glVertexArrayVertexBuffer(m_quadVAO, vbuf_index, m_quadVBO, 0,
+                4 * sizeof(float));
+
+            int a_pos = 0;
+            glEnableVertexArrayAttrib(m_quadVAO, a_pos);
+            glVertexArrayAttribFormat(m_quadVAO, a_pos, 2, GL_FLOAT, GL_FALSE, 0);
+            glVertexArrayAttribBinding(m_quadVAO, a_pos, vbuf_index);
+
+            int a_uv = 1;
+            glEnableVertexArrayAttrib(m_quadVAO, a_uv);
+            glVertexArrayAttribFormat(m_quadVAO, a_uv, 2, GL_FLOAT, GL_FALSE,
+                sizeof(float) * 2);
+            glVertexArrayAttribBinding(m_quadVAO, a_uv, vbuf_index);
+        }
     }
 
     void Graphics::InitImGUIFramebuffer(WindowDimension dimension)
@@ -168,6 +205,19 @@ namespace RedFoxEngine
         DeInitGraphicsObj(&model->obj);
     }
 
+    void Graphics::InitFont(Memory* temp)
+    {
+        unsigned char* temp_bitmap = (unsigned char*)MyMalloc(temp, 512 * 512);
+        unsigned char* ttf_buffer = (unsigned char*)MyMalloc(temp, 1 << 20);
+
+        fread(ttf_buffer, 1, 1 << 20, fopen("Fonts\\VictorMono-Bold.ttf", "rb"));
+        stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, 512, 512, 32, 96, cdata); // no guarantee this fits!
+        glGenTextures(1, &m_gFontTexture);
+        glBindTexture(GL_TEXTURE_2D, m_gFontTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, temp_bitmap);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    }
+
     u32 Graphics::InitTexture(void* data, int width, int height, bool resident, bool repeat)
     {
         GLuint texture;
@@ -212,6 +262,44 @@ namespace RedFoxEngine
     {
         m_viewProjection = vp;
     }
+
+    void Graphics::RenderText(char* text, float x, float y, float scale)
+    {
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBindProgramPipeline(m_font.pipeline);
+        while (*text) {
+            if (*text >= 32)
+            {
+                stbtt_aligned_quad q;
+                stbtt_GetBakedQuad(cdata, 512, 512, *text - 32, &x, &y, &q, 1);
+
+                int width = 1080;
+                int height = 512;
+                float vertices[] = {
+                     q.x0 / width + x / (1920) + -1.f / width, -q.y0 / height + 1.f / height, q.s0, q.t0,
+                     q.x0 / width + x / (1920) + -1.f / width, -q.y1 / height + -1.f / height, q.s0, q.t1,
+                     q.x1 / width + x / (1920) + 1.f / width, -q.y0 / height + 1.f / height, q.s1, q.t0,
+                     q.x1 / width + x / (1920) + 1.f / width, -q.y1 / height + -1.f / height, q.s1, q.t1,
+                };
+                // update content of VBO memory
+                glNamedBufferSubData(m_quadVBO, 0,
+                    sizeof(vertices), vertices);
+                glBindTextureUnit(0, m_gFontTexture);
+                glBindVertexArray(m_quadVAO);
+                // render quad
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            }
+            ++text;
+        }
+        
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+
+    }
+
 
     void Graphics::DrawSkyDome(SkyDome skyDome, float time)
     {

@@ -27,17 +27,18 @@ namespace RedFoxEngine
 
 struct ImGUI
 {
-    //Editor ui
+    bool manipulatingGizmo = false;
     bool editorMenuOpen = false;
     bool sceneGraphScrollButtonHovered = false;
     int selectedObject;
+    int selectedUI;
     int nodeIndex = 1;
+    int uiIndex = 0;
     int sceneGraphScrollStrength = 1;
     int currentFrame = 0;
     int translateSnap = 1;
     int rotateSnap = 45;
     int scaleSnap = 1;
-    ImTextureID icons[10];
     float averageFps;
     float dragSpeed = 1.f;
     float fps[255];
@@ -45,6 +46,7 @@ struct ImGUI
     ImGuizmo::MODE gizmoMode;
     ImGuiIO* io;
     ImFont* defaultFont;
+    ImTextureID icons[10];
 };
 
 class Engine
@@ -83,6 +85,7 @@ private:
     void DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight);
     int  DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
     void DrawSceneNodes(bool is_child, int index);
+    void DrawSceneNodesUI(bool is_child, int index);
     void UpdateIMGUI();
     void UpdateEditorCamera();
     void UpdateModelMatrices();
@@ -93,6 +96,7 @@ private:
     void UpdateLights(LightStorage* lightStorage);
     void initSphericalManyGameObjects(int count); //TODO: remove
     u32 LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat);
+
 public:
     Engine(int width, int height);
     ~Engine();

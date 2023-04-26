@@ -166,7 +166,8 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     
     if (ImageButton("NEW SCENE", m_gui.icons[0], ImVec2(buttonHeight, buttonHeight)))
     {
-        m_scene.gameObjectCount = 0;
+        m_scene.gameObjectCount = 1;
+        m_gui.selectedObject = 0;
         m_memoryManager.m_memory.arena.usedSize = m_memoryManager.m_sceneUsedMemory;
         m_scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
     }
@@ -247,6 +248,17 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->modelIndex = 1;
     }
 
+    ImGui::SameLine();
+    if (ImGui::Button("ADD UI", ImVec2(0, buttonHeight)))
+    {
+        GameUI* newGameUI = &m_scene.gameUIs[m_scene.gameUICount++];
+        *newGameUI = {};
+        char tmp[255];
+        int size = snprintf(tmp, 255, "New UI #%d", m_scene.gameUICount - 1);
+        newGameUI->name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
+        newGameUI->name.capacity = 255;
+        newGameUI->scale = { 1, 1 };
+    }
     PopStyleVar();
     End();
 }
@@ -308,10 +320,11 @@ void Engine::DrawSceneNodes(bool is_child, int index)
     flags |= ImGuiTreeNodeFlags_SpanFullWidth;
 
     bool nodeOpen = TreeNodeEx((char*)m_scene.gameObjects[index].name.data, flags, "%s", (char*)m_scene.gameObjects[index].name.data);
-    if ((IsItemClicked() && !IsItemToggledOpen()) || 
+    if ((IsItemClicked() && !IsItemToggledOpen()) ||
         IsItemFocused())
     {
         m_gui.selectedObject = index;
+        m_gui.selectedUI = 0;
     }
 
     // TODO(a.perche): Double click to focus object or press F (lerp position)
@@ -351,6 +364,69 @@ void Engine::DrawSceneNodes(bool is_child, int index)
             int* children = m_scene.GetChildren(index, &m_memoryManager.m_memory.temp);
             for (int i = 0; i < childrenCount; i++)
                 DrawSceneNodes(true, children[i]);
+        }
+        TreePop();
+    }
+}
+
+void Engine::DrawSceneNodesUI(bool is_child, int index)
+{
+    int childrenCount = m_scene.GetChildrenCount(index);
+
+    ImGuiTreeNodeFlags flags;
+    if (is_child && childrenCount == 0)
+        flags = ImGuiTreeNodeFlags_Bullet;
+    else
+        flags = (childrenCount == 0) ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_OpenOnArrow;
+    if (index == m_gui.selectedUI && m_gui.selectedUI != 0)
+        flags |= ImGuiTreeNodeFlags_Selected;
+    flags |= ImGuiTreeNodeFlags_SpanFullWidth;
+
+    bool nodeOpen = TreeNodeEx((char*)m_scene.gameUIs[index].name.data, flags, "%s", (char*)m_scene.gameUIs[index].name.data);
+    if ((IsItemClicked() && !IsItemToggledOpen()) || 
+        IsItemFocused())
+    {
+        m_gui.selectedUI = index;
+        m_gui.selectedObject = 0;
+    }
+
+    // TODO(a.perche): Double click to focus object or press F (lerp position)
+    /*
+    if (IsMouseDoubleClicked(ImGuiMouseButton_Left) && IsItemHovered())
+    {
+        m_editorCamera.position = m_selectedObject->position;
+        const RedFoxMaths::Float3 up(0, 1, 0);
+        m_editorCamera.SetViewLookAt(m_selectedObject->position, up);
+    }
+    */
+
+    if (BeginDragDropSource())
+    {
+        SetDragDropPayload("_SCENENODE", &index, sizeof(index));
+        Text("Moving %s", m_scene.gameUIs[index].name.data);
+        EndDragDropSource();
+    }
+
+    if (BeginDragDropTarget())
+    {
+        if (const ImGuiPayload* payload = AcceptDragDropPayload("_SCENENODE"))
+        {
+            if (payload->IsDelivery())
+            {
+                int movedIndex = *(int*)payload->Data;
+                m_scene.gameUIs[movedIndex].parent = index;
+            }
+            EndDragDropTarget();
+        }
+    }
+
+    if (nodeOpen)
+    {
+        if (childrenCount)
+        {
+            int* children = m_scene.GetChildren(index, &m_memoryManager.m_memory.temp);
+            for (int i = 0; i < childrenCount; i++)
+                DrawSceneNodesUI(true, children[i]);
         }
         TreePop();
     }
@@ -414,7 +490,7 @@ void Engine::UpdateIMGUI()
         
         SetCursorPos(ImVec2(vMax.x - vPos.x - 115, vMin.y - vPos.y));
         PushStyleColor(ImGuiCol_WindowBg, RF_DARKGRAY);
-        BeginChild("Fps counter", ImVec2(vMax.x - vPos.x - 115, vMin.y - vPos.y));
+        BeginChild("Fps counter", ImVec2(115, vMin.y - vPos.y));
         PushStyleColor(ImGuiCol_Text, RF_ORANGE);
         m_gui.averageFps = RedFoxMaths::Misc::Clamp(m_gui.averageFps, 0, 1000);
         float deltaTime = RedFoxMaths::Misc::Clamp(m_time.delta, 0, 1);
@@ -467,6 +543,75 @@ void Engine::UpdateIMGUI()
         }
         SetItemAllowOverlap();
 
+        if (m_gui.selectedObject != 0 && !m_editorCameraEnabled && m_scene.isPaused)
+        {
+            ImGuizmo::SetDrawlist();
+            GetCurrentWindow();
+            ImGuizmo::SetRect(windowPos.x, windowPos.y, content.x, content.y);
+            RedFoxMaths::Mat4 cameraProjection = m_editorCamera.m_projection.GetTransposedMatrix();
+            RedFoxMaths::Mat4 cameraView = m_editorCamera.GetViewMatrix().GetTransposedMatrix();
+            RedFoxMaths::Mat4 transformMat = m_scene.GetWorldMatrix(m_gui.selectedObject).GetTransposedMatrix();
+            RedFoxMaths::Mat4 deltaMat = { };
+            float* cameraViewPtr = (float*)cameraView.AsPtr();
+            float* cameraProjectionPtr = (float*)cameraProjection.AsPtr();
+            float* transformMatPtr = (float*)transformMat.AsPtr();
+            float* deltaMatPtr = (float*)deltaMat.AsPtr();
+            float snap3[3] = { 0, 0, 0 };
+            if (m_input.W)
+                m_gui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
+            else if (m_input.R)
+                m_gui.gizmoType = ImGuizmo::OPERATION::ROTATE;
+            else if (m_input.E)
+                m_gui.gizmoType = ImGuizmo::OPERATION::SCALE;
+
+            switch (m_gui.gizmoType)
+            {
+            case ImGuizmo::OPERATION::TRANSLATE:
+                snap3[0] = (float)m_gui.translateSnap;
+                snap3[1] = (float)m_gui.translateSnap;
+                snap3[2] = (float)m_gui.translateSnap;
+                break;
+            case ImGuizmo::OPERATION::ROTATE:
+                snap3[0] = (float)m_gui.rotateSnap;
+                snap3[1] = (float)m_gui.rotateSnap;
+                snap3[2] = (float)m_gui.rotateSnap;
+                break;
+            case ImGuizmo::OPERATION::SCALE:
+                snap3[0] = (float)m_gui.scaleSnap;
+                snap3[1] = (float)m_gui.scaleSnap;
+                snap3[2] = (float)m_gui.scaleSnap;
+                break;
+            default:
+                break;
+            }
+
+            bool snapping = m_input.LControl;
+            m_gui.manipulatingGizmo = ImGuizmo::Manipulate(cameraViewPtr, cameraProjectionPtr,
+                m_gui.gizmoType, m_gui.gizmoMode, transformMatPtr, deltaMatPtr,
+                snapping ? snap3 : nullptr);
+
+            if (ImGuizmo::IsUsing())
+            {
+                using namespace RedFoxMaths;
+                Float3 translation, rotation, scale;
+                Float3 scaleUnit = { 1, 1, 1 };
+                ImGuizmo::DecomposeMatrixToComponents(deltaMat.AsPtr(),
+                    (float*)&translation.x, (float*)&rotation.x, (float*)&scale.x);
+
+                m_scene.gameObjects[m_gui.selectedObject].orientation =
+                    Quaternion::Hamilton(Quaternion::FromEuler(rotation * DEG2RAD),
+                        m_scene.gameObjects[m_gui.selectedObject].orientation);
+                if (m_gui.gizmoType != ImGuizmo::OPERATION::ROTATE)
+                {
+                    m_scene.gameObjects[m_gui.selectedObject].position += translation;
+                    m_scene.gameObjects[m_gui.selectedObject].scale += scale - scaleUnit;
+                }
+                m_scene.gameObjects[m_gui.selectedObject].scale.x = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.x, 1, 10000);
+                m_scene.gameObjects[m_gui.selectedObject].scale.y = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.y, 1, 10000);
+                m_scene.gameObjects[m_gui.selectedObject].scale.z = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.z, 1, 10000);
+            }
+        }
+
         if (mousePosEditor.x > 0 && mousePosEditor.x < content.x &&
             mousePosEditor.y > 0 && mousePosEditor.y < content.y)
         {
@@ -481,7 +626,7 @@ void Engine::UpdateIMGUI()
             RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
             ray_world.Normalize(); 
 
-            if (IsMouseClicked(ImGuiMouseButton_Left))
+            if (IsMouseClicked(ImGuiMouseButton_Left) && !m_gui.manipulatingGizmo)
             {
                 RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
                 physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
@@ -513,84 +658,119 @@ void Engine::UpdateIMGUI()
             }
         }
       
-        if (m_gui.selectedObject != 0)
-        {
-            ImGuizmo::SetDrawlist();
-            GetCurrentWindow();
-            ImGuizmo::SetRect(windowPos.x, windowPos.y, content.x, content.y);
-            RedFoxMaths::Mat4 cameraProjection = m_editorCamera.m_projection.GetTransposedMatrix();
-            RedFoxMaths::Mat4 cameraView = m_editorCamera.GetViewMatrix().GetTransposedMatrix();
-            RedFoxMaths::Mat4 transformMat = m_scene.GetWorldMatrix(m_gui.selectedObject).GetTransposedMatrix();
-            RedFoxMaths::Mat4 deltaMat = { };
-            float* cameraViewPtr = (float*)cameraView.AsPtr();
-            float* cameraProjectionPtr = (float*)cameraProjection.AsPtr();
-            float* transformMatPtr = (float*)transformMat.AsPtr();
-            float* deltaMatPtr = (float*)deltaMat.AsPtr();
-            float snap3[3] = { 0, 0, 0 };
-            if (m_input.W)
-                m_gui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
-            else if (m_input.R)
-                m_gui.gizmoType = ImGuizmo::OPERATION::ROTATE;
-            else if (m_input.E)
-                m_gui.gizmoType = ImGuizmo::OPERATION::SCALE;
-            
-            switch (m_gui.gizmoType)
-            {
-            case ImGuizmo::OPERATION::TRANSLATE:
-                snap3[0] = (float)m_gui.translateSnap;
-                snap3[1] = (float)m_gui.translateSnap;
-                snap3[2] = (float)m_gui.translateSnap;
-                break;
-            case ImGuizmo::OPERATION::ROTATE:
-                snap3[0] = (float)m_gui.rotateSnap;
-                snap3[1] = (float)m_gui.rotateSnap;
-                snap3[2] = (float)m_gui.rotateSnap;
-                break;
-            case ImGuizmo::OPERATION::SCALE:
-                snap3[0] = (float)m_gui.scaleSnap;
-                snap3[1] = (float)m_gui.scaleSnap;
-                snap3[2] = (float)m_gui.scaleSnap;
-                break;
-            default:
-                break;
-            }
-            
-            bool snapping = m_input.LControl;
-            ImGuizmo::Manipulate(cameraViewPtr, cameraProjectionPtr,
-                m_gui.gizmoType, m_gui.gizmoMode, transformMatPtr, deltaMatPtr, 
-                snapping ? snap3 : nullptr);
-
-            if (ImGuizmo::IsUsing())
-            {
-                using namespace RedFoxMaths;
-                Float3 translation, rotation, scale;
-                Float3 scaleUnit = {1, 1, 1};
-                ImGuizmo::DecomposeMatrixToComponents(deltaMat.AsPtr(),
-                    (float*)&translation.x, (float*)&rotation.x, (float*)&scale.x);
-
-                m_scene.gameObjects[m_gui.selectedObject].orientation = 
-                    Quaternion::Hamilton(Quaternion::FromEuler(rotation*DEG2RAD),
-                    m_scene.gameObjects[m_gui.selectedObject].orientation);
-                if(m_gui.gizmoType != ImGuizmo::OPERATION::ROTATE)
-                {
-                    m_scene.gameObjects[m_gui.selectedObject].position += translation;
-                    m_scene.gameObjects[m_gui.selectedObject].scale += scale - scaleUnit;
-                }
-                m_scene.gameObjects[m_gui.selectedObject].scale.x = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.x, 0.01, 10000);
-                m_scene.gameObjects[m_gui.selectedObject].scale.y = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.y, 0.01, 10000);
-                m_scene.gameObjects[m_gui.selectedObject].scale.z = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.z, 0.01, 10000);
-            }
-        }
-
         if (m_input.Escape)
-        {
             m_gui.selectedObject = 0;
-        }
     }
     End();
     PopStyleVar();
 
-    SameLine();
+    if (Begin("UI Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
+    {
+        ImGuiTreeNodeFlags rootNodeFlags =
+            ImGuiTreeNodeFlags_Framed |
+            ImGuiTreeNodeFlags_Leaf |
+            ImGuiTreeNodeFlags_AllowItemOverlap |
+            ImGuiTreeNodeFlags_DefaultOpen |
+            ImGuiTreeNodeFlags_SpanFullWidth;
+
+        if (TreeNodeEx("_TREENODE", rootNodeFlags, " %s", m_scene.m_name.data))
+        {
+            if (BeginPopupContextItem("RenameScenePopup"))
+            {
+                if (m_input.Enter)
+                    CloseCurrentPopup();
+
+                SameLine();
+                InputText(" ", (char*)m_scene.m_name.data, m_scene.m_name.capacity);
+                EndPopup();
+            }
+
+            if (IsMouseDoubleClicked(ImGuiMouseButton_Left) && IsItemHovered() && !m_gui.sceneGraphScrollButtonHovered)
+            {
+                OpenPopup("RenameScenePopup");
+            }
+
+            if (BeginDragDropTarget())
+            {
+                if (const ImGuiPayload* payload = AcceptDragDropPayload("_SCENENODE"))
+                {
+                    if (payload->IsDelivery())
+                    {
+                        int* movedGameobject = (int*)payload->Data;
+                        m_scene.gameUIs[*movedGameobject].parent = 0;
+                    }
+                    EndDragDropTarget();
+                }
+            }
+
+            float sceneGraphWidth = GetContentRegionAvail().x;
+            int buttonWidth = 50;
+            if (buttonWidth < sceneGraphWidth)
+            {
+                char tempString[32] = {};
+                snprintf(tempString, 32, "%d", m_gui.sceneGraphScrollStrength);
+                SameLine(sceneGraphWidth - (float)buttonWidth / 2);
+                if (Button(tempString, ImVec2(buttonWidth, 0)))
+                {
+                    m_gui.sceneGraphScrollStrength *= 10;
+                    if (m_gui.sceneGraphScrollStrength > 1000)
+                        m_gui.sceneGraphScrollStrength = 1;
+                }
+            }
+            m_gui.sceneGraphScrollButtonHovered = IsItemHovered();
+        }
+        TreePop();
+
+        if (m_scene.gameUICount > 1)
+        {
+            ImGuiWindowFlags sceneGraphFlags =
+                ImGuiWindowFlags_AlwaysHorizontalScrollbar |
+                ImGuiWindowFlags_AlwaysVerticalScrollbar |
+                ImGuiWindowFlags_NoMove;
+
+            BeginChild("SceneGraphNodes", ImVec2(0, 0), true, sceneGraphFlags);
+            if (m_gui.uiIndex < 1)
+                m_gui.uiIndex = 1;
+            else if (m_gui.uiIndex > (int)m_scene.gameUICount - 1)
+                m_gui.uiIndex = m_scene.gameUICount - 1;
+
+            int maxItems = (int)GetMainViewport()->Size.y / 16;
+            for (int i = 0; i + m_gui.uiIndex < (int)m_scene.gameUICount && i < maxItems; i++)
+            {
+                if (mousePickNodeIndexTmp != -1)
+                {
+                    m_gui.uiIndex = mousePickNodeIndexTmp;
+                    SetScrollY(mousePickNodeIndexTmp - m_gui.uiIndex);
+                    mousePickNodeIndexTmp = -1;
+                }
+
+                if (i == 0 && m_gui.uiIndex > 1 && GetScrollY() == 0)
+                {
+                    SetScrollY(1);
+                    m_gui.uiIndex -= m_gui.sceneGraphScrollStrength;
+                }
+
+                float scrollMax = GetScrollMaxY();
+                if (i == maxItems - 1 && m_gui.uiIndex + i < (int)m_scene.gameUICount - 1 &&
+                    scrollMax == GetScrollY() && scrollMax != 0)
+                {
+                    SetScrollY(scrollMax - 1);
+                    m_gui.uiIndex += m_gui.sceneGraphScrollStrength;
+                }
+
+                if (m_gui.uiIndex + i < 1)
+                    m_gui.uiIndex = 1;
+                else if (m_gui.uiIndex + i > (int)m_scene.gameUICount - 1)
+                    m_gui.uiIndex = m_scene.gameUICount - i - 1;
+
+                if (m_scene.gameUIs[i + m_gui.uiIndex].parent == 0)
+                    DrawSceneNodesUI(false, i + m_gui.uiIndex);
+            }
+            EndChild();
+        }
+    }
+    End();
+
     if (Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
         ImGuiTreeNodeFlags rootNodeFlags = 
@@ -629,6 +809,25 @@ void Engine::UpdateIMGUI()
                     EndDragDropTarget();
                 }
             }
+
+            if (IsKeyPressed(ImGuiKey_Delete, false))
+            {
+                if (m_scene.gameObjectCount - 1 > 1 && m_gui.selectedObject != 0)
+                {
+                    int* children = m_scene.GetChildren(m_gui.selectedObject, &m_memoryManager.m_memory.temp);
+                    if (children != nullptr)
+                    {
+                        int childrenCount = m_scene.GetChildrenCount(m_gui.selectedObject);
+                        for (int i = 0; i < childrenCount; i++)
+                            m_scene.gameObjects[*children + i].parent = 0;
+                    }
+                    m_scene.gameObjects[m_gui.selectedObject] = m_scene.gameObjects[m_scene.gameObjectCount - 1];
+                }
+                if (m_scene.gameObjectCount > 1)
+                    m_scene.gameObjectCount--;
+
+                m_gui.selectedObject = 0;
+            }
             
             float sceneGraphWidth = GetContentRegionAvail().x;
             int buttonWidth = 50;
@@ -648,7 +847,7 @@ void Engine::UpdateIMGUI()
         }
         TreePop();
 
-        if (m_scene.gameObjectCount > 0)
+        if (m_scene.gameObjectCount > 1)
         {
             ImGuiWindowFlags sceneGraphFlags =
                 ImGuiWindowFlags_AlwaysHorizontalScrollbar |
@@ -696,7 +895,7 @@ void Engine::UpdateIMGUI()
             EndChild();
         }
     }
-    End();
+    End();  
 
     if (Begin("Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
@@ -765,23 +964,94 @@ void Engine::UpdateIMGUI()
             }
             if (CollapsingHeader("Render", propertiesFlags))
             {
+                int* modelIndex = &m_scene.gameObjects[m_gui.selectedObject].modelIndex;
                 SeparatorText("Model");
-
-                SeparatorText("Material");
-                if (BeginTable("MaterialTable", 2, tableFlags))
+                SetNextItemWidth(-FLT_MIN);
+                if (ImGui::BeginCombo("ModelList", (*modelIndex != -1) ? (char*)m_models[*modelIndex].name.data : "Select model"))
                 {
-                    TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-                    TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-                    TableNextRow();
-                    TableSetColumnIndex(0);
-                    Text("Color");
-                    TableSetColumnIndex(1);
-                    SetNextItemWidth(-FLT_MIN);
+                    for (int i = 0; i < m_modelCount; i++)
+                    {
+                        bool is_selected = (*modelIndex == i);
+                        if (ImGui::Selectable((char*)m_models[i].name.data, is_selected))
+                            *modelIndex = i;
 
-                    ColorPicker3("MaterialColor",
-                        &m_scene.gameObjects[m_gui.selectedObject].Color.x,
-                        ImGuiColorEditFlags_PickerHueWheel);
-                    EndTable();
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+
+                // TODO: Refactor this when materials will be for each game objects
+                SeparatorText("Material");
+                if (*modelIndex != -1)
+                {
+                    if (BeginTable("MaterialTable", 2, tableFlags))
+                    {
+                        TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                        TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+                        TableNextRow();
+                        TableSetColumnIndex(0);
+                        Text("Color");
+                        TableSetColumnIndex(1);
+                        SetNextItemWidth(-FLT_MIN);
+                        ColorPicker3("MaterialColor",
+                            &m_scene.gameObjects[m_gui.selectedObject].Color.x,
+                            ImGuiColorEditFlags_PickerHueWheel);
+                        EndTable();
+                    }
+                }
+            }
+        }
+  
+        if (m_gui.selectedUI != 0)
+        {
+            if (ImGui::CollapsingHeader("Transform", propertiesFlags))
+            {
+                //TODO(a.perche) : Drag speed according to user param.
+                ImGuiTableFlags tableFlags =
+                    ImGuiTableFlags_RowBg |
+                    ImGuiTableFlags_SizingStretchSame |
+                    ImGuiTableFlags_Resizable |
+                    ImGuiTableFlags_BordersOuter;
+
+                if (ImGui::BeginTable("TransformTable", 2, tableFlags))
+                {
+                    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+
+                    ImGui::Text("Position");
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::SetNextItemWidth(-FLT_MIN);
+                    DragFloat2("TransformPosition", &m_scene.gameUIs[m_gui.selectedUI].screenPosition.x, m_gui.dragSpeed, -150.f, 150.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+
+                    ImGui::Text("Scale");
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::SetNextItemWidth(-FLT_MIN);
+                    DragFloat2("TransformScale", &m_scene.gameUIs[m_gui.selectedUI].scale.x, m_gui.dragSpeed, 0, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    ImGui::EndTable();
+                }
+            }
+            if (ImGui::CollapsingHeader("Text", propertiesFlags))
+            {
+                if (ImGui::BeginTable("Attributes", 2, tableFlags))
+                {
+                    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+
+                    ImGui::Text("Text");
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::SetNextItemWidth(-FLT_MIN);
+                    ImGui::InputText("Text", (char*)&m_scene.gameUIs[m_gui.selectedUI].text, 256, 0, 0, 0);
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+
+                    ImGui::EndTable();
                 }
             }
         }

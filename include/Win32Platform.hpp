@@ -90,6 +90,7 @@ struct Input
     u8 Down : 1;
     u8 Left : 1;
     u8 Right : 1;
+    u8 Delete : 1;
 };
 
 #ifndef UPDATEGAME

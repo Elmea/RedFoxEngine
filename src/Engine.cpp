@@ -29,9 +29,13 @@ Engine::Engine(int width, int height) :
     m_models = (Model *)m_memoryManager.PersistentAllocation(sizeof(Model) * 100);
     m_models[m_modelCount].obj = CreateCube(&m_memoryManager.m_memory.arena);
     m_models[m_modelCount].hash = 1;
+    m_models[m_modelCount].name = initStringChar("Cube", 4, &m_memoryManager.m_memory.arena);
+    m_models[m_modelCount].name.capacity = 4;
     m_modelCount++;
     m_models[m_modelCount].obj = CreateSphere(30, 25, &m_memoryManager.m_memory.arena);
     m_models[m_modelCount].hash = 2;
+    m_models[m_modelCount].name = initStringChar("Sphere", 6, &m_memoryManager.m_memory.arena);
+    m_models[m_modelCount].name.capacity = 6;
     m_modelCount++;
     ObjModelPush("ts_bot912.obj");
     // ObjModelPush("vortigaunt.obj");
@@ -39,23 +43,28 @@ Engine::Engine(int width, int height) :
 
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
-    m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(
-                                                sizeof(GameObject) * 100000);
+
+    //Init GameUI
+    m_scene.gameUIs = (GameUI*)m_memoryManager.PersistentAllocation(sizeof(GameUI) * 100);
+    m_scene.gameUIs[0] = {};
+    m_scene.gameUIs[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
+    m_scene.gameUIs[0].name.capacity = 255;
+    m_scene.gameUIs[0].screenPosition = {0, 0};
+    m_scene.gameUIs[0].scale = {1,1};
+    m_scene.gameUICount++;
+    for (int i = 1; i < (int)m_scene.gameUICount; i++)
+        m_scene.gameUIs[i].parent = 0;
+
+    //Init GameObject
+    m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);
     m_scene.gameObjects[0] = {};
     m_scene.gameObjects[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
     m_scene.gameObjects[0].name.capacity = 255;
-    m_scene.gameObjects[0].position =
-    {
-        0, -11, 0
-    };
-    m_scene.gameObjects[0].orientation =
-    {
-        1, 0, 0, 0
-    };
-    m_scene.gameObjects[0].scale =
-    {
-        10000, 2, 10000
-    };
+    m_scene.gameObjects[0].position = { 0, 0, 0 };
+    m_scene.gameObjects[0].orientation = { 1, 0, 0, 0 };
+    m_scene.gameObjects[0].scale = { 1, 1, 1 };
+    m_scene.gameObjects->modelIndex = -1;
+
     m_graphics.lightStorage.lights = (Light*)m_memoryManager.PersistentAllocation(sizeof(Light) * 1000);
     m_graphics.lightStorage.shadowMaps = (unsigned int*)m_memoryManager.PersistentAllocation(sizeof(unsigned int) * 1000);
     m_scene.gameObjectCount++;
@@ -117,7 +126,9 @@ Engine::Engine(int width, int height) :
     // path into the scene data ? maybe both
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
     m_graphics.InitLights();
+    m_graphics.InitQuad();
     m_physx.InitPhysics(m_scene, 1);
+    m_graphics.InitFont(&m_memoryManager.m_memory.temp);
 }
 
 void Engine::ObjModelPush(const char *path)
@@ -135,6 +146,11 @@ void Engine::ObjModelPush(const char *path)
         length++;
     m_models[m_modelCount - 1].hash = MeowU64From(MeowHash(MeowDefaultSeed,
         (u64)length, (void *)path), 0);
+    
+    u64 len = strlen(path) - 4;
+    //MyString name = initStringChar(path, len, &m_memoryManager.m_memory.arena);
+    m_models[m_modelCount - 1].name = initStringChar(path, len, &m_memoryManager.m_memory.arena);
+    m_models[m_modelCount - 1].name.capacity = len;
 }
 
 bool Engine::isRunning()
@@ -183,14 +199,9 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
                 m_scene.gameObjects[index - 1].position * scale;
         }
     }
-    m_scene.gameObjects[0].position =
-    {
-        0, -10, 0
-    };
-    m_scene.gameObjects[0].scale =
-    {
-        1, 1, 1
-    };
+    m_scene.gameObjects[1].modelIndex = 0;
+    m_scene.gameObjects[1].position = { 0, -10, 0 };
+    m_scene.gameObjects[1].scale = { 1, 1, 1 };
 
 }
 
@@ -206,7 +217,7 @@ void Engine::ProcessInputs()
 
 void Engine::UpdateEditorCamera()
 {
-    if (m_editorCameraEnabled)
+    if (m_editorCameraEnabled && m_scene.isPaused)
     {
         const f32 dt32 = (f32)m_time.delta;
         static Float3 cameraRotation;
@@ -317,6 +328,12 @@ void Engine::Draw()
         currentCamera = &m_scene.m_gameCamera;
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
     m_graphics.Draw(&m_scene, m_platform.m_windowDimension, m_time.current, m_time.delta);
+   
+    for (int i = 0; i < m_scene.gameUICount; i++)
+    {
+        if (m_scene.gameUIs[i].text.data != "")
+            m_graphics.RenderText((char*)&m_scene.gameUIs[i].text, m_scene.gameUIs[i].screenPosition.x * 5, -m_scene.gameUIs[i].screenPosition.y * 5, 20);
+    }
     m_platform.SwapFramebuffers();
     m_time.delta = (Platform::GetTimer() - m_time.current);
     m_memoryManager.m_memory.temp.usedSize = 0;

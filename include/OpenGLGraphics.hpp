@@ -12,6 +12,8 @@
 #include "Light.hpp"
 #include "Scene.hpp"
 
+#include "imstb_truetype.h"
+
 namespace RedFoxEngine
 {
 
@@ -67,6 +69,7 @@ private:
     Shader m_blinnPhong;
     Shader m_shadow;
     Shader m_sky;
+    Shader m_font;
 
     GLuint m_imguiFramebuffer;
 
@@ -80,6 +83,13 @@ private:
     u32    m_matrixSSBO;
     u32    m_textureSSBO;
     u32    m_shadowMapsSSBO;
+
+    stbtt_bakedchar cdata[96];
+    GLuint m_gFontTexture;
+
+    GLuint m_quadVAO;
+    unsigned int m_quadVBO;
+
 public:
     GLuint m_imguiTexture;
     Model* m_models = nullptr;
@@ -88,6 +98,8 @@ public:
     
     void InitModel(Model *model);
     void InitLights();
+    void InitFont(Memory* temp);
+    void InitQuad();
     void InitModelTextures(ObjModel *model);
     u32 InitTexture(void *data, int width, int height, bool resident, bool repeat);
     void InitFramebuffer();
@@ -107,6 +119,8 @@ public:
     void DrawModelInstances(Model* model,
         RedFoxMaths::Mat4* modelMatrices, int instanceCount);
     void DrawModelShadowInstances(Model* model, int instanceCount);
+    void RenderText(char* text, float x, float y, float scale);
+
 };
 } // namespace RedFoxEngine
 
