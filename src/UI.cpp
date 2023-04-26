@@ -135,9 +135,8 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     Begin("Topbar", (bool*)0, window_flags | ImGuiWindowFlags_NoBringToFrontOnFocus);
     PopStyleColor();
 
-    // TODO(a.perche): Project name here
-    SetCursorPosX((GetWindowWidth() - CalcTextSize("Project Name").x) / 2.f);
-    Text("Project Name");
+    SetCursorPosX((GetWindowWidth() - CalcTextSize("RedFox Engine").x) / 2.f);
+    Text("RedFox Engine");
 
     SameLine();
     SetCursorPosX(GetWindowWidth() - buttonHeight - 5.f);
@@ -183,11 +182,17 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
     if (ImageButton("PAUSE", m_scene.isPaused ? m_gui.icons[3] : m_gui.icons[2], ImVec2(buttonHeight, buttonHeight)))
+    {
         m_scene.isPaused = !m_scene.isPaused;
+        WindowOrigin windowOrigin = m_platform.GetWindowOrigin();
+        int lockedMouseX = windowOrigin.x + ((int)(m_gui.content.x + m_gui.vMin.x) / 2);
+        int lockedMouseY = windowOrigin.y + ((int)(m_gui.content.y + m_gui.vMin.y) / 2);
+        m_platform.SetMousePosition(lockedMouseX, lockedMouseY);
+    }
 
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
-    if (ImageButton("TRANSLATE", m_gui.icons[4], ImVec2(buttonHeight, buttonHeight), ImVec2(0,0), ImVec2(1,1),
+    if (ImageButton("TRANSLATE", m_gui.icons[4], ImVec2(buttonHeight, buttonHeight), ImVec2(0, 0), ImVec2(1, 1),
         m_gui.gizmoType == ImGuizmo::OPERATION::TRANSLATE ? RF_LIGHTGRAYBLUE : RF_DARKORANGE))
         m_gui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
 
@@ -202,7 +207,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     if (ImageButton("SCALE", m_gui.icons[6], ImVec2(buttonHeight, buttonHeight), ImVec2(0, 0), ImVec2(1, 1),
         m_gui.gizmoType == ImGuizmo::OPERATION::SCALE ? RF_LIGHTGRAYBLUE : RF_DARKORANGE))
         m_gui.gizmoType = ImGuizmo::OPERATION::SCALE;
-    
+
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
     if (ImageButton("ADD ENTITY", m_gui.icons[7], ImVec2(buttonHeight, buttonHeight)))
@@ -267,23 +272,23 @@ int Engine::DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dock
 {
     if (viewport == NULL)
         viewport = GetMainViewport();
-    
+
     const ImGuiWindow* window = GetCurrentWindow();
     const float titleBarHeight = window->TitleBarHeight();
     const float toolbarSize = 44.f;
     const float totalHeight = titleBarHeight + toolbarSize;
     const float buttonHeight = 32.f;
 
-    
+
     SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + totalHeight + 8.f));
     SetNextWindowSize(ImVec2(viewport->WorkSize.x, viewport->WorkSize.y - totalHeight - 8.f));
     SetNextWindowViewport(viewport->ID);
-    
+
     ImGuiWindowFlags host_window_flags = 0;
-    host_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | 
-                         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | 
-                         ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBringToFrontOnFocus |
-                         ImGuiWindowFlags_NoNavFocus;
+    host_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBringToFrontOnFocus |
+        ImGuiWindowFlags_NoNavFocus;
 
     if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
         host_window_flags |= ImGuiWindowFlags_NoBackground;
@@ -383,7 +388,7 @@ void Engine::DrawSceneNodesUI(bool is_child, int index)
     flags |= ImGuiTreeNodeFlags_SpanFullWidth;
 
     bool nodeOpen = TreeNodeEx((char*)m_scene.gameUIs[index].name.data, flags, "%s", (char*)m_scene.gameUIs[index].name.data);
-    if ((IsItemClicked() && !IsItemToggledOpen()) || 
+    if ((IsItemClicked() && !IsItemToggledOpen()) ||
         IsItemFocused())
     {
         m_gui.selectedUI = index;
@@ -446,8 +451,7 @@ void Engine::UpdateIMGUI()
 
     ImGuizmo::SetOrthographic(false);
     ImGuizmo::BeginFrame();
-    
-    // TODO(a.perche) : Build dockspace at runtime
+
     DrawDockSpace(GetMainViewport(), dockingFlags, (const ImGuiWindowClass*)0);
 
     PushFont(m_gui.defaultFont);
@@ -455,28 +459,28 @@ void Engine::UpdateIMGUI()
     PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
     if (Begin("Editor", (bool*)0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
     {
-        WindowDimension &dimension = m_platform.m_windowDimension;
-        ImVec2 content = GetContentRegionAvail();
+        WindowDimension& dimension = m_platform.m_windowDimension;
+        m_gui.content = GetContentRegionAvail();
         ImVec2 windowPos = GetWindowPos();
 
-        if (content.x != 0 && content.y != 0)
+        if (m_gui.content.x != 0 && m_gui.content.y != 0)
         {
-            if (content.x != dimension.width || content.y != dimension.height)
-                m_graphics.UpdateImGUIFrameBuffer(dimension, {(int)content.x, (int)content.y});
-            void *framebuffer = (void*)((u64)m_graphics.m_imguiTexture);
+            if (m_gui.content.x != dimension.width || m_gui.content.y != dimension.height)
+                m_graphics.UpdateImGUIFrameBuffer(dimension, { (int)m_gui.content.x, (int)m_gui.content.y });
+            void* framebuffer = (void*)((u64)m_graphics.m_imguiTexture);
             Image(framebuffer,
                 ImVec2(dimension.width, dimension.height), ImVec2(0, 1), ImVec2(1, 0));
         }
 
         ImVec2 vPos = GetWindowPos();
-        ImVec2 vMin = GetWindowContentRegionMin() + vPos;
+        m_gui.vMin = GetWindowContentRegionMin() + vPos;
         ImVec2 vMax = GetWindowContentRegionMax() + vPos;
         ImVec2 mousePos = GetMousePos();
         RedFoxMaths::Float2 mousePosEditor = {
-            mousePos.x * dimension.width / content.x - vMin.x,
-            mousePos.y * dimension.height / content.y - vMin.y
+            mousePos.x * dimension.width / m_gui.content.x - m_gui.vMin.x,
+            mousePos.y * dimension.height / m_gui.content.y - m_gui.vMin.y
         };
-        
+
         if (m_time.delta)
         {
             m_gui.fps[m_gui.currentFrame++] = (1.0f / m_time.delta);
@@ -487,10 +491,10 @@ void Engine::UpdateIMGUI()
                     m_gui.averageFps = (m_gui.fps[i] + m_gui.averageFps) / 2.0f;
             }
         }
-        
-        SetCursorPos(ImVec2(vMax.x - vPos.x - 115, vMin.y - vPos.y));
+
+        SetCursorPos(ImVec2(vMax.x - vPos.x - 115, m_gui.vMin.y - vPos.y));
         PushStyleColor(ImGuiCol_WindowBg, RF_DARKGRAY);
-        BeginChild("Fps counter", ImVec2(115, vMin.y - vPos.y));
+        BeginChild("Fps counter", ImVec2(115, m_gui.vMin.y - vPos.y));
         PushStyleColor(ImGuiCol_Text, RF_ORANGE);
         m_gui.averageFps = RedFoxMaths::Misc::Clamp(m_gui.averageFps, 0, 1000);
         float deltaTime = RedFoxMaths::Misc::Clamp(m_time.delta, 0, 1);
@@ -505,7 +509,7 @@ void Engine::UpdateIMGUI()
             m_gui.editorMenuOpen = !m_gui.editorMenuOpen;
         if (m_gui.editorMenuOpen == true)
         {
-            ImVec2 menuPos = vMin + ImVec2(0, 20);
+            ImVec2 menuPos = m_gui.vMin + ImVec2(0, 20);
             ImVec2 menuSize = ImVec2(200, 175);
             ImVec2 menuAbsSize = menuPos + menuSize;
             SetNextWindowPos(menuPos);
@@ -547,7 +551,7 @@ void Engine::UpdateIMGUI()
         {
             ImGuizmo::SetDrawlist();
             GetCurrentWindow();
-            ImGuizmo::SetRect(windowPos.x, windowPos.y, content.x, content.y);
+            ImGuizmo::SetRect(windowPos.x, windowPos.y, m_gui.content.x, m_gui.content.y);
             RedFoxMaths::Mat4 cameraProjection = m_editorCamera.m_projection.GetTransposedMatrix();
             RedFoxMaths::Mat4 cameraView = m_editorCamera.GetViewMatrix().GetTransposedMatrix();
             RedFoxMaths::Mat4 transformMat = m_scene.GetWorldMatrix(m_gui.selectedObject).GetTransposedMatrix();
@@ -612,19 +616,19 @@ void Engine::UpdateIMGUI()
             }
         }
 
-        if (mousePosEditor.x > 0 && mousePosEditor.x < content.x &&
-            mousePosEditor.y > 0 && mousePosEditor.y < content.y)
+        if (mousePosEditor.x > 0 && mousePosEditor.x < m_gui.content.x &&
+            mousePosEditor.y > 0 && mousePosEditor.y < m_gui.content.y)
         {
             RedFoxMaths::Float3 ray_ndc = {
-                (2.0f * mousePosEditor.x) / content.x - 1.0f,
-                1.0f - (2.0f * mousePosEditor.y) / content.y,
+                (2.0f * mousePosEditor.x) / m_gui.content.x - 1.0f,
+                1.0f - (2.0f * mousePosEditor.y) / m_gui.content.y,
                 1
             };
             RedFoxMaths::Float4 ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };
             RedFoxMaths::Float4 ray_eye = m_editorCamera.m_projection.GetInverseMatrix() * ray_clip;
             ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };
             RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
-            ray_world.Normalize(); 
+            ray_world.Normalize();
 
             if (IsMouseClicked(ImGuiMouseButton_Left) && !m_gui.manipulatingGizmo)
             {
@@ -647,9 +651,22 @@ void Engine::UpdateIMGUI()
                 }
             }
 
-            if (m_input.mouseRClick)
+            if (!m_scene.isPaused)
+            {
+                m_input.lockMouse = true;
+                m_editorCameraEnabled = false;
+                WindowOrigin windowOrigin = m_platform.GetWindowOrigin();
+                int lockedMouseX = (int)(m_gui.content.x + m_gui.vMin.x) / 2;
+                int lockedMouseY = (int)(m_gui.content.y + m_gui.vMin.y) / 2;
+                //TODO(a.perche): Find the SetCursor showing the mouse overriding the lock call
+                m_platform.LockMouse(m_platform.m_window, lockedMouseX, lockedMouseY, &m_input);
+            }
+            else if (m_input.mouseRClick)
             {
                 m_input.lockMouse = m_editorCameraEnabled = true;
+                m_platform.LockMouse(m_platform.m_window, m_input.mouseXPosition, m_input.mouseYPosition, &m_input);
+                if (m_input.mouseXDelta == 0 && m_input.mouseYDelta == 0)
+                    SetCursor(LoadCursor(nullptr, IDC_ARROW));
             }
             else
             {
@@ -659,7 +676,17 @@ void Engine::UpdateIMGUI()
         }
       
         if (m_input.Escape)
-            m_gui.selectedObject = 0;
+        {
+            if (m_scene.isPaused)
+            {
+                m_gui.selectedObject = 0;
+            }
+            else
+            {
+                m_scene.isPaused = true;
+                m_input.lockMouse = false;
+            }
+        }
     }
     End();
     PopStyleVar();

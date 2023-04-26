@@ -29,6 +29,12 @@ namespace RedFoxEngine
 typedef HWND Window;
 typedef HINSTANCE ApplicationContext;
 
+struct WindowOrigin
+{
+    int x;
+    int y;
+};
+
 struct WindowDimension
 {
     int width;
@@ -127,7 +133,9 @@ public:
     Platform(int width, int height);
     void Maximize();
     void FatalError(const char *message);
+    void LockMouse(RedFoxEngine::Window m_window, int mouseX, int mouseY, RedFoxEngine::Input* input);
     void MessageProcessing(Input *input);
+    WindowOrigin GetWindowOrigin();
     WindowDimension GetWindowDimension();
     void SetMousePosition(int x, int y);
     static u64 GetTimerFrequency();
