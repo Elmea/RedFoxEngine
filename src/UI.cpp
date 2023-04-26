@@ -255,14 +255,10 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         *newGameUI = {};
         char tmp[255];
         int size = snprintf(tmp, 255, "New UI #%d", m_scene.gameUICount - 1);
-
         newGameUI->name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
-
         newGameUI->name.capacity = 255;
         newGameUI->scale = { 1, 1 };
-        newGameUI->text.data = "hello world";
     }
-
     PopStyleVar();
     End();
 }
@@ -663,9 +659,7 @@ void Engine::UpdateIMGUI()
         }
       
         if (m_input.Escape)
-        {
             m_gui.selectedObject = 0;
-        }
     }
     End();
     PopStyleVar();
@@ -1030,7 +1024,7 @@ void Engine::UpdateIMGUI()
                     ImGui::Text("Position");
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    DragFloat2("TransformPosition", &m_scene.gameUIs[m_gui.selectedUI].screenPosition.x, m_gui.dragSpeed, 0, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    DragFloat2("TransformPosition", &m_scene.gameUIs[m_gui.selectedUI].screenPosition.x, m_gui.dragSpeed, -150.f, 150.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
 
@@ -1042,7 +1036,40 @@ void Engine::UpdateIMGUI()
                 }
             }
             if (ImGui::CollapsingHeader("Text", propertiesFlags))
-                ImGui::InputText((char*)&m_scene.gameUIs[m_gui.selectedUI].name, (char*)&m_scene.gameUIs[m_gui.selectedUI].text, 256, 0, 0, 0);
+            {
+                if (ImGui::BeginTable("Attributes", 2, tableFlags))
+                {
+                    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+
+                    ImGui::Text("Text");
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::SetNextItemWidth(-FLT_MIN);
+                    ImGui::InputText("Text", (char*)&m_scene.gameUIs[m_gui.selectedUI].text, 256, 0, 0, 0);
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+
+                    ImGui::Text("Image path");
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::SetNextItemWidth(-FLT_MIN);
+                    ImGui::InputText("Image path", (char*)&m_scene.gameUIs[m_gui.selectedUI].imagePath, 256, 0, 0, 0);
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+
+
+                    int modelId = m_scene.gameObjects[m_gui.selectedObject].modelIndex;
+                    Text("Color");
+                    TableSetColumnIndex(1);
+                    SetNextItemWidth(-FLT_MIN);
+                    ColorPicker3("MaterialColor",
+                        &m_models[modelId].obj.materials.material->diffuse.x,
+                        ImGuiColorEditFlags_PickerHueWheel);
+
+                    ImGui::EndTable();
+                }
+            }
         }
         End();
         PopFont();
