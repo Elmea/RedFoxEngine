@@ -257,7 +257,8 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         int size = snprintf(tmp, 255, "New UI #%d", m_scene.gameUICount - 1);
         newGameUI->name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
         newGameUI->name.capacity = 255;
-        newGameUI->scale = { 1, 1 };
+        newGameUI->text = initStringChar("", 254, &m_memoryManager.m_memory.arena);
+        newGameUI->size = {100, 100};
     }
     PopStyleVar();
     End();
@@ -1031,7 +1032,7 @@ void Engine::UpdateIMGUI()
                     ImGui::Text("Scale");
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    DragFloat2("TransformScale", &m_scene.gameUIs[m_gui.selectedUI].scale.x, m_gui.dragSpeed, 0, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    DragFloat2("TransformScale", &m_scene.gameUIs[m_gui.selectedUI].size.x, m_gui.dragSpeed, 0, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                     ImGui::EndTable();
                 }
             }
@@ -1047,12 +1048,26 @@ void Engine::UpdateIMGUI()
                     ImGui::Text("Text");
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::InputText("Text", (char*)&m_scene.gameUIs[m_gui.selectedUI].text, 254, 0, 0, 0);
+                    ImGui::InputText("Text", (char*)m_scene.gameUIs[m_gui.selectedUI].text.data, m_scene.gameUIs[m_gui.selectedUI].text.capacity, 0, 0, 0);
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
-
                     ImGui::EndTable();
                 }
+            }
+            SeparatorText("Text Color");
+            if (BeginTable("TextTable", 2, tableFlags))
+            {
+                TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+                TableNextRow();
+                TableSetColumnIndex(0);
+                Text("Color");
+                TableSetColumnIndex(1);
+                SetNextItemWidth(-FLT_MIN);
+                ColorPicker3("TextColor",
+                    &m_scene.gameUIs[m_gui.selectedUI].textColor.x,
+                    ImGuiColorEditFlags_PickerHueWheel);
+                EndTable();
             }
         }
         End();

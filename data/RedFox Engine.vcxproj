@@ -176,6 +176,7 @@
       <PreprocessorDefinitions>_DEBUG</PreprocessorDefinitions>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <PreLinkEvent>
       <Command>
@@ -200,6 +201,7 @@
       <PreprocessorDefinitions>NDEBUG</PreprocessorDefinitions>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <PreBuildEvent>
       <Command>

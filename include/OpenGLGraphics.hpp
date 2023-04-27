@@ -120,8 +120,7 @@ public:
     void DrawModelInstances(Model* model,
         RedFoxMaths::Mat4* modelMatrices, int instanceCount);
     void DrawModelShadowInstances(Model* model, int instanceCount);
-    void RenderText(char* text, float x, float y, float scale);
-
+    void RenderText(GameUI ui);
 };
 } // namespace RedFoxEngine
 
