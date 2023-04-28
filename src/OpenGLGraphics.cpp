@@ -264,7 +264,7 @@ namespace RedFoxEngine
     }
 
     void Graphics::RenderText(GameUI ui)
-    {
+    {      
         if (ui.text.data == nullptr)
             return;
         glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
