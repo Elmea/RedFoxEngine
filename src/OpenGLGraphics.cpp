@@ -281,10 +281,10 @@ namespace RedFoxEngine
             RedFoxMaths::Float4 vertices[4] = 
             {
                 // positions  // texture Coords
-                {xOffset - ui.size.x / 2, yOffset + ui.size.y / 2,  0.0f, 1.0f},
-                {xOffset - ui.size.x / 2, yOffset - ui.size.y / 2,  0.0f, 0.0f},
-                {xOffset + ui.size.x / 2, yOffset + ui.size.y / 2,  1.0f, 1.0f},
-                {xOffset + ui.size.x / 2, yOffset - ui.size.y / 2,  1.0f, 0.0f},
+                {xOffset , yOffset + ui.size.y ,  0.0f, 1.0f},
+                {xOffset , yOffset ,  0.0f, 0.0f},
+                {xOffset + ui.size.x , yOffset + ui.size.y ,  1.0f, 1.0f},
+                {xOffset + ui.size.x , yOffset ,  1.0f, 0.0f},
             };
             glNamedBufferSubData(m_quadVBO, 0, sizeof(vertices), &vertices[0].x);
             if (ui.image)
@@ -305,9 +305,9 @@ namespace RedFoxEngine
             ++text;
         }
         text = (char *)ui.text.data;
-        offset /= 2;
-        float xPos = ui.screenPosition.x - offset + xOffset;
-        float yPos = ui.screenPosition.y - yOffset * 1.15f;
+        //offset /= 2;
+        float xPos = xOffset;
+        float yPos = -yOffset;
         while (*text) {
             if (*text >= 32)
             {
