@@ -135,18 +135,18 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     Begin("Topbar", (bool*)0, window_flags | ImGuiWindowFlags_NoBringToFrontOnFocus);
     PopStyleColor();
 
-    // TODO(a.perche): Project name here
-    SetCursorPosX((GetWindowWidth() - CalcTextSize("Project Name").x) / 2.f);
-    Text("Project Name");
+    char* windowTitle = "RedFox Engine";
+    SetCursorPosX((GetWindowWidth() - CalcTextSize(windowTitle).x) / 2.f);
+    Text(windowTitle);
 
     SameLine();
     SetCursorPosX(GetWindowWidth() - buttonHeight - 5.f);
-    if (Button("X", ImVec2(buttonHeight, titleBarHeight)))
+    if (ButtonEx("X", ImVec2(buttonHeight, titleBarHeight), ImGuiButtonFlags_FlattenChildren))
         m_platform.m_running = 0;
 
     SameLine();
     SetCursorPosX(GetWindowWidth() - (buttonHeight * 2.f) - 10.f);
-    if (Button("[__]", ImVec2(buttonHeight, titleBarHeight)))
+    if (ButtonEx("[__]", ImVec2(buttonHeight, titleBarHeight), ImGuiButtonFlags_FlattenChildren))
         m_platform.Maximize();
 
     End();  
@@ -202,13 +202,19 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     if (ImageButton("SCALE", m_gui.icons[6], ImVec2(buttonHeight, buttonHeight), ImVec2(0, 0), ImVec2(1, 1),
         m_gui.gizmoType == ImGuizmo::OPERATION::SCALE ? RF_LIGHTGRAYBLUE : RF_DARKORANGE))
         m_gui.gizmoType = ImGuizmo::OPERATION::SCALE;
+
+    SameLine();
+    bool isLocal = m_gui.gizmoMode == ImGuizmo::MODE::LOCAL;
+    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
+    if (ButtonEx(isLocal ? "LOCAL" : "WORLD", ImVec2(0, buttonHeight)))
+        m_gui.gizmoMode = isLocal ? ImGuizmo::MODE::WORLD : ImGuizmo::MODE::LOCAL;
     
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
     if (ImageButton("ADD ENTITY", m_gui.icons[7], ImVec2(buttonHeight, buttonHeight)))
     {
         GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
-        *newGameObject = { };
+        *newGameObject = {0};
         char tmp[255];
         int size = snprintf(tmp, 255, "New entity #%d", m_scene.gameObjectCount - 1);
         newGameObject->name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
@@ -248,8 +254,8 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->modelIndex = 1;
     }
 
-    ImGui::SameLine();
-    if (ImGui::Button("ADD UI", ImVec2(0, buttonHeight)))
+    SameLine();
+    if (Button("ADD UI", ImVec2(0, buttonHeight)))
     {
         GameUI* newGameUI = &m_scene.gameUIs[m_scene.gameUICount++];
         *newGameUI = {};
@@ -319,23 +325,13 @@ void Engine::DrawSceneNodes(bool is_child, int index)
         flags |= ImGuiTreeNodeFlags_Selected;
     flags |= ImGuiTreeNodeFlags_SpanFullWidth;
 
-    bool nodeOpen = TreeNodeEx((char*)m_scene.gameObjects[index].name.data, flags, "%s", (char*)m_scene.gameObjects[index].name.data);
-    if ((IsItemClicked() && !IsItemToggledOpen()) ||
-        IsItemFocused())
+    bool nodeOpen = TreeNodeEx((char*)m_scene.gameObjects[index].name.data, flags, "%s",
+                               (char*)m_scene.gameObjects[index].name.data);
+    if ((IsItemClicked() && !IsItemToggledOpen()) || IsItemFocused())
     {
         m_gui.selectedObject = index;
         m_gui.selectedUI = 0;
     }
-
-    // TODO(a.perche): Double click to focus object or press F (lerp position)
-    /*
-    if (IsMouseDoubleClicked(ImGuiMouseButton_Left) && IsItemHovered())
-    {
-        m_editorCamera.position = m_selectedObject->position;
-        const RedFoxMaths::Float3 up(0, 1, 0);
-        m_editorCamera.SetViewLookAt(m_selectedObject->position, up);
-    }
-    */
 
     if (BeginDragDropSource())
     {
@@ -382,23 +378,13 @@ void Engine::DrawSceneNodesUI(bool is_child, int index)
         flags |= ImGuiTreeNodeFlags_Selected;
     flags |= ImGuiTreeNodeFlags_SpanFullWidth;
 
-    bool nodeOpen = TreeNodeEx((char*)m_scene.gameUIs[index].name.data, flags, "%s", (char*)m_scene.gameUIs[index].name.data);
-    if ((IsItemClicked() && !IsItemToggledOpen()) || 
-        IsItemFocused())
+    bool nodeOpen = TreeNodeEx((char*)m_scene.gameUIs[index].name.data, flags, "%s", 
+                               (char*)m_scene.gameUIs[index].name.data);
+    if ((IsItemClicked() && !IsItemToggledOpen()) || IsItemFocused())
     {
         m_gui.selectedUI = index;
         m_gui.selectedObject = 0;
     }
-
-    // TODO(a.perche): Double click to focus object or press F (lerp position)
-    /*
-    if (IsMouseDoubleClicked(ImGuiMouseButton_Left) && IsItemHovered())
-    {
-        m_editorCamera.position = m_selectedObject->position;
-        const RedFoxMaths::Float3 up(0, 1, 0);
-        m_editorCamera.SetViewLookAt(m_selectedObject->position, up);
-    }
-    */
 
     if (BeginDragDropSource())
     {
@@ -440,6 +426,10 @@ void Engine::UpdateIMGUI()
         ImGuiDockNodeFlags_NoWindowMenuButton |
         ImGuiDockNodeFlags_NoCloseButton;
 
+    ImGuiWindowFlags windowFlags =
+        ImGuiWindowFlags_NoCollapse | 
+        ImGuiWindowFlags_NoScrollbar;
+
     ImGui_ImplWin32_NewFrame();
     ImGui_ImplOpenGL3_NewFrame();
     NewFrame();
@@ -447,13 +437,12 @@ void Engine::UpdateIMGUI()
     ImGuizmo::SetOrthographic(false);
     ImGuizmo::BeginFrame();
     
-    // TODO(a.perche) : Build dockspace at runtime
     DrawDockSpace(GetMainViewport(), dockingFlags, (const ImGuiWindowClass*)0);
 
     PushFont(m_gui.defaultFont);
 
     PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
-    if (Begin("Editor", (bool*)0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
+    if (Begin("Editor", (bool*)0, windowFlags))
     {
         WindowDimension &dimension = m_platform.m_windowDimension;
         ImVec2 content = GetContentRegionAvail();
@@ -506,7 +495,7 @@ void Engine::UpdateIMGUI()
         if (m_gui.editorMenuOpen == true)
         {
             ImVec2 menuPos = vMin + ImVec2(0, 20);
-            ImVec2 menuSize = ImVec2(200, 175);
+            ImVec2 menuSize = ImVec2(200, 250);
             ImVec2 menuAbsSize = menuPos + menuSize;
             SetNextWindowPos(menuPos);
             BeginChild("Editor settings", menuSize);
@@ -962,23 +951,24 @@ void Engine::UpdateIMGUI()
                     EndTable();
                 }
             }
+
             if (CollapsingHeader("Render", propertiesFlags))
             {
                 int* modelIndex = &m_scene.gameObjects[m_gui.selectedObject].modelIndex;
                 SeparatorText("Model");
                 SetNextItemWidth(-FLT_MIN);
-                if (ImGui::BeginCombo("ModelList", (*modelIndex != -1) ? (char*)m_models[*modelIndex].name.data : "Select model"))
+                if (BeginCombo(" ", (*modelIndex != -1) ? (char*)m_models[*modelIndex].name.data : "Select model"))
                 {
                     for (int i = 0; i < m_modelCount; i++)
                     {
                         bool is_selected = (*modelIndex == i);
-                        if (ImGui::Selectable((char*)m_models[i].name.data, is_selected))
+                        if (Selectable((char*)m_models[i].name.data, is_selected))
                             *modelIndex = i;
 
                         if (is_selected)
-                            ImGui::SetItemDefaultFocus();
+                            SetItemDefaultFocus();
                     }
-                    ImGui::EndCombo();
+                    EndCombo();
                 }
 
                 // TODO: Refactor this when materials will be for each game objects
@@ -1005,7 +995,7 @@ void Engine::UpdateIMGUI()
   
         if (m_gui.selectedUI != 0)
         {
-            if (ImGui::CollapsingHeader("Transform", propertiesFlags))
+            if (CollapsingHeader("Transform", propertiesFlags))
             {
                 //TODO(a.perche) : Drag speed according to user param.
                 ImGuiTableFlags tableFlags =
@@ -1014,47 +1004,90 @@ void Engine::UpdateIMGUI()
                     ImGuiTableFlags_Resizable |
                     ImGuiTableFlags_BordersOuter;
 
-                if (ImGui::BeginTable("TransformTable", 2, tableFlags))
+                if (BeginTable("TransformTable", 2, tableFlags))
                 {
-                    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-                    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
+                    TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                    TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+                    TableNextRow();
+                    TableSetColumnIndex(0);
 
-                    ImGui::Text("Position");
-                    ImGui::TableSetColumnIndex(1);
-                    ImGui::SetNextItemWidth(-FLT_MIN);
+                    Text("Position");
+                    TableSetColumnIndex(1);
+                    SetNextItemWidth(-FLT_MIN);
                     DragFloat2("TransformPosition", &m_scene.gameUIs[m_gui.selectedUI].screenPosition.x, m_gui.dragSpeed, -150.f, 150.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
+                    TableNextRow();
+                    TableSetColumnIndex(0);
 
-                    ImGui::Text("Scale");
-                    ImGui::TableSetColumnIndex(1);
-                    ImGui::SetNextItemWidth(-FLT_MIN);
+                    Text("Scale");
+                    TableSetColumnIndex(1);
+                    SetNextItemWidth(-FLT_MIN);
                     DragFloat2("TransformScale", &m_scene.gameUIs[m_gui.selectedUI].scale.x, m_gui.dragSpeed, 0, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-                    ImGui::EndTable();
+                    EndTable();
                 }
             }
-            if (ImGui::CollapsingHeader("Text", propertiesFlags))
+            if (CollapsingHeader("Text", propertiesFlags))
             {
-                if (ImGui::BeginTable("Attributes", 2, tableFlags))
+                if (BeginTable("Attributes", 2, tableFlags))
                 {
-                    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-                    ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
+                    TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                    TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+                    TableNextRow();
+                    TableSetColumnIndex(0);
 
-                    ImGui::Text("Text");
-                    ImGui::TableSetColumnIndex(1);
-                    ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::InputText("Text", (char*)&m_scene.gameUIs[m_gui.selectedUI].text, 256, 0, 0, 0);
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
+                    Text("Text");
+                    TableSetColumnIndex(1);
+                    SetNextItemWidth(-FLT_MIN);
+                    InputText("Text", (char*)&m_scene.gameUIs[m_gui.selectedUI].text, 256, 0, 0, 0);
+                    TableNextRow();
+                    TableSetColumnIndex(0);
 
-                    ImGui::EndTable();
+                    EndTable();
                 }
             }
         }
+        float viewerSize = GetContentRegionAvail().y / 4.f;
+        if (Begin("AssetViewer", (bool *)0, windowFlags))
+        {
+            Text("THIS WILL BE THE ASSET VIEWER");
+            EndChild();
+        }
+        if (Begin("Assets", (bool*)0, windowFlags))
+        {
+            if (BeginTabBar("AssetsBar", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton))
+            {
+                if (BeginTabItem("Models", (bool*)0, ImGuiTabItemFlags_None))
+                {
+                    if (BeginListBox(" ", ImVec2(-FLT_MIN, 5 * GetTextLineHeightWithSpacing())))
+                    {
+                        for (int i = 0; i < m_modelCount; i++)
+                        {
+                            bool is_selected = m_gui.selectedModelAsset == i;
+                            if (Selectable(m_models[i].name.data, is_selected))
+                                m_gui.selectedModelAsset = i;
+
+                            if (is_selected)
+                                SetItemDefaultFocus();
+                        }
+                        EndListBox();
+                    }
+                        
+                    EndTabItem();
+                }
+                if (BeginTabItem("Textures", (bool*)0, ImGuiTabItemFlags_None))
+                {
+                    //TODO(a.perche): Public nammed textures from graphics
+                    EndTabItem();
+                }
+                if (BeginTabItem("Sounds", (bool*)0, ImGuiTabItemFlags_None))
+                {
+                    //TODO(a.perche): Same for sounds
+                    EndTabItem();
+                }
+            }
+            EndTabBar();
+        }
+        End();
+
         End();
         PopFont();
     }

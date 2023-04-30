@@ -32,6 +32,7 @@ struct ImGUI
     bool sceneGraphScrollButtonHovered = false;
     int selectedObject;
     int selectedUI;
+    int selectedModelAsset = 0;
     int nodeIndex = 1;
     int uiIndex = 0;
     int sceneGraphScrollStrength = 1;
