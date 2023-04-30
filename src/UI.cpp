@@ -105,16 +105,16 @@ void Engine::InitIMGUI()
     m_gui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
     m_gui.gizmoMode = ImGuizmo::MODE::LOCAL;
 
-    m_gui.icons[0] = (void*)(u64)LoadTextureFromFilePath("Textures/new_scene.png", false, false);
-    m_gui.icons[1] = (void*)(u64)LoadTextureFromFilePath("Textures/save_scene.png", false, false);
-    m_gui.icons[2] = (void*)(u64)LoadTextureFromFilePath("Textures/pause.png", false, false);
-    m_gui.icons[3] = (void*)(u64)LoadTextureFromFilePath("Textures/resume.png", false, false);
-    m_gui.icons[4] = (void*)(u64)LoadTextureFromFilePath("Textures/translate.png", false, false);
-    m_gui.icons[5] = (void*)(u64)LoadTextureFromFilePath("Textures/rotate.png", false, false);
-    m_gui.icons[6] = (void*)(u64)LoadTextureFromFilePath("Textures/scale.png", false, false);
-    m_gui.icons[7] = (void*)(u64)LoadTextureFromFilePath("Textures/new_entity.png", false, false);
-    m_gui.icons[8] = (void*)(u64)LoadTextureFromFilePath("Textures/new_cube.png", false, false);
-    m_gui.icons[9] = (void*)(u64)LoadTextureFromFilePath("Textures/new_sphere.png", false, false);
+    m_gui.icons[0] = (void*)(u64)LoadTextureFromFilePath("Textures/new_scene.png", false, false, false);
+    m_gui.icons[1] = (void*)(u64)LoadTextureFromFilePath("Textures/save_scene.png", false, false, false);
+    m_gui.icons[2] = (void*)(u64)LoadTextureFromFilePath("Textures/pause.png", false, false, false);
+    m_gui.icons[3] = (void*)(u64)LoadTextureFromFilePath("Textures/resume.png", false, false, false);
+    m_gui.icons[4] = (void*)(u64)LoadTextureFromFilePath("Textures/translate.png", false, false, false);
+    m_gui.icons[5] = (void*)(u64)LoadTextureFromFilePath("Textures/rotate.png", false, false, false);
+    m_gui.icons[6] = (void*)(u64)LoadTextureFromFilePath("Textures/scale.png", false, false, false);
+    m_gui.icons[7] = (void*)(u64)LoadTextureFromFilePath("Textures/new_entity.png", false, false, false);
+    m_gui.icons[8] = (void*)(u64)LoadTextureFromFilePath("Textures/new_cube.png", false, false, false);
+    m_gui.icons[9] = (void*)(u64)LoadTextureFromFilePath("Textures/new_sphere.png", false, false, false);
 }
 
 void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight)

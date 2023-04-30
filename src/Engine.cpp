@@ -339,10 +339,11 @@ void Engine::Draw()
     m_memoryManager.m_memory.temp.usedSize = 0;
 }
 
-u32 Engine::LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat)
+u32 Engine::LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat, bool flip)
 {
     int width, height, comp;
     MyString file = OpenAndReadEntireFile(filePath, &m_memoryManager.m_memory.temp);
+    stbi_set_flip_vertically_on_load(flip);
     char* data = (char*)stbi_load_from_memory((u8*)file.data, file.size, &width, &height, &comp, 4);
     GLuint texture = m_graphics.InitTexture(data, width, height, resident, repeat);
     stbi_image_free(data);
@@ -356,11 +357,11 @@ void Engine::InitSkyDome()
     m_scene.skyDome.model = RedFoxMaths::Mat4::GetScale({ skyDrawDistance,
         skyDrawDistance, skyDrawDistance });
 
-    m_scene.skyDome.topTint = LoadTextureFromFilePath("Textures/topSkyTint.png", false, true);
-    m_scene.skyDome.botTint = LoadTextureFromFilePath("Textures/botSkyTint.png", false, false);
-    m_scene.skyDome.sun     = LoadTextureFromFilePath("Textures/sun.png", false, false);
-    m_scene.skyDome.moon    = LoadTextureFromFilePath("Textures/moon.png", false, false);
-    m_scene.skyDome.clouds  = LoadTextureFromFilePath("Textures/clouds.png", false, false);
+    m_scene.skyDome.topTint = LoadTextureFromFilePath("Textures/topSkyTint.png", false, true, false);
+    m_scene.skyDome.botTint = LoadTextureFromFilePath("Textures/botSkyTint.png", false, false, false);
+    m_scene.skyDome.sun     = LoadTextureFromFilePath("Textures/sun.png", false, false, false);
+    m_scene.skyDome.moon    = LoadTextureFromFilePath("Textures/moon.png", false, false, false);
+    m_scene.skyDome.clouds  = LoadTextureFromFilePath("Textures/clouds.png", false, false, false);
 }
 
 Engine::~Engine()
