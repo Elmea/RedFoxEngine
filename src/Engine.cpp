@@ -243,7 +243,8 @@ void Engine::UpdateModelMatrices()
 {
     m_scene.m_modelMatrices = (RedFoxMaths::Mat4 *)m_memoryManager.TemporaryAllocation(
         sizeof(RedFoxMaths::Mat4) * m_scene.gameObjectCount);
-    m_scene.m_modelCountIndex = (u64 *)m_memoryManager.TemporaryAllocation(sizeof(u64) * m_modelCount);
+    m_scene.m_modelCountIndex = (u64 *)m_memoryManager.TemporaryAllocation(sizeof(u64)
+                                                         * m_modelCount);
     memset(m_scene.m_modelCountIndex, 0, sizeof(u64) * m_modelCount);
     int totalIndex = 0;
     
@@ -263,8 +264,8 @@ void Engine::UpdateModelMatrices()
                         material->diffuse = m_scene.gameObjects[index].Color;
                     else 
                         material->diffuse = {model->obj.materials.material[i].diffuse.x, 
-                                             model->obj.materials.material[i].diffuse.y,
-                                             model->obj.materials.material[i].diffuse.z};
+                                                model->obj.materials.material[i].diffuse.y,
+                                                model->obj.materials.material[i].diffuse.z};
                     material->Shininess = model->obj.materials.material[i].Shininess;
                     if (model->obj.materials.material[i].hasTexture == 0)
                         material->diffuseMap = -1;

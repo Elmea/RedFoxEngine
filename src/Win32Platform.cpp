@@ -175,22 +175,13 @@ Platform::Platform(int width, int height)
     SetCurrentDirectory(current);
 }
 
-WindowOrigin Platform::GetWindowOrigin()
-{
-    WindowOrigin result = { 0 };
-    RECT Rect;
-    GetWindowRect(m_window, &Rect);
-    result.x = Rect.left;
-    result.y = Rect.top;
-    return result;
-}
-
 WindowDimension Platform::GetWindowDimension()
 {
     RECT ClientRect;
     GetClientRect(m_window, &ClientRect);
     m_windowDimension.width = ClientRect.right - ClientRect.left;
     m_windowDimension.height = ClientRect.bottom - ClientRect.top;
+    glViewport(0, 0, m_windowDimension.width, m_windowDimension.height);
     return (m_windowDimension);
 }
 
@@ -232,14 +223,16 @@ void Platform::SetMousePosition(int x, int y)
 }
 }
 
-void RedFoxEngine::Platform::LockMouse(RedFoxEngine::Window m_window,
-    int mouseX, int mouseY, RedFoxEngine::Input *input)
+static void updateMouse(RedFoxEngine::Window m_window,
+    int mouseX,
+    int mouseY,
+    RedFoxEngine::Input *input)
 {
-    POINT p;
-    p.x = mouseX; p.y = mouseY;
+    RedFoxEngine::WindowDimension p;
+    p.width = mouseX; p.height = mouseY;
     ClientToScreen(m_window, (LPPOINT)&p);
     SetCursor(nullptr);
-    SetCursorPos(p.x, p.y);
+    SetCursorPos(p.width, p.height);
     input->mouseXPosition = mouseX;
     input->mouseYPosition = mouseY;
 }
@@ -264,6 +257,14 @@ void RedFoxEngine::Platform::MessageProcessing(Input *input)
             input->mouseYPosition = HIWORD(Message.lParam);
             input->mouseXDelta = input->mouseXPosition - mouseX;
             input->mouseYDelta = input->mouseYPosition - mouseY;
+            if (input->lockMouse)
+            {
+                updateMouse(m_window, mouseX, mouseY, input);
+            }
+            else if (input->mouseXDelta == 0 && input->mouseYDelta == 0)
+            {
+                SetCursor(LoadCursor(nullptr, IDC_ARROW));
+            }
         }
         break;
         case WM_MOUSEWHEEL: {

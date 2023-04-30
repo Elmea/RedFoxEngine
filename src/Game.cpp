@@ -82,8 +82,6 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
             }
             physx::PxTransform transform {(float)j * 10, (float)(i+t) * 5, 0};
             // actors[i]->is<physx::PxRigidDynamic>()->setGlobalPose(transform);
-            
-            // Update physics
             if (!scene->isPaused && !actors[i]->is<physx::PxRigidDynamic>()->isSleeping())
             {
                 transform = actors[i]->getGlobalPose();
@@ -103,17 +101,13 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
                 transform.q.w = gameObjects[i].orientation.a;
                 transform.q.x = gameObjects[i].orientation.b;
                 transform.q.y = gameObjects[i].orientation.c;
-                transform.q.z = gameObjects[i].orientation.d;
+                transform.q.z	= gameObjects[i].orientation.d;
                 actors[i]->is<physx::PxRigidDynamic>()->setGlobalPose(transform);
             }
     }
-
-    // Camera
     scene->m_gameCamera.position = {gameObjects[1].position.x, gameObjects[1].position.y, gameObjects[1].position.z};
     static Float3 cameraRotation;
     cameraRotation += {(f32)input.mouseYDelta * deltaTime, (f32)input.mouseXDelta * deltaTime, 0}; 
-    if (cameraRotation.x > PI/2)  cameraRotation.x = PI / 2;
-    if (cameraRotation.x < -PI/2) cameraRotation.x = -PI / 2;
     scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
         
     Float3 inputDirection(0, 0, 0);
@@ -136,8 +130,8 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
             velocity = tPlayer->getLinearVelocity();
 
             velocity.x = speed * deltaTime * inputDirection.x;
-            //velocity.y = speed * deltaTime * inputDirection.y;
-            velocity.z = speed * deltaTime * inputDirection.z;
+            velocity.y = speed * deltaTime * inputDirection.y;
+            //velocity.z = speed * deltaTime * inputDirection.z;
             tPlayer->setLinearVelocity(velocity);
             physx::PxTransform transform;
             // transform = tPlayer->getGlobalPose();

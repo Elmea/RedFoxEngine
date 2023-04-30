@@ -42,8 +42,6 @@ struct ImGUI
     float averageFps;
     float dragSpeed = 1.f;
     float fps[255];
-    ImVec2 content;
-    ImVec2 vMin;
     ImGuizmo::OPERATION gizmoType;
     ImGuizmo::MODE gizmoMode;
     ImGuiIO* io;
