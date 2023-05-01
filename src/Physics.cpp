@@ -77,7 +77,7 @@ void Physx::InitPhysics(Scene scene, int sphereIndex)
 		if (scene.gameObjects[i].modelIndex == sphereIndex)
 			CreateSphereCollider(scene.gameObjects[i].position, scene.gameObjects[i].radius);
 		else
-			CreateCubeCollider(scene.gameObjects[i].position, 1, 0.5);
+			CreateCubeCollider(scene.gameObjects[i].position, 1, 1);
 	}
 }
 
@@ -89,7 +89,7 @@ void Physx::UpdatePhysics(f32 deltaTime, ResourcesManager m, bool isPaused)
 		if(!isPaused)
 			m_scene->simulate(deltaTime);
 		
-		actorCount = temp;			
+		actorCount = temp;
 		actors = (PxRigidActor **)m.TemporaryAllocation(sizeof(actors) * actorCount);
 		m_scene->getActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC, (physx::PxActor**)actors, actorCount);
 	}

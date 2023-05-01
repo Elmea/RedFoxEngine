@@ -66,43 +66,43 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
             physx->m_scene->fetchResults(true);
         physx::PxRigidActor *player = actors[1];
         physx::PxTransform transform;
+        
         transform = player->is<physx::PxRigidDynamic>()->getGlobalPose();
         transform.q.w = 1;
         transform.q.x = transform.q.y = transform.q.z = 0;
         player->is<physx::PxRigidDynamic>()->setGlobalPose(transform);
 
-        int j = 0;
-        int t = 20;
-        for (int i = 1; i < (int)gameObjectCount; i++)
+        int j = 1;
+        for (int i = 1; i < (int)gameObjectCount && j < physx->actorCount; i++)
         {
-            if (i % 10 == 0)
-            {
-                j++;
-                t -= 10;
-            }
-            physx::PxTransform transform {(float)j * 10, (float)(i+t) * 5, 0};
             // actors[i]->is<physx::PxRigidDynamic>()->setGlobalPose(transform);
-            if (!scene->isPaused && !actors[i]->is<physx::PxRigidDynamic>()->isSleeping())
+            physx::PxRigidDynamic *actor = actors[j]->is<physx::PxRigidDynamic>();
+            if (actor)
             {
-                transform = actors[i]->getGlobalPose();
-                gameObjects[i].position.x    = transform.p.x;
-                gameObjects[i].position.y    = transform.p.y;
-                gameObjects[i].position.z    = transform.p.z;
-                gameObjects[i].orientation.a = transform.q.w;
-                gameObjects[i].orientation.b = transform.q.x;
-                gameObjects[i].orientation.c = transform.q.y;
-                gameObjects[i].orientation.d = transform.q.z;
-            }
-            else
-            {
-                transform.p.x = gameObjects[i].position.x   ;
-                transform.p.y = gameObjects[i].position.y   ;
-                transform.p.z = gameObjects[i].position.z   ;
-                transform.q.w = gameObjects[i].orientation.a;
-                transform.q.x = gameObjects[i].orientation.b;
-                transform.q.y = gameObjects[i].orientation.c;
-                transform.q.z	= gameObjects[i].orientation.d;
-                actors[i]->is<physx::PxRigidDynamic>()->setGlobalPose(transform);
+                if (!scene->isPaused && !actor->isSleeping())
+                {
+                    transform = actor->getGlobalPose();
+                    gameObjects[i].position.x    = transform.p.x;
+                    gameObjects[i].position.y    = transform.p.y;
+                    gameObjects[i].position.z    = transform.p.z;
+                    gameObjects[i].orientation.a = transform.q.w;
+                    gameObjects[i].orientation.b = transform.q.x;
+                    gameObjects[i].orientation.c = transform.q.y;
+                    gameObjects[i].orientation.d = transform.q.z;
+                    j++;
+                }
+                else
+                {
+                    transform.p.x = gameObjects[i].position.x   ;
+                    transform.p.y = gameObjects[i].position.y   ;
+                    transform.p.z = gameObjects[i].position.z   ;
+                    transform.q.w = gameObjects[i].orientation.a;
+                    transform.q.x = gameObjects[i].orientation.b;
+                    transform.q.y = gameObjects[i].orientation.c;
+                    transform.q.z	= gameObjects[i].orientation.d;
+                    actor->setGlobalPose(transform);
+                    j++;
+                }
             }
     }
     scene->m_gameCamera.position = {gameObjects[1].position.x, gameObjects[1].position.y, gameObjects[1].position.z};

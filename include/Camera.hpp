@@ -18,9 +18,19 @@ namespace RedFoxEngine
         float FOV, aspect;
     };
     
-    class Camera : public GameObject
+    class Camera
     {
     public:
+        union
+        {
+            Transform transform;
+            struct
+            {
+              RedFoxMaths::Float3 position;
+              RedFoxMaths::Float3 scale;
+              RedFoxMaths::Quaternion orientation;
+            };
+        };
         RedFoxMaths::Mat4 m_projection;
         CameraParameters m_parameters;
         
