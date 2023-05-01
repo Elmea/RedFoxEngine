@@ -237,6 +237,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->orientation = { 1,0,0,0 };
         newGameObject->scale = { 1,1,1 };
         newGameObject->modelIndex = 0;
+        m_physx.CreateCubeCollider({}, 1, 1);
     }
 
     SameLine();
@@ -252,6 +253,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->orientation = { 1,0,0,0 };
         newGameObject->scale = { 1,1,1 };
         newGameObject->modelIndex = 1;
+        m_physx.CreateSphereCollider({}, 1);
     }
 
     SameLine();

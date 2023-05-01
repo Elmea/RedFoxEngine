@@ -5,17 +5,27 @@
 
 namespace RedFoxEngine
 {
+    struct Transform
+    {
+        RedFoxMaths::Float3 position;
+        RedFoxMaths::Float3 scale;
+        RedFoxMaths::Quaternion orientation;
+    };
     struct GameObject
     {
         MyString name;
-  
-        RedFoxMaths::Float3 position;
+        union
+        {
+            Transform transform;
+            struct
+            {
+              RedFoxMaths::Float3 position;
+              RedFoxMaths::Float3 scale;
+              RedFoxMaths::Quaternion orientation;
+            };
+        };
         int parent;
-
-        RedFoxMaths::Float3 scale;
         int modelIndex;
-
-        RedFoxMaths::Quaternion orientation;
         float radius;
         RedFoxMaths::Float3 boxExtents;
         RedFoxMaths::Float3 Color;

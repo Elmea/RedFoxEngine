@@ -990,9 +990,9 @@ ObjModel CreateCube(Memory *memory)
     result.meshCount = 1;
 
     vec3 positions[] = {
-        {{0.50000f, -0.50000f, -0.50000f}},  {{0.50000f, -0.50000f, 0.50000f}},  {{-0.50000f, -0.50000f, 0.50000f}},
-        {{-0.50000f, -0.50000f, -0.50000f}}, {{0.50000f, 0.50000f, -0.5000f}},   {{0.50000f, 0.50000f, 0.50000f}},
-        {{-0.50000f, 0.50000f, 0.50000f}},   {{-0.50000f, 0.50000f, -0.50000f}},
+        {{1.0f, -1.0f, -1.0f}},  {{1.0f, -1.0f, 1.0f}},  {{-1.0f, -1.0f, 1.0f}},
+        {{-1.0f, -1.0f, -1.0f}}, {{1.0f, 1.0f, -1.0f}},   {{1.0f, 1.0f, 1.0f}},
+        {{-1.0f, 1.0f, 1.0f}},   {{-1.0f, 1.0f, -1.0f}},
     };
     vec3 normals[] = {
         {{0.00000f, -1.00000f, 0.00000f}}, {{0.00000f, 1.00000f, 0.00000f}},    {{1.00000f, 0.00000f, 0.00000f}},
@@ -1078,9 +1078,12 @@ ObjModel CreateSphere(int latitudeCount, int longitudeCount, ArenaAllocator *mem
     {
         for (int j = 0; j <= longitudeCount; ++j, v++)
         {
+            float phi   = j * longitudeStep;
+            float theta = i * latitudeStep;
             //TODO: unit sphere
-            result.vertices[v].position = {{cosf(longitudeStep * j) * sinf(i * latitudeStep), cosf(i * latitudeStep - M_PI),
-                                     sinf(longitudeStep * j) * sinf(i * latitudeStep)}};
+            result.vertices[v].position = {{cosf(phi) * sinf(theta), cosf(theta - M_PI),
+                                     sinf(phi) * sinf(theta)}};
+            NormalizeV3(result.vertices[v].position);
 
             vec3 zero = {};
             result.vertices[v].normal = result.vertices[v].position;
