@@ -77,7 +77,7 @@ Engine::Engine(int width, int height) :
 #if 0
     LoadScene("Sample Scene.scene");
 #else
-    initSphericalManyGameObjects(1000);
+    initSphericalManyGameObjects(10000);
     m_scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
 
     // Some light for testing
@@ -294,7 +294,6 @@ void Engine::UpdateModelMatrices()
         }
     }
     m_graphics.PushMaterial(materials, totalIndex);
-    
 }
 
 void Engine::UpdateSkyDome()
@@ -314,22 +313,28 @@ void Engine::Update()
     UpdateSkyDome();
     m_soundManager.UpdateListener(m_editorCamera.position, m_editorCamera.orientation.ToEuler());
     UpdateLights(&m_graphics.lightStorage);
-    m_physx.UpdatePhysics(m_time.delta, m_memoryManager, m_scene.isPaused);
-    m_game.update(&m_scene, &m_physx, m_input, m_time.delta);
+    static float physxUpdate;
+
+    if (physxUpdate >= 1.0 / 60.0)
+    {
+        m_physx.UpdatePhysics(1.0 / 60.0, m_memoryManager, m_scene.isPaused);
+        m_game.update(&m_scene, &m_physx, m_input, 1.0 / 60.0);
+        physxUpdate = 0;
+    }
     UpdateModelMatrices();
     UpdateIMGUI();
-    
+    physxUpdate += m_time.delta;
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 
 void Engine::Draw()
 {
-    if (m_time.delta < 0.03f)
-    {
-        timeBeginPeriod(1);
-        Sleep(3);
-        timeEndPeriod(1);
-    }
+    // if (m_time.delta < 0.03f)
+    // {
+    //     timeBeginPeriod(1);
+    //     Sleep(3);
+    //     timeEndPeriod(1);
+    // }
     // Camera *currentCamera = &m_scene.m_gameCamera; //TODO game camera
     Camera *currentCamera;
     if (m_scene.isPaused)
@@ -339,11 +344,13 @@ void Engine::Draw()
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
     m_graphics.Draw(&m_scene, m_platform.m_windowDimension, m_time.current, m_time.delta);
    
-    for (int i = 0; i < m_scene.gameUICount; i++)
+    for (int i = 0; i < (int)m_scene.gameUICount; i++)
     {
-        if (m_scene.gameUIs[i].text.data != "")
+        if (m_scene.gameUIs[i].text.data)
             m_graphics.RenderText((char*)&m_scene.gameUIs[i].text, m_scene.gameUIs[i].screenPosition.x * 5, -m_scene.gameUIs[i].screenPosition.y * 5, 20);
     }
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     m_platform.SwapFramebuffers();
     m_time.delta = (Platform::GetTimer() - m_time.current);
     m_memoryManager.m_memory.temp.usedSize = 0;

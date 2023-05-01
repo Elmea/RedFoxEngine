@@ -352,8 +352,6 @@ namespace RedFoxEngine
         // swap the buffers to show output
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
 
     static void bindBuffer(int bindingPoint, GLuint buffer, int size)

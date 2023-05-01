@@ -611,6 +611,7 @@ void Engine::UpdateIMGUI()
                 m_scene.gameObjects[m_gui.selectedObject].scale.x = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.x, 1, 10000);
                 m_scene.gameObjects[m_gui.selectedObject].scale.y = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.y, 1, 10000);
                 m_scene.gameObjects[m_gui.selectedObject].scale.z = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_gui.selectedObject].scale.z, 1, 10000);
+                m_physx.SetTransform(m_gui.selectedObject, m_scene.gameObjects[m_gui.selectedObject].transform);
             }
         }
 
@@ -640,7 +641,7 @@ void Engine::UpdateIMGUI()
                     if (hit.actor)
                     {
                         int hitIndex = hit.actor->getInternalActorIndex();
-                        if (hitIndex < m_scene.gameObjectCount && hitIndex > 0 && hitIndex != m_gui.selectedObject)
+                        if (hitIndex < (int)m_scene.gameObjectCount && hitIndex > 0)
                         {
                             m_gui.selectedObject = hitIndex;
                             mousePickNodeIndexTmp = hitIndex;
@@ -932,7 +933,9 @@ void Engine::UpdateIMGUI()
                     Text("Position");
                     TableSetColumnIndex(1);
                     SetNextItemWidth(-FLT_MIN);
-                    DragFloat3("TransformPosition", &m_scene.gameObjects[m_gui.selectedObject].position.x, m_gui.dragSpeed, - 32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    if (DragFloat3("TransformPosition", &m_scene.gameObjects[m_gui.selectedObject].position.x, m_gui.dragSpeed, - 32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp))
+                        m_physx.SetTransform(m_gui.selectedObject, m_scene.gameObjects[m_gui.selectedObject].transform);
+
                     TableNextRow();
                     TableSetColumnIndex(0);
                     Text("Rotation");
@@ -942,17 +945,12 @@ void Engine::UpdateIMGUI()
                     static RedFoxMaths::Float3 rotation;
                     if (DragFloat3("TransformRotation", &rotation.x, m_gui.dragSpeed, -360.f, 360.f, "%.3f", ImGuiSliderFlags_AlwaysClamp))
                     {
-                        /*
-                        rotation.x = RedFoxMaths::Misc::Clamp(rotation.x, -360, 360);
-                        rotation.y = RedFoxMaths::Misc::Clamp(rotation.y, -360, 360);
-                        rotation.z = RedFoxMaths::Misc::Clamp(rotation.z, -360, 360);
-                        */
                         rotation *= DEG2RAD;
                         m_scene.gameObjects[m_gui.selectedObject].orientation =
                             RedFoxMaths::Quaternion::SLerp(m_scene.gameObjects[m_gui.selectedObject].orientation,
                                 RedFoxMaths::Quaternion::FromEuler(rotation), 0.5);
                         m_scene.gameObjects[m_gui.selectedObject].orientation.Normalize();
-                        rotation *= RAD2DEG;
+                        m_physx.SetTransform(m_gui.selectedObject, m_scene.gameObjects[m_gui.selectedObject].transform);
                     }
 
                     TableNextRow();
@@ -971,7 +969,7 @@ void Engine::UpdateIMGUI()
                 SetNextItemWidth(-FLT_MIN);
                 if (ImGui::BeginCombo("ModelList", (*modelIndex != -1) ? (char*)m_models[*modelIndex].name.data : "Select model"))
                 {
-                    for (int i = 0; i < m_modelCount; i++)
+                    for (int i = 0; i < (int)m_modelCount; i++)
                     {
                         bool is_selected = (*modelIndex == i);
                         if (ImGui::Selectable((char*)m_models[i].name.data, is_selected))

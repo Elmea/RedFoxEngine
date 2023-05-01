@@ -66,80 +66,53 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
             physx->m_scene->fetchResults(true);
         physx::PxRigidActor *player = actors[1];
         physx::PxTransform transform;
-        
-        transform = player->is<physx::PxRigidDynamic>()->getGlobalPose();
-        transform.q.w = 1;
-        transform.q.x = transform.q.y = transform.q.z = 0;
-        player->is<physx::PxRigidDynamic>()->setGlobalPose(transform);
 
-        int j = 1;
-        for (int i = 1; i < (int)gameObjectCount && j < physx->actorCount; i++)
+        for (int i = 1; i < (int)gameObjectCount && i < physx->actorCount; i++)
         {
-            // actors[i]->is<physx::PxRigidDynamic>()->setGlobalPose(transform);
-            physx::PxRigidDynamic *actor = actors[j]->is<physx::PxRigidDynamic>();
-            if (actor)
+            if (actors[i])
             {
-                if (!scene->isPaused && !actor->isSleeping())
+                physx::PxRigidDynamic *actor = actors[i]->is<physx::PxRigidDynamic>();
+                if (actor)
                 {
-                    transform = actor->getGlobalPose();
-                    gameObjects[i].position.x    = transform.p.x;
-                    gameObjects[i].position.y    = transform.p.y;
-                    gameObjects[i].position.z    = transform.p.z;
-                    gameObjects[i].orientation.a = transform.q.w;
-                    gameObjects[i].orientation.b = transform.q.x;
-                    gameObjects[i].orientation.c = transform.q.y;
-                    gameObjects[i].orientation.d = transform.q.z;
-                    j++;
-                }
-                else
-                {
-                    transform.p.x = gameObjects[i].position.x   ;
-                    transform.p.y = gameObjects[i].position.y   ;
-                    transform.p.z = gameObjects[i].position.z   ;
-                    transform.q.w = gameObjects[i].orientation.a;
-                    transform.q.x = gameObjects[i].orientation.b;
-                    transform.q.y = gameObjects[i].orientation.c;
-                    transform.q.z	= gameObjects[i].orientation.d;
-                    actor->setGlobalPose(transform);
-                    j++;
+                    if (!actor->isSleeping())
+                    {
+                        transform = actor->getGlobalPose();
+                        gameObjects[i].transform   = {{transform.p.x, transform.p.y, transform.p.z}, gameObjects[i].scale, {transform.q.w, transform.q.x, transform.q.y, transform.q.z}};
+                    }
                 }
             }
-    }
-    scene->m_gameCamera.position = {gameObjects[1].position.x, gameObjects[1].position.y, gameObjects[1].position.z};
-    static Float3 cameraRotation;
-    cameraRotation += {(f32)input.mouseYDelta * deltaTime, (f32)input.mouseXDelta * deltaTime, 0}; 
-    scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
+        }
+        scene->m_gameCamera.position = {gameObjects[1].position.x, gameObjects[1].position.y, gameObjects[1].position.z};
+        static Float3 cameraRotation;
+        cameraRotation += {(f32)input.mouseYDelta * deltaTime, (f32)input.mouseXDelta * deltaTime, 0}; 
+        scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
         
-    Float3 inputDirection(0, 0, 0);
-    if (input.W || input.Up)    inputDirection.z += -1;
-    if (input.S || input.Down)  inputDirection.z +=  1;
-    if (input.A || input.Left)  inputDirection.x += -1;
-    if (input.D || input.Right) inputDirection.x +=  1;
-    if (input.W || input.S || input.A || input.D)
-    {
-        inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
-        inputDirection.Normalize();
-        inputDirection = inputDirection * 200.f;
-        physx::PxRigidActor *player = actors[1];
-        Quaternion orientation = {1, 0, 0, 0};
-        float speed = 5;
-        physx::PxRigidDynamic *tPlayer = player->is<physx::PxRigidDynamic>();
-        physx::PxVec3 velocity;
-        if (tPlayer)
+        Float3 inputDirection(0, 0, 0);
+        if (input.W || input.Up)    inputDirection.z += -1;
+        if (input.S || input.Down)  inputDirection.z +=  1;
+        if (input.A || input.Left)  inputDirection.x += -1;
+        if (input.D || input.Right) inputDirection.x +=  1;
+        if (input.W || input.S || input.A || input.D)
         {
-            velocity = tPlayer->getLinearVelocity();
+            inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
+            inputDirection.Normalize();
+            inputDirection = inputDirection * 200.f;
+            physx::PxRigidActor *player = actors[1];
+            Quaternion orientation = {1, 0, 0, 0};
+            float speed = 5;
+            physx::PxRigidDynamic *tPlayer = player->is<physx::PxRigidDynamic>();
+            physx::PxVec3 velocity;
+            if (tPlayer)
+            {
+                velocity = tPlayer->getLinearVelocity();
 
-            velocity.x = speed * deltaTime * inputDirection.x;
-            velocity.y = speed * deltaTime * inputDirection.y;
-            //velocity.z = speed * deltaTime * inputDirection.z;
-            tPlayer->setLinearVelocity(velocity);
-            physx::PxTransform transform;
-            // transform = tPlayer->getGlobalPose();
+                velocity.x = speed * deltaTime * inputDirection.x;
+                velocity.y = speed * deltaTime * inputDirection.y;
+                //velocity.z = speed * deltaTime * inputDirection.z;
+                tPlayer->setLinearVelocity(velocity);
+                physx::PxTransform transform;
+                // transform = tPlayer->getGlobalPose();
+            }
         }
     }
-}
-//for (int i = 0; i < (int)gameObjectCount; i++) // TODO physics code here ?
-//{
-//    gameObjects[i].position += Float3(sinf(time), cosf(time), 0) * 0.001f;        
-//}
 }

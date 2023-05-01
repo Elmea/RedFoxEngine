@@ -100,9 +100,9 @@ static int StringsAreEqual(MyString a, MyString b)
     if (a.size == b.size)
     {
         int i = 0;
-        while (a.data[i] == b.data[i] && i < a.size)
+        while (a.data[i] == b.data[i] && i < (int)a.size)
             i++;
-        if (i == a.size)
+        if (i == (int)a.size)
             return (1);
     }
     return (0);
@@ -113,9 +113,9 @@ static int StringsAreEqual_C(MyString a,
 {
     int i = 0;
 
-    while (a.data[i] == str[i] && i < a.size)
+    while (a.data[i] == str[i] && i < (int)a.size)
         i++;
-    if (i == a.size)
+    if (i == (int)a.size)
     {
         if (delimiter)
         {
@@ -140,7 +140,7 @@ static int StringsAreEqual_C(MyString a,
 
 static Memory InitVirtualMemory(size_t size)
 {
-    Memory memory = {0};
+    Memory memory = {};
 
     memory.virtualSize = size;
     memory.data = VirtualAlloc(NULL, size, MEM_RESERVE, PAGE_READWRITE);
@@ -197,7 +197,7 @@ static MyString initStringChar(const char *str, u64 n, Memory *memory)
     MyString result = {};
 
     int i = 0;
-    while (str[i] && i < n)
+    while (str[i] && i < (int)n)
         i++;
     result.size = i;
     result.capacity = n;
@@ -206,8 +206,11 @@ static MyString initStringChar(const char *str, u64 n, Memory *memory)
     i = 0;
     char *temp = (char *)result.data;
 
-    while (i < result.size)
-        temp[i++] = str[i];
+    while (i < (int)result.size)
+    {
+        temp[i] = str[i];
+        i++;
+    }
     return (result);
 }
 
@@ -268,7 +271,7 @@ static u32 my_strlen(char *src)
 static u32 my_strnlen(char *src, u64 n)
 {
     int i = 0;
-    while (src[i] && i < n)
+    while (src[i] && i < (int)n)
         i++;
     return (i);
 }
@@ -277,12 +280,12 @@ static char *my_strncpy_s(char *dest, u64 dest_size, const char *src,
     u64 src_size)
 {
     int i = 0;
-    while (i < dest_size && i < src_size)
+    while (i < (int)dest_size && i < (int)src_size)
     {
         dest[i] = src[i];
         i++;
     }
-    while (i < dest_size && i < src_size)
+    while (i < (int)dest_size && i < (int)src_size)
     {
         dest[i] = '\0';
         i++;
@@ -293,7 +296,7 @@ static char *my_strncpy_s(char *dest, u64 dest_size, const char *src,
 static char *my_strcpy_s(char *dest, u64 n, char *src)
 {
     int i = 0;
-    while (i < n && src[i])
+    while (i < (int)n && src[i])
     {
         dest[i] = src[i];
         i++;
