@@ -473,11 +473,51 @@ void Engine::UpdateIMGUI()
         ImVec2 vMin = GetWindowContentRegionMin() + vPos;
         ImVec2 vMax = GetWindowContentRegionMax() + vPos;
         ImVec2 mousePos = GetMousePos();
-        RedFoxMaths::Float2 mousePosEditor = {
+        m_gui.mousePosEditor = {
             mousePos.x * dimension.width / content.x - vMin.x,
             mousePos.y * dimension.height / content.y - vMin.y
         };
+       
+
+
         
+        RedFoxMaths::Float2 uiPos, convertedPos, uiSize;
+        for (int i = 1; i < m_scene.gameUICount; i++)
+        {        
+
+            uiPos = m_scene.gameUIs[i].screenPosition;
+            uiSize = m_scene.gameUIs[i].size;
+                
+            convertedPos = {
+                vMax.x * (uiPos.x / 100),
+                dimension.height - dimension.height * (uiPos.y / 100) - uiSize.y
+            };
+
+
+            //printf("\nui : [x = %f and %f] -, [y = %f and %f]\n", convertedpos.x, convertedpos.x + uisize.x, convertedpos.y, convertedpos.y + uisize.y);
+            //printf("mouse : x=%f, y=%f\n", m_gui.mouseposeditor.x, m_gui.mouseposeditor.y);
+
+            if (m_gui.mousePosEditor.x > convertedPos.x &&
+                m_gui.mousePosEditor.x <= convertedPos.x + uiSize.x &&
+                m_gui.mousePosEditor.y > convertedPos.y &&
+                m_gui.mousePosEditor.y <= convertedPos.y + uiSize.y)
+            {
+                m_scene.gameUIs[i].isHovered = true;
+                if (IsMouseClicked(ImGuiMouseButton_Left))
+                {
+                    m_scene.gameUIs[i].isPressed = true;
+                }
+                else
+                {
+                    m_scene.gameUIs[i].isPressed = false;
+                }
+            }
+            else
+            {
+                m_scene.gameUIs[i].isHovered = false;
+            }
+        }
+
         if (m_time.delta)
         {
             m_gui.fps[m_gui.currentFrame++] = (1.0f / m_time.delta);
@@ -613,12 +653,12 @@ void Engine::UpdateIMGUI()
             }
         }
 
-        if (mousePosEditor.x > 0 && mousePosEditor.x < content.x &&
-            mousePosEditor.y > 0 && mousePosEditor.y < content.y)
+        if (m_gui.mousePosEditor.x > 0 && m_gui.mousePosEditor.x < content.x &&
+            m_gui.mousePosEditor.y > 0 && m_gui.mousePosEditor.y < content.y)
         {
             RedFoxMaths::Float3 ray_ndc = {
-                (2.0f * mousePosEditor.x) / content.x - 1.0f,
-                1.0f - (2.0f * mousePosEditor.y) / content.y,
+                (2.0f * m_gui.mousePosEditor.x) / content.x - 1.0f,
+                1.0f - (2.0f * m_gui.mousePosEditor.y) / content.y,
                 1
             };
             RedFoxMaths::Float4 ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };

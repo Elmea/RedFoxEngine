@@ -17,6 +17,8 @@ namespace RedFoxEngine
 
         //TODO Function callback
 
+
+
         MyString text;
         u32 image = 0;
   

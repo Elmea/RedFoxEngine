@@ -41,12 +41,14 @@ struct ImGUI
     int scaleSnap = 1;
     float averageFps;
     float dragSpeed = 1.f;
+    RedFoxMaths::Float2 mousePosEditor = RedFoxMaths::Float2();
     float fps[255];
     ImGuizmo::OPERATION gizmoType;
     ImGuizmo::MODE gizmoMode;
     ImGuiIO* io;
     ImFont* defaultFont;
     ImTextureID icons[10];
+
 };
 
 class Engine
