@@ -1090,7 +1090,52 @@ void Engine::UpdateIMGUI()
                     ImGui::EndTable();
                 }
             }
-            SeparatorText("Text Color");
+            SeparatorText("Colors");
+           
+            /*
+            int* modelIndex = &m_scene.gameObjects[m_gui.selectedObject].modelIndex;
+            
+            float* colorPicker[3] = { &m_scene.gameUIs[m_gui.selectedUI].textColor.x,
+                                    &m_scene.gameUIs[m_gui.selectedUI].selectedColor.x,
+                                    &m_scene.gameUIs[m_gui.selectedUI].hoverColor.x };
+            int colorIndex = 0;
+
+
+            SetNextItemWidth(-FLT_MIN);
+            if (ImGui::BeginCombo("ColorList", "Change color"))
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    bool is_selected = (colorIndex == i);
+                    if (ImGui::Selectable((char*)colorPicker, is_selected))
+                        colorIndex = i;
+
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+            */
+
+            /*
+            int* modelIndex = &m_scene.gameObjects[m_gui.selectedObject].modelIndex;
+            SeparatorText("Model");
+            SetNextItemWidth(-FLT_MIN);
+            if (ImGui::BeginCombo("ModelList", (*modelIndex != -1) ? (char*)m_models[*modelIndex].name.data : "Select model"))
+            {
+                for (int i = 0; i < m_modelCount; i++)
+                {
+                    bool is_selected = (*modelIndex == i);
+                    if (ImGui::Selectable((char*)m_models[i].name.data, is_selected))
+                        *modelIndex = i;
+
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+            */
+
             if (BeginTable("TextTable", 2, tableFlags))
             {
                 TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
@@ -1098,20 +1143,24 @@ void Engine::UpdateIMGUI()
                 TableNextRow();
 
                 TableSetColumnIndex(0);
-                Text("Color");
-                TableSetColumnIndex(1);
-                SetNextItemWidth(-FLT_MIN);
-                ColorPicker3("TextColor",
-                    &m_scene.gameUIs[m_gui.selectedUI].textColor.x,
-                    ImGuiColorEditFlags_PickerHueWheel);
                 SetNextItemWidth(-FLT_MIN); 
+                SeparatorText("Button color");
                 ColorPicker3("SelectedColor",
                     &m_scene.gameUIs[m_gui.selectedUI].selectedColor.x,
                     ImGuiColorEditFlags_PickerHueWheel);
-                SetNextItemWidth(-FLT_MIN); 
+
+                SetNextItemWidth(-FLT_MIN);
+                SeparatorText("Text color");
+                ColorPicker3("TextColor",
+                    &m_scene.gameUIs[m_gui.selectedUI].textColor.x,
+                    ImGuiColorEditFlags_PickerHueWheel);                
+
+                SetNextItemWidth(-FLT_MIN);
+                SeparatorText("Hover color");
                 ColorPicker3("HoverColor",
                     &m_scene.gameUIs[m_gui.selectedUI].hoverColor.x,
                     ImGuiColorEditFlags_PickerHueWheel);
+                
                 EndTable();
                 
             }
