@@ -8,6 +8,8 @@ layout (binding=0)
 uniform sampler2D text;
 layout (location=0)
 uniform vec3 u_color;
+layout (location=2)
+uniform vec3 u_selectedColor;
 layout (location=1)
 uniform bool isText;
 
@@ -21,7 +23,7 @@ void main()
     }
     else
     {
-        color = texture(text, TexCoords);
+        color.xyz = u_selectedColor;
         color.w = 1;
     }
 } 

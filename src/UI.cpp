@@ -1100,6 +1100,38 @@ void Engine::UpdateIMGUI()
                 TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
                 TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
                 TableNextRow();
+
+                /*
+                if (ImGui::BeginCombo("ColorList","ColorList",0 ))
+                {
+                    bool is_selected = false;
+                    if (ImGui::Selectable((char*)"textColor", is_selected))
+                        printf("test");
+
+
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+         
+                    ImGui::EndCombo();
+                }
+                    
+
+                if (ImGui::BeginCombo("ModelList", "Select model",0))
+                {
+                    for (int i = 0; i < m_modelCount; i++)
+                    {
+                        bool is_selected = (*modelIndex == i);
+                        if (ImGui::Selectable((char*)m_models[i].name.data, is_selected))
+                            *modelIndex = i;
+
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+                    
+
+                    */
                 TableSetColumnIndex(0);
                 Text("Color");
                 TableSetColumnIndex(1);
@@ -1107,7 +1139,16 @@ void Engine::UpdateIMGUI()
                 ColorPicker3("TextColor",
                     &m_scene.gameUIs[m_gui.selectedUI].textColor.x,
                     ImGuiColorEditFlags_PickerHueWheel);
+                SetNextItemWidth(-FLT_MIN); 
+                ColorPicker3("SelectedColor",
+                    &m_scene.gameUIs[m_gui.selectedUI].selectedColor.x,
+                    ImGuiColorEditFlags_PickerHueWheel);
+                SetNextItemWidth(-FLT_MIN); 
+                ColorPicker3("HoverColor",
+                    &m_scene.gameUIs[m_gui.selectedUI].hoverColor.x,
+                    ImGuiColorEditFlags_PickerHueWheel);
                 EndTable();
+                
             }
         }
         End();

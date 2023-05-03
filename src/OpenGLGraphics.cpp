@@ -292,6 +292,10 @@ namespace RedFoxEngine
             else
                 glBindTextureUnit(0, 0);
         
+            if(ui.isHovered)
+                glProgramUniform3fv(m_font.fragment, 2, 1, &ui.hoverColor.x);
+            else
+                glProgramUniform3fv(m_font.fragment, 2, 1, &ui.selectedColor.x);
             glProgramUniform1i(m_font.fragment, 1, 0);
             glProgramUniformMatrix4fv(m_font.vertex, 0, 1, GL_TRUE, mat.mat16);
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -322,9 +326,10 @@ namespace RedFoxEngine
                 // update content of VBO memory
                 glNamedBufferSubData(m_quadVBO, 0, sizeof(vertices), vertices);
                 glBindTextureUnit(0, m_gFontTexture);
+
                 glProgramUniform3fv(m_font.fragment, 0, 1, &ui.textColor.x);
                 glProgramUniform1i(m_font.fragment, 1, 1);
-                // render quad
+                // render quad 
                 glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
             }
             ++text;
