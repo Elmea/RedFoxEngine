@@ -259,7 +259,8 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         int size = snprintf(tmp, 255, "New UI #%d", m_scene.gameUICount - 1);
         newGameUI->name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
         newGameUI->name.capacity = 255;
-        newGameUI->scale = { 1, 1 };
+        newGameUI->text = initStringChar("", 254, &m_memoryManager.m_memory.arena);
+        newGameUI->size = {100, 100};
     }
     PopStyleVar();
     End();
@@ -474,12 +475,44 @@ void Engine::UpdateIMGUI()
         ImVec2 vMin = GetWindowContentRegionMin() + vPos;
         ImVec2 vMax = GetWindowContentRegionMax() + vPos;
         ImVec2 mousePos = GetMousePos();
-        RedFoxMaths::Float2 mousePosEditor = {
+        m_gui.mousePosEditor = {
             mousePos.x * dimension.width / content.x - vMin.x,
             mousePos.y * dimension.height / content.y - vMin.y
         };
-
         static float averageFps;
+
+
+        
+        RedFoxMaths::Float2 uiPos, convertedPos, uiSize;
+        for (int i = 1; i < m_scene.gameUICount; i++)
+        {        
+
+            uiPos = m_scene.gameUIs[i].screenPosition;
+            uiSize = m_scene.gameUIs[i].size;
+                
+            convertedPos = {
+                vMax.x * (uiPos.x / 100),
+                dimension.height - dimension.height * (uiPos.y / 100) - uiSize.y
+            };
+
+            if (m_gui.mousePosEditor.x > convertedPos.x &&
+                m_gui.mousePosEditor.x <= convertedPos.x + uiSize.x &&
+                m_gui.mousePosEditor.y > convertedPos.y &&
+                m_gui.mousePosEditor.y <= convertedPos.y + uiSize.y)
+            {
+                m_scene.gameUIs[i].isHovered = true;
+                if (IsMouseClicked(ImGuiMouseButton_Left))
+                    m_scene.gameUIs[i].isPressed = true;
+
+                else
+                    m_scene.gameUIs[i].isPressed = false;
+
+            }
+            else
+            {
+                m_scene.gameUIs[i].isHovered = false;
+            }
+        }
         if (m_time.delta)
             m_gui.fps[m_gui.currentFrame++ % 255] = (1.0f / m_time.delta);
         if (m_gui.fpsUpdate >= 0.5)
@@ -615,12 +648,12 @@ void Engine::UpdateIMGUI()
             }
         }
 
-        if (mousePosEditor.x > 0 && mousePosEditor.x < content.x &&
-            mousePosEditor.y > 0 && mousePosEditor.y < content.y)
+        if (m_gui.mousePosEditor.x > 0 && m_gui.mousePosEditor.x < content.x &&
+            m_gui.mousePosEditor.y > 0 && m_gui.mousePosEditor.y < content.y)
         {
             RedFoxMaths::Float3 ray_ndc = {
-                (2.0f * mousePosEditor.x) / content.x - 1.0f,
-                1.0f - (2.0f * mousePosEditor.y) / content.y,
+                (2.0f * m_gui.mousePosEditor.x) / content.x - 1.0f,
+                1.0f - (2.0f * m_gui.mousePosEditor.y) / content.y,
                 1
             };
             RedFoxMaths::Float4 ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };
@@ -1024,14 +1057,21 @@ void Engine::UpdateIMGUI()
                     ImGui::Text("Position");
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    DragFloat2("TransformPosition", &m_scene.gameUIs[m_gui.selectedUI].screenPosition.x, m_gui.dragSpeed, -150.f, 150.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    DragFloat2("TransformPosition", &m_scene.gameUIs[m_gui.selectedUI].screenPosition.x, m_gui.dragSpeed, 0, 100.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    ImGui::TableNextRow();
+                    ImGui::SetNextItemWidth(-FLT_MIN);
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Text("Text Offset");
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::SetNextItemWidth(-FLT_MIN);
+                    DragFloat2("TextOffset", &m_scene.gameUIs[m_gui.selectedUI].textOffset.x, m_gui.dragSpeed, 0, 100.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
 
                     ImGui::Text("Scale");
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    DragFloat2("TransformScale", &m_scene.gameUIs[m_gui.selectedUI].scale.x, m_gui.dragSpeed, 0, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    DragFloat2("TransformScale", &m_scene.gameUIs[m_gui.selectedUI].size.x, m_gui.dragSpeed, 0, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                     ImGui::EndTable();
                 }
             }
@@ -1047,12 +1087,36 @@ void Engine::UpdateIMGUI()
                     ImGui::Text("Text");
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::InputText("Text", (char*)&m_scene.gameUIs[m_gui.selectedUI].text, 256, 0, 0, 0);
+                    ImGui::InputText("Text", (char*)m_scene.gameUIs[m_gui.selectedUI].text.data, m_scene.gameUIs[m_gui.selectedUI].text.capacity, 0, 0, 0);
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
-
                     ImGui::EndTable();
                 }
+            }
+            SeparatorText("Text Color");
+            if (BeginTable("TextTable", 2, tableFlags))
+            {
+                TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+                TableNextRow();
+
+                TableSetColumnIndex(0);
+                Text("Color");
+                TableSetColumnIndex(1);
+                SetNextItemWidth(-FLT_MIN);
+                ColorPicker3("TextColor",
+                    &m_scene.gameUIs[m_gui.selectedUI].textColor.x,
+                    ImGuiColorEditFlags_PickerHueWheel);
+                SetNextItemWidth(-FLT_MIN); 
+                ColorPicker3("SelectedColor",
+                    &m_scene.gameUIs[m_gui.selectedUI].selectedColor.x,
+                    ImGuiColorEditFlags_PickerHueWheel);
+                SetNextItemWidth(-FLT_MIN); 
+                ColorPicker3("HoverColor",
+                    &m_scene.gameUIs[m_gui.selectedUI].hoverColor.x,
+                    ImGuiColorEditFlags_PickerHueWheel);
+                EndTable();
+                
             }
         }
         End();

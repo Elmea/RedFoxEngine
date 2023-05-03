@@ -50,7 +50,7 @@ Engine::Engine(int width, int height) :
     m_scene.gameUIs[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
     m_scene.gameUIs[0].name.capacity = 255;
     m_scene.gameUIs[0].screenPosition = {0, 0};
-    m_scene.gameUIs[0].scale = {1,1};
+    m_scene.gameUIs[0].size = {200,200};
     m_scene.gameUICount++;
     for (int i = 1; i < (int)m_scene.gameUICount; i++)
         m_scene.gameUIs[i].parent = 0;
@@ -77,7 +77,7 @@ Engine::Engine(int width, int height) :
 #if 0
     LoadScene("Sample Scene.scene");
 #else
-    initSphericalManyGameObjects(100);
+    initSphericalManyGameObjects(5000);
     m_scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
 
     // Some light for testing
@@ -336,12 +336,8 @@ void Engine::Draw()
         currentCamera = &m_scene.m_gameCamera;
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
     m_graphics.Draw(&m_scene, m_platform.m_windowDimension, m_time.current, m_time.delta);
-   
-    for (int i = 0; i < (int)m_scene.gameUICount; i++)
-    {
-        if (m_scene.gameUIs[i].text.data)
-            m_graphics.RenderText((char*)&m_scene.gameUIs[i].text, m_scene.gameUIs[i].screenPosition.x * 5, -m_scene.gameUIs[i].screenPosition.y * 5, 20);
-    }
+    for (int i = 0; i < m_scene.gameUICount; i++)
+        m_graphics.RenderText(m_scene.gameUIs[i]);
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     m_platform.SwapFramebuffers();

@@ -165,6 +165,7 @@
       </PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)include\RedFoxMaths;$(SolutionDir)external;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -202,6 +203,7 @@
       </PrecompiledHeaderFile>
       <DebugInformationFormat>None</DebugInformationFormat>
       <AdditionalIncludeDirectories>$(SolutionDir)include;$(SolutionDir)include\RedFoxMaths;$(SolutionDir)external;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

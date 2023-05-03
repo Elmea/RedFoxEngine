@@ -91,6 +91,7 @@ private:
     unsigned int m_quadVBO;
 
 public:
+    WindowDimension dimension;
     GLuint m_imguiTexture;
     Model* m_models = nullptr;
     u32    m_modelCount;
@@ -119,8 +120,7 @@ public:
     void DrawModelInstances(Model* model,
         RedFoxMaths::Mat4* modelMatrices, int instanceCount);
     void DrawModelShadowInstances(Model* model, int instanceCount);
-    void RenderText(char* text, float x, float y, float scale);
-
+    void RenderText(GameUI ui);
 };
 } // namespace RedFoxEngine
 

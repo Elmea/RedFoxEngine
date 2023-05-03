@@ -81,55 +81,6 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
     CloseHandle(file);
 }
 
-// void RedFoxEngine::Engine::LoadScene(const char *fileName)
-// {
-    
-//     HANDLE file = CreateFile(fileName, GENERIC_READ,
-//         FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
-//         FILE_ATTRIBUTE_NORMAL, nullptr);
-    
-//     m_scene.m_name = initStringChar(fileName, 255, &m_memoryManager.m_memory.arena);
-
-//     ReadFile(file, &m_scene.gameObjectCount, sizeof(u32), nullptr, nullptr);
-//     for(int i = 0; i < (int)m_scene.gameObjectCount; i++)
-//     {
-//         GameObject *current = &m_scene.gameObjects[i];
-//         ReadFile(file, &current->name, sizeof(MyString), nullptr, nullptr);
-//         current->name.data = (char *)m_memoryManager.PersistentAllocation(255);
-//         ReadFile(file, (void*)current->name.data, current->name.size, nullptr, nullptr);
-//         int parent;
-//         ReadFile(file, &parent, sizeof(int), nullptr, nullptr);
-//         u64 hash = 0;
-//         ReadFile(file, &hash, sizeof(u64), nullptr, nullptr);
-//         current->modelIndex = -1;
-//         if (hash != 0)
-//         {
-//             for (int modelIndex = 0;
-//             modelIndex < (int)m_modelCount;
-//             modelIndex++)
-//             {
-//                 if (m_models[modelIndex].hash == hash)
-//                 {
-//                     current->modelIndex = modelIndex;
-//                     break;
-//                 }
-//             }
-//         }
-//         ReadFile(file, &current->position,
-//             sizeof(current->position), nullptr, nullptr);
-//         ReadFile(file, &current->scale,
-//             sizeof(current->scale), nullptr, nullptr);
-//         // current->scale.y = current->scale.z = 1;
-//         ReadFile(file, &current->orientation,
-//             sizeof(current->orientation), nullptr, nullptr);
-//         // current->orientation.a = 1;
-//         // current->orientation.b = current->orientation.c = current->orientation.d = 0;
-//     }
-//     CloseHandle(file);
-
-    
-// }
-
 static void WriteStringToFile(HANDLE file, MyString string)
 {
     WriteFile(file, &string, sizeof(MyString), nullptr, nullptr);

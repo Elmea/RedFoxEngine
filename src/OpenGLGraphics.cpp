@@ -11,8 +11,9 @@
 namespace RedFoxEngine
 {
 
-    void Graphics::InitGraphics(Memory* tempArena, WindowDimension dimension)
+    void Graphics::InitGraphics(Memory* tempArena, WindowDimension p_dimension)
     {
+        dimension = p_dimension;
         InitShaders(tempArena);
         // setup global GL state
         {
@@ -208,10 +209,9 @@ namespace RedFoxEngine
     void Graphics::InitFont(Memory* temp)
     {
         unsigned char* temp_bitmap = (unsigned char*)MyMalloc(temp, 512 * 512);
-        unsigned char* ttf_buffer = (unsigned char*)MyMalloc(temp, 1 << 20);
 
-        fread(ttf_buffer, 1, 1 << 20, fopen("Fonts\\VictorMono-Bold.ttf", "rb"));
-        stbtt_BakeFontBitmap(ttf_buffer, 0, 32.0, temp_bitmap, 512, 512, 32, 96, cdata); // no guarantee this fits!
+        MyString file = OpenAndReadEntireFile("Fonts\\VictorMono-Bold.ttf", temp);
+        stbtt_BakeFontBitmap((const unsigned char *)file.data, 0, 32.0, temp_bitmap, 512, 512, 32, 96, cdata); // no guarantee this fits!
         glGenTextures(1, &m_gFontTexture);
         glBindTexture(GL_TEXTURE_2D, m_gFontTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, temp_bitmap);
@@ -263,43 +263,73 @@ namespace RedFoxEngine
         m_viewProjection = vp;
     }
 
-    void Graphics::RenderText(char* text, float x, float y, float scale)
-    {
+    void Graphics::RenderText(GameUI ui)
+    {      
+        if (ui.text.data == nullptr)
+            return;
+        glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glBindProgramPipeline(m_font.pipeline);
+        glBindVertexArray(m_quadVAO);
+        float xOffset = (ui.screenPosition.x / 100) * dimension.width;
+        float yOffset = (ui.screenPosition.y / 100) * dimension.height;
+        RedFoxMaths::Mat4 mat = RedFoxMaths::Mat4::GetOrthographicMatrix(dimension.width, 0, dimension.height, 0, 1, -1);
+        if (*ui.text.data)
+        {
+            RedFoxMaths::Float4 vertices[4] = 
+            {
+                // positions  // texture Coords
+                {xOffset, yOffset + ui.size.y,  0.0f, 1.0f},
+                {xOffset, yOffset,  0.0f, 0.0f},
+                {xOffset + ui.size.x, yOffset + ui.size.y,  1.0f, 1.0f},
+                {xOffset + ui.size.x, yOffset,  1.0f, 0.0f},
+            };
+            glNamedBufferSubData(m_quadVBO, 0, sizeof(vertices), &vertices[0].x);
+            if (ui.image)
+                glBindTextureUnit(0, ui.image);
+            else
+                glBindTextureUnit(0, 0);
+        
+            if(ui.isHovered)
+                glProgramUniform3fv(m_font.fragment, 2, 1, &ui.hoverColor.x);
+            else
+                glProgramUniform3fv(m_font.fragment, 2, 1, &ui.selectedColor.x);
+            glProgramUniform1i(m_font.fragment, 1, 0);
+            glProgramUniformMatrix4fv(m_font.vertex, 0, 1, GL_TRUE, mat.mat16);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        }
+        char *text = (char *)ui.text.data;
+        float xPos = xOffset + ui.textOffset.x;
+        float yPos = -yOffset - ui.textOffset.y;
         while (*text) {
             if (*text >= 32)
             {
                 stbtt_aligned_quad q;
-                stbtt_GetBakedQuad(cdata, 512, 512, *text - 32, &x, &y, &q, 1);
-
-                int width = 1080;
-                int height = 512;
+                stbtt_GetBakedQuad(cdata, 512, 512, *text - 32, &xPos, &yPos, &q, 1);
                 float vertices[] = {
-                     q.x0 / width + x / (1920) + -1.f / width, -q.y0 / height + 1.f / height, q.s0, q.t0,
-                     q.x0 / width + x / (1920) + -1.f / width, -q.y1 / height + -1.f / height, q.s0, q.t1,
-                     q.x1 / width + x / (1920) + 1.f / width, -q.y0 / height + 1.f / height, q.s1, q.t0,
-                     q.x1 / width + x / (1920) + 1.f / width, -q.y1 / height + -1.f / height, q.s1, q.t1,
+                     q.x0, -q.y0, q.s0, q.t0,
+                     q.x0, -q.y1, q.s0, q.t1,
+                     q.x1, -q.y0, q.s1, q.t0,
+                     q.x1, -q.y1, q.s1, q.t1,
                 };
                 // update content of VBO memory
-                glNamedBufferSubData(m_quadVBO, 0,
-                    sizeof(vertices), vertices);
+                glNamedBufferSubData(m_quadVBO, 0, sizeof(vertices), vertices);
                 glBindTextureUnit(0, m_gFontTexture);
-                glBindVertexArray(m_quadVAO);
-                // render quad
+
+                glProgramUniform3fv(m_font.fragment, 0, 1, &ui.textColor.x);
+                glProgramUniform1i(m_font.fragment, 1, 1);
+                // render quad 
                 glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
             }
             ++text;
         }
-        
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
-
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
-
 
     void Graphics::DrawSkyDome(SkyDome skyDome, float time)
     {
@@ -317,11 +347,14 @@ namespace RedFoxEngine
         glProgramUniformMatrix4fv(m_sky.vertex, 1, 1, GL_TRUE, mvp.AsPtr());
         glProgramUniform1f(m_sky.fragment, 0, time);
 
-        glDrawElements(GL_TRIANGLES, m_models[1].obj.indexCount, GL_UNSIGNED_INT, 0);
+        Model *sphere = &m_models[1];
+        glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, sphere->indexCount,
+            GL_UNSIGNED_INT, (void *)(sphere->indexOffset * sizeof(u32)), 1, sphere->vertexOffset, 0);
     }
 
     void Graphics::Draw(Scene *m_scene, WindowDimension p_windowDimension, float p_time, float p_delta)
     {
+        dimension = p_windowDimension;
         glBindVertexArray(m_vertexArrayObject);
         //
         glNamedBufferSubData(m_matrixSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_scene->gameObjectCount, m_scene->m_modelMatrices);
@@ -350,8 +383,7 @@ namespace RedFoxEngine
         glEnable(GL_CULL_FACE);
         DrawGameObjects(m_scene->m_modelCountIndex);
         // swap the buffers to show output
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);    
     }
 
     static void bindBuffer(int bindingPoint, GLuint buffer, int size)
