@@ -281,10 +281,10 @@ namespace RedFoxEngine
             RedFoxMaths::Float4 vertices[4] = 
             {
                 // positions  // texture Coords
-                {xOffset , yOffset + ui.size.y ,  0.0f, 1.0f},
-                {xOffset , yOffset ,  0.0f, 0.0f},
-                {xOffset + ui.size.x , yOffset + ui.size.y ,  1.0f, 1.0f},
-                {xOffset + ui.size.x , yOffset ,  1.0f, 0.0f},
+                {xOffset, yOffset + ui.size.y,  0.0f, 1.0f},
+                {xOffset, yOffset,  0.0f, 0.0f},
+                {xOffset + ui.size.x, yOffset + ui.size.y,  1.0f, 1.0f},
+                {xOffset + ui.size.x, yOffset,  1.0f, 0.0f},
             };
             glNamedBufferSubData(m_quadVBO, 0, sizeof(vertices), &vertices[0].x);
             if (ui.image)
@@ -301,17 +301,8 @@ namespace RedFoxEngine
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         }
         char *text = (char *)ui.text.data;
-        // float x, y;
-        float offset = 0;
-        while(*text)
-        {
-            offset += cdata[*text - 32].xadvance;
-            ++text;
-        }
-        text = (char *)ui.text.data;
-        //offset /= 2;
-        float xPos = xOffset;
-        float yPos = -yOffset;
+        float xPos = xOffset + ui.textOffset.x;
+        float yPos = -yOffset - ui.textOffset.y;
         while (*text) {
             if (*text >= 32)
             {

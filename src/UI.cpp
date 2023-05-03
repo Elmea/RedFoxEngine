@@ -1056,6 +1056,13 @@ void Engine::UpdateIMGUI()
                     ImGui::SetNextItemWidth(-FLT_MIN);
                     DragFloat2("TransformPosition", &m_scene.gameUIs[m_gui.selectedUI].screenPosition.x, m_gui.dragSpeed, 0, 100.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                     ImGui::TableNextRow();
+                    ImGui::SetNextItemWidth(-FLT_MIN);
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Text("Text Offset");
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::SetNextItemWidth(-FLT_MIN);
+                    DragFloat2("TextOffset", &m_scene.gameUIs[m_gui.selectedUI].textOffset.x, m_gui.dragSpeed, 0, 100.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
 
                     ImGui::Text("Scale");

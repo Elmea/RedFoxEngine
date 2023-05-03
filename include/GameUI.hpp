@@ -11,6 +11,7 @@ namespace RedFoxEngine
 
         RedFoxMaths::Float2 screenPosition;
         RedFoxMaths::Float2 size;
+        RedFoxMaths::Float2 textOffset;
         RedFoxMaths::Float3 textColor;
         RedFoxMaths::Float3 hoverColor;
         RedFoxMaths::Float3 selectedColor;
