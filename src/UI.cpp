@@ -1090,52 +1090,27 @@ void Engine::UpdateIMGUI()
                     ImGui::EndTable();
                 }
             }
-            SeparatorText("Colors");
-           
-            /*
-            int* modelIndex = &m_scene.gameObjects[m_gui.selectedObject].modelIndex;
+
+            SeparatorText("Colors");                                 
+            const char* colors[] = { "SelectedColor", "TextColor", "HoverColor" };
+            static const char* current_item = colors[0];
+
+            SetNextItemWidth(-FLT_MIN);
+            if (ImGui::BeginCombo("ColorList", current_item))
+            {
+                for (int i = 0; i < IM_ARRAYSIZE(colors); i++)
+                {
+                    bool is_selected = (current_item == colors[i]);
+                    if (ImGui::Selectable(colors[i], is_selected))
+                        current_item = colors[i];
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
             
-            float* colorPicker[3] = { &m_scene.gameUIs[m_gui.selectedUI].textColor.x,
-                                    &m_scene.gameUIs[m_gui.selectedUI].selectedColor.x,
-                                    &m_scene.gameUIs[m_gui.selectedUI].hoverColor.x };
-            int colorIndex = 0;
 
-
-            SetNextItemWidth(-FLT_MIN);
-            if (ImGui::BeginCombo("ColorList", "Change color"))
-            {
-                for (int i = 0; i < 3; i++)
-                {
-                    bool is_selected = (colorIndex == i);
-                    if (ImGui::Selectable((char*)colorPicker, is_selected))
-                        colorIndex = i;
-
-                    if (is_selected)
-                        ImGui::SetItemDefaultFocus();
-                }
-                ImGui::EndCombo();
-            }
-            */
-
-            /*
-            int* modelIndex = &m_scene.gameObjects[m_gui.selectedObject].modelIndex;
-            SeparatorText("Model");
-            SetNextItemWidth(-FLT_MIN);
-            if (ImGui::BeginCombo("ModelList", (*modelIndex != -1) ? (char*)m_models[*modelIndex].name.data : "Select model"))
-            {
-                for (int i = 0; i < m_modelCount; i++)
-                {
-                    bool is_selected = (*modelIndex == i);
-                    if (ImGui::Selectable((char*)m_models[i].name.data, is_selected))
-                        *modelIndex = i;
-
-                    if (is_selected)
-                        ImGui::SetItemDefaultFocus();
-                }
-                ImGui::EndCombo();
-            }
-            */
-
+            
             if (BeginTable("TextTable", 2, tableFlags))
             {
                 TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
@@ -1164,6 +1139,7 @@ void Engine::UpdateIMGUI()
                 EndTable();
                 
             }
+                
         }
         End();
         PopFont();

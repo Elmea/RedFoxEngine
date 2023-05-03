@@ -48,7 +48,7 @@ struct ImGUI
     ImGuiIO* io;
     ImFont* defaultFont;
     ImTextureID icons[10];
-
+    int currentSelectedColorType=0;
 };
 
 class Engine
