@@ -478,25 +478,25 @@ void Engine::UpdateIMGUI()
             mousePos.x * dimension.width / content.x - vMin.x,
             mousePos.y * dimension.height / content.y - vMin.y
         };
-        
+
+        static float averageFps;
         if (m_time.delta)
+            m_gui.fps[m_gui.currentFrame++ % 255] = (1.0f / m_time.delta);
+        if (m_gui.fpsUpdate >= 0.5)
         {
-            m_gui.fps[m_gui.currentFrame++] = (1.0f / m_time.delta);
-            if (m_gui.currentFrame >= (int)(1 / m_time.delta))
-            {
-                m_gui.currentFrame = 0;
-                for (int i = 0; i < (int)(1 / m_time.delta); i += 2)
-                    m_gui.averageFps = (m_gui.fps[i] + m_gui.averageFps) / 2.0f;
-            }
+            averageFps = m_gui.fps[0];
+            for (int i = 1; i < 255; i++)
+                averageFps = (averageFps + m_gui.fps[i]) / 2.0f;
+            // averageFps = 1.0 / m_guiaverageFps;
+            m_gui.fpsUpdate = 0;
         }
-        
+        m_gui.fpsUpdate += m_time.delta;
         SetCursorPos(ImVec2(vMax.x - vPos.x - 115, vMin.y - vPos.y));
         PushStyleColor(ImGuiCol_WindowBg, RF_DARKGRAY);
         BeginChild("Fps counter", ImVec2(115, vMin.y - vPos.y));
         PushStyleColor(ImGuiCol_Text, RF_ORANGE);
-        m_gui.averageFps = RedFoxMaths::Misc::Clamp(m_gui.averageFps, 0, 1000);
         float deltaTime = RedFoxMaths::Misc::Clamp(m_time.delta, 0, 1);
-        Text(" %.f FPS | %.2f ms", m_gui.averageFps, deltaTime * 1000);
+        Text(" %.f FPS | %.2f ms", averageFps, deltaTime * 1000);
         PopStyleColor();
         EndChild();
         PopStyleColor();

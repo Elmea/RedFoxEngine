@@ -86,7 +86,7 @@ namespace RedFoxEngine
             // glVertexArrayBindingDivisor(model->vao, a_materialID, 1);
         }
         //V-SYNC
-        wglSwapIntervalEXT(0);
+        wglSwapIntervalEXT(1);
     }
 
     void Graphics::InitQuad()
@@ -330,13 +330,13 @@ namespace RedFoxEngine
             textureHandles[i] = glGetTextureSamplerHandleARB(m_textures.textures[i], m_textureSampler);
         glNamedBufferSubData(m_textureSSBO, 0, sizeof(u64) * (m_textures.textureCount), textureHandles);
         //
-        static float test;
-        if (test > 0.016)
+        static float shadowMapUpdate;
+        if (shadowMapUpdate > 0.016)
         {
             DrawShadowMaps(m_scene->m_modelCountIndex);
-            test = 0;
+            shadowMapUpdate = 0;
         }
-        test += p_delta;
+        shadowMapUpdate += p_delta;
 
         glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
         glCullFace(GL_BACK);

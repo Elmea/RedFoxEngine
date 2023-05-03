@@ -40,7 +40,7 @@ struct ImGUI
     int translateSnap = 1;
     int rotateSnap = 45;
     int scaleSnap = 1;
-    float averageFps;
+    float fpsUpdate = 0;
     float dragSpeed = 1.f;
     float fps[255];
     ImGuizmo::OPERATION gizmoType;
@@ -73,7 +73,6 @@ private:
     float m_editorCameraSpeed;
     RedFoxMaths::Float3 m_editorCameraVelocity;
     bool m_editorCameraEnabled = false;
-    
     ImGUI m_gui = {};
     Physx m_physx {};
     SoundManager m_soundManager;

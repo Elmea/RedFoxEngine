@@ -77,7 +77,7 @@ Engine::Engine(int width, int height) :
 #if 0
     LoadScene("Sample Scene.scene");
 #else
-    initSphericalManyGameObjects(10000);
+    initSphericalManyGameObjects(100);
     m_scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
 
     // Some light for testing
@@ -313,28 +313,21 @@ void Engine::Update()
     UpdateSkyDome();
     m_soundManager.UpdateListener(m_editorCamera.position, m_editorCamera.orientation.ToEuler());
     UpdateLights(&m_graphics.lightStorage);
-    static float physxUpdate;
-
-    if (physxUpdate >= 1.0 / 60.0)
-    {
-        m_physx.UpdatePhysics(1.0 / 60.0, m_memoryManager, m_scene.isPaused);
-        m_game.update(&m_scene, &m_physx, m_input, 1.0 / 60.0);
-        physxUpdate = 0;
-    }
+    m_physx.UpdatePhysics(1.0 / 60.0, m_memoryManager, m_scene.isPaused);
+    m_game.update(&m_scene, &m_physx, m_input, 1.0 / 60.0);
     UpdateModelMatrices();
     UpdateIMGUI();
-    physxUpdate += m_time.delta;
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 
 void Engine::Draw()
 {
-    // if (m_time.delta < 0.03f)
-    // {
-    //     timeBeginPeriod(1);
-    //     Sleep(3);
-    //     timeEndPeriod(1);
-    // }
+    if (m_time.delta < 1.0 / 100.0)
+    {
+        timeBeginPeriod(1);
+        Sleep(10);
+        timeEndPeriod(1);
+    }
     // Camera *currentCamera = &m_scene.m_gameCamera; //TODO game camera
     Camera *currentCamera;
     if (m_scene.isPaused)
