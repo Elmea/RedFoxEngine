@@ -210,7 +210,7 @@ namespace RedFoxEngine
     {
         unsigned char* temp_bitmap = (unsigned char*)MyMalloc(temp, 512 * 512);
 
-        MyString file = OpenAndReadEntireFile("Fonts\\VictorMono-Bold.ttf", temp);
+        MyString file = OpenAndReadEntireFile("VictorMono-Bold.ttf", temp);
         stbtt_BakeFontBitmap((const unsigned char *)file.data, 0, 32.0, temp_bitmap, 512, 512, 32, 96, cdata); // no guarantee this fits!
         glGenTextures(1, &m_gFontTexture);
         glBindTexture(GL_TEXTURE_2D, m_gFontTexture);

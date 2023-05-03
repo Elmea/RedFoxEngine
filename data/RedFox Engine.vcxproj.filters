@@ -96,7 +96,7 @@
     <ClCompile Include="..\src\Win32Platform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-        <ClCompile Include="..\src\SoundManager.cpp">
+    <ClCompile Include="..\src\SoundManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -173,7 +173,19 @@
     <ClInclude Include="..\include\Win32Platform.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\SoundManager.h">
+    <ClInclude Include="..\include\SoundManager.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Icons.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\GameObject.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Mesh.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Physics.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
