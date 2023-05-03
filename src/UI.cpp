@@ -493,10 +493,6 @@ void Engine::UpdateIMGUI()
                 dimension.height - dimension.height * (uiPos.y / 100) - uiSize.y
             };
 
-
-            //printf("\nui : [x = %f and %f] -, [y = %f and %f]\n", convertedpos.x, convertedpos.x + uisize.x, convertedpos.y, convertedpos.y + uisize.y);
-            //printf("mouse : x=%f, y=%f\n", m_gui.mouseposeditor.x, m_gui.mouseposeditor.y);
-
             if (m_gui.mousePosEditor.x > convertedPos.x &&
                 m_gui.mousePosEditor.x <= convertedPos.x + uiSize.x &&
                 m_gui.mousePosEditor.y > convertedPos.y &&
@@ -504,13 +500,11 @@ void Engine::UpdateIMGUI()
             {
                 m_scene.gameUIs[i].isHovered = true;
                 if (IsMouseClicked(ImGuiMouseButton_Left))
-                {
                     m_scene.gameUIs[i].isPressed = true;
-                }
+
                 else
-                {
                     m_scene.gameUIs[i].isPressed = false;
-                }
+
             }
             else
             {
@@ -981,11 +975,6 @@ void Engine::UpdateIMGUI()
                     static RedFoxMaths::Float3 rotation;
                     if (DragFloat3("TransformRotation", &rotation.x, m_gui.dragSpeed, -360.f, 360.f, "%.3f", ImGuiSliderFlags_AlwaysClamp))
                     {
-                        /*
-                        rotation.x = RedFoxMaths::Misc::Clamp(rotation.x, -360, 360);
-                        rotation.y = RedFoxMaths::Misc::Clamp(rotation.y, -360, 360);
-                        rotation.z = RedFoxMaths::Misc::Clamp(rotation.z, -360, 360);
-                        */
                         rotation *= DEG2RAD;
                         m_scene.gameObjects[m_gui.selectedObject].orientation =
                             RedFoxMaths::Quaternion::SLerp(m_scene.gameObjects[m_gui.selectedObject].orientation,
@@ -1101,37 +1090,6 @@ void Engine::UpdateIMGUI()
                 TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
                 TableNextRow();
 
-                /*
-                if (ImGui::BeginCombo("ColorList","ColorList",0 ))
-                {
-                    bool is_selected = false;
-                    if (ImGui::Selectable((char*)"textColor", is_selected))
-                        printf("test");
-
-
-                    if (is_selected)
-                        ImGui::SetItemDefaultFocus();
-         
-                    ImGui::EndCombo();
-                }
-                    
-
-                if (ImGui::BeginCombo("ModelList", "Select model",0))
-                {
-                    for (int i = 0; i < m_modelCount; i++)
-                    {
-                        bool is_selected = (*modelIndex == i);
-                        if (ImGui::Selectable((char*)m_models[i].name.data, is_selected))
-                            *modelIndex = i;
-
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus();
-                    }
-                    ImGui::EndCombo();
-                }
-                    
-
-                    */
                 TableSetColumnIndex(0);
                 Text("Color");
                 TableSetColumnIndex(1);
