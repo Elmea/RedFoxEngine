@@ -256,6 +256,7 @@
     <ClInclude Include="..\include\Camera.hpp" />
     <ClInclude Include="..\include\Engine.hpp" />
     <ClInclude Include="..\include\GameUI.hpp" />
+    <ClInclude Include="..\include\Icons.hpp" />
     <ClInclude Include="..\include\Light.hpp" />
     <ClInclude Include="..\include\Model.hpp" />
     <ClInclude Include="..\include\MyMemory.hpp" />

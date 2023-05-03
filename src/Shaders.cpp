@@ -41,30 +41,30 @@ void RedFoxEngine::Graphics::InitShaders(Memory *tempArena)
     int tempSize = tempArena->usedSize;
     // fragment & vertex shaders for drawing triangle
     MyString vertexShaderSource = OpenAndReadEntireFile(
-        "Shaders\\blinn_phong.vert.glsl", tempArena);
+        "blinn_phong.vert.glsl", tempArena);
     MyString fragmentShaderSource = OpenAndReadEntireFile(
-        "Shaders\\blinn_phong.frag.glsl", tempArena);
+        "blinn_phong.frag.glsl", tempArena);
     CompileShader(vertexShaderSource.data, fragmentShaderSource.data,
         m_blinnPhong);
     tempArena->usedSize = tempSize;
     vertexShaderSource = OpenAndReadEntireFile(
-        "Shaders\\ShadowShader.vert", tempArena);
+        "ShadowShader.vert", tempArena);
     fragmentShaderSource = OpenAndReadEntireFile(
-        "Shaders\\ShadowShader.frag", tempArena);
+        "ShadowShader.frag", tempArena);
     CompileShader(vertexShaderSource.data, fragmentShaderSource.data,
         m_shadow);
     tempArena->usedSize = tempSize;
     vertexShaderSource = OpenAndReadEntireFile(
-        "Shaders\\skydome.vert", tempArena);
+        "skydome.vert", tempArena);
     fragmentShaderSource = OpenAndReadEntireFile(
-        "Shaders\\skydome.frag", tempArena);
+        "skydome.frag", tempArena);
     CompileShader(vertexShaderSource.data, fragmentShaderSource.data,
         m_sky);
     tempArena->usedSize = tempSize;
 
     vertexShaderSource = OpenAndReadEntireFile(
-        "Shaders\\font.vert", tempArena);
+        "font.vert", tempArena);
     fragmentShaderSource = OpenAndReadEntireFile(
-        "Shaders\\font.frag", tempArena);
+        "font.frag", tempArena);
     CompileShader(vertexShaderSource.data, fragmentShaderSource.data,m_font);
 }

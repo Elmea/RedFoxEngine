@@ -76,9 +76,12 @@ void SoundManager::Init(Memory* memAllocator)
 {
     m_soundEngine = irrklang::createIrrKlangDevice();
     m_sounds = (Sound*)MyMalloc(memAllocator, sizeof(Sound) * m_maxSounds);
+    m_soundsName = (MyString*)MyMalloc(memAllocator, sizeof(MyString) * m_maxSounds);
+    for (int i = 0; i < m_maxSounds; i++)
+        m_soundsName->capacity = 64;
 }
 
-Sound* SoundManager::CreateSound(const char* file)
+Sound* SoundManager::CreateSound(const char* file, Memory* memAllocator)
 {
     if (m_soundCount - m_freedSound >= m_maxSounds)
     {
@@ -89,6 +92,7 @@ Sound* SoundManager::CreateSound(const char* file)
     Sound newOne;
     newOne.m_source = m_soundEngine->addSoundSourceFromFile(file);
     newOne.m_soundEngine = m_soundEngine;
+    m_soundsName[m_soundCount] = initStringChar(file, strlen(file), memAllocator);
     
     if (m_freedSound > 0)
     {
@@ -146,6 +150,16 @@ void SoundManager::UpdateListener(RedFoxMaths::Float3 position, RedFoxMaths::Flo
 void SoundManager::SetMasterVolume(float volume)
 {
     m_soundEngine->setSoundVolume(volume);
+}
+
+int SoundManager::GetSoundCount()
+{
+    return m_soundCount;
+}
+
+MyString* SoundManager::GetSoundsName()
+{
+    return m_soundsName;
 }
 
 SoundManager::~SoundManager()

@@ -46,9 +46,10 @@ namespace RedFoxEngine
 		int m_freedSound = 0;
 
 		Sound* m_sounds;
+		MyString* m_soundsName;
 	public:
 		void Init(Memory* memAllocator);
-		Sound* CreateSound(const char* file);
+		Sound* CreateSound(const char* file, Memory* memAllocator);
 		void deleteSound(int index);
 
 		// Play a sound by his Index, return the corresponding sound
@@ -59,6 +60,9 @@ namespace RedFoxEngine
 
 		void UpdateListener(RedFoxMaths::Float3 position, RedFoxMaths::Float3 rotation);
 		void SetMasterVolume(float volume);
+
+		int GetSoundCount();
+		MyString* GetSoundsName();
 
 		~SoundManager();
 	};

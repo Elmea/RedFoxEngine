@@ -1,6 +1,6 @@
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
-
+#include "Icons.hpp"
 #include "Engine.hpp"
 
 using namespace RedFoxEngine;
@@ -105,16 +105,16 @@ void Engine::InitIMGUI()
     m_gui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
     m_gui.gizmoMode = ImGuizmo::MODE::LOCAL;
 
-    m_gui.icons[0] = (void*)(u64)LoadTextureFromFilePath("Textures/new_scene.png", false, false, false);
-    m_gui.icons[1] = (void*)(u64)LoadTextureFromFilePath("Textures/save_scene.png", false, false, false);
-    m_gui.icons[2] = (void*)(u64)LoadTextureFromFilePath("Textures/pause.png", false, false, false);
-    m_gui.icons[3] = (void*)(u64)LoadTextureFromFilePath("Textures/resume.png", false, false, false);
-    m_gui.icons[4] = (void*)(u64)LoadTextureFromFilePath("Textures/translate.png", false, false, false);
-    m_gui.icons[5] = (void*)(u64)LoadTextureFromFilePath("Textures/rotate.png", false, false, false);
-    m_gui.icons[6] = (void*)(u64)LoadTextureFromFilePath("Textures/scale.png", false, false, false);
-    m_gui.icons[7] = (void*)(u64)LoadTextureFromFilePath("Textures/new_entity.png", false, false, false);
-    m_gui.icons[8] = (void*)(u64)LoadTextureFromFilePath("Textures/new_cube.png", false, false, false);
-    m_gui.icons[9] = (void*)(u64)LoadTextureFromFilePath("Textures/new_sphere.png", false, false, false);
+    m_gui.icons[0] = (void*)(u64)LoadTextureFromMemory(new_scene_icon, sizeof(new_scene_icon), false, false, false);
+    m_gui.icons[1] = (void*)(u64)LoadTextureFromMemory(save_scene_icon, sizeof(save_scene_icon), false, false, false);
+    m_gui.icons[2] = (void*)(u64)LoadTextureFromMemory(pause_icon, sizeof(pause_icon), false, false, false);
+    m_gui.icons[3] = (void*)(u64)LoadTextureFromMemory(resume_icon, sizeof(resume_icon), false, false, false);
+    m_gui.icons[4] = (void*)(u64)LoadTextureFromMemory(translate_icon, sizeof(translate_icon), false, false, false);
+    m_gui.icons[5] = (void*)(u64)LoadTextureFromMemory(rotate_icon, sizeof(rotate_icon), false, false, false);
+    m_gui.icons[6] = (void*)(u64)LoadTextureFromMemory(scale_icon, sizeof(scale_icon), false, false, false);
+    m_gui.icons[7] = (void*)(u64)LoadTextureFromMemory(new_entity_icon, sizeof(new_entity_icon), false, false, false);
+    m_gui.icons[8] = (void*)(u64)LoadTextureFromMemory(new_cube_icon, sizeof(new_cube_icon), false, false, false);
+    m_gui.icons[9] = (void*)(u64)LoadTextureFromMemory(new_sphere_icon, sizeof(new_sphere_icon), false, false, false);
 }
 
 void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight)
@@ -176,7 +176,6 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
     if (ImageButton("SAVE SCENE", m_gui.icons[1], ImVec2(buttonHeight, buttonHeight)))
     {
-        strncat_s((char*)m_scene.m_name.data, 7, ".scene", m_scene.m_name.capacity);
         SaveScene(m_scene.m_name.data, m_scene);
     }
 
@@ -959,12 +958,12 @@ void Engine::UpdateIMGUI()
                 int* modelIndex = &m_scene.gameObjects[m_gui.selectedObject].modelIndex;
                 SeparatorText("Model");
                 SetNextItemWidth(-FLT_MIN);
-                if (BeginCombo(" ", (*modelIndex != -1) ? (char*)m_models[*modelIndex].name.data : "Select model"))
+                if (BeginCombo(" ", (*modelIndex != -1) ? (char*)m_modelsName[*modelIndex].data : "Select model"))
                 {
                     for (int i = 0; i < m_modelCount; i++)
                     {
                         bool is_selected = (*modelIndex == i);
-                        if (Selectable((char*)m_models[i].name.data, is_selected))
+                        if (Selectable((char*)m_modelsName[i].data, is_selected))
                             *modelIndex = i;
 
                         if (is_selected)
@@ -1047,12 +1046,6 @@ void Engine::UpdateIMGUI()
                 }
             }
         }
-        float viewerSize = GetContentRegionAvail().y / 4.f;
-        if (Begin("AssetViewer", (bool *)0, windowFlags))
-        {
-            Text("THIS WILL BE THE ASSET VIEWER");
-            EndChild();
-        }
         if (Begin("Assets", (bool*)0, windowFlags))
         {
             if (BeginTabBar("AssetsBar", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton))
@@ -1064,7 +1057,7 @@ void Engine::UpdateIMGUI()
                         for (int i = 0; i < m_modelCount; i++)
                         {
                             bool is_selected = m_gui.selectedModelAsset == i;
-                            if (Selectable(m_models[i].name.data, is_selected))
+                            if (Selectable(m_modelsName[i].data, is_selected))
                                 m_gui.selectedModelAsset = i;
 
                             if (is_selected)
@@ -1072,17 +1065,23 @@ void Engine::UpdateIMGUI()
                         }
                         EndListBox();
                     }
-                        
-                    EndTabItem();
-                }
-                if (BeginTabItem("Textures", (bool*)0, ImGuiTabItemFlags_None))
-                {
-                    //TODO(a.perche): Public nammed textures from graphics
                     EndTabItem();
                 }
                 if (BeginTabItem("Sounds", (bool*)0, ImGuiTabItemFlags_None))
                 {
-                    //TODO(a.perche): Same for sounds
+                    for (int i = 0; i < m_soundManager.GetSoundCount(); i++)
+                    {
+                        if (BeginListBox(" ", ImVec2(-FLT_MIN, 5 * GetTextLineHeightWithSpacing())))
+                        {
+                            bool is_selected = m_gui.selectedSoundAsset == i;
+                            if (Selectable(m_soundManager.GetSoundsName()[i].data, is_selected))
+                                m_gui.selectedSoundAsset = i;
+
+                            if (is_selected)
+                                SetItemDefaultFocus();
+                        }
+                        EndListBox();
+                    }
                     EndTabItem();
                 }
             }

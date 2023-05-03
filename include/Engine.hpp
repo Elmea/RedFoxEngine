@@ -34,6 +34,7 @@ struct ImGUI
     int selectedObject;
     int selectedUI;
     int selectedModelAsset = 0;
+    int selectedSoundAsset = 0;
     int nodeIndex = 1;
     int uiIndex = 0;
     int sceneGraphScrollStrength = 1;
@@ -60,6 +61,7 @@ private:
     //GameState
     Input m_input = {};
     Model *m_models = nullptr;
+    MyString* m_modelsName;
     u64 m_modelCount = 0;
 
     Camera m_editorCamera;
@@ -100,6 +102,7 @@ private:
     void UpdateLights(LightStorage* lightStorage);
     void initSphericalManyGameObjects(int count); //TODO: remove
     u32 LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat, bool flip);
+    u32 LoadTextureFromMemory(u8* memory, int size, bool resident, bool repeat, bool flip);
 
 public:
     Engine(int width, int height);
