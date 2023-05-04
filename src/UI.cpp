@@ -566,7 +566,7 @@ void Engine::UpdateIMGUI()
         }
         SetItemAllowOverlap();
 
-        if (m_gui.selectedObject != 0 && !m_editorCameraEnabled && m_scene.isPaused)
+        if (m_gui.selectedObject != 0 && m_scene.isPaused)
         {
             ImGuizmo::SetDrawlist();
             GetCurrentWindow();
@@ -938,13 +938,6 @@ void Engine::UpdateIMGUI()
         {
             if (CollapsingHeader("Transform", propertiesFlags))
             {
-                //TODO(a.perche) : Drag speed according to user param.
-                ImGuiTableFlags tableFlags =
-                    ImGuiTableFlags_RowBg |
-                    ImGuiTableFlags_SizingStretchSame |
-                    ImGuiTableFlags_Resizable |
-                    ImGuiTableFlags_BordersOuter;
-
                 if (BeginTable("TransformTable", 2, tableFlags))
                 {
                     TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
@@ -1003,7 +996,6 @@ void Engine::UpdateIMGUI()
                     EndCombo();
                 }
 
-                // TODO: Refactor this when materials will be for each game objects
                 SeparatorText("Material");
                 if (*modelIndex != -1)
                 {
@@ -1029,13 +1021,6 @@ void Engine::UpdateIMGUI()
         {
             if (CollapsingHeader("Transform", propertiesFlags))
             {
-                //TODO(a.perche) : Drag speed according to user param.
-                ImGuiTableFlags tableFlags =
-                    ImGuiTableFlags_RowBg |
-                    ImGuiTableFlags_SizingStretchSame |
-                    ImGuiTableFlags_Resizable |
-                    ImGuiTableFlags_BordersOuter;
-
                 if (BeginTable("TransformTable", 2, tableFlags))
                 {
                     TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
@@ -1108,48 +1093,57 @@ void Engine::UpdateIMGUI()
                 
             }
         }
-        if (Begin("Assets", (bool*)0, windowFlags))
+        if (Begin("Assets Browser", (bool*)0, windowFlags))
         {
-            if (BeginTabBar("AssetsBar", ImGuiTabBarFlags_NoCloseWithMiddleMouseButton))
-            {
-                if (BeginTabItem("Models", (bool*)0, ImGuiTabItemFlags_None))
-                {
-                    if (BeginListBox(" ", ImVec2(-FLT_MIN, 5 * GetTextLineHeightWithSpacing())))
-                    {
-                        for (int i = 0; i < m_modelCount; i++)
-                        {
-                            bool is_selected = m_gui.selectedModelAsset == i;
-                            if (Selectable(m_modelsName[i].data, is_selected))
-                                m_gui.selectedModelAsset = i;
+            ImGuiTableFlags tableFlags =
+                ImGuiTableFlags_RowBg |
+                ImGuiTableFlags_SizingStretchSame |
+                ImGuiTableFlags_BordersOuter;
 
-                            if (is_selected)
-                                SetItemDefaultFocus();
-                        }
-                        EndListBox();
+            if (BeginTable("AssetsTable", 2, tableFlags))
+            {
+                TableNextRow();
+                TableSetColumnIndex(0);
+                //SetCursorPosX(GetCursorPos().x + (GetColumnWidth() - CalcTextSize("Models").x) / 2.f);
+                Text("Models");
+                TableSetColumnIndex(1);
+                //SetCursorPosX(GetCursorPos().x + (GetColumnWidth() - CalcTextSize("Sounds").x) / 2.f);
+                Text("Sounds");
+                TableNextRow();
+
+                TableSetColumnIndex(0);
+                if (BeginListBox("ModelsList", ImVec2(-FLT_MIN, 5 * GetTextLineHeightWithSpacing())))
+                {
+                    for (int i = 0; i < m_modelCount; i++)
+                    {
+                        bool is_selected = m_gui.selectedModelAsset == i;
+                        if (Selectable(m_modelsName[i].data, is_selected))
+                            m_gui.selectedModelAsset = i;
+
+                        if (is_selected)
+                            SetItemDefaultFocus();
                     }
-                    EndTabItem();
+                    EndListBox();
                 }
-                if (BeginTabItem("Sounds", (bool*)0, ImGuiTabItemFlags_None))
+
+                TableSetColumnIndex(1);
+                if (BeginListBox("SoundsList", ImVec2(-FLT_MIN, 5 * GetTextLineHeightWithSpacing())))
                 {
                     for (int i = 0; i < m_soundManager.GetSoundCount(); i++)
                     {
-                        if (BeginListBox(" ", ImVec2(-FLT_MIN, 5 * GetTextLineHeightWithSpacing())))
-                        {
-                            bool is_selected = m_gui.selectedSoundAsset == i;
-                            if (Selectable(m_soundManager.GetSoundsName()[i].data, is_selected))
-                                m_gui.selectedSoundAsset = i;
+                        bool is_selected = m_gui.selectedSoundAsset == i;
+                        if (Selectable(m_soundManager.GetSoundsName()[i].data, is_selected))
+                            m_gui.selectedSoundAsset = i;
 
-                            if (is_selected)
-                                SetItemDefaultFocus();
-                        }
-                        EndListBox();
+                        if (is_selected)
+                            SetItemDefaultFocus();
                     }
-                    EndTabItem();
+                    EndListBox();
                 }
+                EndTable();
             }
-            EndTabBar();
+            End();
         }
-        End();
 
         End();
         PopFont();
