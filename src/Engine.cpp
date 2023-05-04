@@ -136,11 +136,14 @@ Engine::Engine(int width, int height) :
     m_soundManager.SetMasterVolume(1);
     
     m_testMusic = m_soundManager.CreateSound("music.ogg", &m_memoryManager.m_memory.arena);
-    m_testMusic->SetVolume(1);
-    m_testMusic->SetLoop(true);
-    m_testMusic->position = {0.f, 0.f, 0.f};
-    m_testMusic->Play3D();
-    m_graphics.InitFont(&m_memoryManager.m_memory.temp);
+    if (m_testMusic)
+    {
+        m_testMusic->SetVolume(1);
+        m_testMusic->SetLoop(true);
+        m_testMusic->position = {0.f, 0.f, 0.f};
+        m_testMusic->Play3D();
+        m_graphics.InitFont(&m_memoryManager.m_memory.temp);
+    }
 }
 
 void Engine::ObjModelPush(const char *path)
