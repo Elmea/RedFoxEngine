@@ -86,6 +86,9 @@ namespace RedFoxEngine
             glVertexArrayAttribBinding(m_vertexArrayObject, a_materialID, vbuf_index);
             // glVertexArrayBindingDivisor(model->vao, a_materialID, 1);
         }
+
+        m_kernels = (RedFoxMaths::Mat4*)MyMalloc(tempArena, sizeof(RedFoxMaths::Mat4) * m_maxKernel);
+        
         //V-SYNC
         wglSwapIntervalEXT(1);
     }
@@ -150,6 +153,32 @@ namespace RedFoxEngine
             __debugbreak();
     }
 
+    void Graphics::InitSceneFramebuffer(WindowDimension dimension)
+    {
+        glCreateFramebuffers(1, &m_sceneFramebuffer);
+
+        glCreateTextures(GL_TEXTURE_2D, 1, &m_sceneTexture);
+        glTextureParameteri(m_sceneTexture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTextureParameteri(m_sceneTexture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTextureStorage2D(m_sceneTexture, 1, GL_RGBA8, dimension.width,
+            dimension.height);
+        glNamedFramebufferTexture(m_sceneFramebuffer, GL_COLOR_ATTACHMENT0,
+            m_sceneTexture, 0);
+        unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0 };
+        glNamedFramebufferDrawBuffers(m_sceneFramebuffer, 1, attachments);
+        GLuint rbo;
+
+        glCreateRenderbuffers(1, &rbo);
+        glNamedRenderbufferStorage(rbo, GL_DEPTH24_STENCIL8,
+            dimension.width, dimension.height);
+        glNamedFramebufferRenderbuffer(m_sceneFramebuffer, GL_DEPTH_ATTACHMENT,
+            GL_RENDERBUFFER, rbo);
+
+        if (glCheckNamedFramebufferStatus(m_sceneFramebuffer, GL_FRAMEBUFFER) !=
+            GL_FRAMEBUFFER_COMPLETE)
+                __debugbreak();
+    }
+    
     /*If the dimensions of the window change, we need to resize*/
     void Graphics::UpdateImGUIFrameBuffer(WindowDimension& dimension,
         WindowDimension content)
@@ -483,4 +512,8 @@ namespace RedFoxEngine
             0, instanceCount);
     }
 
+    void Graphics::PostProcessingPasses()
+    {
+
+    }
 } // namespace RedFoxEngine

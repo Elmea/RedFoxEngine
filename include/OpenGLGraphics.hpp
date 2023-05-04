@@ -72,6 +72,7 @@ private:
     Shader m_font;
 
     GLuint m_imguiFramebuffer;
+    GLuint m_sceneFramebuffer;
 
     u32    m_indexCount = 0;
     u32    m_vertexCount = 0;
@@ -90,12 +91,25 @@ private:
     GLuint m_quadVAO;
     unsigned int m_quadVBO;
 
+    int m_maxKernel = 5;
+    int m_kernelCount;
+    RedFoxMaths::Mat4* m_kernels;
+    
 public:
     WindowDimension dimension;
     GLuint m_imguiTexture;
+    GLuint m_sceneTexture;
     Model* m_models = nullptr;
     u32    m_modelCount;
     LightStorage lightStorage;
+    bool postProcessingEnabled;
+
+    // Add a kernel to the kernel array. Return his index.
+    int AddKernel(RedFoxMaths::Mat4 kernel);
+    // Delete a kernel from the kernels array by index.
+    void DeleteKernel(int id);
+    // Setting an existing kernel by his index.
+    void EditKernel(int id, RedFoxMaths::Mat4 kernel);
     
     void InitModel(Model *model);
     void InitLights();
@@ -107,6 +121,7 @@ public:
     void InitShaders(Memory *tempArena);
     void InitGraphics(Memory *tempArena, WindowDimension dimension);
     void InitImGUIFramebuffer(WindowDimension dimension);
+    void InitSceneFramebuffer(WindowDimension dimension);
     void BindLights();
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
     void FillLightBuffer(LightInfo* lights, LightType type);
@@ -121,6 +136,7 @@ public:
         RedFoxMaths::Mat4* modelMatrices, int instanceCount);
     void DrawModelShadowInstances(Model* model, int instanceCount);
     void RenderText(GameUI ui);
+    void PostProcessingPasses();
 };
 } // namespace RedFoxEngine
 

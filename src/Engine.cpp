@@ -333,7 +333,7 @@ void Engine::Draw()
     // Camera *currentCamera = &m_scene.m_gameCamera; //TODO game camera
     Camera *currentCamera;
     if (m_scene.isPaused)
-        currentCamera = &m_editorCamera; //TODO game camera
+        currentCamera = &m_editorCamera;
     else
         currentCamera = &m_scene.m_gameCamera;
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
