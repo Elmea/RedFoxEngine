@@ -9,16 +9,14 @@ namespace RedFoxEngine
         MyString name;
         int      parent;
 
+        int behaviourIndex;
+
         RedFoxMaths::Float2 screenPosition;
         RedFoxMaths::Float2 size;
         RedFoxMaths::Float2 textOffset;
         RedFoxMaths::Float3 textColor;
         RedFoxMaths::Float3 hoverColor;
         RedFoxMaths::Float3 selectedColor;
-
-        //TODO Function callback
-
-
 
         MyString text;
         u32 image = 0;

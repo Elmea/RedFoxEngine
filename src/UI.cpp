@@ -260,6 +260,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameUI->name.capacity = 255;
         newGameUI->text = initStringChar("", 254, &m_memoryManager.m_memory.arena);
         newGameUI->size = {100, 100};
+        newGameUI->behaviourIndex = 1;
     }
     PopStyleVar();
     End();
@@ -1093,8 +1094,6 @@ void Engine::UpdateIMGUI()
             }
 
             SeparatorText("Colors");                                 
-
-
             const char* colors[3] = { "selectedColor", "textColor", "hoverColor" };
             float* variable[3] = { &m_scene.gameUIs[m_gui.selectedUI].selectedColor.x,
                                   &m_scene.gameUIs[m_gui.selectedUI].textColor.x,

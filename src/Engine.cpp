@@ -16,6 +16,10 @@
 using namespace RedFoxEngine;
 using namespace RedFoxMaths;
 
+void DefaultBehaviour(Scene scene)
+{
+}
+
 Engine::Engine(int width, int height) :
     m_scene(width, height),
     m_editorCamera(projectionType::PERSPECTIVE, width / (f32)height),
@@ -54,6 +58,15 @@ Engine::Engine(int width, int height) :
     m_scene.gameUICount++;
     for (int i = 1; i < (int)m_scene.gameUICount; i++)
         m_scene.gameUIs[i].parent = 0;
+
+    m_scene.gameUIBehaviours = (GameUIBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameUIBehaviour) * 100);
+    m_scene.gameUIBehaviours[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
+    for (int i = 1; i < 100; i++)
+    {
+        m_scene.gameUIBehaviours[i].name = initStringChar("DefaultBehaviour", 255, &m_memoryManager.m_memory.arena);
+        m_scene.gameUIBehaviours[i].function = DefaultBehaviour;
+    }
+
 
     //Init GameObject
     m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);
@@ -329,7 +342,15 @@ void Engine::Draw()
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
     m_graphics.Draw(&m_scene, m_platform.m_windowDimension, m_time.current, m_time.delta);
     for (int i = 0; i < m_scene.gameUICount; i++)
+    {
         m_graphics.RenderText(m_scene.gameUIs[i]);
+        if (m_scene.gameUIs[i].isPressed)
+            ((void(*) (Scene)) m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex].function)(m_scene);
+        /*
+        m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex].function;
+            ((void(*)())e.fn)();
+    */
+    }
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     m_platform.SwapFramebuffers();
