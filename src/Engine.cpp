@@ -95,32 +95,6 @@ Engine::Engine(int width, int height) :
         dir->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
         dir->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
         dir->lightInfo.specular = {0.1f, 0.1f, 0.1f};
-     
-        /**/
-        Light* spot = m_graphics.lightStorage.CreateLight(LightType::SPOT);
-        spot->lightInfo.constant = 1.0f;
-        spot->lightInfo.linear = 0.09f;
-        spot->lightInfo.quadratic = 0.032f;
-        spot->lightInfo.direction = {0.0f, 0.0f, 1.0f};
-        spot->lightInfo.position = {0.0f, 0.0f, -5.0f};
-        spot->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
-        spot->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
-        spot->lightInfo.specular = {0.1f, 0.1f, 0.1f};
-        spot->lightInfo.cutOff = 0.5f;
-        spot->lightInfo.outerCutOff = 0.1f;
-        /*
-        Light* point = m_graphics.lightStorage.CreateLight(LightType::POINT);
-        point->lightInfo.constant = 1.0f;
-        point->lightInfo.linear = 0.1f;
-        point->lightInfo.quadratic = 0.1f;
-        point->lightInfo.direction = {0.0f, 0.0f, 1.0f};
-        point->lightInfo.position = {0.0f, 0.0f, -5.0f};
-        point->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
-        point->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
-        point->lightInfo.specular = {0.1f, 0.1f, 0.1f};
-        point->lightInfo.cutOff = 0.5f;
-        point->lightInfo.outerCutOff = 0.1f;
-        */
     }
 
 #endif
