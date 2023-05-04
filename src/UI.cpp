@@ -2,6 +2,7 @@
 #include "MyMemory.hpp"
 
 #include "Engine.hpp"
+#include <unordered_map>
 
 using namespace RedFoxEngine;
 using namespace ImGui;
@@ -1092,8 +1093,16 @@ void Engine::UpdateIMGUI()
             }
 
             SeparatorText("Colors");                                 
-            const char* colors[] = { "SelectedColor", "TextColor", "HoverColor" };
+
+
+            const char* colors[3] = { "selectedColor", "textColor", "hoverColor" };
+            float* variable[3] = { &m_scene.gameUIs[m_gui.selectedUI].selectedColor.x,
+                                  &m_scene.gameUIs[m_gui.selectedUI].textColor.x,
+                                  &m_scene.gameUIs[m_gui.selectedUI].hoverColor.x
+            };
+            static int index=0;
             static const char* current_item = colors[0];
+
 
             SetNextItemWidth(-FLT_MIN);
             if (ImGui::BeginCombo("ColorList", current_item))
@@ -1102,14 +1111,15 @@ void Engine::UpdateIMGUI()
                 {
                     bool is_selected = (current_item == colors[i]);
                     if (ImGui::Selectable(colors[i], is_selected))
+                    {
                         current_item = colors[i];
+                        index = i;
+                    }
                     if (is_selected)
                         ImGui::SetItemDefaultFocus();
                 }
                 ImGui::EndCombo();
             }
-            
-
             
             if (BeginTable("TextTable", 2, tableFlags))
             {
@@ -1121,23 +1131,10 @@ void Engine::UpdateIMGUI()
                 SetNextItemWidth(-FLT_MIN); 
                 SeparatorText("Button color");
                 ColorPicker3("SelectedColor",
-                    &m_scene.gameUIs[m_gui.selectedUI].selectedColor.x,
+                    variable[index],
                     ImGuiColorEditFlags_PickerHueWheel);
-
-                SetNextItemWidth(-FLT_MIN);
-                SeparatorText("Text color");
-                ColorPicker3("TextColor",
-                    &m_scene.gameUIs[m_gui.selectedUI].textColor.x,
-                    ImGuiColorEditFlags_PickerHueWheel);                
-
-                SetNextItemWidth(-FLT_MIN);
-                SeparatorText("Hover color");
-                ColorPicker3("HoverColor",
-                    &m_scene.gameUIs[m_gui.selectedUI].hoverColor.x,
-                    ImGuiColorEditFlags_PickerHueWheel);
-                
-                EndTable();
-                
+            
+                EndTable();                
             }
                 
         }
