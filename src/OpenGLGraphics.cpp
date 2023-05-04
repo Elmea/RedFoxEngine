@@ -400,7 +400,7 @@ namespace RedFoxEngine
         }
         shadowMapUpdate += p_delta;
 
-        glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFramebuffer);
         glCullFace(GL_BACK);
         glViewport(0, 0, p_windowDimension.width,
             p_windowDimension.height);
@@ -512,8 +512,16 @@ namespace RedFoxEngine
             0, instanceCount);
     }
 
-    void Graphics::PostProcessingPasses()
+    void Graphics::PostProcessingPass()
     {
-
+        glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
+        // clear screen
+        glEnable(GL_BLEND);
+        glBindProgramPipeline(m_postProcess.pipeline);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        // Bind the buffer to a binding point
+        glBindVertexArray(m_quadVAO);
+        BindLights();
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 } // namespace RedFoxEngine

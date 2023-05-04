@@ -70,6 +70,9 @@ private:
     Shader m_shadow;
     Shader m_sky;
     Shader m_font;
+    Shader m_postProcess;
+
+    GLuint m_quadVAO;
 
     GLuint m_imguiFramebuffer;
     GLuint m_sceneFramebuffer;
@@ -88,7 +91,6 @@ private:
     stbtt_bakedchar cdata[96];
     GLuint m_gFontTexture;
 
-    GLuint m_quadVAO;
     unsigned int m_quadVBO;
 
     int m_maxKernel = 5;
@@ -136,7 +138,7 @@ public:
         RedFoxMaths::Mat4* modelMatrices, int instanceCount);
     void DrawModelShadowInstances(Model* model, int instanceCount);
     void RenderText(GameUI ui);
-    void PostProcessingPasses();
+    void PostProcessingPass();
 };
 } // namespace RedFoxEngine
 
