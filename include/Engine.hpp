@@ -22,8 +22,11 @@
 #include "Camera.hpp"
 #include "ResourceManager.hpp"
 
+
 namespace RedFoxEngine
 {
+    typedef void (*functionBehaviour)(Scene);
+
 
 struct ImGUI
 {
@@ -98,6 +101,7 @@ private:
     void UpdateLights(LightStorage* lightStorage);
     void initSphericalManyGameObjects(int count); //TODO: remove
     u32 LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat);
+    void AddBehaviour(MyString name, functionBehaviour function);
 
 public:
     Engine(int width, int height);

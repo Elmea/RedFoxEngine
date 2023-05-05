@@ -9,7 +9,7 @@ namespace RedFoxEngine
         MyString name;
         int      parent;
 
-        int behaviourIndex;
+        int behaviourIndex=0;
 
         RedFoxMaths::Float2 screenPosition;
         RedFoxMaths::Float2 size;

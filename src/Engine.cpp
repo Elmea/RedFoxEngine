@@ -27,6 +27,10 @@ void AbortMission(Scene scene)
     exit(0);
 }
 
+void Engine::AddBehaviour(MyString name, functionBehaviour function )
+{
+}
+
 Engine::Engine(int width, int height) :
     m_scene(width, height),
     m_editorCamera(projectionType::PERSPECTIVE, width / (f32)height),
@@ -37,7 +41,7 @@ Engine::Engine(int width, int height) :
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
     m_editorCameraSpeed = 1;
 
-    m_models = (Model *)m_memoryManager.PersistentAllocation(sizeof(Model) * 100);
+    m_models = (Model*)m_memoryManager.PersistentAllocation(sizeof(Model) * 100);
     m_models[m_modelCount].obj = CreateCube(&m_memoryManager.m_memory.arena);
     m_models[m_modelCount].hash = 1;
     m_models[m_modelCount].name = initStringChar("Cube", 4, &m_memoryManager.m_memory.arena);
@@ -55,17 +59,6 @@ Engine::Engine(int width, int height) :
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
 
-    //Init GameUI
-    m_scene.gameUIs = (GameUI*)m_memoryManager.PersistentAllocation(sizeof(GameUI) * 100);
-    m_scene.gameUIs[0] = {};
-    m_scene.gameUIs[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
-    m_scene.gameUIs[0].name.capacity = 255;
-    m_scene.gameUIs[0].screenPosition = {0, 0};
-    m_scene.gameUIs[0].size = {200,200};
-    m_scene.gameUICount++;
-    for (int i = 1; i < (int)m_scene.gameUICount; i++)
-        m_scene.gameUIs[i].parent = 0;
-
     //Init GameUIBehaviour
     m_scene.gameUIBehaviours = (GameUIBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameUIBehaviour) * 100);
     m_scene.gameUIBehaviourCount = 2;
@@ -74,12 +67,26 @@ Engine::Engine(int width, int height) :
         m_scene.gameUIBehaviours[i].name = initStringChar("DefaultBehaviour", 255, &m_memoryManager.m_memory.arena);
         m_scene.gameUIBehaviours[i].function = DefaultBehaviour;
     }
-    m_scene.gameUIBehaviours[0].name = initStringChar("DefaultBehaviour", 255, &m_memoryManager.m_memory.arena);
-    m_scene.gameUIBehaviours[0].function = DefaultBehaviour;
+    m_scene.gameUIBehaviours[1].name = initStringChar("DefaultBehaviour", 255, &m_memoryManager.m_memory.arena);
+    m_scene.gameUIBehaviours[1].function = DefaultBehaviour;
 
-    m_scene.gameUIBehaviours[1].name = initStringChar("AbortMission", 255, &m_memoryManager.m_memory.arena);
-    m_scene.gameUIBehaviours[1].function = AbortMission;
+    m_scene.gameUIBehaviours[0].name = initStringChar("AbortMission", 255, &m_memoryManager.m_memory.arena);
+    m_scene.gameUIBehaviours[0].function = AbortMission;
 
+
+    //Init GameUI
+    m_scene.gameUIs = (GameUI*)m_memoryManager.PersistentAllocation(sizeof(GameUI) * 100);
+    m_scene.gameUIs[0] = {};
+    m_scene.gameUIs[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
+    m_scene.gameUIs[0].name.capacity = 255;
+    m_scene.gameUIs[0].screenPosition = { 0, 0 };
+    m_scene.gameUIs[0].size = { 200,200 };
+    m_scene.gameUICount++;
+    for (int i = 1; i < 100; i++)
+    {
+        m_scene.gameUIs[i].parent = 0;
+        m_scene.gameUIs[i].behaviourIndex = 0;
+    }
     //Init GameObject
     m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);
     m_scene.gameObjects[0] = {};

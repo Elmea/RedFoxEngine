@@ -1094,8 +1094,9 @@ void Engine::UpdateIMGUI()
             }
 
             SeparatorText("Behaviour");
-            SetNextItemWidth(-FLT_MIN);
+            SetNextItemWidth(-FLT_MIN);           
             static const char* currentBehaviour = m_scene.gameUIBehaviours[0].name.data;
+           
             if (ImGui::BeginCombo("BehaviourList", currentBehaviour))
             {
                 for (int i = 0; i < m_scene.gameUIBehaviourCount; i++)
