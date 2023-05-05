@@ -58,6 +58,19 @@ struct Shader
     GLuint vertex, fragment, pipeline;
 };
 
+class Graphics;
+
+class Kernel
+{
+    int uniqueId;
+    bool active = true;
+    bool deleted = false;
+public:
+    RedFoxMaths::Mat4 kernel;
+    friend class Graphics;
+    int GetId() { return uniqueId; };
+};
+
 class Graphics
 {
 private:
@@ -87,6 +100,7 @@ private:
     u32    m_matrixSSBO;
     u32    m_textureSSBO;
     u32    m_shadowMapsSSBO;
+    u32    m_kernelSSBO;
 
     stbtt_bakedchar cdata[96];
     GLuint m_gFontTexture;
@@ -94,9 +108,11 @@ private:
     unsigned int m_quadVBO;
 
     int m_maxKernel = 5;
-    int m_kernelCount;
-    RedFoxMaths::Mat4* m_kernels;
-    
+    int m_kernelCount = 0;
+    int m_kernelCreated = 0;
+    Kernel* m_kernels;
+    RedFoxMaths::Mat4* m_kernelsMatrices;
+
 public:
     WindowDimension dimension;
     GLuint m_imguiTexture;
@@ -105,13 +121,6 @@ public:
     u32    m_modelCount;
     LightStorage lightStorage;
     bool postProcessingEnabled;
-
-    // Add a kernel to the kernel array. Return his index.
-    int AddKernel(RedFoxMaths::Mat4 kernel);
-    // Delete a kernel from the kernels array by index.
-    void DeleteKernel(int id);
-    // Setting an existing kernel by his index.
-    void EditKernel(int id, RedFoxMaths::Mat4 kernel);
     
     void InitModel(Model *model);
     void InitLights();
@@ -138,7 +147,16 @@ public:
         RedFoxMaths::Mat4* modelMatrices, int instanceCount);
     void DrawModelShadowInstances(Model* model, int instanceCount);
     void RenderText(GameUI ui);
+
     void PostProcessingPass();
+    // Add a kernel to the kernel array. Return it.
+    Kernel* AddKernel(RedFoxMaths::Mat4 kernel);
+    // Delete a kernel from the kernels array by index.
+    void DeleteKernel(int id);
+    void DeactivateKernel(int id);
+    // Setting an existing kernel by his index.
+    void EditKernel(int id, RedFoxMaths::Mat4 kernel);
+    void BindKernelBuffer(Memory* tempAlocator);
 };
 } // namespace RedFoxEngine
 

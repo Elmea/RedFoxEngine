@@ -97,6 +97,17 @@ Engine::Engine(int width, int height) :
         dir->lightInfo.specular = {0.1f, 0.1f, 0.1f};
     }
 
+    float kernel[4][4] = {
+        { 1.f, 1.f, 1.f, 0.f },
+        { 1.f, -8.f, 1.f, 0.f },
+        { 1.f, 1.f, 1.f, 0.f },
+        { 0.f, 0.f, 0.f, 1.f }
+    };
+
+    RedFoxMaths::Mat4 kernelMat = kernel;
+
+    m_graphics.AddKernel(kernelMat);
+
 #endif
     m_input = {};
     //TODO: ask user for what game to load ? or maybe save the game dll
@@ -190,7 +201,6 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     m_scene.gameObjects[1].modelIndex = 0;
     m_scene.gameObjects[1].position = { 0, -10, 0 };
     m_scene.gameObjects[1].scale = { 1, 1, 1 };
-
 }
 
 void Engine::ProcessInputs()
@@ -315,6 +325,9 @@ void Engine::Draw()
         currentCamera = &m_scene.m_gameCamera;
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
     m_graphics.Draw(&m_scene, m_platform.m_windowDimension, m_time.current, m_time.delta);
+    m_graphics.BindKernelBuffer(&m_memoryManager.m_memory.temp);
+    m_graphics.PostProcessingPass();
+
     for (int i = 0; i < m_scene.gameUICount; i++)
         m_graphics.RenderText(m_scene.gameUIs[i]);
     ImGui::Render();

@@ -35,6 +35,11 @@ namespace RedFoxEngine
                 100100 * sizeof(Material),
                 nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT | GL_MAP_READ_BIT);
 
+            glCreateBuffers(1, &m_kernelSSBO);
+            glNamedBufferStorage(m_kernelSSBO,
+                100000 * sizeof(RedFoxMaths::Mat4),
+                nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
+
             glCreateBuffers(1, &m_textureSSBO);
             glNamedBufferStorage(m_textureSSBO, 10000 * sizeof(u64), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
@@ -87,8 +92,9 @@ namespace RedFoxEngine
             // glVertexArrayBindingDivisor(model->vao, a_materialID, 1);
         }
 
-        m_kernels = (RedFoxMaths::Mat4*)MyMalloc(tempArena, sizeof(RedFoxMaths::Mat4) * m_maxKernel);
-        
+        m_kernelsMatrices = (RedFoxMaths::Mat4*)MyMalloc(tempArena, sizeof(RedFoxMaths::Mat4) * m_maxKernel);
+        m_kernels = (Kernel*)MyMalloc(tempArena, sizeof(Kernel) * m_maxKernel);
+
         //V-SYNC
         wglSwapIntervalEXT(1);
     }
@@ -514,7 +520,13 @@ namespace RedFoxEngine
 
     void Graphics::PostProcessingPass()
     {
+        glNamedBufferSubData(m_matrixSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount, m_kernels);
+
         glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
+        
+        glViewport(0, 0, dimension.width,
+            dimension.height);
+
         // clear screen
         glEnable(GL_BLEND);
         glBindProgramPipeline(m_postProcess.pipeline);
@@ -523,5 +535,61 @@ namespace RedFoxEngine
         glBindVertexArray(m_quadVAO);
         BindLights();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    Kernel* Graphics::AddKernel(RedFoxMaths::Mat4 kernel)
+    {
+        Kernel result;
+        result.uniqueId = m_kernelCreated;
+        result.kernel = kernel;
+
+        m_kernels[result.uniqueId] = result;
+        m_kernelCount++;
+        m_kernelCreated++;
+
+        return &m_kernels[result.uniqueId];
+    }
+
+    void Graphics::DeleteKernel(int id)
+    {
+        if (id > m_kernelCreated || m_kernels[id].deleted)
+            return;
+
+        m_kernels[id].deleted = true;
+
+        if (m_kernels[id].active)
+            m_kernelCount--;
+    }
+
+    void Graphics::DeactivateKernel(int id)
+    {
+        if (id > m_kernelCreated || m_kernels[id].deleted || m_kernels[id].active)
+            return;
+
+        m_kernels[id].active = true;
+        m_kernelCount--;
+    }
+
+    void Graphics::EditKernel(int id, RedFoxMaths::Mat4 kernel)
+    {
+        if (id > m_kernelCreated || m_kernels[id].deleted)
+            return;
+
+        m_kernels[id].kernel = kernel;
+    }
+
+    void Graphics::BindKernelBuffer(Memory* tempAlocator)
+    {
+        m_kernelsMatrices = (RedFoxMaths::Mat4*)MyMalloc(tempAlocator, sizeof(RedFoxMaths::Mat4) * m_kernelCount);
+        int count = 0;
+        for (int i = 0; i < m_kernelCreated; i++)
+        {
+            if (!m_kernels[i].deleted && m_kernels[i].active)
+            {
+                m_kernelsMatrices[count] = m_kernels[i].kernel;
+                count++;
+            }
+        }
     }
 } // namespace RedFoxEngine
