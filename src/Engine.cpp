@@ -19,7 +19,7 @@ using namespace RedFoxMaths;
 
 void DefaultBehaviour(Scene scene)
 {
-    (char)scene.m_name.data[0] = 'f'; //TODO Remove
+
 }
 
 void AbortMission(Scene scene)
@@ -68,13 +68,16 @@ Engine::Engine(int width, int height) :
 
     //Init GameUIBehaviour
     m_scene.gameUIBehaviours = (GameUIBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameUIBehaviour) * 100);
-    m_scene.gameUIBehaviourCount = 1;
+    m_scene.gameUIBehaviourCount = 2;
+   /*
     for (int i = 0; i < 100; i++)
+    */
     {
-        m_scene.gameUIBehaviours[i].name = initStringChar("DefaultBehaviour", 255, &m_memoryManager.m_memory.arena);
-        m_scene.gameUIBehaviours[i].function = DefaultBehaviour;
+        m_scene.gameUIBehaviours[0].name = initStringChar("DefaultBehaviour", 255, &m_memoryManager.m_memory.arena);
+        m_scene.gameUIBehaviours[0].function = DefaultBehaviour;
     }
-
+    m_scene.gameUIBehaviours[1].name = initStringChar("AbortMission", 255, &m_memoryManager.m_memory.arena);
+    m_scene.gameUIBehaviours[1].function = AbortMission;
 
     //Init GameObject
     m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);

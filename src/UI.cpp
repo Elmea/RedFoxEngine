@@ -1093,32 +1093,52 @@ void Engine::UpdateIMGUI()
                 }
             }
 
-            SeparatorText("Colors");                                 
-            const char* colors[3] = { "selectedColor", "textColor", "hoverColor" };
-            float* variable[3] = { &m_scene.gameUIs[m_gui.selectedUI].selectedColor.x,
-                                  &m_scene.gameUIs[m_gui.selectedUI].textColor.x,
-                                  &m_scene.gameUIs[m_gui.selectedUI].hoverColor.x
-            };
-            static int index=0;
-            static const char* current_item = colors[0];
-
-
+            SeparatorText("Behaviour");
             SetNextItemWidth(-FLT_MIN);
-            if (ImGui::BeginCombo("ColorList", current_item))
+            static const char* currentBehaviour = m_scene.gameUIBehaviours[0].name.data;
+            if (ImGui::BeginCombo("BehaviourList", currentBehaviour))
             {
-                for (int i = 0; i < IM_ARRAYSIZE(colors); i++)
+                for (int i = 0; i < m_scene.gameUIBehaviourCount; i++)
                 {
-                    bool is_selected = (current_item == colors[i]);
-                    if (ImGui::Selectable(colors[i], is_selected))
+                    bool is_selected = (currentBehaviour == m_scene.gameUIBehaviours[i].name.data);
+                    if (ImGui::Selectable(m_scene.gameUIBehaviours[i].name.data, is_selected))
                     {
-                        current_item = colors[i];
-                        index = i;
+                        currentBehaviour = m_scene.gameUIBehaviours[i].name.data;
+                        m_scene.gameUIs[m_gui.selectedUI].behaviourIndex = i;
                     }
                     if (is_selected)
                         ImGui::SetItemDefaultFocus();
                 }
                 ImGui::EndCombo();
             }
+
+            SeparatorText("Colors");                                 
+            const char* colors[3] = { "selectedColor", "textColor", "hoverColor" };
+            float* variable[3] = { &m_scene.gameUIs[m_gui.selectedUI].selectedColor.x,
+                                  &m_scene.gameUIs[m_gui.selectedUI].textColor.x,
+                                  &m_scene.gameUIs[m_gui.selectedUI].hoverColor.x
+            };
+            static int colorIndex=0;
+            static const char* currentColorType = colors[0];
+
+
+            SetNextItemWidth(-FLT_MIN);
+            if (ImGui::BeginCombo("ColorList", currentColorType))
+            {
+                for (int i = 0; i < IM_ARRAYSIZE(colors); i++)
+                {
+                    bool is_selected = (currentColorType == colors[i]);
+                    if (ImGui::Selectable(colors[i], is_selected))
+                    {
+                        currentColorType = colors[i];
+                        colorIndex = i;
+                    }
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+
             
             if (BeginTable("TextTable", 2, tableFlags))
             {
@@ -1130,7 +1150,7 @@ void Engine::UpdateIMGUI()
                 SetNextItemWidth(-FLT_MIN); 
                 SeparatorText("Button color");
                 ColorPicker3("SelectedColor",
-                    variable[index],
+                    variable[colorIndex],
                     ImGuiColorEditFlags_PickerHueWheel);
             
                 EndTable();                
