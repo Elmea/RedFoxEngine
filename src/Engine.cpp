@@ -16,6 +16,7 @@
 using namespace RedFoxEngine;
 using namespace RedFoxMaths;
 
+//Write behaviours here
 
 void DefaultBehaviour(Scene scene)
 {
@@ -29,6 +30,9 @@ void AbortMission(Scene scene)
 
 void Engine::AddBehaviour(MyString name, functionBehaviour function )
 {
+    m_scene.gameUIBehaviours[m_scene.gameUIBehaviourCount].name = name;
+    m_scene.gameUIBehaviours[m_scene.gameUIBehaviourCount].function = function;
+    m_scene.gameUIBehaviourCount++;
 }
 
 Engine::Engine(int width, int height) :
@@ -61,18 +65,16 @@ Engine::Engine(int width, int height) :
 
     //Init GameUIBehaviour
     m_scene.gameUIBehaviours = (GameUIBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameUIBehaviour) * 100);
-    m_scene.gameUIBehaviourCount = 2;
-    for (int i = 2; i < 100; i++)
+    
+    //Add behaviours here
+    AddBehaviour(initStringChar("AbortMission", 255, &m_memoryManager.m_memory.arena), AbortMission);
+    AddBehaviour(initStringChar("DefaultBehaviour", 255, &m_memoryManager.m_memory.arena), DefaultBehaviour);
+
+    for (int i = m_scene.gameUIBehaviourCount; i < 100-m_scene.gameUIBehaviourCount; i++)
     {
         m_scene.gameUIBehaviours[i].name = initStringChar("DefaultBehaviour", 255, &m_memoryManager.m_memory.arena);
         m_scene.gameUIBehaviours[i].function = DefaultBehaviour;
     }
-    m_scene.gameUIBehaviours[1].name = initStringChar("DefaultBehaviour", 255, &m_memoryManager.m_memory.arena);
-    m_scene.gameUIBehaviours[1].function = DefaultBehaviour;
-
-    m_scene.gameUIBehaviours[0].name = initStringChar("AbortMission", 255, &m_memoryManager.m_memory.arena);
-    m_scene.gameUIBehaviours[0].function = AbortMission;
-
 
     //Init GameUI
     m_scene.gameUIs = (GameUI*)m_memoryManager.PersistentAllocation(sizeof(GameUI) * 100);
