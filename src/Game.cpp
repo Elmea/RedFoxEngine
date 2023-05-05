@@ -33,6 +33,10 @@ static Float3 RotateVectorByQuaternion(Quaternion q, Float3 test)
     return result.GetXYZF3();
 }
 
+void Test(RedFoxEngine::Scene scene)
+{
+    printf("f");
+}
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
 {
@@ -45,6 +49,17 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
 
     RedFoxEngine::Physx *physx = (RedFoxEngine::Physx *)p;
     RedFoxEngine::Scene *scene = (RedFoxEngine::Scene *)s;
+
+    static bool init = false;
+
+    if (!init)
+    {
+        char *kappa = (char*)scene->gameUIBehaviours[scene->gameUIBehaviourCount].name.data;
+        kappa[0] = 'f';
+        scene->gameUIBehaviours[scene->gameUIBehaviourCount].function = Test;
+        scene->gameUIBehaviourCount++;
+        init = true;
+    }
     RedFoxEngine::GameObject *gameObjects = scene->gameObjects;
     int gameObjectCount = scene->gameObjectCount;
     gameObjects[0].position =
