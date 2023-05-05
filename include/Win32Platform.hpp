@@ -93,10 +93,8 @@ struct Input
     u8 Delete : 1;
 };
 
-#ifndef UPDATEGAME
 #define UPDATEGAME(name) void name(void *s, \
                                    void *p, RedFoxEngine::Input input, float deltaTime)
-#endif
 typedef UPDATEGAME(_updategame);
 
 struct GameLibrary

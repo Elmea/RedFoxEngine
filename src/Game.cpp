@@ -9,6 +9,9 @@
 #include "Physics.hpp"
 #include "Scene.hpp"
 
+#define MEMORY_IMPLEMENTATION
+#include "MyMemory.hpp"
+
 using namespace RedFoxMaths;
 
 BOOL APIENTRY DllMain(HMODULE hModule,
@@ -33,9 +36,15 @@ static Float3 RotateVectorByQuaternion(Quaternion q, Float3 test)
     return result.GetXYZF3();
 }
 
-void Test(RedFoxEngine::Scene scene)
+
+BUTTONBEHAIVOUR(Test)
 {
     printf("f");
+}
+
+BUTTONBEHAIVOUR(Best)
+{
+    printf("b");
 }
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
@@ -54,12 +63,15 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
 
     if (!init)
     {
-        char *kappa = (char*)scene->gameUIBehaviours[scene->gameUIBehaviourCount].name.data;
-        kappa[0] = 'f';
-        scene->gameUIBehaviours[scene->gameUIBehaviourCount].function = Test;
+        // scene->gameUIBehaviours[scene->gameUIBehaviourCount].name = assignString(scene->gameUIBehaviours[scene->gameUIBehaviourCount].name, "Test");
+        // scene->gameUIBehaviours[scene->gameUIBehaviourCount].function = Test;
+        // scene->gameUIBehaviourCount++;
+        scene->gameUIBehaviours[scene->gameUIBehaviourCount].name = assignString(scene->gameUIBehaviours[scene->gameUIBehaviourCount].name, "Best");
+        scene->gameUIBehaviours[scene->gameUIBehaviourCount].function = Best;
         scene->gameUIBehaviourCount++;
         init = true;
     }
+
     RedFoxEngine::GameObject *gameObjects = scene->gameObjects;
     int gameObjectCount = scene->gameObjectCount;
     gameObjects[0].position =

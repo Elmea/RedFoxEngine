@@ -68,6 +68,7 @@ void DeInitMemory(Memory *memory);
 fileResource FileResourceInit(const char *fileName, Memory *m);
 fileResource *LoadFile(fileResource *result, Memory *memory);
 MyString initStringChar(const char *str, u64 n, Memory *memory);
+MyString assignString(MyString input, const char *str);
 int StringsAreEqual_C(MyString a, const char *str, const char *delimiter);
 int StringsAreEqual(MyString a, MyString b);
 char *my_strncpy_s(char *dest, u64 dest_size, const char *src, u64 src_size);
@@ -209,6 +210,20 @@ static MyString initStringChar(const char *str, u64 n, Memory *memory)
     while (i < result.size)
         temp[i++] = str[i];
     return (result);
+}
+
+static MyString assignString(MyString input, const char *str)
+{
+    int i = 0;
+    while (str[i] && i < input.capacity)
+        i++;
+    input.size = i;
+    i = 0;
+    char *temp = (char *)input.data;
+    while (i < input.size)
+        temp[i++] = str[i];
+    temp[i] = '\0';
+    return (input);
 }
 
 static MyString OpenAndReadEntireFile(const char *filePath, Memory *memory)
