@@ -16,9 +16,6 @@
 using namespace RedFoxEngine;
 using namespace RedFoxMaths;
 
-void DefaultBehaviour(Scene scene)
-{
-}
 
 Engine::Engine(int width, int height) :
     m_scene(width, height),
@@ -59,13 +56,7 @@ Engine::Engine(int width, int height) :
     for (int i = 1; i < (int)m_scene.gameUICount; i++)
         m_scene.gameUIs[i].parent = 0;
 
-    m_scene.gameUIBehaviours = (GameUIBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameUIBehaviour) * 100);
-    m_scene.gameUIBehaviours[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
-    for (int i = 1; i < 100; i++)
-    {
-        m_scene.gameUIBehaviours[i].name = initStringChar("DefaultBehaviour", 255, &m_memoryManager.m_memory.arena);
-        m_scene.gameUIBehaviours[i].function = DefaultBehaviour;
-    }
+
 
 
     //Init GameObject
@@ -325,6 +316,12 @@ void Engine::Update()
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 
+void DefaultBehaviour(Scene scene)
+{
+    exit(0);
+}
+
+
 void Engine::Draw()
 {
     if (m_time.delta < 0.03f)
@@ -345,7 +342,9 @@ void Engine::Draw()
     {
         m_graphics.RenderText(m_scene.gameUIs[i]);
         if (m_scene.gameUIs[i].isPressed)
-            ((void(*) (Scene)) m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex].function)(m_scene);
+            ((void(*) ()) DefaultBehaviour)();
+
+            //            ((void(*) (Scene)) m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex].function)(m_scene);
         /*
         m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex].function;
             ((void(*)())e.fn)();

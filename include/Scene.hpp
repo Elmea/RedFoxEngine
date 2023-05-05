@@ -50,7 +50,7 @@ public:
     GameObject *gameObjects = nullptr;
     GameUI* gameUIs = nullptr;
     GameUIBehaviour* gameUIBehaviours = nullptr;
-
+ 
     Scene(int width, int height):m_gameCamera(projectionType::PERSPECTIVE,
         width / (f32)height){};
     RedFoxMaths::Mat4 GetWorldMatrix(int gameObjectindex)
