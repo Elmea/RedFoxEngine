@@ -97,6 +97,7 @@ namespace RedFoxEngine
 
         //V-SYNC
         wglSwapIntervalEXT(1);
+        InitSceneFramebuffer(dimension);
     }
 
     void Graphics::InitQuad()
@@ -302,7 +303,7 @@ namespace RedFoxEngine
     {      
         if (ui.text.data == nullptr)
             return;
-        glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFramebuffer);
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
@@ -418,7 +419,7 @@ namespace RedFoxEngine
         glEnable(GL_CULL_FACE);
         DrawGameObjects(m_scene->m_modelCountIndex);
         // swap the buffers to show output
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);    
+
     }
 
     static void bindBuffer(int bindingPoint, GLuint buffer, int size)
@@ -520,22 +521,22 @@ namespace RedFoxEngine
 
     void Graphics::PostProcessingPass()
     {
-        glNamedBufferSubData(m_matrixSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount, m_kernels);
-
+        glBindTextureUnit(1, m_sceneTexture);
         glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
-        
-        glViewport(0, 0, dimension.width,
-            dimension.height);
+        glViewport(0, 0, dimension.width, dimension.height);
+        glNamedBufferSubData(m_matrixSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount, m_kernelsMatrices);
 
         // clear screen
         glEnable(GL_BLEND);
         glBindProgramPipeline(m_postProcess.pipeline);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         // Bind the buffer to a binding point
+
+        glDisable(GL_DEPTH_TEST);
         glBindVertexArray(m_quadVAO);
-        BindLights();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     Kernel* Graphics::AddKernel(RedFoxMaths::Mat4 kernel)

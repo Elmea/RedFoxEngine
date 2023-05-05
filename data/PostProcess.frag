@@ -2,7 +2,7 @@
 
 in vec2 TexCoords;
 
-uniform sampler2D screenTexture;
+layout (binding = 1) uniform sampler2D screenTexture;
 
 layout(std430, binding = 0) buffer KernelBlock 
 {
