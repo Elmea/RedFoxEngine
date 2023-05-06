@@ -5,7 +5,7 @@ struct ShadowParameters
 {
     int index;
     int SHADOW_WIDTH, SHADOW_HEIGHT;
-    unsigned int depthMap;
+    uint depthMap;
 };
 
 struct Light {
@@ -43,12 +43,12 @@ struct Material
     int normalMap;
 };
 
-in FS_IN
+layout(location = 0)in FS_IN
 {
     vec3 Position;
     vec3 Normal;
     vec2 TexCoord;
-    flat unsigned int materialID;
+    flat uint materialID;
     vec3 Color;
 } fs_in;
 
@@ -90,7 +90,6 @@ float ShadowCalculation(Light light)
     vec3 Normal       = fs_in.Normal;
 
     vec4 fragPosLightSpace = light.lightVp * vec4(FragPosition, 1);
-    sampler2D shadowMap = sampler2D(sb_ShadowMaps.data[0]);
 
     // perform perspective divide
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
@@ -98,19 +97,19 @@ float ShadowCalculation(Light light)
     projCoords = projCoords * 0.5 + 0.5;
 
     // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
-    float closestDepth = texture(shadowMap, projCoords.xy).r; 
+    float closestDepth = texture(sampler2D(sb_ShadowMaps.data[0]), projCoords.xy).r; 
     // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
     // check whether current frag pos is in shadow
     float bias = -max(0.00000025 * (1.0 - dot(Normal, vec3(fragPosLightSpace))), 0.0000000025);  
 
     float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    vec2 texelSize = 1.0 / textureSize(sampler2D(sb_ShadowMaps.data[0]), 0);
     for(int x = -1; x <= 1; ++x)
     {
         for(int y = -1; y <= 1; ++y)
         {
-            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+            float pcfDepth = texture(sampler2D(sb_ShadowMaps.data[0]), projCoords.xy + vec2(x, y) * texelSize).r; 
             shadow += currentDepth + bias > pcfDepth ? 1.0 : 0.0;        
         } 
     }
@@ -191,13 +190,11 @@ void main()
     }
     else
     {
-        sampler2D diffuse = sampler2D(sb_Texture.data[mat.material[fs_in.materialID].diffuseMap]);
-        Color = texture(diffuse, fs_in.TexCoord).xyz;
+        Color = texture(sampler2D(sb_Texture.data[mat.material[fs_in.materialID].diffuseMap]), fs_in.TexCoord).xyz;
     }
     if (mat.material[fs_in.materialID].normalMap != -1)
     {
-        sampler2D normal = sampler2D(sb_Texture.data[mat.material[fs_in.materialID].normalMap]);
-        Normal = normalize(texture(normal, fs_in.TexCoord) * 2.0 - 1.0).xyz;
+        Normal = normalize(texture(sampler2D(sb_Texture.data[mat.material[fs_in.materialID].normalMap]), fs_in.TexCoord) * 2.0 - 1.0).xyz;
         vec3 q1 = dFdx(vec3(fs_in.TexCoord, 0.0));
         vec3 q2 = dFdy(vec3(fs_in.TexCoord, 0.0));
         vec3 T = normalize(q1 * q2.y - q2 * q1.y);
