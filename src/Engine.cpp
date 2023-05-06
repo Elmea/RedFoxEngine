@@ -315,7 +315,7 @@ void Engine::Draw()
         currentCamera = &m_scene.m_gameCamera;
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
     m_graphics.Draw(&m_scene, m_platform.m_windowDimension, m_time.current, m_time.delta);
-    for (int i = 0; i < m_scene.gameUICount; i++)
+    for (int i = 0; i < (int)m_scene.gameUICount; i++)
         m_graphics.RenderText(m_scene.gameUIs[i]);
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

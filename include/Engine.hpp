@@ -7,13 +7,6 @@
 // TODO(V. Caraulan): linux mac or whatever
 #endif
 
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include <imgui.h>
-#include <imgui_internal.h>
-#include "imgui_impl_opengl3.h"
-#include "imgui_impl_win32.h"
-#include <ImGuizmo.h>
-
 #include "Scene.hpp"
 #include "Physics.hpp"
 #include "ObjParser.hpp"
@@ -22,6 +15,10 @@
 #include "Camera.hpp"
 #include "ResourceManager.hpp"
 #include "SoundManager.hpp"
+
+#include <ImGuizmo.h>
+#include "imgui_impl_opengl3.h"
+#include "imgui_impl_win32.h"
 
 namespace RedFoxEngine
 {
@@ -51,7 +48,6 @@ struct ImGUI
     ImGuiIO* io;
     ImFont* defaultFont;
     ImTextureID icons[10];
-
 };
 
 class Engine

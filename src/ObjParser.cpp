@@ -6,7 +6,9 @@
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
 
+#ifndef STB_IMAGE_IMPLEMENTATION
 #include <STB_Image/stb_image.h>
+#endif
 
 /*
     Function that uses intrinsics to read 32 bytes by 32 bytes

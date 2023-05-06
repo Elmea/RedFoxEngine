@@ -3,6 +3,11 @@
 #include "Icons.hpp"
 #include "Engine.hpp"
 
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include <imgui.h>
+#include <imgui_internal.h>
+#include <ImGuizmo.h>
+
 using namespace RedFoxEngine;
 using namespace ImGui;
 
