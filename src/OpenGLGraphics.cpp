@@ -524,14 +524,13 @@ namespace RedFoxEngine
         glBindTextureUnit(1, m_sceneTexture);
         glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
         glViewport(0, 0, dimension.width, dimension.height);
-        glNamedBufferSubData(m_matrixSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount, m_kernelsMatrices);
+        glNamedBufferSubData(m_kernelSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount, m_kernelsMatrices);
 
         // clear screen
         glEnable(GL_BLEND);
         glBindProgramPipeline(m_postProcess.pipeline);
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        // Bind the buffer to a binding point
 
         glDisable(GL_DEPTH_TEST);
         glBindVertexArray(m_quadVAO);
@@ -588,8 +587,7 @@ namespace RedFoxEngine
         {
             if (!m_kernels[i].deleted && m_kernels[i].active)
             {
-                m_kernelsMatrices[count] = m_kernels[i].kernel;
-                count++;
+                m_kernelsMatrices[i] = m_kernels[i].kernel;
             }
         }
     }
