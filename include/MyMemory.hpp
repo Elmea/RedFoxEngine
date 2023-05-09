@@ -4,10 +4,24 @@
 #define MY_MEMORY_H
 
 #define _AMD64_
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
-#include "engine_math.hpp"
 #include <memoryapi.h>
 #include <windows.h>
+#endif
+
+#include <stdint.h>
+typedef int8_t       s8;
+typedef uint8_t      u8;
+typedef int16_t      s16;
+typedef uint16_t     u16;
+typedef int32_t      s32;
+typedef uint32_t     u32;
+typedef int64_t      s64;
+typedef uint64_t     u64;
+
+typedef float  f32;
+typedef double f64;
 
 typedef struct
 {
@@ -101,9 +115,9 @@ static int StringsAreEqual(MyString a, MyString b)
     if (a.size == b.size)
     {
         int i = 0;
-        while (a.data[i] == b.data[i] && i < a.size)
+        while (a.data[i] == b.data[i] && i < (int)a.size)
             i++;
-        if (i == a.size)
+        if (i == (int)a.size)
             return (1);
     }
     return (0);
@@ -114,9 +128,9 @@ static int StringsAreEqual_C(MyString a,
 {
     int i = 0;
 
-    while (a.data[i] == str[i] && i < a.size)
+    while (a.data[i] == str[i] && i < (int)a.size)
         i++;
-    if (i == a.size)
+    if (i == (int)a.size)
     {
         if (delimiter)
         {
@@ -141,7 +155,7 @@ static int StringsAreEqual_C(MyString a,
 
 static Memory InitVirtualMemory(size_t size)
 {
-    Memory memory = {0};
+    Memory memory = {};
 
     memory.virtualSize = size;
     memory.data = VirtualAlloc(NULL, size, MEM_RESERVE, PAGE_READWRITE);
@@ -188,7 +202,7 @@ static MyString initString(u64 n, Memory *memory)
 {
     MyString result = {};
     result.size = 0;
-    result.capacity = n;
+    result.capacity = (u32)n;
     result.data = (const char *)MyMalloc(memory, n);
     return (result);
 }
@@ -198,17 +212,20 @@ static MyString initStringChar(const char *str, u64 n, Memory *memory)
     MyString result = {};
 
     int i = 0;
-    while (str[i] && i < n)
+    while (str[i] && i < (int)n)
         i++;
     result.size = i;
-    result.capacity = n;
+    result.capacity = (u32)n;
     result.data = (const char *)MyMalloc(memory, n);
 
     i = 0;
     char *temp = (char *)result.data;
 
-    while (i < result.size)
-        temp[i++] = str[i];
+    while (i < (int)result.size)
+    {
+        temp[i] = str[i];
+        i++;
+    }
     return (result);
 }
 
@@ -239,7 +256,7 @@ static MyString OpenAndReadEntireFile(const char *filePath, Memory *memory)
         u64 fileSize;
         GetFileSizeEx(File, (LARGE_INTEGER *)&fileSize);
         result = initString(fileSize, memory);
-        ReadFile(File, (void *)result.data, fileSize,
+        ReadFile(File, (void *)result.data, (DWORD)fileSize,
             (DWORD *)&result.size, NULL);
         if (fileSize != result.size)
             __debugbreak();
@@ -283,7 +300,7 @@ static u32 my_strlen(char *src)
 static u32 my_strnlen(char *src, u64 n)
 {
     int i = 0;
-    while (src[i] && i < n)
+    while (src[i] && i < (int)n)
         i++;
     return (i);
 }
@@ -292,12 +309,12 @@ static char *my_strncpy_s(char *dest, u64 dest_size, const char *src,
     u64 src_size)
 {
     int i = 0;
-    while (i < dest_size && i < src_size)
+    while (i < (int)dest_size && i < (int)src_size)
     {
         dest[i] = src[i];
         i++;
     }
-    while (i < dest_size && i < src_size)
+    while (i < (int)dest_size && i < (int)src_size)
     {
         dest[i] = '\0';
         i++;
@@ -308,7 +325,7 @@ static char *my_strncpy_s(char *dest, u64 dest_size, const char *src,
 static char *my_strcpy_s(char *dest, u64 n, char *src)
 {
     int i = 0;
-    while (i < n && src[i])
+    while (i < (int)n && src[i])
     {
         dest[i] = src[i];
         i++;

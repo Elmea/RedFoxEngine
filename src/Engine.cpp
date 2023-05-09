@@ -44,15 +44,21 @@ Engine::Engine(int width, int height) :
     InitIMGUI();
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
     m_editorCameraSpeed = 1;
+    m_models = (Model *)m_memoryManager.PersistentAllocation(sizeof(Model) * 100);
 
-    m_models = (Model*)m_memoryManager.PersistentAllocation(sizeof(Model) * 100);
+    m_modelsName = (MyString*)m_memoryManager.PersistentAllocation(sizeof(MyString) * 100);
+    for (int i = 0; i < 100; i++)
+        m_modelsName->capacity   = 64;
+
     m_models[m_modelCount].obj = CreateCube(&m_memoryManager.m_memory.arena);
     m_models[m_modelCount].hash = 1;
-    m_models[m_modelCount].name = initStringChar("Cube", 4, &m_memoryManager.m_memory.arena);
+    m_modelsName[0] = initStringChar("Cube", 4, &m_memoryManager.m_memory.arena);
+    m_modelsName[0].capacity = 4;
     m_modelCount++;
     m_models[m_modelCount].obj = CreateSphere(30, 25, &m_memoryManager.m_memory.arena);
     m_models[m_modelCount].hash = 2;
-    m_models[m_modelCount].name = initStringChar("Sphere", 6, &m_memoryManager.m_memory.arena);
+    m_modelsName[1] = initStringChar("Sphere", 6, &m_memoryManager.m_memory.arena);
+    m_modelsName[1].capacity = 6;
     m_modelCount++;
     ObjModelPush("ts_bot912.obj");
     // ObjModelPush("vortigaunt.obj");
@@ -118,37 +124,10 @@ Engine::Engine(int width, int height) :
         dir->lightInfo.quadratic = 0.032f;
         dir->lightInfo.position = {0.0f, 75.0f, 0.0f};
         dir->lightInfo.direction = { 0.3f, -0.8f, -0.5f };
-        dir->lightInfo.ambient = {0.3, 0.3, 0.3};
-        dir->lightInfo.diffuse = {0.6, 0.6, 0.6};
-        dir->lightInfo.specular = {0.1, 0.1, 0.1};
-     
-        /**/
-        Light* spot = m_graphics.lightStorage.CreateLight(LightType::SPOT);
-        spot->lightInfo.constant = 1.0f;
-        spot->lightInfo.linear = 0.09f;
-        spot->lightInfo.quadratic = 0.032f;
-        spot->lightInfo.direction = {0.0f, 0.0f, 1.0f};
-        spot->lightInfo.position = {0.0f, 0.0f, -5.0f};
-        spot->lightInfo.ambient = {0.3, 0.3, 0.3};
-        spot->lightInfo.diffuse = {0.6, 0.6, 0.6};
-        spot->lightInfo.specular = {0.1, 0.1, 0.1};
-        spot->lightInfo.cutOff = 0.5f;
-        spot->lightInfo.outerCutOff = 0.1f;
-        /*
-        Light* point = m_graphics.lightStorage.CreateLight(LightType::POINT);
-        point->lightInfo.constant = 1.0f;
-        point->lightInfo.linear = 0.1f;
-        point->lightInfo.quadratic = 0.1f;
-        point->lightInfo.direction = {0.0f, 0.0f, 1.0f};
-        point->lightInfo.position = {0.0f, 0.0f, -5.0f};
-        point->lightInfo.ambient = {0.3, 0.3, 0.3};
-        point->lightInfo.diffuse = {0.6, 0.6, 0.6};
-        point->lightInfo.specular = {0.1, 0.1, 0.1};
-        point->lightInfo.cutOff = 0.5f;
-        point->lightInfo.outerCutOff = 0.1f;
-        */
+        dir->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
+        dir->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
+        dir->lightInfo.specular = {0.1f, 0.1f, 0.1f};
     }
-
 
 #endif
     m_input = {};
@@ -158,7 +137,19 @@ Engine::Engine(int width, int height) :
     m_graphics.InitLights();
     m_graphics.InitQuad();
     m_physx.InitPhysics(m_scene, 1);
-    m_graphics.InitFont(&m_memoryManager.m_memory.temp);
+
+    m_soundManager.Init(&m_memoryManager.m_memory.arena);
+    m_soundManager.SetMasterVolume(1);
+    
+    m_testMusic = m_soundManager.CreateSound("music.ogg", &m_memoryManager.m_memory.arena);
+    if (m_testMusic)
+    {
+        m_testMusic->SetVolume(1);
+        m_testMusic->SetLoop(true);
+        m_testMusic->position = {0.f, 0.f, 0.f};
+        m_testMusic->Play3D();
+        m_graphics.InitFont(&m_memoryManager.m_memory.temp);
+    }
 }
 
 void Engine::ObjModelPush(const char *path)
@@ -177,10 +168,9 @@ void Engine::ObjModelPush(const char *path)
     m_models[m_modelCount - 1].hash = MeowU64From(MeowHash(MeowDefaultSeed,
         (u64)length, (void *)path), 0);
     
-    u64 len = strlen(path) - 4;
-    //MyString name = initStringChar(path, len, &m_memoryManager.m_memory.arena);
-    m_models[m_modelCount - 1].name = initStringChar(path, len, &m_memoryManager.m_memory.arena);
-    m_models[m_modelCount - 1].name.capacity = len;
+    u64 len = strlen(path);
+    m_modelsName[m_modelCount - 1] = initStringChar(path, len, &m_memoryManager.m_memory.arena);
+    m_modelsName[m_modelCount - 1].capacity = len;
 }
 
 bool Engine::isRunning()
@@ -315,7 +305,6 @@ void Engine::UpdateModelMatrices()
         }
     }
     m_graphics.PushMaterial(materials, totalIndex);
-    
 }
 
 void Engine::UpdateSkyDome()
@@ -333,12 +322,12 @@ void Engine::Update()
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
     UpdateEditorCamera();
     UpdateSkyDome();
+    m_soundManager.UpdateListener(m_editorCamera.position, m_editorCamera.orientation.ToEuler());
     UpdateLights(&m_graphics.lightStorage);
-    m_physx.UpdatePhysics(m_time.delta, m_memoryManager, m_scene.isPaused);
-    m_game.update(&m_scene, &m_physx, m_input, m_time.delta);
+    m_physx.UpdatePhysics(1.0 / 60.0, m_memoryManager, m_scene.isPaused);
+    m_game.update(&m_scene, &m_physx, m_input, 1.0 / 60.0);
     UpdateModelMatrices();
     UpdateIMGUI();
-    
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 
@@ -346,10 +335,10 @@ void Engine::Update()
 
 void Engine::Draw()
 {
-    if (m_time.delta < 0.03f)
+    if (m_time.delta < 1.0 / 100.0)
     {
         timeBeginPeriod(1);
-        Sleep(3);
+        Sleep(10);
         timeEndPeriod(1);
     }
     // Camera *currentCamera = &m_scene.m_gameCamera; //TODO game camera
@@ -374,11 +363,18 @@ void Engine::Draw()
     m_memoryManager.m_memory.temp.usedSize = 0;
 }
 
-u32 Engine::LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat)
+u32 Engine::LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat, bool flip)
 {
     int width, height, comp;
     MyString file = OpenAndReadEntireFile(filePath, &m_memoryManager.m_memory.temp);
-    char* data = (char*)stbi_load_from_memory((u8*)file.data, file.size, &width, &height, &comp, 4);
+    return (LoadTextureFromMemory((u8*)file.data, file.size, resident, repeat, flip));
+}
+
+u32 Engine::LoadTextureFromMemory(u8* memory, int size, bool resident, bool repeat, bool flip)
+{
+    int width, height, comp;
+    stbi_set_flip_vertically_on_load(flip);
+    char* data = (char*)stbi_load_from_memory((u8*)memory, size, &width, &height, &comp, 4);
     GLuint texture = m_graphics.InitTexture(data, width, height, resident, repeat);
     stbi_image_free(data);
     return (texture);
@@ -391,11 +387,11 @@ void Engine::InitSkyDome()
     m_scene.skyDome.model = RedFoxMaths::Mat4::GetScale({ skyDrawDistance,
         skyDrawDistance, skyDrawDistance });
 
-    m_scene.skyDome.topTint = LoadTextureFromFilePath("Textures/topSkyTint.png", false, true);
-    m_scene.skyDome.botTint = LoadTextureFromFilePath("Textures/botSkyTint.png", false, false);
-    m_scene.skyDome.sun     = LoadTextureFromFilePath("Textures/sun.png", false, false);
-    m_scene.skyDome.moon    = LoadTextureFromFilePath("Textures/moon.png", false, false);
-    m_scene.skyDome.clouds  = LoadTextureFromFilePath("Textures/clouds.png", false, false);
+    m_scene.skyDome.topTint = LoadTextureFromFilePath("topSkyTint.png", false, true, false);
+    m_scene.skyDome.botTint = LoadTextureFromFilePath("botSkyTint.png", false, false, false);
+    m_scene.skyDome.sun     = LoadTextureFromFilePath("sun.png", false, false, false);
+    m_scene.skyDome.moon    = LoadTextureFromFilePath("moon.png", false, false, false);
+    m_scene.skyDome.clouds  = LoadTextureFromFilePath("clouds.png", false, false, false);
 }
 
 Engine::~Engine()

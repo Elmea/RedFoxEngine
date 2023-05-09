@@ -157,7 +157,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);opengl32.lib;user32.lib;gdi32.lib;winmm.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_static_64.lib;PhysXCooking_static_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_static_64.lib;PhysXPvdSDK_static_64.lib;PhysXVehicle2_static_64.lib;PhysXVehicle_static_64.lib;PhysX_static_64.lib;PVDRuntime_64.lib;SnippetRender_static_64.lib;SnippetUtils_static_64.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);opengl32.lib;user32.lib;gdi32.lib;winmm.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_static_64.lib;PhysXCooking_static_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_static_64.lib;PhysXPvdSDK_static_64.lib;PhysXVehicle2_static_64.lib;PhysXVehicle_static_64.lib;PhysX_static_64.lib;PVDRuntime_64.lib;SnippetRender_static_64.lib;SnippetUtils_static_64.lib;irrKlang.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)external\libs</AdditionalLibraryDirectories>
       <Profile>true</Profile>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
@@ -189,7 +189,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Link>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);opengl32.lib;user32.lib;gdi32.lib;winmm.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_static_64.lib;PhysXCooking_static_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_static_64.lib;PhysXPvdSDK_static_64.lib;PhysXVehicle2_static_64.lib;PhysXVehicle_static_64.lib;PhysX_static_64.lib;PVDRuntime_64.lib;SnippetRender_static_64.lib;SnippetUtils_static_64.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);opengl32.lib;user32.lib;gdi32.lib;winmm.lib;PhysXCharacterKinematic_static_64.lib;PhysXCommon_static_64.lib;PhysXCooking_static_64.lib;PhysXExtensions_static_64.lib;PhysXFoundation_static_64.lib;PhysXPvdSDK_static_64.lib;PhysXVehicle2_static_64.lib;PhysXVehicle_static_64.lib;PhysX_static_64.lib;PVDRuntime_64.lib;SnippetRender_static_64.lib;SnippetUtils_static_64.lib;irrKlang.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)external\libs\Release</AdditionalLibraryDirectories>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
@@ -239,6 +239,7 @@
     <ClCompile Include="..\src\ResourceManager.cpp" />
     <ClCompile Include="..\src\SceneGraph.cpp" />
     <ClCompile Include="..\src\Shaders.cpp" />
+    <ClCompile Include="..\src\SoundManager.cpp" />
     <ClCompile Include="..\src\UI.cpp" />
     <ClCompile Include="..\src\Win32Platform.cpp" />
   </ItemGroup>
@@ -257,16 +258,21 @@
     <ClInclude Include="..\external\include\wglext.h" />
     <ClInclude Include="..\include\Camera.hpp" />
     <ClInclude Include="..\include\Engine.hpp" />
+    <ClInclude Include="..\include\GameObject.hpp" />
     <ClInclude Include="..\include\GameUI.hpp" />
+    <ClInclude Include="..\include\Icons.hpp" />
     <ClInclude Include="..\include\GameUIBehaviour.hpp" />
     <ClInclude Include="..\include\Light.hpp" />
+    <ClInclude Include="..\include\Mesh.hpp" />
     <ClInclude Include="..\include\Model.hpp" />
     <ClInclude Include="..\include\MyMemory.hpp" />
     <ClInclude Include="..\include\ObjParser.hpp" />
     <ClInclude Include="..\include\OpenGLFunctions.hpp" />
     <ClInclude Include="..\include\OpenGLGraphics.hpp" />
+    <ClInclude Include="..\include\Physics.hpp" />
     <ClInclude Include="..\include\RedFoxMaths\RedfoxMaths.hpp" />
     <ClInclude Include="..\include\Scene.hpp" />
+    <ClInclude Include="..\include\SoundManager.hpp" />
     <ClInclude Include="..\include\Win32Platform.hpp" />
   </ItemGroup>
   <ItemGroup>

@@ -24,6 +24,5 @@ namespace RedFoxEngine
         // Meshes mesh;
         ObjModel obj;
         u64 hash;
-        MyString name;
     };
 }

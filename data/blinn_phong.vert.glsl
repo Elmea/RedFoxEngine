@@ -3,11 +3,11 @@
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aTexCoord;
-layout(location = 3) in unsigned int aMaterialID;
+layout(location = 3) in uint aMaterialID;
 
 layout(std430, binding = 3) buffer MatrixBlock 
 {
-    mat4 worldMatrix[];
+    readonly mat4 worldMatrix[];
 };
 
 struct Material
@@ -32,12 +32,12 @@ layout(std430, binding = 5) buffer Materials
 
 layout (location = 0) uniform mat4 vp;
 
-out VS_OUT
+layout (location = 0) out VS_OUT
 {
     vec3 Position;
     vec3 Normal;
     vec2 TexCoords;
-    flat unsigned int materialID;
+    flat uint materialID;
     vec3 Color;
 } vs_out;
 

@@ -7,13 +7,6 @@
 // TODO(V. Caraulan): linux mac or whatever
 #endif
 
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include <imgui.h>
-#include <imgui_internal.h>
-#include "imgui_impl_opengl3.h"
-#include "imgui_impl_win32.h"
-#include <ImGuizmo.h>
-
 #include "Scene.hpp"
 #include "Physics.hpp"
 #include "ObjParser.hpp"
@@ -21,7 +14,11 @@
 #include "GameObject.hpp"
 #include "Camera.hpp"
 #include "ResourceManager.hpp"
+#include "SoundManager.hpp"
 
+#include <ImGuizmo.h>
+#include "imgui_impl_opengl3.h"
+#include "imgui_impl_win32.h"
 
 namespace RedFoxEngine
 {
@@ -34,6 +31,8 @@ struct ImGUI
     bool sceneGraphScrollButtonHovered = false;
     int selectedObject;
     int selectedUI;
+    int selectedModelAsset = 0;
+    int selectedSoundAsset = 0;
     int nodeIndex = 1;
     int uiIndex = 0;
     int sceneGraphScrollStrength = 1;
@@ -41,7 +40,7 @@ struct ImGUI
     int translateSnap = 1;
     int rotateSnap = 45;
     int scaleSnap = 1;
-    float averageFps;
+    float fpsUpdate = 0;
     float dragSpeed = 1.f;
     RedFoxMaths::Float2 mousePosEditor = RedFoxMaths::Float2();
     float fps[255];
@@ -62,6 +61,7 @@ private:
     //GameState
     Input m_input = {};
     Model *m_models = nullptr;
+    MyString* m_modelsName;
     u64 m_modelCount = 0;
 
     Camera m_editorCamera;
@@ -76,9 +76,10 @@ private:
     float m_editorCameraSpeed;
     RedFoxMaths::Float3 m_editorCameraVelocity;
     bool m_editorCameraEnabled = false;
-    
     ImGUI m_gui = {};
     Physx m_physx {};
+    SoundManager m_soundManager;
+    Sound* m_testMusic;
 
 public:
     bool isGame = false;
@@ -99,8 +100,9 @@ private:
     void SaveScene(const char *fileName, Scene scene);
     void UpdateLights(LightStorage* lightStorage);
     void initSphericalManyGameObjects(int count); //TODO: remove
-    u32 LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat);
     void AddBehaviour(const char *name, functionBehaviour function);
+    u32 LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat, bool flip);
+    u32 LoadTextureFromMemory(u8* memory, int size, bool resident, bool repeat, bool flip);
 
 public:
     Engine(int width, int height);

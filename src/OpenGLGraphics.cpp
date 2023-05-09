@@ -87,7 +87,7 @@ namespace RedFoxEngine
             // glVertexArrayBindingDivisor(model->vao, a_materialID, 1);
         }
         //V-SYNC
-        wglSwapIntervalEXT(0);
+        wglSwapIntervalEXT(1);
     }
 
     void Graphics::InitQuad()
@@ -210,7 +210,7 @@ namespace RedFoxEngine
     {
         unsigned char* temp_bitmap = (unsigned char*)MyMalloc(temp, 512 * 512);
 
-        MyString file = OpenAndReadEntireFile("Fonts\\VictorMono-Bold.ttf", temp);
+        MyString file = OpenAndReadEntireFile("VictorMono-Bold.ttf", temp);
         stbtt_BakeFontBitmap((const unsigned char *)file.data, 0, 32.0, temp_bitmap, 512, 512, 32, 96, cdata); // no guarantee this fits!
         glGenTextures(1, &m_gFontTexture);
         glBindTexture(GL_TEXTURE_2D, m_gFontTexture);
@@ -363,13 +363,13 @@ namespace RedFoxEngine
             textureHandles[i] = glGetTextureSamplerHandleARB(m_textures.textures[i], m_textureSampler);
         glNamedBufferSubData(m_textureSSBO, 0, sizeof(u64) * (m_textures.textureCount), textureHandles);
         //
-        static float test;
-        if (test > 0.016)
+        static float shadowMapUpdate;
+        if (shadowMapUpdate > 0.016)
         {
             DrawShadowMaps(m_scene->m_modelCountIndex);
-            test = 0;
+            shadowMapUpdate = 0;
         }
-        test += p_delta;
+        shadowMapUpdate += p_delta;
 
         glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
         glCullFace(GL_BACK);

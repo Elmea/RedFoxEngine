@@ -70,7 +70,7 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
         FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL, nullptr);
 
-    printf("%lld\n", sizeof(MyString) + sizeof(SkyDome) + sizeof(Camera) + sizeof(SceneGraph) + sizeof(int) + sizeof(u32) + sizeof(int) + sizeof(bool)); 
+    printf("%lld\n", sizeof(MyString) + sizeof(SkyDome) + sizeof(Camera) + sizeof(int) + sizeof(u32) + sizeof(int) + sizeof(bool)); 
     ReadFile(file, &m_scene, 309, nullptr, nullptr);
     ReadStringFromFile(file, &m_scene.m_name, m_memoryManager);
     ReadFile(file, &m_scene.gameObjectCount, sizeof(u32), nullptr, nullptr);

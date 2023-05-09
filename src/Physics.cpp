@@ -72,15 +72,31 @@ void Physx::InitPhysics(Scene scene, int sphereIndex)
 	PxRigidStatic* groundPlane = PxCreatePlane(*physics, PxPlane(0, 1, 0, 10), *material);
 	m_scene->addActor(*groundPlane);
 
-	for (u32 i = 0; i < (u32)scene.gameObjectCount; i++)
+	for (u32 i = 1; i < (u32)scene.gameObjectCount; i++)
 	{
 		if (scene.gameObjects[i].modelIndex == sphereIndex)
 			CreateSphereCollider(scene.gameObjects[i].position, scene.gameObjects[i].radius);
 		else
-			CreateCubeCollider(scene.gameObjects[i].position, 1, 0.5);
+			CreateCubeCollider(scene.gameObjects[i].position, 1, 1);
 	}
 }
 
+void Physx::SetTransform(int index, Transform transform)
+{
+	int temp = m_scene->getNbActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC);
+	if (index < temp)
+	{
+		PxActor *actor;
+		m_scene->getActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC, (physx::PxActor**)&actor, 1, index);
+		if (actor && actor->is<physx::PxRigidDynamic>())
+		{
+			physx::PxTransform t;
+			t.p = {transform.position.x, transform.position.y, transform.position.z};
+			t.q = {transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a};
+			actor->is<physx::PxRigidDynamic>()->setGlobalPose(t);
+		}
+	}
+}
 void Physx::UpdatePhysics(f32 deltaTime, ResourcesManager m, bool isPaused)
 {
 	int temp = m_scene->getNbActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC);
@@ -89,7 +105,7 @@ void Physx::UpdatePhysics(f32 deltaTime, ResourcesManager m, bool isPaused)
 		if(!isPaused)
 			m_scene->simulate(deltaTime);
 		
-		actorCount = temp;			
+		actorCount = temp;
 		actors = (PxRigidActor **)m.TemporaryAllocation(sizeof(actors) * actorCount);
 		m_scene->getActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC, (physx::PxActor**)actors, actorCount);
 	}
