@@ -69,6 +69,7 @@ public:
     RedFoxMaths::Mat4 kernel;
     friend class Graphics;
     int GetId() { return uniqueId; };
+    void SetActive(bool state) { active = state; };
 };
 
 class Graphics

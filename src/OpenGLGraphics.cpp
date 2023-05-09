@@ -10,7 +10,6 @@
 
 namespace RedFoxEngine
 {
-
     void Graphics::InitGraphics(Memory* tempArena, WindowDimension p_dimension)
     {
         dimension = p_dimension;
@@ -540,10 +539,26 @@ namespace RedFoxEngine
 
     Kernel* Graphics::AddKernel(RedFoxMaths::Mat4 kernel)
     {
+        if (m_kernelCreated > m_kernelCount)
+        {
+            for (int i = 0; i < m_kernelCount; i++)
+            {
+                if (m_kernels[i].deleted)
+                {
+                    m_kernels[i].kernel = kernel;
+                    m_kernels[i].deleted = false;
+                    m_kernels[i].active = true;
+                    
+                    m_kernelCount++;
+                    return &m_kernels[i];
+                }
+            }
+        }
+
         Kernel result;
         result.uniqueId = m_kernelCreated;
         result.kernel = kernel;
-
+        
         m_kernels[result.uniqueId] = result;
         m_kernelCount++;
         m_kernelCreated++;
@@ -587,7 +602,8 @@ namespace RedFoxEngine
         {
             if (!m_kernels[i].deleted && m_kernels[i].active)
             {
-                m_kernelsMatrices[i] = m_kernels[i].kernel;
+                m_kernelsMatrices[count] = m_kernels[i].kernel;
+                count++;
             }
         }
     }
