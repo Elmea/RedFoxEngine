@@ -559,11 +559,11 @@ void Engine::DrawEditor()
             float* transformMatPtr = (float*)transformMat.AsPtr();
             float* deltaMatPtr = (float*)deltaMat.AsPtr();
             float snap3[3] = { 0, 0, 0 };
-            if (m_input.W)
+            if (IsKeyPressed(ImGuiKey_W))
                 m_imgui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
-            else if (m_input.R)
+            else if (IsKeyPressed(ImGuiKey_R))
                 m_imgui.gizmoType = ImGuizmo::OPERATION::ROTATE;
-            else if (m_input.E)
+            else if (IsKeyPressed(ImGuiKey_E))
                 m_imgui.gizmoType = ImGuizmo::OPERATION::SCALE;
 
             switch (m_imgui.gizmoType)
@@ -587,7 +587,7 @@ void Engine::DrawEditor()
                 break;
             }
 
-            bool snapping = m_input.LControl;
+            bool snapping = IsKeyDown(ImGuiKey_LeftCtrl);
             m_imgui.manipulatingGizmo = ImGuizmo::Manipulate(cameraViewPtr, cameraProjectionPtr,
                 m_imgui.gizmoType, m_imgui.gizmoMode, transformMatPtr, deltaMatPtr,
                 snapping ? snap3 : nullptr);
@@ -650,7 +650,7 @@ void Engine::DrawEditor()
                 }
             }
 
-            if (m_input.mouseRClick)
+            if (IsMouseDown(ImGuiMouseButton_Right))
             {
                 m_input.lockMouse = m_editorCameraEnabled = true;
             }
@@ -661,7 +661,7 @@ void Engine::DrawEditor()
             }
         }
 
-        if (m_input.Escape)
+        if (IsKeyPressed(ImGuiKey_Escape))
             m_imgui.selectedObject = 0;
     }
     End();
@@ -683,7 +683,7 @@ void Engine::DrawUIGraph()
         {
             if (BeginPopupContextItem("RenameScenePopup"))
             {
-                if (m_input.Enter)
+                if (IsKeyPressed(ImGuiKey_Enter))
                     CloseCurrentPopup();
 
                 SameLine();
@@ -781,7 +781,7 @@ void Engine::DrawSceneGraph()
         {
             if (BeginPopupContextItem("RenameScenePopup"))
             {
-                if (m_input.Enter)
+                if (IsKeyPressed(ImGuiKey_Enter))
                     CloseCurrentPopup();
 
                 SameLine();
