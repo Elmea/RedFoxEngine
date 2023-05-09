@@ -16,6 +16,25 @@
 using namespace RedFoxEngine;
 using namespace RedFoxMaths;
 
+//Write behaviours here
+
+BUTTONBEHAIVOUR(DefaultBehaviour)
+{
+    
+}
+
+BUTTONBEHAIVOUR(AbortMission)
+{
+    exit(0);
+}
+
+void Engine::AddBehaviour(const char *name, functionBehaviour function)
+{
+    m_scene.gameUIBehaviours[m_scene.gameUIBehaviourCount].name = initStringChar(name, 255, &m_memoryManager.m_memory.arena);
+    m_scene.gameUIBehaviours[m_scene.gameUIBehaviourCount].function = function;
+    m_scene.gameUIBehaviourCount++;
+}
+
 Engine::Engine(int width, int height) :
     m_scene(width, height),
     m_editorCamera(projectionType::PERSPECTIVE, width / (f32)height),
@@ -48,17 +67,30 @@ Engine::Engine(int width, int height) :
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
 
+    //Init GameUIBehaviour
+    m_scene.gameUIBehaviours = (GameUIBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameUIBehaviour) * 100);
+    
+    //Add behaviours here
+    AddBehaviour("AbortMission"    , AbortMission);
+    AddBehaviour("DefaultBehaviour", DefaultBehaviour);
+
+    for (int i = 2; i < 100; i++)
+        AddBehaviour("DefaultBehaviour", DefaultBehaviour);
+    m_scene.gameUIBehaviourCount = 2;
+
     //Init GameUI
     m_scene.gameUIs = (GameUI*)m_memoryManager.PersistentAllocation(sizeof(GameUI) * 100);
     m_scene.gameUIs[0] = {};
     m_scene.gameUIs[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
     m_scene.gameUIs[0].name.capacity = 255;
-    m_scene.gameUIs[0].screenPosition = {0, 0};
-    m_scene.gameUIs[0].size = {200,200};
+    m_scene.gameUIs[0].screenPosition = { 0, 0 };
+    m_scene.gameUIs[0].size = { 200,200 };
     m_scene.gameUICount++;
-    for (int i = 1; i < (int)m_scene.gameUICount; i++)
+    for (int i = 1; i < 100; i++)
+    {
         m_scene.gameUIs[i].parent = 0;
-
+        m_scene.gameUIs[i].behaviourIndex = 0;
+    }
     //Init GameObject
     m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);
     m_scene.gameObjects[0] = {};
@@ -95,32 +127,6 @@ Engine::Engine(int width, int height) :
         dir->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
         dir->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
         dir->lightInfo.specular = {0.1f, 0.1f, 0.1f};
-     
-        /**/
-        Light* spot = m_graphics.lightStorage.CreateLight(LightType::SPOT);
-        spot->lightInfo.constant = 1.0f;
-        spot->lightInfo.linear = 0.09f;
-        spot->lightInfo.quadratic = 0.032f;
-        spot->lightInfo.direction = {0.0f, 0.0f, 1.0f};
-        spot->lightInfo.position = {0.0f, 0.0f, -5.0f};
-        spot->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
-        spot->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
-        spot->lightInfo.specular = {0.1f, 0.1f, 0.1f};
-        spot->lightInfo.cutOff = 0.5f;
-        spot->lightInfo.outerCutOff = 0.1f;
-        /*
-        Light* point = m_graphics.lightStorage.CreateLight(LightType::POINT);
-        point->lightInfo.constant = 1.0f;
-        point->lightInfo.linear = 0.1f;
-        point->lightInfo.quadratic = 0.1f;
-        point->lightInfo.direction = {0.0f, 0.0f, 1.0f};
-        point->lightInfo.position = {0.0f, 0.0f, -5.0f};
-        point->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
-        point->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
-        point->lightInfo.specular = {0.1f, 0.1f, 0.1f};
-        point->lightInfo.cutOff = 0.5f;
-        point->lightInfo.outerCutOff = 0.1f;
-        */
     }
 
 #endif
@@ -136,11 +142,14 @@ Engine::Engine(int width, int height) :
     m_soundManager.SetMasterVolume(1);
     
     m_testMusic = m_soundManager.CreateSound("music.ogg", &m_memoryManager.m_memory.arena);
-    m_testMusic->SetVolume(1);
-    m_testMusic->SetLoop(true);
-    m_testMusic->position = {0.f, 0.f, 0.f};
-    m_testMusic->Play3D();
-    m_graphics.InitFont(&m_memoryManager.m_memory.temp);
+    if (m_testMusic)
+    {
+        m_testMusic->SetVolume(1);
+        m_testMusic->SetLoop(true);
+        m_testMusic->position = {0.f, 0.f, 0.f};
+        m_testMusic->Play3D();
+        m_graphics.InitFont(&m_memoryManager.m_memory.temp);
+    }
 }
 
 void Engine::ObjModelPush(const char *path)
@@ -322,6 +331,8 @@ void Engine::Update()
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 
+
+
 void Engine::Draw()
 {
     if (m_time.delta < 1.0 / 100.0)
@@ -338,8 +349,13 @@ void Engine::Draw()
         currentCamera = &m_scene.m_gameCamera;
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
     m_graphics.Draw(&m_scene, m_platform.m_windowDimension, m_time.current, m_time.delta);
-    for (int i = 0; i < m_scene.gameUICount; i++)
+    for (int i = 0; i < (int)m_scene.gameUICount; i++)
+    {
         m_graphics.RenderText(m_scene.gameUIs[i]);
+        if (m_scene.gameUIs[i].isPressed)
+            m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex].function(&m_scene);
+
+    }
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     m_platform.SwapFramebuffers();

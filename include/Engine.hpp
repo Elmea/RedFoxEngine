@@ -7,13 +7,6 @@
 // TODO(V. Caraulan): linux mac or whatever
 #endif
 
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include <imgui.h>
-#include <imgui_internal.h>
-#include "imgui_impl_opengl3.h"
-#include "imgui_impl_win32.h"
-#include <ImGuizmo.h>
-
 #include "Scene.hpp"
 #include "Physics.hpp"
 #include "ObjParser.hpp"
@@ -23,8 +16,15 @@
 #include "ResourceManager.hpp"
 #include "SoundManager.hpp"
 
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "ImGuizmo.h"
+#include "imgui_impl_opengl3.h"
+#include "imgui_internal.h"
+#include "imgui_impl_win32.h"
+
 namespace RedFoxEngine
 {
+
 
 struct ImGUI
 {
@@ -126,6 +126,7 @@ private:
     void SaveScene(const char *fileName, Scene scene);
     void UpdateLights(LightStorage* lightStorage);
     void initSphericalManyGameObjects(int count); //TODO: remove
+    void AddBehaviour(const char *name, functionBehaviour function);
     u32 LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat, bool flip);
     u32 LoadTextureFromMemory(u8* memory, int size, bool resident, bool repeat, bool flip);
 

@@ -1,5 +1,7 @@
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#endif
 #include "Win32Platform.hpp"
 
 
@@ -8,6 +10,9 @@
 
 #include "Physics.hpp"
 #include "Scene.hpp"
+
+#define MEMORY_IMPLEMENTATION
+#include "MyMemory.hpp"
 
 using namespace RedFoxMaths;
 
@@ -34,6 +39,16 @@ static Float3 RotateVectorByQuaternion(Quaternion q, Float3 test)
 }
 
 
+BUTTONBEHAIVOUR(Test)
+{
+    printf("f");
+}
+
+BUTTONBEHAIVOUR(Best)
+{
+    printf("b");
+}
+
 __declspec(dllexport) UPDATEGAME(UpdateGame)
 {
 /* 
@@ -45,6 +60,20 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
 
     RedFoxEngine::Physx *physx = (RedFoxEngine::Physx *)p;
     RedFoxEngine::Scene *scene = (RedFoxEngine::Scene *)s;
+
+    static bool init = false;
+
+    if (!init)
+    {
+        // scene->gameUIBehaviours[scene->gameUIBehaviourCount].name = assignString(scene->gameUIBehaviours[scene->gameUIBehaviourCount].name, "Test");
+        // scene->gameUIBehaviours[scene->gameUIBehaviourCount].function = Test;
+        // scene->gameUIBehaviourCount++;
+        scene->gameUIBehaviours[scene->gameUIBehaviourCount].name = assignString(scene->gameUIBehaviours[scene->gameUIBehaviourCount].name, "Best");
+        scene->gameUIBehaviours[scene->gameUIBehaviourCount].function = Best;
+        scene->gameUIBehaviourCount++;
+        init = true;
+    }
+
     RedFoxEngine::GameObject *gameObjects = scene->gameObjects;
     int gameObjectCount = scene->gameObjectCount;
     gameObjects[0].position =

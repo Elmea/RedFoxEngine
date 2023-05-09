@@ -83,6 +83,12 @@ void SoundManager::Init(Memory* memAllocator)
 
 Sound* SoundManager::CreateSound(const char* file, Memory* memAllocator)
 {
+    if (!m_soundEngine)
+    {
+        std::cout << "Sound device not initialized";
+        return nullptr;
+    }
+
     if (m_soundCount - m_freedSound >= m_maxSounds)
     {
         std::cout << "Max sounds count already hitted, can't load more";
@@ -126,12 +132,18 @@ void SoundManager::deleteSound(int index)
 
 Sound* SoundManager::PlaySoundByIndex(int index)
 {
+    if (!m_soundEngine)
+        return nullptr;
+
     m_soundEngine->play2D(m_sounds[index].m_source, m_sounds[index].m_loopState);
     return &m_sounds[index];
 }
 
 Sound* SoundManager::PlaySoundByIndex3D(int index)
 {
+    if (!m_soundEngine)
+        return nullptr;
+
     irrklang::vec3df pos {m_sounds[index].position.x, m_sounds[index].position.y, m_sounds[index].position.z};
     m_soundEngine->play3D(m_sounds[index].m_source, pos, m_sounds[index].m_loopState);
     return &m_sounds[index];
@@ -139,6 +151,9 @@ Sound* SoundManager::PlaySoundByIndex3D(int index)
 
 void SoundManager::UpdateListener(RedFoxMaths::Float3 position, RedFoxMaths::Float3 rotation)
 {
+    if (!m_soundEngine)
+        return;
+
     irrklang::vec3df posIrr {position.x, position.y, position.z};
 
     RedFoxMaths::Float3 dir = -RedFoxMaths::Float3::EulerToDir({ rotation.x, -rotation.y, rotation.z } );
@@ -149,6 +164,9 @@ void SoundManager::UpdateListener(RedFoxMaths::Float3 position, RedFoxMaths::Flo
 
 void SoundManager::SetMasterVolume(float volume)
 {
+    if (!m_soundEngine)
+        return;
+
     m_soundEngine->setSoundVolume(volume);
 }
 
@@ -164,7 +182,8 @@ MyString* SoundManager::GetSoundsName()
 
 SoundManager::~SoundManager()
 {
-    m_soundEngine->drop();
+    if (m_soundEngine)
+        m_soundEngine->drop();
 }
 
 
