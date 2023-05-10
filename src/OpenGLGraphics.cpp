@@ -525,16 +525,19 @@ namespace RedFoxEngine
         glViewport(0, 0, dimension.width, dimension.height);
         glNamedBufferSubData(m_kernelSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount, m_kernelsMatrices);
 
+        if (m_kernelCount > 0)
+            glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0,m_kernelSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount);
+        
         // clear screen
         glEnable(GL_BLEND);
         glBindProgramPipeline(m_postProcess.pipeline);
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         glDisable(GL_DEPTH_TEST);
         glBindVertexArray(m_quadVAO);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glEnable(GL_DEPTH_TEST);
     }
 
     Kernel* Graphics::AddKernel(RedFoxMaths::Mat4 kernel)

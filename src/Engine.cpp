@@ -97,15 +97,28 @@ Engine::Engine(int width, int height) :
         dir->lightInfo.specular = {0.1f, 0.1f, 0.1f};
     }
 
-    float kernel[4][4] = {
+    float edge[4][4] = {
         { 1.f, 1.f, 1.f, 0.f },
         { 1.f, -8.f, 1.f, 0.f },
         { 1.f, 1.f, 1.f, 0.f },
         { 0.f, 0.f, 0.f, 1.f }
     };
 
-    RedFoxMaths::Mat4 kernelMat = kernel;
-
+    float blur[4][4] = {
+        { 1.f / 16.f, 2.f / 16.f, 1.f / 16.f, 0.f },
+        { 2.f / 16.f, 4.f / 16.f, 2.f / 16.f, 0.f },
+        { 1.f / 16.f, 2.f / 16.f, 1.f / 16.f, 0.f },
+        { 0.f, 0.f, 0.f, 1.f }
+    };
+    
+    float nonKernel[4][4] = {
+        { 0.f, 0.f, 0.f, 0.f },
+        { 0.f, 1.f, 0.f, 0.f },
+        { 0.f, 0.f, 0.f, 0.f },
+        { 0.f, 0.f, 0.f, 0.f }
+    };
+    
+    RedFoxMaths::Mat4 kernelMat = nonKernel;
     m_graphics.AddKernel(kernelMat);
 
 #endif
@@ -127,8 +140,9 @@ Engine::Engine(int width, int height) :
         m_testMusic->SetLoop(true);
         m_testMusic->position = {0.f, 0.f, 0.f};
         m_testMusic->Play3D();
-        m_graphics.InitFont(&m_memoryManager.m_memory.temp);
     }
+    
+    m_graphics.InitFont(&m_memoryManager.m_memory.temp);
 }
 
 void Engine::ObjModelPush(const char *path)

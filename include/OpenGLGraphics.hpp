@@ -66,6 +66,7 @@ class Kernel
     bool active = true;
     bool deleted = false;
 public:
+    // Used as 3x3 matrix
     RedFoxMaths::Mat4 kernel;
     friend class Graphics;
     int GetId() { return uniqueId; };
