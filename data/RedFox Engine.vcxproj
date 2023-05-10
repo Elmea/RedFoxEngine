@@ -276,14 +276,16 @@
     <ClInclude Include="..\include\Win32Platform.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\blinn_phong.frag.glsl" />
-    <None Include="Shaders\blinn_phong.vert.glsl" />
-    <None Include="Shaders\font.frag" />
-    <None Include="Shaders\font.vert" />
-    <None Include="Shaders\ShadowShader.frag" />
-    <None Include="Shaders\ShadowShader.vert" />
-    <None Include="Shaders\skydome.frag" />
-    <None Include="Shaders\skydome.vert" />
+    <None Include="blinn_phong.frag.glsl" />
+    <None Include="blinn_phong.vert.glsl" />
+    <None Include="font.frag" />
+    <None Include="font.vert" />
+    <None Include="PostProcess.frag" />
+    <None Include="PostProcess.vert" />
+    <None Include="ShadowShader.frag" />
+    <None Include="ShadowShader.vert" />
+    <None Include="skydome.frag" />
+    <None Include="skydome.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
