@@ -58,13 +58,17 @@ struct Shader
     GLuint vertex, fragment, pipeline;
 };
 
+class Graphics;
 
-struct Kernel
+class Kernel
 {
-    bool active;
-    bool deleted;
+private:
+    bool deleted = false;
     int uniqueId;
+public:
+    bool active = true;
     RedFoxMaths::Mat4 kernel;
+    friend class Graphics;
 };
     
 class Graphics
