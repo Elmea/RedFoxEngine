@@ -4,10 +4,24 @@
 #define MY_MEMORY_H
 
 #define _AMD64_
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
-#include "engine_math.hpp"
 #include <memoryapi.h>
 #include <windows.h>
+#endif
+
+#include <stdint.h>
+typedef int8_t       s8;
+typedef uint8_t      u8;
+typedef int16_t      s16;
+typedef uint16_t     u16;
+typedef int32_t      s32;
+typedef uint32_t     u32;
+typedef int64_t      s64;
+typedef uint64_t     u64;
+
+typedef float  f32;
+typedef double f64;
 
 typedef struct
 {
@@ -68,6 +82,7 @@ void DeInitMemory(Memory *memory);
 fileResource FileResourceInit(const char *fileName, Memory *m);
 fileResource *LoadFile(fileResource *result, Memory *memory);
 MyString initStringChar(const char *str, u64 n, Memory *memory);
+MyString assignString(MyString input, const char *str);
 int StringsAreEqual_C(MyString a, const char *str, const char *delimiter);
 int StringsAreEqual(MyString a, MyString b);
 char *my_strncpy_s(char *dest, u64 dest_size, const char *src, u64 src_size);
@@ -187,7 +202,7 @@ static MyString initString(u64 n, Memory *memory)
 {
     MyString result = {};
     result.size = 0;
-    result.capacity = n;
+    result.capacity = (u32)n;
     result.data = (const char *)MyMalloc(memory, n);
     return (result);
 }
@@ -200,7 +215,7 @@ static MyString initStringChar(const char *str, u64 n, Memory *memory)
     while (str[i] && i < (int)n)
         i++;
     result.size = i;
-    result.capacity = n;
+    result.capacity = (u32)n;
     result.data = (const char *)MyMalloc(memory, n);
 
     i = 0;
@@ -212,6 +227,20 @@ static MyString initStringChar(const char *str, u64 n, Memory *memory)
         i++;
     }
     return (result);
+}
+
+static MyString assignString(MyString input, const char *str)
+{
+    int i = 0;
+    while (str[i] && i < input.capacity)
+        i++;
+    input.size = i;
+    i = 0;
+    char *temp = (char *)input.data;
+    while (i < input.size)
+        temp[i++] = str[i];
+    temp[i] = '\0';
+    return (input);
 }
 
 static MyString OpenAndReadEntireFile(const char *filePath, Memory *memory)
@@ -227,7 +256,7 @@ static MyString OpenAndReadEntireFile(const char *filePath, Memory *memory)
         u64 fileSize;
         GetFileSizeEx(File, (LARGE_INTEGER *)&fileSize);
         result = initString(fileSize, memory);
-        ReadFile(File, (void *)result.data, fileSize,
+        ReadFile(File, (void *)result.data, (DWORD)fileSize,
             (DWORD *)&result.size, NULL);
         if (fileSize != result.size)
             __debugbreak();

@@ -1,12 +1,8 @@
 /* date = February 22nd 2023 11:17 am */
 #pragma once
 
-#define WIN32_LEAN_AND_MEAN
-#include <new>
 #include <stddef.h>
 #include <stdint.h>
-#include <windows.h>
-
 #include "OpenGLFunctions.hpp"
 #include <GL/gl.h>
 #include "Model.hpp"
@@ -93,10 +89,8 @@ struct Input
     u8 Delete : 1;
 };
 
-#ifndef UPDATEGAME
 #define UPDATEGAME(name) void name(void *s, \
                                    void *p, RedFoxEngine::Input input, float deltaTime)
-#endif
 typedef UPDATEGAME(_updategame);
 
 struct GameLibrary

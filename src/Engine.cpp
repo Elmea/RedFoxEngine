@@ -16,6 +16,25 @@
 using namespace RedFoxEngine;
 using namespace RedFoxMaths;
 
+//Write behaviours here
+
+BUTTONBEHAIVOUR(DefaultBehaviour)
+{
+    
+}
+
+BUTTONBEHAIVOUR(AbortMission)
+{
+    exit(0);
+}
+
+void Engine::AddBehaviour(const char *name, functionBehaviour function)
+{
+    m_scene.gameUIBehaviours[m_scene.gameUIBehaviourCount].name = initStringChar(name, 255, &m_memoryManager.m_memory.arena);
+    m_scene.gameUIBehaviours[m_scene.gameUIBehaviourCount].function = function;
+    m_scene.gameUIBehaviourCount++;
+}
+
 Engine::Engine(int width, int height) :
     m_scene(width, height),
     m_editorCamera(projectionType::PERSPECTIVE, width / (f32)height),
@@ -49,17 +68,30 @@ Engine::Engine(int width, int height) :
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
 
+    //Init GameUIBehaviour
+    m_scene.gameUIBehaviours = (GameUIBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameUIBehaviour) * 100);
+    
+    //Add behaviours here
+    AddBehaviour("AbortMission"    , AbortMission);
+    AddBehaviour("DefaultBehaviour", DefaultBehaviour);
+
+    for (int i = 2; i < 100; i++)
+        AddBehaviour("DefaultBehaviour", DefaultBehaviour);
+    m_scene.gameUIBehaviourCount = 2;
+
     //Init GameUI
     m_scene.gameUIs = (GameUI*)m_memoryManager.PersistentAllocation(sizeof(GameUI) * 100);
     m_scene.gameUIs[0] = {};
     m_scene.gameUIs[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
     m_scene.gameUIs[0].name.capacity = 255;
-    m_scene.gameUIs[0].screenPosition = {0, 0};
-    m_scene.gameUIs[0].size = {200,200};
+    m_scene.gameUIs[0].screenPosition = { 0, 0 };
+    m_scene.gameUIs[0].size = { 200,200 };
     m_scene.gameUICount++;
-    for (int i = 1; i < (int)m_scene.gameUICount; i++)
+    for (int i = 1; i < 100; i++)
+    {
         m_scene.gameUIs[i].parent = 0;
-
+        m_scene.gameUIs[i].behaviourIndex = 0;
+    }
     //Init GameObject
     m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);
     m_scene.gameObjects[0] = {};
@@ -322,6 +354,8 @@ void Engine::Update()
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 
+
+
 void Engine::Draw()
 {
     if (m_time.delta < 1.0 / 100.0)
@@ -343,8 +377,12 @@ void Engine::Draw()
     m_graphics.PostProcessingPass();
 
     for (int i = 0; i < m_scene.gameUICount; i++)
+    {
         m_graphics.RenderText(m_scene.gameUIs[i]);
-    
+        if (m_scene.gameUIs[i].isPressed)
+            m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex].function(&m_scene);
+
+    }
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     m_platform.SwapFramebuffers();

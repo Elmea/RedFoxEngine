@@ -23,7 +23,16 @@ void main()
     }
     else
     {
-        color.xyz = u_selectedColor;
-        color.w = 1;
+        if(texture(text, TexCoords).rgb != vec3(0))
+        {
+            color.xyz = u_selectedColor * texture(text, TexCoords).rgb;
+            color.w = 1;
+        }
+        else
+        {
+            color.xyz = u_selectedColor;
+            color.w = 1;
+        }
+
     }
 } 

@@ -2,6 +2,12 @@
 #include "MyMemory.hpp"
 #include "Icons.hpp"
 #include "Engine.hpp"
+#include <unordered_map>
+
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include <imgui.h>
+#include <imgui_internal.h>
+#include <ImGuizmo.h>
 
 using namespace RedFoxEngine;
 using namespace ImGui;
@@ -266,6 +272,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameUI->name.capacity = 255;
         newGameUI->text = initStringChar("", 254, &m_memoryManager.m_memory.arena);
         newGameUI->size = {100, 100};
+        newGameUI->behaviourIndex = 1;
     }
     PopStyleVar();
     End();
@@ -1082,7 +1089,55 @@ void Engine::UpdateIMGUI()
                     ImGui::EndTable();
                 }
             }
-            SeparatorText("Text Color");
+
+            SeparatorText("Behaviour");
+            SetNextItemWidth(-FLT_MIN);           
+            static const char* currentBehaviour = m_scene.gameUIBehaviours[0].name.data;
+           
+            if (ImGui::BeginCombo("BehaviourList", currentBehaviour))
+            {
+                for (int i = 0; i < m_scene.gameUIBehaviourCount; i++)
+                {
+                    bool is_selected = (currentBehaviour == m_scene.gameUIBehaviours[i].name.data);
+                    if (ImGui::Selectable(m_scene.gameUIBehaviours[i].name.data, is_selected))
+                    {
+                        currentBehaviour = m_scene.gameUIBehaviours[i].name.data;
+                        m_scene.gameUIs[m_gui.selectedUI].behaviourIndex = i;
+                    }
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+
+            SeparatorText("Colors");                                 
+            const char* colors[3] = { "selectedColor", "textColor", "hoverColor" };
+            float* variable[3] = { &m_scene.gameUIs[m_gui.selectedUI].selectedColor.x,
+                                  &m_scene.gameUIs[m_gui.selectedUI].textColor.x,
+                                  &m_scene.gameUIs[m_gui.selectedUI].hoverColor.x
+            };
+            static int colorIndex=0;
+            static const char* currentColorType = colors[0];
+
+
+            SetNextItemWidth(-FLT_MIN);
+            if (ImGui::BeginCombo("ColorList", currentColorType))
+            {
+                for (int i = 0; i < IM_ARRAYSIZE(colors); i++)
+                {
+                    bool is_selected = (currentColorType == colors[i]);
+                    if (ImGui::Selectable(colors[i], is_selected))
+                    {
+                        currentColorType = colors[i];
+                        colorIndex = i;
+                    }
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+
+            
             if (BeginTable("TextTable", 2, tableFlags))
             {
                 TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
@@ -1090,23 +1145,15 @@ void Engine::UpdateIMGUI()
                 TableNextRow();
 
                 TableSetColumnIndex(0);
-                Text("Color");
-                TableSetColumnIndex(1);
-                SetNextItemWidth(-FLT_MIN);
-                ColorPicker3("TextColor",
-                    &m_scene.gameUIs[m_gui.selectedUI].textColor.x,
-                    ImGuiColorEditFlags_PickerHueWheel);
                 SetNextItemWidth(-FLT_MIN); 
+                SeparatorText("Button color");
                 ColorPicker3("SelectedColor",
-                    &m_scene.gameUIs[m_gui.selectedUI].selectedColor.x,
+                    variable[colorIndex],
                     ImGuiColorEditFlags_PickerHueWheel);
-                SetNextItemWidth(-FLT_MIN); 
-                ColorPicker3("HoverColor",
-                    &m_scene.gameUIs[m_gui.selectedUI].hoverColor.x,
-                    ImGuiColorEditFlags_PickerHueWheel);
-                EndTable();
-                
+            
+                EndTable();                
             }
+                
         }
         if (Begin("Assets", (bool*)0, windowFlags))
         {
