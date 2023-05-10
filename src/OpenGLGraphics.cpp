@@ -88,8 +88,6 @@ namespace RedFoxEngine
             // glVertexArrayBindingDivisor(model->vao, a_materialID, 1);
         }
 
-
-
         //V-SYNC
         wglSwapIntervalEXT(1);
 
