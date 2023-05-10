@@ -15,7 +15,7 @@
 #include "Camera.hpp"
 #include "ResourceManager.hpp"
 #include "SoundManager.hpp"
-#include "GameUIBehaviour.hpp"
+#include "GameBehaviour.hpp"
 
 #include <ImGuizmo.h>
 #include "imgui_impl_opengl3.h"

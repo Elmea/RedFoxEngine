@@ -84,8 +84,8 @@ Engine::Engine(int width, int height) :
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
 
-    //Init GameUIBehaviour
-    m_scene.gameUIBehaviours = (GameUIBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameUIBehaviour) * 100);
+    //Init UI GameBehaviour
+    m_scene.gameUIBehaviours = (GameBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameBehaviour) * 100);
     
     //Add UI behaviours here
     AddUIBehaviour("AbortMission"    , AbortMission);
@@ -109,8 +109,8 @@ Engine::Engine(int width, int height) :
         m_scene.gameUIs[i].behaviourIndex = 0;
     }
 
-    //Init GameObjectBehaviour
-    m_scene.gameObjectBehaviours = (GameUIBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameUIBehaviour) * 100);
+    //Init Object GameBehaviour
+    m_scene.gameObjectBehaviours = (GameBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameBehaviour) * 100);
 
     //Add object behaviours here
     AddObjectBehaviour("DefaultBehaviour", DefaultBehaviour);

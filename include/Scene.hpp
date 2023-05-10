@@ -2,7 +2,7 @@
 #include "Camera.hpp"
 #include "GameObject.hpp"
 #include "GameUI.hpp"
-#include "GameUIBehaviour.hpp"
+#include "GameBehaviour.hpp"
 
 namespace RedFoxEngine
 {
@@ -59,8 +59,8 @@ public:
 
     GameObject *gameObjects = nullptr;
     GameUI* gameUIs = nullptr;
-    GameUIBehaviour* gameUIBehaviours = nullptr;
-    GameUIBehaviour* gameObjectBehaviours = nullptr;
+    GameBehaviour* gameUIBehaviours = nullptr;
+    GameBehaviour* gameObjectBehaviours = nullptr;
 
     Scene(int width, int height):m_gameCamera(projectionType::PERSPECTIVE,
         width / (f32)height){}
