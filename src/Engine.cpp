@@ -22,6 +22,7 @@ Engine::Engine(int width, int height) :
     m_platform(width, height)
 {
     m_graphics.InitGraphics(&m_memoryManager.m_memory.temp, m_platform.m_windowDimension);
+    m_graphics.InitPostProcess(&m_memoryManager.m_memory.arena);
     InitIMGUI();
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
     m_editorCameraSpeed = 1;
@@ -110,15 +111,10 @@ Engine::Engine(int width, int height) :
         { 1.f / 16.f, 2.f / 16.f, 1.f / 16.f, 0.f },
         { 0.f, 0.f, 0.f, 1.f }
     };
-    
-    float nonKernel[4][4] = {
-        { 0.f, 0.f, 0.f, 0.f },
-        { 0.f, 1.f, 0.f, 0.f },
-        { 0.f, 0.f, 0.f, 0.f },
-        { 0.f, 0.f, 0.f, 0.f }
-    };
-    
-    RedFoxMaths::Mat4 kernelMat = nonKernel;
+
+    RedFoxMaths::Mat4 kernelMat = edge;
+    RedFoxMaths::Mat4 secondKernelMat = blur;
+    m_graphics.AddKernel(secondKernelMat);
     m_graphics.AddKernel(kernelMat);
 
 #endif

@@ -6,6 +6,8 @@
 #include "MyMemory.hpp"
 
 #define STB_TRUETYPE_IMPLEMENTATION
+#include <ResourceManager.hpp>
+
 #include "imstb_truetype.h"
 
 namespace RedFoxEngine
@@ -33,11 +35,6 @@ namespace RedFoxEngine
             glNamedBufferStorage(m_materialSSBO,
                 100100 * sizeof(Material),
                 nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT | GL_MAP_READ_BIT);
-
-            glCreateBuffers(1, &m_kernelSSBO);
-            glNamedBufferStorage(m_kernelSSBO,
-                100000 * sizeof(RedFoxMaths::Mat4),
-                nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
 
             glCreateBuffers(1, &m_textureSSBO);
             glNamedBufferStorage(m_textureSSBO, 10000 * sizeof(u64), nullptr, GL_DYNAMIC_STORAGE_BIT);
@@ -91,8 +88,7 @@ namespace RedFoxEngine
             // glVertexArrayBindingDivisor(model->vao, a_materialID, 1);
         }
 
-        m_kernelsMatrices = (RedFoxMaths::Mat4*)MyMalloc(tempArena, sizeof(RedFoxMaths::Mat4) * m_maxKernel);
-        m_kernels = (Kernel*)MyMalloc(tempArena, sizeof(Kernel) * m_maxKernel);
+
 
         //V-SYNC
         wglSwapIntervalEXT(1);
@@ -518,6 +514,16 @@ namespace RedFoxEngine
             0, instanceCount);
     }
 
+    void Graphics::InitPostProcess(Memory* arena)
+    {
+        glCreateBuffers(1, &m_kernelSSBO);
+        glNamedBufferStorage(m_kernelSSBO,
+            100000 * sizeof(RedFoxMaths::Mat4),
+            nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
+
+        m_kernels = (Kernel*)MyMalloc(arena, sizeof(Kernel) * m_maxKernel);
+    }
+    
     void Graphics::PostProcessingPass()
     {
         glBindTextureUnit(1, m_sceneTexture);

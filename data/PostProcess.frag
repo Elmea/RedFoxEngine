@@ -12,7 +12,7 @@ layout (binding = 1) uniform sampler2D screenTexture;
 layout (location=0)
 out vec4 o_color;
 
-const float offset = 1.0; // / 300.0;  
+const float offset = 1.0 / 300.0;  
 
 const vec2 offsets[9] = vec2[](
     vec2(-offset,  offset), // top-left

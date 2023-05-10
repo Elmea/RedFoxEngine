@@ -72,7 +72,7 @@ public:
     int GetId() { return uniqueId; };
     void SetActive(bool state) { active = state; };
 };
-
+    
 class Graphics
 {
 private:
@@ -135,6 +135,7 @@ public:
     void InitGraphics(Memory *tempArena, WindowDimension dimension);
     void InitImGUIFramebuffer(WindowDimension dimension);
     void InitSceneFramebuffer(WindowDimension dimension);
+    void InitPostProcess(Memory* arena);
     void BindLights();
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
     void FillLightBuffer(LightInfo* lights, LightType type);
