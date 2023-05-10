@@ -403,15 +403,15 @@ void Engine::Draw()
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
     m_graphics.Draw(&m_scene, m_platform.m_windowDimension, m_time.current, m_time.delta);
     m_graphics.BindKernelBuffer(&m_memoryManager.m_memory.temp);
-    m_graphics.PostProcessingPass();
-
-    for (int i = 0; i < m_scene.gameUICount; i++)
+    for (int i = 0; i < (int)m_scene.gameUICount; i++)
     {
         m_graphics.RenderText(m_scene.gameUIs[i]);
         if (m_scene.gameUIs[i].isPressed)
             m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex].function(&m_scene);
 
     }
+    m_graphics.PostProcessingPass();
+
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     m_platform.SwapFramebuffers();

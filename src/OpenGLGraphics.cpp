@@ -361,6 +361,14 @@ namespace RedFoxEngine
             }
             ++text;
         }
+        float vertices[] = {
+            // positions  // texture Coords
+            -1.0f,  1.0f,  0.0f, 1.0f,
+            -1.0f, -1.0f,  0.0f, 0.0f,
+             1.0f,  1.0f,  1.0f, 1.0f,
+             1.0f, -1.0f,  1.0f, 0.0f,
+        };
+        glNamedBufferSubData(m_quadVBO, 0, sizeof(vertices), vertices);
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
