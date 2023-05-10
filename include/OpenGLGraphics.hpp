@@ -58,19 +58,13 @@ struct Shader
     GLuint vertex, fragment, pipeline;
 };
 
-class Graphics;
 
-class Kernel
+struct Kernel
 {
+    bool active;
+    bool deleted;
     int uniqueId;
-    bool active = true;
-    bool deleted = false;
-public:
-    // Used as 3x3 matrix
     RedFoxMaths::Mat4 kernel;
-    friend class Graphics;
-    int GetId() { return uniqueId; };
-    void SetActive(bool state) { active = state; };
 };
     
 class Graphics
@@ -109,14 +103,15 @@ private:
 
     unsigned int m_quadVBO;
 
-    int m_maxKernel = 5;
-    int m_kernelCount = 0;
     int m_kernelCreated = 0;
-    Kernel* m_kernels;
     RedFoxMaths::Mat4* m_kernelsMatrices;
     WindowDimension m_sceneTextureDimension;
     
 public:
+    int m_kernelCount;
+    const int m_maxKernel = 5;
+    Kernel* m_kernels;
+
     WindowDimension dimension;
     GLuint m_imguiTexture;
     GLuint m_sceneTexture;

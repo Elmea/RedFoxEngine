@@ -12,7 +12,7 @@ void name(RedFoxEngine::Scene *scene)
 
 typedef BUTTONBEHAIVOUR(functionBehaviour);
 
-class GameUIBehaviour
+class GameBehaviour
 {
 
 public:
