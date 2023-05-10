@@ -107,7 +107,8 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
                     {
                         transform = actor->getGlobalPose();
                         gameObjects[i].transform   = {{transform.p.x, transform.p.y, transform.p.z}, gameObjects[i].scale, {transform.q.w, transform.q.x, transform.q.y, transform.q.z}};
-                        scene->gameObjectBehaviours[scene->gameObjects[i].behaviourIndex].function(scene);
+                        if(!scene->isPaused)
+                            scene->gameObjectBehaviours[scene->gameObjects[i].behaviourIndex].function(scene);
                     }
                 }
             }
