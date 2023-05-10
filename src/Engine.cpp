@@ -454,6 +454,6 @@ Engine::~Engine()
 {
     for (int i = 0; i < (int)m_modelCount; i++)
         DeInitObj(&m_models[i].obj);
-    m_gui.defaultFont->ContainerAtlas->Clear();
+    m_imgui.defaultFont->ContainerAtlas->Clear();
     ImGui::DestroyContext();
 }

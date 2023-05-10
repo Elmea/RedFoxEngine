@@ -17,8 +17,10 @@
 #include "SoundManager.hpp"
 #include "GameBehaviour.hpp"
 
-#include <ImGuizmo.h>
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "ImGuizmo.h"
 #include "imgui_impl_opengl3.h"
+#include "imgui_internal.h"
 #include "imgui_impl_win32.h"
 
 namespace RedFoxEngine
@@ -32,16 +34,17 @@ struct ImGUI
     bool sceneGraphScrollButtonHovered = false;
     int selectedObject;
     int selectedUI;
-    int selectedModelAsset = 0;
-    int selectedSoundAsset = 0;
+    int selectedModelAsset;
+    int selectedSoundAsset;
     int nodeIndex = 1;
-    int uiIndex = 0;
+    int uiIndex;
     int sceneGraphScrollStrength = 1;
-    int currentFrame = 0;
+    int currentFrame;
     int translateSnap = 1;
     int rotateSnap = 45;
     int scaleSnap = 1;
-    float fpsUpdate = 0;
+    int mousePickNodeIndex = -1;
+    float fpsUpdate;
     float dragSpeed = 1.f;
     RedFoxMaths::Float2 mousePosEditor = RedFoxMaths::Float2();
     float fps[255];
@@ -50,7 +53,37 @@ struct ImGUI
     ImGuiIO* io;
     ImFont* defaultFont;
     ImTextureID icons[10];
-    int currentSelectedColorType=0;
+
+    const ImGuiDockNodeFlags dockingFlags =
+        ImGuiDockNodeFlags_NoWindowMenuButton |
+        ImGuiDockNodeFlags_NoCloseButton;
+
+    const ImGuiWindowFlags windowFlags =
+        ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoScrollbar;
+
+    const ImGuiWindowFlags sceneGraphFlags =
+        ImGuiWindowFlags_AlwaysHorizontalScrollbar |
+        ImGuiWindowFlags_AlwaysVerticalScrollbar |
+        ImGuiWindowFlags_NoMove;
+
+    const ImGuiTreeNodeFlags rootNodeFlags =
+        ImGuiTreeNodeFlags_Framed |
+        ImGuiTreeNodeFlags_Leaf |
+        ImGuiTreeNodeFlags_AllowItemOverlap |
+        ImGuiTreeNodeFlags_DefaultOpen |
+        ImGuiTreeNodeFlags_SpanFullWidth;
+
+    ImGuiTreeNodeFlags propertiesFlags =
+        ImGuiTreeNodeFlags_DefaultOpen |
+        ImGuiTreeNodeFlags_OpenOnArrow |
+        ImGuiTreeNodeFlags_OpenOnDoubleClick;
+
+    ImGuiTableFlags tableFlags =
+        ImGuiTableFlags_RowBg |
+        ImGuiTableFlags_SizingStretchSame |
+        ImGuiTableFlags_Resizable |
+        ImGuiTableFlags_BordersOuter;
 };
 
 class Engine
@@ -77,7 +110,7 @@ private:
     float m_editorCameraSpeed;
     RedFoxMaths::Float3 m_editorCameraVelocity;
     bool m_editorCameraEnabled = false;
-    ImGUI m_gui = {};
+    ImGUI m_imgui = {};
     Physx m_physx {};
     SoundManager m_soundManager;
     Sound* m_testMusic;
@@ -92,6 +125,12 @@ private:
     int  DrawDockSpace(const ImGuiViewport* viewport, ImGuiDockNodeFlags dockspace_flags, const ImGuiWindowClass* window_class);
     void DrawSceneNodes(bool is_child, int index);
     void DrawSceneNodesUI(bool is_child, int index);
+    void DrawEditor();
+    void DrawAssetsBrowser();
+    void DrawUIGraph();
+    void DrawSceneGraph();
+    void DrawProperties();
+    void DrawWorldProperties();
     void UpdateIMGUI();
     void UpdateEditorCamera();
     void UpdateModelMatrices();
