@@ -30,6 +30,8 @@ namespace RedFoxEngine
         RedFoxMaths::Float3 boxExtents;
         RedFoxMaths::Float3 Color;
 
+        int behaviourIndex = 0;
+
         RedFoxMaths::Mat4 GetLocalMatrix();
     };
 }

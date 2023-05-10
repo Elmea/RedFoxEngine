@@ -991,6 +991,29 @@ void Engine::UpdateIMGUI()
                 }
             }
 
+            if (CollapsingHeader("Behaviour", propertiesFlags))
+            {
+                SeparatorText("Behaviour");
+                SetNextItemWidth(-FLT_MIN);
+                static const char* currentBehaviour = m_scene.gameObjectBehaviours[0].name.data;
+
+                if (ImGui::BeginCombo("BehaviourList", currentBehaviour))
+                {
+                    for (int i = 0; i < m_scene.gameObjectBehaviourCount; i++)
+                    {
+                        bool is_selected = (currentBehaviour == m_scene.gameObjectBehaviours[i].name.data);
+                        if (ImGui::Selectable(m_scene.gameObjectBehaviours[i].name.data, is_selected))
+                        {
+                            currentBehaviour = m_scene.gameObjectBehaviours[i].name.data;
+                            m_scene.gameObjects[m_gui.selectedObject].behaviourIndex = i;
+                        }
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+            }
+
             if (CollapsingHeader("Render", propertiesFlags))
             {
                 int* modelIndex = &m_scene.gameObjects[m_gui.selectedObject].modelIndex;
@@ -1090,69 +1113,75 @@ void Engine::UpdateIMGUI()
                 }
             }
 
-            SeparatorText("Behaviour");
-            SetNextItemWidth(-FLT_MIN);           
-            static const char* currentBehaviour = m_scene.gameUIBehaviours[0].name.data;
+            if (CollapsingHeader("Button", propertiesFlags))
+            {
+                SeparatorText("Behaviour");
+                SetNextItemWidth(-FLT_MIN);           
+                static const char* currentBehaviour = m_scene.gameUIBehaviours[0].name.data;
            
-            if (ImGui::BeginCombo("BehaviourList", currentBehaviour))
-            {
-                for (int i = 0; i < m_scene.gameUIBehaviourCount; i++)
+                if (ImGui::BeginCombo("BehaviourList", currentBehaviour))
                 {
-                    bool is_selected = (currentBehaviour == m_scene.gameUIBehaviours[i].name.data);
-                    if (ImGui::Selectable(m_scene.gameUIBehaviours[i].name.data, is_selected))
+                    for (int i = 0; i < m_scene.gameUIBehaviourCount; i++)
                     {
-                        currentBehaviour = m_scene.gameUIBehaviours[i].name.data;
-                        m_scene.gameUIs[m_gui.selectedUI].behaviourIndex = i;
+                        bool is_selected = (currentBehaviour == m_scene.gameUIBehaviours[i].name.data);
+                        if (ImGui::Selectable(m_scene.gameUIBehaviours[i].name.data, is_selected))
+                        {
+                            currentBehaviour = m_scene.gameUIBehaviours[i].name.data;
+                            m_scene.gameUIs[m_gui.selectedUI].behaviourIndex = i;
+                        }
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
                     }
-                    if (is_selected)
-                        ImGui::SetItemDefaultFocus();
+                    ImGui::EndCombo();
                 }
-                ImGui::EndCombo();
+
             }
 
-            SeparatorText("Colors");                                 
-            const char* colors[3] = { "selectedColor", "textColor", "hoverColor" };
-            float* variable[3] = { &m_scene.gameUIs[m_gui.selectedUI].selectedColor.x,
-                                  &m_scene.gameUIs[m_gui.selectedUI].textColor.x,
-                                  &m_scene.gameUIs[m_gui.selectedUI].hoverColor.x
-            };
-            static int colorIndex=0;
-            static const char* currentColorType = colors[0];
-
-
-            SetNextItemWidth(-FLT_MIN);
-            if (ImGui::BeginCombo("ColorList", currentColorType))
+            if (CollapsingHeader("Render", propertiesFlags))
             {
-                for (int i = 0; i < IM_ARRAYSIZE(colors); i++)
+                SeparatorText("Colors");                                 
+                const char* colors[3] = { "selectedColor", "textColor", "hoverColor" };
+                float* variable[3] = { &m_scene.gameUIs[m_gui.selectedUI].selectedColor.x,
+                                      &m_scene.gameUIs[m_gui.selectedUI].textColor.x,
+                                      &m_scene.gameUIs[m_gui.selectedUI].hoverColor.x
+                };
+                static int colorIndex=0;
+                static const char* currentColorType = colors[0];
+
+                SetNextItemWidth(-FLT_MIN);
+                if (ImGui::BeginCombo("ColorList", currentColorType))
                 {
-                    bool is_selected = (currentColorType == colors[i]);
-                    if (ImGui::Selectable(colors[i], is_selected))
+                    for (int i = 0; i < IM_ARRAYSIZE(colors); i++)
                     {
-                        currentColorType = colors[i];
-                        colorIndex = i;
+                        bool is_selected = (currentColorType == colors[i]);
+                        if (ImGui::Selectable(colors[i], is_selected))
+                        {
+                            currentColorType = colors[i];
+                            colorIndex = i;
+                        }
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
                     }
-                    if (is_selected)
-                        ImGui::SetItemDefaultFocus();
+                    ImGui::EndCombo();
                 }
-                ImGui::EndCombo();
+            
+                if (BeginTable("TextTable", 2, tableFlags))
+                {
+                    TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                    TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+                    TableNextRow();
+
+                    TableSetColumnIndex(0);
+                    SetNextItemWidth(-FLT_MIN); 
+                    SeparatorText("Button color");
+                    ColorPicker3("SelectedColor",
+                        variable[colorIndex],
+                        ImGuiColorEditFlags_PickerHueWheel);
+            
+                    EndTable();                
+                }
             }
 
-            
-            if (BeginTable("TextTable", 2, tableFlags))
-            {
-                TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-                TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-                TableNextRow();
-
-                TableSetColumnIndex(0);
-                SetNextItemWidth(-FLT_MIN); 
-                SeparatorText("Button color");
-                ColorPicker3("SelectedColor",
-                    variable[colorIndex],
-                    ImGuiColorEditFlags_PickerHueWheel);
-            
-                EndTable();                
-            }
                 
         }
         if (Begin("Assets", (bool*)0, windowFlags))

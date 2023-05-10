@@ -23,17 +23,34 @@ BUTTONBEHAIVOUR(DefaultBehaviour)
     
 }
 
+BUTTONBEHAIVOUR(TestObjectBehaviour)
+{
+    printf("ObjectBehaviour\n");
+}
+
+
 BUTTONBEHAIVOUR(AbortMission)
 {
     exit(0);
 }
 
-void Engine::AddBehaviour(const char *name, functionBehaviour function)
+
+
+void Engine::AddUIBehaviour(const char* name, functionBehaviour function)
 {
     m_scene.gameUIBehaviours[m_scene.gameUIBehaviourCount].name = initStringChar(name, 255, &m_memoryManager.m_memory.arena);
     m_scene.gameUIBehaviours[m_scene.gameUIBehaviourCount].function = function;
-    m_scene.gameUIBehaviourCount++;
+    m_scene.gameUIBehaviourCount++ ;
 }
+
+void Engine::AddObjectBehaviour(const char* name, functionBehaviour function)
+{
+    m_scene.gameObjectBehaviours[m_scene.gameObjectBehaviourCount].name = initStringChar(name, 255, &m_memoryManager.m_memory.arena);
+    m_scene.gameObjectBehaviours[m_scene.gameObjectBehaviourCount].function = function;
+    m_scene.gameObjectBehaviourCount++;
+}
+
+
 
 Engine::Engine(int width, int height) :
     m_scene(width, height),
@@ -70,12 +87,12 @@ Engine::Engine(int width, int height) :
     //Init GameUIBehaviour
     m_scene.gameUIBehaviours = (GameUIBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameUIBehaviour) * 100);
     
-    //Add behaviours here
-    AddBehaviour("AbortMission"    , AbortMission);
-    AddBehaviour("DefaultBehaviour", DefaultBehaviour);
+    //Add UI behaviours here
+    AddUIBehaviour("AbortMission"    , AbortMission);
+    AddUIBehaviour("DefaultBehaviour", DefaultBehaviour);
 
     for (int i = 2; i < 100; i++)
-        AddBehaviour("DefaultBehaviour", DefaultBehaviour);
+        AddUIBehaviour("DefaultBehaviour", DefaultBehaviour);
     m_scene.gameUIBehaviourCount = 2;
 
     //Init GameUI
@@ -91,6 +108,18 @@ Engine::Engine(int width, int height) :
         m_scene.gameUIs[i].parent = 0;
         m_scene.gameUIs[i].behaviourIndex = 0;
     }
+
+    //Init GameObjectBehaviour
+    m_scene.gameObjectBehaviours = (GameUIBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameUIBehaviour) * 100);
+
+    //Add object behaviours here
+    AddObjectBehaviour("DefaultBehaviour", DefaultBehaviour);
+    AddObjectBehaviour("TestObjectBehaviour", TestObjectBehaviour);
+
+    for (int i = 2; i < 100; i++)
+        AddObjectBehaviour("DefaultBehaviour", DefaultBehaviour);
+    m_scene.gameObjectBehaviourCount = 2;
+
     //Init GameObject
     m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);
     m_scene.gameObjects[0] = {};

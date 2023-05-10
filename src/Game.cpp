@@ -65,9 +65,9 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
 
     if (!init)
     {
-        // scene->gameUIBehaviours[scene->gameUIBehaviourCount].name = assignString(scene->gameUIBehaviours[scene->gameUIBehaviourCount].name, "Test");
-        // scene->gameUIBehaviours[scene->gameUIBehaviourCount].function = Test;
-        // scene->gameUIBehaviourCount++;
+        scene->gameUIBehaviours[scene->gameUIBehaviourCount].name = assignString(scene->gameUIBehaviours[scene->gameUIBehaviourCount].name, "Test");
+        scene->gameUIBehaviours[scene->gameUIBehaviourCount].function = Test;
+        scene->gameUIBehaviourCount++;
         scene->gameUIBehaviours[scene->gameUIBehaviourCount].name = assignString(scene->gameUIBehaviours[scene->gameUIBehaviourCount].name, "Best");
         scene->gameUIBehaviours[scene->gameUIBehaviourCount].function = Best;
         scene->gameUIBehaviourCount++;
@@ -107,6 +107,7 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
                     {
                         transform = actor->getGlobalPose();
                         gameObjects[i].transform   = {{transform.p.x, transform.p.y, transform.p.z}, gameObjects[i].scale, {transform.q.w, transform.q.x, transform.q.y, transform.q.z}};
+                        scene->gameObjectBehaviours[scene->gameObjects[i].behaviourIndex].function(scene);
                     }
                 }
             }

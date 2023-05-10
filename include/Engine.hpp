@@ -15,6 +15,7 @@
 #include "Camera.hpp"
 #include "ResourceManager.hpp"
 #include "SoundManager.hpp"
+#include "GameUIBehaviour.hpp"
 
 #include <ImGuizmo.h>
 #include "imgui_impl_opengl3.h"
@@ -100,7 +101,8 @@ private:
     void SaveScene(const char *fileName, Scene scene);
     void UpdateLights(LightStorage* lightStorage);
     void initSphericalManyGameObjects(int count); //TODO: remove
-    void AddBehaviour(const char *name, functionBehaviour function);
+    void AddUIBehaviour(const char* name, functionBehaviour function);
+    void AddObjectBehaviour(const char* name, functionBehaviour function);
     u32 LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat, bool flip);
     u32 LoadTextureFromMemory(u8* memory, int size, bool resident, bool repeat, bool flip);
 
