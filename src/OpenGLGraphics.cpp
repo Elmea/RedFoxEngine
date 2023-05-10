@@ -92,7 +92,12 @@ namespace RedFoxEngine
 
         //V-SYNC
         wglSwapIntervalEXT(1);
-        InitSceneFramebuffer(dimension);
+
+        WindowDimension sceneDimension;
+        sceneDimension.height = 2160;
+        sceneDimension.width = 3840;
+        
+        InitSceneFramebuffer(sceneDimension);
     }
 
     void Graphics::InitQuad()
@@ -162,8 +167,10 @@ namespace RedFoxEngine
         glCreateTextures(GL_TEXTURE_2D, 1, &m_sceneTexture);
         glTextureParameteri(m_sceneTexture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTextureParameteri(m_sceneTexture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTextureStorage2D(m_sceneTexture, 1, GL_RGBA8, dimension.width,
-            dimension.height);
+        m_sceneTextureDimension = dimension;
+        glTextureStorage2D(m_sceneTexture, 1, GL_RGBA8, m_sceneTextureDimension.width,
+            m_sceneTextureDimension.height);
+
         glNamedFramebufferTexture(m_sceneFramebuffer, GL_COLOR_ATTACHMENT0,
             m_sceneTexture, 0);
         unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0 };
@@ -404,8 +411,8 @@ namespace RedFoxEngine
 
         glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFramebuffer);
         glCullFace(GL_BACK);
-        glViewport(0, 0, p_windowDimension.width,
-            p_windowDimension.height);
+        glViewport(0, 0, m_sceneTextureDimension.width,
+            m_sceneTextureDimension.height);
         glClearColor(0, 0, 0, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         glDisable(GL_CULL_FACE);

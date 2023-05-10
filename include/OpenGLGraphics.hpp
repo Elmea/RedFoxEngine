@@ -114,7 +114,8 @@ private:
     int m_kernelCreated = 0;
     Kernel* m_kernels;
     RedFoxMaths::Mat4* m_kernelsMatrices;
-
+    WindowDimension m_sceneTextureDimension;
+    
 public:
     WindowDimension dimension;
     GLuint m_imguiTexture;
