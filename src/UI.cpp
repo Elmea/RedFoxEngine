@@ -1221,18 +1221,17 @@ void Engine::DrawWorldProperties()
                 Text("Kernel %d", i + 1);
                 TableSetColumnIndex(1);
                 SetNextItemWidth(-FLT_MIN);
-                DragFloat3("KernelRow1", &m_graphics.m_kernels[i].kernel.mat16[0], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                DragFloat3("KernelRow1" + i, &m_graphics.m_kernels[i].kernel.mat16[0], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                 SetNextItemWidth(-FLT_MIN);
-                DragFloat3("KernelRow2", &m_graphics.m_kernels[i].kernel.mat16[4], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                DragFloat3("KernelRow2" + i, &m_graphics.m_kernels[i].kernel.mat16[4], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                 SetNextItemWidth(-FLT_MIN);
-                DragFloat3("KernelRow3", &m_graphics.m_kernels[i].kernel.mat16[8], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                DragFloat3("KernelRow3" + i, &m_graphics.m_kernels[i].kernel.mat16[8], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                 m_graphics.EditKernel(i, m_graphics.m_kernels[i].kernel);
             }
             EndTable();
             if (Button("Add empty", ImVec2(GetContentRegionAvail().x, 20)) && m_graphics.m_kernelCount < m_graphics.m_maxKernel)
             {
-                float mat[4][4] = { 0 };
-                mat[1][1] = 1;
+                float mat[4][4] = { 0 }; mat[1][1] = 1;
                 Kernel* k = m_graphics.AddKernel(RedFoxMaths::Mat4(mat));
             }
         }
