@@ -378,8 +378,6 @@ namespace RedFoxEngine
     void Graphics::DrawSkyDome(SkyDome skyDome, float time)
     {
         glBindProgramPipeline(m_sky.pipeline);
-        // glBindVertexArray(m_models[1].vao); // TODO:Maybe pass the model as a parameter
-
         RedFoxMaths::Mat4 mvp = m_viewProjection * skyDome.model;
 
         glBindTextureUnit(0, skyDome.topTint);

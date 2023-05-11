@@ -922,7 +922,9 @@ void Engine::DrawAssetsBrowser()
                 if (Button("Import"))
                 {
                     ObjModelPush(path.data);
-                    m_graphics.InitModel(&m_models[m_modelCount]);
+                    m_graphics.InitModel(&m_models[m_modelCount - 1]);
+                    m_graphics.m_models = m_models;
+                    m_graphics.m_modelCount = m_modelCount;
                     assignString(path, "");
                     CloseCurrentPopup();
                 }
