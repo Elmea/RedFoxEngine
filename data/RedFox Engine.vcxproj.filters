@@ -99,7 +99,7 @@
     <ClCompile Include="..\src\SoundManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\GameUIBehaviour.cpp">
+    <ClCompile Include="..\src\GameBehaviour.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -191,33 +191,39 @@
     <ClInclude Include="..\include\Physics.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\GameUIBehaviour.hpp">
+    <ClInclude Include="..\include\GameBehaviour.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\blinn_phong.vert.glsl">
+    <None Include="blinn_phong.frag.glsl">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="Shaders\ShadowShader.frag">
+    <None Include="blinn_phong.vert.glsl">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="Shaders\ShadowShader.vert">
+    <None Include="font.frag">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="Shaders\skydome.frag">
+    <None Include="font.vert">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="Shaders\skydome.vert">
+    <None Include="PostProcess.frag">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="Shaders\blinn_phong.frag.glsl">
+    <None Include="ShadowShader.frag">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="Shaders\font.frag">
+    <None Include="ShadowShader.vert">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="Shaders\font.vert">
+    <None Include="skydome.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="skydome.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="PostProcess.vert">
       <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>

@@ -15,6 +15,7 @@
 #include "Camera.hpp"
 #include "ResourceManager.hpp"
 #include "SoundManager.hpp"
+#include "GameBehaviour.hpp"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "ImGuizmo.h"
@@ -72,6 +73,17 @@ struct ImGUI
         ImGuiTreeNodeFlags_AllowItemOverlap |
         ImGuiTreeNodeFlags_DefaultOpen |
         ImGuiTreeNodeFlags_SpanFullWidth;
+
+    ImGuiTreeNodeFlags propertiesFlags =
+        ImGuiTreeNodeFlags_DefaultOpen |
+        ImGuiTreeNodeFlags_OpenOnArrow |
+        ImGuiTreeNodeFlags_OpenOnDoubleClick;
+
+    ImGuiTableFlags tableFlags =
+        ImGuiTableFlags_RowBg |
+        ImGuiTableFlags_SizingStretchSame |
+        ImGuiTableFlags_Resizable |
+        ImGuiTableFlags_BordersOuter;
 };
 
 class Engine
@@ -114,9 +126,11 @@ private:
     void DrawSceneNodes(bool is_child, int index);
     void DrawSceneNodesUI(bool is_child, int index);
     void DrawEditor();
+    void DrawAssetsBrowser();
     void DrawUIGraph();
     void DrawSceneGraph();
     void DrawProperties();
+    void DrawWorldProperties();
     void UpdateIMGUI();
     void UpdateEditorCamera();
     void UpdateModelMatrices();
@@ -126,7 +140,8 @@ private:
     void SaveScene(const char *fileName, Scene scene);
     void UpdateLights(LightStorage* lightStorage);
     void initSphericalManyGameObjects(int count); //TODO: remove
-    void AddBehaviour(const char *name, functionBehaviour function);
+    void AddUIBehaviour(const char* name, functionBehaviour function);
+    void AddObjectBehaviour(const char* name, functionBehaviour function);
     u32 LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat, bool flip);
     u32 LoadTextureFromMemory(u8* memory, int size, bool resident, bool repeat, bool flip);
 

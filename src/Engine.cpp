@@ -23,17 +23,34 @@ BUTTONBEHAIVOUR(DefaultBehaviour)
     
 }
 
+BUTTONBEHAIVOUR(TestObjectBehaviour)
+{
+    printf("ObjectBehaviour\n");
+}
+
+
 BUTTONBEHAIVOUR(AbortMission)
 {
     exit(0);
 }
 
-void Engine::AddBehaviour(const char *name, functionBehaviour function)
+
+
+void Engine::AddUIBehaviour(const char* name, functionBehaviour function)
 {
     m_scene.gameUIBehaviours[m_scene.gameUIBehaviourCount].name = initStringChar(name, 255, &m_memoryManager.m_memory.arena);
     m_scene.gameUIBehaviours[m_scene.gameUIBehaviourCount].function = function;
-    m_scene.gameUIBehaviourCount++;
+    m_scene.gameUIBehaviourCount++ ;
 }
+
+void Engine::AddObjectBehaviour(const char* name, functionBehaviour function)
+{
+    m_scene.gameObjectBehaviours[m_scene.gameObjectBehaviourCount].name = initStringChar(name, 255, &m_memoryManager.m_memory.arena);
+    m_scene.gameObjectBehaviours[m_scene.gameObjectBehaviourCount].function = function;
+    m_scene.gameObjectBehaviourCount++;
+}
+
+
 
 Engine::Engine(int width, int height) :
     m_scene(width, height),
@@ -41,6 +58,7 @@ Engine::Engine(int width, int height) :
     m_platform(width, height)
 {
     m_graphics.InitGraphics(&m_memoryManager.m_memory.temp, m_platform.m_windowDimension);
+    m_graphics.InitPostProcess(&m_memoryManager.m_memory.arena);
     InitIMGUI();
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
     m_editorCameraSpeed = 1;
@@ -60,22 +78,22 @@ Engine::Engine(int width, int height) :
     m_modelsName[1] = initStringChar("Sphere", 6, &m_memoryManager.m_memory.arena);
     m_modelsName[1].capacity = 6;
     m_modelCount++;
-    ObjModelPush("ts_bot912.obj");
+    //ObjModelPush("ts_bot912.obj");
     // ObjModelPush("vortigaunt.obj");
     // ObjModelPush("barbarian.obj");
 
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
 
-    //Init GameUIBehaviour
-    m_scene.gameUIBehaviours = (GameUIBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameUIBehaviour) * 100);
+    //Init UI GameBehaviour
+    m_scene.gameUIBehaviours = (GameBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameBehaviour) * 100);
     
-    //Add behaviours here
-    AddBehaviour("AbortMission"    , AbortMission);
-    AddBehaviour("DefaultBehaviour", DefaultBehaviour);
+    //Add UI behaviours here
+    AddUIBehaviour("AbortMission"    , AbortMission);
+    AddUIBehaviour("DefaultBehaviour", DefaultBehaviour);
 
     for (int i = 2; i < 100; i++)
-        AddBehaviour("DefaultBehaviour", DefaultBehaviour);
+        AddUIBehaviour("DefaultBehaviour", DefaultBehaviour);
     m_scene.gameUIBehaviourCount = 2;
 
     //Init GameUI
@@ -91,6 +109,18 @@ Engine::Engine(int width, int height) :
         m_scene.gameUIs[i].parent = 0;
         m_scene.gameUIs[i].behaviourIndex = 0;
     }
+
+    //Init Object GameBehaviour
+    m_scene.gameObjectBehaviours = (GameBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameBehaviour) * 100);
+
+    //Add object behaviours here
+    AddObjectBehaviour("DefaultBehaviour", DefaultBehaviour);
+    AddObjectBehaviour("TestObjectBehaviour", TestObjectBehaviour);
+
+    for (int i = 2; i < 100; i++)
+        AddObjectBehaviour("DefaultBehaviour", DefaultBehaviour);
+    m_scene.gameObjectBehaviourCount = 2;
+
     //Init GameObject
     m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);
     m_scene.gameObjects[0] = {};
@@ -116,17 +146,39 @@ Engine::Engine(int width, int height) :
     initSphericalManyGameObjects(5000);
     m_scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
 
-    // Some light for testing
+    // Post process tests
     {
-        Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
-        dir->lightInfo.constant = 1.0f;
-        dir->lightInfo.linear = 0.09f;
-        dir->lightInfo.quadratic = 0.032f;
-        dir->lightInfo.position = {0.0f, 75.0f, 0.0f};
-        dir->lightInfo.direction = { 0.3f, -0.8f, -0.5f };
-        dir->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
-        dir->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
-        dir->lightInfo.specular = {0.1f, 0.1f, 0.1f};
+        // Some light for testing
+        {
+            Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
+            dir->lightInfo.constant = 1.0f;
+            dir->lightInfo.linear = 0.09f;
+            dir->lightInfo.quadratic = 0.032f;
+            dir->lightInfo.position = {0.0f, 75.0f, 0.0f};
+            dir->lightInfo.direction = { 0.3f, -0.8f, -0.5f };
+            dir->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
+            dir->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
+            dir->lightInfo.specular = {0.1f, 0.1f, 0.1f};
+        }
+
+        float edge[4][4] = {
+            { 1.f, 1.f, 1.f, 0.f },
+            { 1.f, -8.f, 1.f, 0.f },
+            { 1.f, 1.f, 1.f, 0.f },
+            { 0.f, 0.f, 0.f, 1.f }
+        };
+
+        float blur[4][4] = {
+            { 1.f / 16.f, 2.f / 16.f, 1.f / 16.f, 0.f },
+            { 2.f / 16.f, 4.f / 16.f, 2.f / 16.f, 0.f },
+            { 1.f / 16.f, 2.f / 16.f, 1.f / 16.f, 0.f },
+            { 0.f, 0.f, 0.f, 1.f }
+        };
+
+        RedFoxMaths::Mat4 kernelMat = edge;
+        RedFoxMaths::Mat4 secondKernelMat = blur;
+        // m_graphics.AddKernel(secondKernelMat);
+        // m_graphics.AddKernel(kernelMat);
     }
 
 #endif
@@ -148,8 +200,9 @@ Engine::Engine(int width, int height) :
         m_testMusic->SetLoop(true);
         m_testMusic->position = {0.f, 0.f, 0.f};
         m_testMusic->Play3D();
-        m_graphics.InitFont(&m_memoryManager.m_memory.temp);
     }
+    
+    m_graphics.InitFont(&m_memoryManager.m_memory.temp);
 }
 
 void Engine::ObjModelPush(const char *path)
@@ -222,7 +275,6 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     m_scene.gameObjects[1].modelIndex = 0;
     m_scene.gameObjects[1].position = { 0, -10, 0 };
     m_scene.gameObjects[1].scale = { 1, 1, 1 };
-
 }
 
 void Engine::ProcessInputs()
@@ -264,8 +316,8 @@ void Engine::UpdateModelMatrices()
     m_scene.m_modelMatrices = (RedFoxMaths::Mat4 *)m_memoryManager.TemporaryAllocation(
         sizeof(RedFoxMaths::Mat4) * m_scene.gameObjectCount);
     m_scene.m_modelCountIndex = (u64 *)m_memoryManager.TemporaryAllocation(sizeof(u64)
-                                                         * m_modelCount);
-    memset(m_scene.m_modelCountIndex, 0, sizeof(u64) * m_modelCount);
+                                                         * (m_modelCount + 1));
+    memset(m_scene.m_modelCountIndex, 0, sizeof(u64) * (m_modelCount + 1));
     int totalIndex = 0;
     
     Material *materials = (Material *)m_memoryManager.TemporaryAllocation(sizeof(Material) * m_scene.gameObjectCount);
@@ -344,11 +396,13 @@ void Engine::Draw()
     // Camera *currentCamera = &m_scene.m_gameCamera; //TODO game camera
     Camera *currentCamera;
     if (m_scene.isPaused)
-        currentCamera = &m_editorCamera; //TODO game camera
+        currentCamera = &m_editorCamera;
     else
         currentCamera = &m_scene.m_gameCamera;
+    
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
     m_graphics.Draw(&m_scene, m_platform.m_windowDimension, m_time.current, m_time.delta);
+    m_graphics.BindKernelBuffer(&m_memoryManager.m_memory.temp);
     for (int i = 0; i < (int)m_scene.gameUICount; i++)
     {
         m_graphics.RenderText(m_scene.gameUIs[i]);
@@ -356,6 +410,8 @@ void Engine::Draw()
             m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex].function(&m_scene);
 
     }
+    m_graphics.PostProcessingPass();
+
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     m_platform.SwapFramebuffers();

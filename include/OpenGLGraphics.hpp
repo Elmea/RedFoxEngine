@@ -58,6 +58,19 @@ struct Shader
     GLuint vertex, fragment, pipeline;
 };
 
+class Graphics;
+
+class Kernel
+{
+private:
+    bool deleted = false;
+    int uniqueId;
+public:
+    bool active = true;
+    RedFoxMaths::Mat4 kernel;
+    friend class Graphics;
+};
+    
 class Graphics
 {
 private:
@@ -70,8 +83,12 @@ private:
     Shader m_shadow;
     Shader m_sky;
     Shader m_font;
+    Shader m_postProcess;
+
+    GLuint m_quadVAO;
 
     GLuint m_imguiFramebuffer;
+    GLuint m_sceneFramebuffer;
 
     u32    m_indexCount = 0;
     u32    m_vertexCount = 0;
@@ -83,19 +100,29 @@ private:
     u32    m_matrixSSBO;
     u32    m_textureSSBO;
     u32    m_shadowMapsSSBO;
+    u32    m_kernelSSBO;
 
     stbtt_bakedchar cdata[96];
     GLuint m_gFontTexture;
 
-    GLuint m_quadVAO;
     unsigned int m_quadVBO;
 
+    int m_kernelCreated = 0;
+    RedFoxMaths::Mat4* m_kernelsMatrices;
+    WindowDimension m_sceneTextureDimension;
+    
 public:
+    int m_kernelCount;
+    const int m_maxKernel = 5;
+    Kernel* m_kernels;
+
     WindowDimension dimension;
     GLuint m_imguiTexture;
+    GLuint m_sceneTexture;
     Model* m_models = nullptr;
     u32    m_modelCount;
     LightStorage lightStorage;
+    bool postProcessingEnabled;
     
     void InitModel(Model *model);
     void InitLights();
@@ -107,6 +134,8 @@ public:
     void InitShaders(Memory *tempArena);
     void InitGraphics(Memory *tempArena, WindowDimension dimension);
     void InitImGUIFramebuffer(WindowDimension dimension);
+    void InitSceneFramebuffer(WindowDimension dimension);
+    void InitPostProcess(Memory* arena);
     void BindLights();
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
     void FillLightBuffer(LightInfo* lights, LightType type);
@@ -121,6 +150,17 @@ public:
         RedFoxMaths::Mat4* modelMatrices, int instanceCount);
     void DrawModelShadowInstances(Model* model, int instanceCount);
     void RenderText(GameUI ui);
+    void ResetKernel(int id);
+
+    void PostProcessingPass();
+    // Add a kernel to the kernel array. Return it.
+    Kernel* AddKernel(RedFoxMaths::Mat4 kernel);
+    // Delete a kernel from the kernels array by index.
+    void DeleteKernel(int id);
+    void DeactivateKernel(int id);
+    // Setting an existing kernel by his index.
+    void EditKernel(int id, RedFoxMaths::Mat4 kernel);
+    void BindKernelBuffer(Memory* tempAlocator);
 };
 } // namespace RedFoxEngine
 

@@ -6,11 +6,12 @@
 #include "MyMemory.hpp"
 
 #define STB_TRUETYPE_IMPLEMENTATION
+#include <ResourceManager.hpp>
+
 #include "imstb_truetype.h"
 
 namespace RedFoxEngine
 {
-
     void Graphics::InitGraphics(Memory* tempArena, WindowDimension p_dimension)
     {
         dimension = p_dimension;
@@ -86,8 +87,15 @@ namespace RedFoxEngine
             glVertexArrayAttribBinding(m_vertexArrayObject, a_materialID, vbuf_index);
             // glVertexArrayBindingDivisor(model->vao, a_materialID, 1);
         }
+
         //V-SYNC
         wglSwapIntervalEXT(1);
+
+        WindowDimension sceneDimension;
+        sceneDimension.height = 2160;
+        sceneDimension.width = 3840;
+        
+        InitSceneFramebuffer(sceneDimension);
     }
 
     void Graphics::InitQuad()
@@ -150,6 +158,34 @@ namespace RedFoxEngine
             __debugbreak();
     }
 
+    void Graphics::InitSceneFramebuffer(WindowDimension dimension)
+    {
+        glCreateFramebuffers(1, &m_sceneFramebuffer);
+
+        glCreateTextures(GL_TEXTURE_2D, 1, &m_sceneTexture);
+        glTextureParameteri(m_sceneTexture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTextureParameteri(m_sceneTexture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        m_sceneTextureDimension = dimension;
+        glTextureStorage2D(m_sceneTexture, 1, GL_RGBA8, m_sceneTextureDimension.width,
+            m_sceneTextureDimension.height);
+
+        glNamedFramebufferTexture(m_sceneFramebuffer, GL_COLOR_ATTACHMENT0,
+            m_sceneTexture, 0);
+        unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0 };
+        glNamedFramebufferDrawBuffers(m_sceneFramebuffer, 1, attachments);
+        GLuint rbo;
+
+        glCreateRenderbuffers(1, &rbo);
+        glNamedRenderbufferStorage(rbo, GL_DEPTH24_STENCIL8,
+            dimension.width, dimension.height);
+        glNamedFramebufferRenderbuffer(m_sceneFramebuffer, GL_DEPTH_ATTACHMENT,
+            GL_RENDERBUFFER, rbo);
+
+        if (glCheckNamedFramebufferStatus(m_sceneFramebuffer, GL_FRAMEBUFFER) !=
+            GL_FRAMEBUFFER_COMPLETE)
+                __debugbreak();
+    }
+    
     /*If the dimensions of the window change, we need to resize*/
     void Graphics::UpdateImGUIFrameBuffer(WindowDimension& dimension,
         WindowDimension content)
@@ -267,7 +303,7 @@ namespace RedFoxEngine
     {      
         if (ui.text.data == nullptr)
             return;
-        glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFramebuffer);
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
@@ -325,6 +361,14 @@ namespace RedFoxEngine
             }
             ++text;
         }
+        float vertices[] = {
+            // positions  // texture Coords
+            -1.0f,  1.0f,  0.0f, 1.0f,
+            -1.0f, -1.0f,  0.0f, 0.0f,
+             1.0f,  1.0f,  1.0f, 1.0f,
+             1.0f, -1.0f,  1.0f, 0.0f,
+        };
+        glNamedBufferSubData(m_quadVBO, 0, sizeof(vertices), vertices);
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
@@ -334,8 +378,6 @@ namespace RedFoxEngine
     void Graphics::DrawSkyDome(SkyDome skyDome, float time)
     {
         glBindProgramPipeline(m_sky.pipeline);
-        // glBindVertexArray(m_models[1].vao); // TODO:Maybe pass the model as a parameter
-
         RedFoxMaths::Mat4 mvp = m_viewProjection * skyDome.model;
 
         glBindTextureUnit(0, skyDome.topTint);
@@ -371,10 +413,10 @@ namespace RedFoxEngine
         }
         shadowMapUpdate += p_delta;
 
-        glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFramebuffer);
         glCullFace(GL_BACK);
-        glViewport(0, 0, p_windowDimension.width,
-            p_windowDimension.height);
+        glViewport(0, 0, m_sceneTextureDimension.width,
+            m_sceneTextureDimension.height);
         glClearColor(0, 0, 0, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         glDisable(GL_CULL_FACE);
@@ -383,7 +425,7 @@ namespace RedFoxEngine
         glEnable(GL_CULL_FACE);
         DrawGameObjects(m_scene->m_modelCountIndex);
         // swap the buffers to show output
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);    
+
     }
 
     static void bindBuffer(int bindingPoint, GLuint buffer, int size)
@@ -483,4 +525,121 @@ namespace RedFoxEngine
             0, instanceCount);
     }
 
+    void Graphics::InitPostProcess(Memory* arena)
+    {
+        glCreateBuffers(1, &m_kernelSSBO);
+        glNamedBufferStorage(m_kernelSSBO,
+            100000 * sizeof(RedFoxMaths::Mat4),
+            nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
+
+        m_kernels = (Kernel*)MyMalloc(arena, sizeof(Kernel) * m_maxKernel);
+    }
+    
+    void Graphics::PostProcessingPass()
+    {
+        glBindTextureUnit(1, m_sceneTexture);
+        glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
+        glViewport(0, 0, dimension.width, dimension.height);
+        glNamedBufferSubData(m_kernelSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount, m_kernelsMatrices);
+
+        if (m_kernelCount > 0)
+            glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0,m_kernelSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount);
+        
+        // clear screen
+        glEnable(GL_BLEND);
+        glBindProgramPipeline(m_postProcess.pipeline);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+        glDisable(GL_DEPTH_TEST);
+        glBindVertexArray(m_quadVAO);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glEnable(GL_DEPTH_TEST);
+    }
+
+    Kernel* Graphics::AddKernel(RedFoxMaths::Mat4 kernel)
+    {
+        if (m_kernelCreated > m_kernelCount)
+        {
+            for (int i = 0; i < m_kernelCount; i++)
+            {
+                if (m_kernels[i].deleted)
+                {
+                    m_kernels[i].kernel = kernel;
+                    m_kernels[i].deleted = false;
+                    m_kernels[i].active = true;
+                    
+                    m_kernelCount++;
+                    return &m_kernels[i];
+                }
+            }
+        }
+
+        Kernel result;
+        result.uniqueId = m_kernelCreated;
+        result.kernel = kernel;
+        
+        m_kernels[result.uniqueId] = result;
+        m_kernelCount++;
+        m_kernelCreated++;
+
+        return &m_kernels[result.uniqueId];
+    }
+
+    void Graphics::DeleteKernel(int id)
+    {
+        if (id > m_kernelCreated || m_kernels[id].deleted)
+            return;
+
+        m_kernels[id].deleted = true;
+
+        if (m_kernels[id].active)
+            m_kernelCount--;
+    }
+
+    void Graphics::DeactivateKernel(int id)
+    {
+        if (id > m_kernelCreated || m_kernels[id].deleted || m_kernels[id].active)
+            return;
+
+        m_kernels[id].active = true;
+        m_kernelCount--;
+    }
+
+    void Graphics::EditKernel(int id, RedFoxMaths::Mat4 kernel)
+    {
+        if (id > m_kernelCreated || m_kernels[id].deleted)
+            return;
+
+        m_kernels[id].kernel = kernel;
+    }
+
+    void Graphics::ResetKernel(int id)
+    {
+        if (id > m_kernelCreated || m_kernels[id].deleted)
+            return;
+
+        float kernel[4][4] = {
+            {0.0f, 0.0f, 0.0f, 0.0f},
+            {0.0f, 1.0f, 0.0f, 0.0f},
+            {0.0f, 0.0f, 0.0f, 0.0f},
+            {0.0f, 0.0f, 0.0f, 0.0f}
+        };
+        
+        m_kernels[id].kernel = kernel;
+    }
+
+    void Graphics::BindKernelBuffer(Memory* tempAlocator)
+    {
+        m_kernelsMatrices = (RedFoxMaths::Mat4*)MyMalloc(tempAlocator, sizeof(RedFoxMaths::Mat4) * m_kernelCount);
+        int count = 0;
+        for (int i = 0; i < m_kernelCreated; i++)
+        {
+            if (!m_kernels[i].deleted && m_kernels[i].active)
+            {
+                m_kernelsMatrices[count] = m_kernels[i].kernel;
+                count++;
+            }
+        }
+    }
 } // namespace RedFoxEngine

@@ -448,9 +448,6 @@ void Engine::DrawEditor()
             mousePos.x * dimension.width / content.x - vMin.x,
             mousePos.y * dimension.height / content.y - vMin.y
         };
-        static float averageFps;
-
-
 
         RedFoxMaths::Float2 uiPos, convertedPos, uiSize;
         for (int i = 1; i < m_scene.gameUICount; i++)
@@ -482,6 +479,8 @@ void Engine::DrawEditor()
                 m_scene.gameUIs[i].isHovered = false;
             }
         }
+
+        static float averageFps;
         if (m_time.delta)
             m_imgui.fps[m_imgui.currentFrame++ % 255] = (1.0f / m_time.delta);
         if (m_imgui.fpsUpdate >= 0.5)
@@ -892,26 +891,100 @@ void Engine::DrawSceneGraph()
     End();
 }
 
+void Engine::DrawAssetsBrowser()
+{
+    if (Begin("Assets Browser", (bool*)0, m_imgui.windowFlags))
+    {
+        if (BeginTable("AssetsTable", 2, m_imgui.tableFlags))
+        {
+            TableNextRow();
+            TableSetColumnIndex(0);
+            //TODO(a.perche): Display max models value (make a struct of maximum resources allowed)
+            Text("Models (%d)", m_modelCount);
+            SameLine();
+
+            if (Button("Import"))
+            {
+                OpenPopup("Importing a model...");
+            }
+            const ImVec2 popupDim(400, 70);
+            ImVec2 windowPos = ImGui::GetIO().DisplaySize;
+            SetNextWindowPos((windowPos - popupDim) / 2);
+            SetNextWindowSize(popupDim);
+            if (BeginPopupModal("Importing a model..."))
+            {
+                SetItemDefaultFocus();
+                static MyString path = initStringChar("", 256, &m_memoryManager.m_memory.arena);
+                Text("Path:");
+                SameLine();
+                SetNextItemWidth(-FLT_MIN);
+                InputText("Path", (char*)path.data, path.capacity);
+                if (Button("Import"))
+                {
+                    ObjModelPush(path.data);
+                    m_graphics.InitModel(&m_models[m_modelCount - 1]);
+                    m_graphics.m_models = m_models;
+                    m_graphics.m_modelCount = m_modelCount;
+                    assignString(path, "");
+                    CloseCurrentPopup();
+                }
+                SameLine();
+                if (Button("Cancel"))
+                {
+                    assignString(path, "");
+                    CloseCurrentPopup();
+                }
+                EndPopup();
+            }
+            
+            TableSetColumnIndex(1);
+            Text("Sounds");
+            TableNextRow();
+
+            TableSetColumnIndex(0);
+            if (BeginListBox("ModelsList", ImVec2(-FLT_MIN, 5 * GetTextLineHeightWithSpacing())))
+            {
+                for (int i = 0; i < m_modelCount; i++)
+                {
+                    bool is_selected = m_imgui.selectedModelAsset == i;
+                    if (Selectable(m_modelsName[i].data, is_selected))
+                        m_imgui.selectedModelAsset = i;
+
+                    if (is_selected)
+                        SetItemDefaultFocus();
+                }
+                EndListBox();
+            }
+
+            TableSetColumnIndex(1);
+            if (BeginListBox("SoundsList", ImVec2(-FLT_MIN, 5 * GetTextLineHeightWithSpacing())))
+            {
+                for (int i = 0; i < m_soundManager.GetSoundCount(); i++)
+                {
+                    bool is_selected = m_imgui.selectedSoundAsset == i;
+                    if (Selectable(m_soundManager.GetSoundsName()[i].data, is_selected))
+                        m_imgui.selectedSoundAsset = i;
+
+                    if (is_selected)
+                        SetItemDefaultFocus();
+                }
+                EndListBox();
+            }
+            EndTable();
+        }
+    }
+    End();
+}
+
 void Engine::DrawProperties()
 {
     if (Begin("Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
-        ImGuiTreeNodeFlags propertiesFlags =
-            ImGuiTreeNodeFlags_DefaultOpen |
-            ImGuiTreeNodeFlags_OpenOnArrow |
-            ImGuiTreeNodeFlags_OpenOnDoubleClick;
-
-        ImGuiTableFlags tableFlags =
-            ImGuiTableFlags_RowBg |
-            ImGuiTableFlags_SizingStretchSame |
-            ImGuiTableFlags_Resizable |
-            ImGuiTableFlags_BordersOuter;
-
         if (m_imgui.selectedObject != 0)
         {
-            if (CollapsingHeader("Transform", propertiesFlags))
+            if (CollapsingHeader("Transform", m_imgui.propertiesFlags))
             {
-                if (BeginTable("TransformTable", 2, tableFlags))
+                if (BeginTable("TransformTable", 2, m_imgui.tableFlags))
                 {
                     TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
                     TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
@@ -928,7 +1001,6 @@ void Engine::DrawProperties()
                     Text("Rotation");
                     TableSetColumnIndex(1);
                     SetNextItemWidth(-FLT_MIN);
-
                     static RedFoxMaths::Float3 rotation;
                     if (DragFloat3("TransformRotation", &rotation.x, m_imgui.dragSpeed, -360.f, 360.f, "%.3f", ImGuiSliderFlags_AlwaysClamp))
                     {
@@ -950,7 +1022,30 @@ void Engine::DrawProperties()
                 }
             }
 
-            if (CollapsingHeader("Render", propertiesFlags))
+            if (CollapsingHeader("Behaviour", m_imgui.propertiesFlags))
+            {
+                SeparatorText("Behaviour");
+                SetNextItemWidth(-FLT_MIN);
+                static const char* currentBehaviour = m_scene.gameObjectBehaviours[0].name.data;
+
+                if (ImGui::BeginCombo("BehaviourList", currentBehaviour))
+                {
+                    for (int i = 0; i < m_scene.gameObjectBehaviourCount; i++)
+                    {
+                        bool is_selected = (currentBehaviour == m_scene.gameObjectBehaviours[i].name.data);
+                        if (ImGui::Selectable(m_scene.gameObjectBehaviours[i].name.data, is_selected))
+                        {
+                            currentBehaviour = m_scene.gameObjectBehaviours[i].name.data;
+                            m_scene.gameObjects[m_imgui.selectedObject].behaviourIndex = i;
+                        }
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+            }
+
+            if (CollapsingHeader("Render", m_imgui.propertiesFlags))
             {
                 int* modelIndex = &m_scene.gameObjects[m_imgui.selectedObject].modelIndex;
                 SeparatorText("Model");
@@ -972,7 +1067,7 @@ void Engine::DrawProperties()
                 SeparatorText("Material");
                 if (*modelIndex != -1)
                 {
-                    if (BeginTable("MaterialTable", 2, tableFlags))
+                    if (BeginTable("MaterialTable", 2, m_imgui.tableFlags))
                     {
                         TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
                         TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
@@ -992,9 +1087,9 @@ void Engine::DrawProperties()
 
         if (m_imgui.selectedUI != 0)
         {
-            if (CollapsingHeader("Transform", propertiesFlags))
+            if (CollapsingHeader("Transform", m_imgui.propertiesFlags))
             {
-                if (BeginTable("TransformTable", 2, tableFlags))
+                if (BeginTable("TransformTable", 2, m_imgui.tableFlags))
                 {
                     TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
                     TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
@@ -1022,9 +1117,9 @@ void Engine::DrawProperties()
                     ImGui::EndTable();
                 }
             }
-            if (CollapsingHeader("Text", propertiesFlags))
+            if (CollapsingHeader("Text", m_imgui.propertiesFlags))
             {
-                if (BeginTable("Attributes", 2, tableFlags))
+                if (BeginTable("Attributes", 2, m_imgui.tableFlags))
                 {
                     TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
                     TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
@@ -1034,7 +1129,7 @@ void Engine::DrawProperties()
                     ImGui::Text("Text");
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::InputText("Text", (char*)m_scene.gameUIs[m_imgui.selectedUI].text.data, m_scene.gameUIs[m_imgui.selectedUI].text.capacity, 0, 0, 0);
+                    ImGui::InputText("Text", (char*)m_scene.gameUIs[m_imgui.selectedUI].text.data, m_scene.gameUIs[m_imgui.selectedUI].text.capacity);
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
                     ImGui::EndTable();
@@ -1042,9 +1137,9 @@ void Engine::DrawProperties()
             }
 
             SeparatorText("Behaviour");
-            SetNextItemWidth(-FLT_MIN);           
+            SetNextItemWidth(-FLT_MIN);
             static const char* currentBehaviour = m_scene.gameUIBehaviours[1].name.data;
-           
+
             if (ImGui::BeginCombo("BehaviourList", currentBehaviour))
             {
                 for (int i = 0; i < m_scene.gameUIBehaviourCount; i++)
@@ -1061,103 +1156,90 @@ void Engine::DrawProperties()
                 ImGui::EndCombo();
             }
 
-            SeparatorText("Colors");                                 
-            const char* colors[3] = { "selectedColor", "textColor", "hoverColor" };
-            float* variable[3] = { &m_scene.gameUIs[m_imgui.selectedUI].selectedColor.x,
-                                  &m_scene.gameUIs[m_imgui.selectedUI].textColor.x,
-                                  &m_scene.gameUIs[m_imgui.selectedUI].hoverColor.x
-            };
-            static int colorIndex=0;
-            static const char* currentColorType = colors[0];
 
-
-            SetNextItemWidth(-FLT_MIN);
-            if (ImGui::BeginCombo("ColorList", currentColorType))
+            if (CollapsingHeader("Render", m_imgui.propertiesFlags))
             {
-                for (int i = 0; i < IM_ARRAYSIZE(colors); i++)
+                SeparatorText("Colors");
+                const char* colors[3] = { "selectedColor", "textColor", "hoverColor" };
+                float* variable[3] = { &m_scene.gameUIs[m_imgui.selectedUI].selectedColor.x,
+                                      &m_scene.gameUIs[m_imgui.selectedUI].textColor.x,
+                                      &m_scene.gameUIs[m_imgui.selectedUI].hoverColor.x
+                };
+                static int colorIndex = 0;
+                static const char* currentColorType = colors[0];
+
+
+                SetNextItemWidth(-FLT_MIN);
+                if (ImGui::BeginCombo("ColorList", currentColorType))
                 {
-                    bool is_selected = (currentColorType == colors[i]);
-                    if (ImGui::Selectable(colors[i], is_selected))
+                    for (int i = 0; i < IM_ARRAYSIZE(colors); i++)
                     {
-                        currentColorType = colors[i];
-                        colorIndex = i;
+                        bool is_selected = (currentColorType == colors[i]);
+                        if (ImGui::Selectable(colors[i], is_selected))
+                        {
+                            currentColorType = colors[i];
+                            colorIndex = i;
+                        }
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
                     }
-                    if (is_selected)
-                        ImGui::SetItemDefaultFocus();
+                    ImGui::EndCombo();
                 }
-                ImGui::EndCombo();
-            }
 
-            
-            if (BeginTable("TextTable", 2, tableFlags))
-            {
-                TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-                TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
-                TableNextRow();
 
-                TableSetColumnIndex(0);
-                SetNextItemWidth(-FLT_MIN); 
-                SeparatorText("Button color");
-                ColorPicker3("SelectedColor",
-                    variable[colorIndex],
-                    ImGuiColorEditFlags_PickerHueWheel);
-                EndTable();
+                if (BeginTable("TextTable", 2, m_imgui.tableFlags))
+                {
+                    TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                    TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+                    TableNextRow();
 
+                    TableSetColumnIndex(0);
+                    SetNextItemWidth(-FLT_MIN);
+                    SeparatorText("Button color");
+                    ColorPicker3("SelectedColor",
+                        variable[colorIndex],
+                        ImGuiColorEditFlags_PickerHueWheel);
+                    EndTable();
+
+                }
             }
         }
-        if (Begin("Assets Browser", (bool*)0, m_imgui.windowFlags))
-        {
-            ImGuiTableFlags tableFlags =
-                ImGuiTableFlags_RowBg |
-                ImGuiTableFlags_SizingStretchSame |
-                ImGuiTableFlags_BordersOuter;
-
-            if (BeginTable("AssetsTable", 2, tableFlags))
-            {
-                TableNextRow();
-                TableSetColumnIndex(0);
-                //SetCursorPosX(GetCursorPos().x + (GetColumnWidth() - CalcTextSize("Models").x) / 2.f);
-                Text("Models");
-                TableSetColumnIndex(1);
-                //SetCursorPosX(GetCursorPos().x + (GetColumnWidth() - CalcTextSize("Sounds").x) / 2.f);
-                Text("Sounds");
-                TableNextRow();
-
-                TableSetColumnIndex(0);
-                if (BeginListBox("ModelsList", ImVec2(-FLT_MIN, 5 * GetTextLineHeightWithSpacing())))
-                {
-                    for (int i = 0; i < m_modelCount; i++)
-                    {
-                        bool is_selected = m_imgui.selectedModelAsset == i;
-                        if (Selectable(m_modelsName[i].data, is_selected))
-                            m_imgui.selectedModelAsset = i;
-
-                        if (is_selected)
-                            SetItemDefaultFocus();
-                    }
-                    EndListBox();
-                }
-
-                TableSetColumnIndex(1);
-                if (BeginListBox("SoundsList", ImVec2(-FLT_MIN, 5 * GetTextLineHeightWithSpacing())))
-                {
-                    for (int i = 0; i < m_soundManager.GetSoundCount(); i++)
-                    {
-                        bool is_selected = m_imgui.selectedSoundAsset == i;
-                        if (Selectable(m_soundManager.GetSoundsName()[i].data, is_selected))
-                            m_imgui.selectedSoundAsset = i;
-
-                        if (is_selected)
-                            SetItemDefaultFocus();
-                    }
-                    EndListBox();
-                }
-                EndTable();
-            }
-            End();
-        }
-        End();
     }
+    End();
+}
+
+void Engine::DrawWorldProperties()
+{
+    if (Begin("WorldProperties", (bool*)0, ImGuiWindowFlags_NoCollapse))
+    {
+        if (CollapsingHeader("Global Post-Process", m_imgui.propertiesFlags))
+        {
+            BeginTable("PostProcessTable", 2, ImGuiTableFlags_RowBg);
+            TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+            TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+            for (int i = 0; i < m_graphics.m_kernelCount; i++)
+            {
+                TableNextRow();
+                TableSetColumnIndex(0);
+                Text("Kernel %d", i + 1);
+                TableSetColumnIndex(1);
+                SetNextItemWidth(-FLT_MIN);
+                DragFloat3("KernelRow1" + i, &m_graphics.m_kernels[i].kernel.mat16[0], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                SetNextItemWidth(-FLT_MIN);
+                DragFloat3("KernelRow2" + i, &m_graphics.m_kernels[i].kernel.mat16[4], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                SetNextItemWidth(-FLT_MIN);
+                DragFloat3("KernelRow3" + i, &m_graphics.m_kernels[i].kernel.mat16[8], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                m_graphics.EditKernel(i, m_graphics.m_kernels[i].kernel);
+            }
+            EndTable();
+            if (Button("Add empty", ImVec2(GetContentRegionAvail().x, 20)) && m_graphics.m_kernelCount < m_graphics.m_maxKernel)
+            {
+                float mat[4][4] = { 0 }; mat[1][1] = 1;
+                Kernel* k = m_graphics.AddKernel(RedFoxMaths::Mat4(mat));
+            }
+        }
+    }
+    End();
 }
 
 void Engine::UpdateIMGUI()
@@ -1175,6 +1257,8 @@ void Engine::UpdateIMGUI()
     DrawEditor();
     DrawUIGraph();
     DrawSceneGraph();
+    DrawWorldProperties();
     DrawProperties();
+    DrawAssetsBrowser();
     PopFont();
 }

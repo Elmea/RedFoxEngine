@@ -105,15 +105,15 @@ float ShadowCalculation(Light light)
 
     float shadow = 0.0;
     vec2 texelSize = 1.0 / textureSize(sampler2D(sb_ShadowMaps.data[0]), 0);
-    for(int x = -1; x <= 1; ++x)
+    for(float x = -1.5; x <= 1.5; ++x)
     {
-        for(int y = -1; y <= 1; ++y)
+        for(float y = -1.5; y <= 1.5; ++y)
         {
             float pcfDepth = texture(sampler2D(sb_ShadowMaps.data[0]), projCoords.xy + vec2(x, y) * texelSize).r; 
             shadow += currentDepth + bias > pcfDepth ? 1.0 : 0.0;        
         } 
     }
-    shadow /= 9.0;
+    shadow /= 16.0;
     return shadow;
 }  
 

@@ -1,4 +1,4 @@
-#include "GameUIBehaviour.hpp"
+#include "GameBehaviour.hpp"
 using namespace RedFoxEngine;
 
 

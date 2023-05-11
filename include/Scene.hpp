@@ -2,7 +2,7 @@
 #include "Camera.hpp"
 #include "GameObject.hpp"
 #include "GameUI.hpp"
-#include "GameUIBehaviour.hpp"
+#include "GameBehaviour.hpp"
 
 namespace RedFoxEngine
 {
@@ -44,6 +44,7 @@ public:
     u32 gameObjectCount = 0;
     u32 gameUICount = 0;
     u32 gameUIBehaviourCount = 0;
+    u32 gameObjectBehaviourCount = 0;
 
     SkyDome skyDome;
     Camera m_gameCamera;
@@ -58,8 +59,9 @@ public:
 
     GameObject *gameObjects = nullptr;
     GameUI* gameUIs = nullptr;
-    GameUIBehaviour* gameUIBehaviours = nullptr;
- 
+    GameBehaviour* gameUIBehaviours = nullptr;
+    GameBehaviour* gameObjectBehaviours = nullptr;
+
     Scene(int width, int height):m_gameCamera(projectionType::PERSPECTIVE,
         width / (f32)height){}
     void InitScene(Memory *persistent)
