@@ -533,7 +533,6 @@ namespace RedFoxEngine
             nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
 
         m_kernels = (Kernel*)MyMalloc(arena, sizeof(Kernel) * m_maxKernel);
-        m_postProcessShaders = (Shader*)MyMalloc(arena, sizeof(Shader) * m_maxPostProcessShader);
         glCreateFramebuffers(1, &m_evenPostProcessFramebuffer);
         glCreateFramebuffers(1, &m_oddPostProcessFramebuffer);
 
@@ -572,7 +571,7 @@ namespace RedFoxEngine
         // Shaders pass
         glBindTextureUnit(1, m_sceneTexture);
         glViewport(0, 0, m_sceneTextureDimension.width, m_sceneTextureDimension.height);
-        for (int i = 0; i < m_postProcessShaderCount; i++)
+        for (int i = 0; i < m_postProcessShaders.size(); i++)
         {
             if (i%2 == 1)
             {

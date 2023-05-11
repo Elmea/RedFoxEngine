@@ -86,7 +86,17 @@ void RedFoxEngine::Graphics::AddPostProcessShader(Memory *tempArena, const char*
 
     CompileShader(vertexShaderSource.data, fragmentShaderSource.data, result);
 
-    // TODO : array gestion stuff
-    m_postProcessShaders[m_postProcessShaderCount] = result;
-    m_postProcessShaderCount++;
+    m_postProcessShaders.push_back(result);
+}
+
+void RedFoxEngine::Graphics::SwapPostProcessShader(int idFirst, int idSecond)
+{
+    std::swap(m_postProcessShaders[idFirst],m_postProcessShaders[idSecond]);
+}
+
+void RedFoxEngine::Graphics::RemovePostProcessShader(int id)
+{
+    auto it = m_postProcessShaders.begin();
+    std::advance(it, id);
+    m_postProcessShaders.erase(it);
 }

@@ -289,6 +289,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="greyScale.frag" />
+    <Content Include="invertColor.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
