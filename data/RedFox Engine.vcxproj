@@ -288,7 +288,7 @@
     <None Include="skydome.vert" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="postProcessTest.frag" />
+    <Content Include="greyScale.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

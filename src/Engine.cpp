@@ -180,7 +180,7 @@ Engine::Engine(int width, int height) :
         // m_graphics.AddKernel(secondKernelMat);
         // m_graphics.AddKernel(kernelMat);
 
-        m_graphics.AddPostProcessShader(&m_memoryManager.m_memory.temp, "postProcessTest.frag");
+        m_graphics.AddPostProcessShader(&m_memoryManager.m_memory.temp, "greyScale.frag");
     }
 
 #endif
