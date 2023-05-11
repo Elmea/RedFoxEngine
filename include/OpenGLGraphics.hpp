@@ -5,6 +5,8 @@
 #include "Win32Platform.hpp"
 #endif
 
+#include <utility>
+#include <vector>
 #include <GL/gl.h>
 #include "OpenGLFunctions.hpp"
 #include "ObjParser.hpp"
@@ -16,7 +18,6 @@
 
 namespace RedFoxEngine
 {
-
 struct Material
 {
     RedFoxMaths::Float3 ambient;
@@ -110,10 +111,17 @@ private:
     int m_kernelCreated = 0;
     RedFoxMaths::Mat4* m_kernelsMatrices;
     WindowDimension m_sceneTextureDimension;
+
+    std::vector<Shader> m_postProcessShaders;
+    GLuint m_evenPostProcessTexture;
+    GLuint m_oddPostProcessTexture;
+    GLuint m_evenPostProcessFramebuffer;
+    GLuint m_oddPostProcessFramebuffer;
     
 public:
     int m_kernelCount;
     const int m_maxKernel = 5;
+    const int m_maxPostProcessShader = 5;
     Kernel* m_kernels;
 
     WindowDimension dimension;
@@ -162,6 +170,10 @@ public:
     // Setting an existing kernel by his index.
     void EditKernel(int id, RedFoxMaths::Mat4 kernel);
     void BindKernelBuffer(Memory* tempAlocator);
+
+    void AddPostProcessShader(Memory *tempArena, const char* fragPath);
+    void SwapPostProcessShader(int idFirst, int idSecond);
+    void RemovePostProcessShader(int id);
 };
 } // namespace RedFoxEngine
 

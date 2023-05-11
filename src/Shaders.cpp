@@ -75,5 +75,28 @@ void RedFoxEngine::Graphics::InitShaders(Memory *tempArena)
     fragmentShaderSource = OpenAndReadEntireFile(
         "PostProcess.frag", tempArena);
     CompileShader(vertexShaderSource.data, fragmentShaderSource.data,m_postProcess);
+}
 
+void RedFoxEngine::Graphics::AddPostProcessShader(Memory *tempArena, const char* fragPath)
+{
+    MyString vertexShaderSource = OpenAndReadEntireFile("PostProcess.vert", tempArena);
+    MyString fragmentShaderSource = OpenAndReadEntireFile(fragPath, tempArena);
+
+    Shader result;
+
+    CompileShader(vertexShaderSource.data, fragmentShaderSource.data, result);
+
+    m_postProcessShaders.push_back(result);
+}
+
+void RedFoxEngine::Graphics::SwapPostProcessShader(int idFirst, int idSecond)
+{
+    std::swap(m_postProcessShaders[idFirst],m_postProcessShaders[idSecond]);
+}
+
+void RedFoxEngine::Graphics::RemovePostProcessShader(int id)
+{
+    auto it = m_postProcessShaders.begin();
+    std::advance(it, id);
+    m_postProcessShaders.erase(it);
 }

@@ -146,20 +146,21 @@ Engine::Engine(int width, int height) :
     initSphericalManyGameObjects(5000);
     m_scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
 
+    // Some light for testing
+    {
+        Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
+        dir->lightInfo.constant = 1.0f;
+        dir->lightInfo.linear = 0.09f;
+        dir->lightInfo.quadratic = 0.032f;
+        dir->lightInfo.position = {0.0f, 75.0f, 0.0f};
+        dir->lightInfo.direction = { 0.3f, -0.8f, -0.5f };
+        dir->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
+        dir->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
+        dir->lightInfo.specular = {0.1f, 0.1f, 0.1f};
+    }
+    /*
     // Post process tests
     {
-        // Some light for testing
-        {
-            Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
-            dir->lightInfo.constant = 1.0f;
-            dir->lightInfo.linear = 0.09f;
-            dir->lightInfo.quadratic = 0.032f;
-            dir->lightInfo.position = {0.0f, 75.0f, 0.0f};
-            dir->lightInfo.direction = { 0.3f, -0.8f, -0.5f };
-            dir->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
-            dir->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
-            dir->lightInfo.specular = {0.1f, 0.1f, 0.1f};
-        }
 
         float edge[4][4] = {
             { 1.f, 1.f, 1.f, 0.f },
@@ -177,9 +178,12 @@ Engine::Engine(int width, int height) :
 
         RedFoxMaths::Mat4 kernelMat = edge;
         RedFoxMaths::Mat4 secondKernelMat = blur;
+        m_graphics.AddKernel(kernelMat);
         // m_graphics.AddKernel(secondKernelMat);
-        // m_graphics.AddKernel(kernelMat);
-    }
+
+        m_graphics.AddPostProcessShader(&m_memoryManager.m_memory.temp, "greyScale.frag");
+        m_graphics.AddPostProcessShader(&m_memoryManager.m_memory.temp, "invertColor.frag");
+    }*/
 
 #endif
     m_input = {};
@@ -382,8 +386,6 @@ void Engine::Update()
     UpdateIMGUI();
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
-
-
 
 void Engine::Draw()
 {
