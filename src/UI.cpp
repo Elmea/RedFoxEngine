@@ -1032,7 +1032,6 @@ void Engine::DrawProperties()
                 if (BeginTable("TransformTable", 2, m_imgui.tableFlags))
                 {
                     TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-                    TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
                     TableNextRow();
                     TableSetColumnIndex(0);
                     Text("Position");
@@ -1259,15 +1258,19 @@ void Engine::DrawWorldProperties()
     {
         if (CollapsingHeader("Global Post-Process", m_imgui.propertiesFlags))
         {
-            BeginTable("PostProcessTable", 2, ImGuiTableFlags_RowBg);
+            BeginTable("PostProcessTable", 3, m_imgui.tableFlags);
             TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
-            TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
             for (int i = 0; i < m_graphics.m_kernelCount; i++)
             {
                 TableNextRow();
                 TableSetColumnIndex(0);
-                Text("Kernel %d", i + 1);
+                if (ArrowButton("KernelUp" + i, ImGuiDir_Up) && i > 0)
+                    m_graphics.SwapKernel(i - 1, i);
+                if (ArrowButton("KernelDown" + i, ImGuiDir_Down) && i + 1 < m_graphics.m_kernelCount)
+                    m_graphics.SwapKernel(i, i + 1);
                 TableSetColumnIndex(1);
+                Text("Kernel %d", i + 1);
+                TableSetColumnIndex(2);
                 SetNextItemWidth(-FLT_MIN);
                 DragFloat3("KernelRow1" + i, &m_graphics.m_kernels[i].kernel.mat16[0], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                 SetNextItemWidth(-FLT_MIN);
@@ -1277,11 +1280,15 @@ void Engine::DrawWorldProperties()
                 m_graphics.EditKernel(i, m_graphics.m_kernels[i].kernel);
             }
             EndTable();
-            if (Button("Add empty", ImVec2(GetContentRegionAvail().x, 20)) && m_graphics.m_kernelCount < m_graphics.m_maxKernel)
+
+            const bool kernelLimitReached = (m_graphics.m_kernelCount >= m_graphics.m_maxKernel);
+            if (kernelLimitReached) BeginDisabled();
+            if (ButtonEx("Add kernel", ImVec2(GetContentRegionAvail().x, 20)))
             {
                 float mat[4][4] = { 0 }; mat[1][1] = 1;
                 Kernel* k = m_graphics.AddKernel(RedFoxMaths::Mat4(mat));
             }
+            if (kernelLimitReached) EndDisabled();
         }
     }
     End();

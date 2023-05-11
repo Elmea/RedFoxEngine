@@ -157,6 +157,7 @@ public:
     Kernel* AddKernel(RedFoxMaths::Mat4 kernel);
     // Delete a kernel from the kernels array by index.
     void DeleteKernel(int id);
+    void SwapKernel(int a, int b);
     void DeactivateKernel(int id);
     // Setting an existing kernel by his index.
     void EditKernel(int id, RedFoxMaths::Mat4 kernel);
