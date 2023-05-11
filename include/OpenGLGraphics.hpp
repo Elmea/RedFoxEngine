@@ -150,6 +150,7 @@ public:
         RedFoxMaths::Mat4* modelMatrices, int instanceCount);
     void DrawModelShadowInstances(Model* model, int instanceCount);
     void RenderText(GameUI ui);
+    void ResetKernel(int id);
 
     void PostProcessingPass();
     // Add a kernel to the kernel array. Return it.

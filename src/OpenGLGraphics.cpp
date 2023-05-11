@@ -616,6 +616,21 @@ namespace RedFoxEngine
         m_kernels[id].kernel = kernel;
     }
 
+    void Graphics::ResetKernel(int id)
+    {
+        if (id > m_kernelCreated || m_kernels[id].deleted)
+            return;
+
+        float kernel[4][4] = {
+            {0.0f, 0.0f, 0.0f, 0.0f},
+            {0.0f, 1.0f, 0.0f, 0.0f},
+            {0.0f, 0.0f, 0.0f, 0.0f},
+            {0.0f, 0.0f, 0.0f, 0.0f}
+        };
+        
+        m_kernels[id].kernel = kernel;
+    }
+
     void Graphics::BindKernelBuffer(Memory* tempAlocator)
     {
         m_kernelsMatrices = (RedFoxMaths::Mat4*)MyMalloc(tempAlocator, sizeof(RedFoxMaths::Mat4) * m_kernelCount);
