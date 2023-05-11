@@ -10,6 +10,16 @@
 
 #include "imstb_truetype.h"
 
+extern "C" 
+{
+  __declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
+}
+
+extern "C"
+{
+  __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+
 namespace RedFoxEngine
 {
     void Graphics::InitGraphics(Memory* tempArena, WindowDimension p_dimension)
