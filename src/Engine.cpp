@@ -78,7 +78,7 @@ Engine::Engine(int width, int height) :
     m_modelsName[1] = initStringChar("Sphere", 6, &m_memoryManager.m_memory.arena);
     m_modelsName[1].capacity = 6;
     m_modelCount++;
-    ObjModelPush("ts_bot912.obj");
+    //ObjModelPush("ts_bot912.obj");
     // ObjModelPush("vortigaunt.obj");
     // ObjModelPush("barbarian.obj");
 

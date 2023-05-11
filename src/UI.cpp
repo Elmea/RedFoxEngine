@@ -914,21 +914,22 @@ void Engine::DrawAssetsBrowser()
             if (BeginPopupModal("Importing a model..."))
             {
                 SetItemDefaultFocus();
-                static MyString path = initStringChar("data/", 256, &m_memoryManager.m_memory.arena);
+                static MyString path = initStringChar("", 256, &m_memoryManager.m_memory.arena);
                 Text("Path:");
                 SameLine();
                 SetNextItemWidth(-FLT_MIN);
                 InputText("Path", (char*)path.data, path.capacity);
                 if (Button("Import"))
                 {
-                    ObjModelPush(path.data); //TODO: DEBUG
-                    assignString(path, "data/");
+                    ObjModelPush(path.data);
+                    m_graphics.InitModel(&m_models[m_modelCount]);
+                    assignString(path, "");
                     CloseCurrentPopup();
                 }
                 SameLine();
                 if (Button("Cancel"))
                 {
-                    assignString(path, "data/");
+                    assignString(path, "");
                     CloseCurrentPopup();
                 }
                 EndPopup();
