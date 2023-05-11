@@ -117,7 +117,6 @@ float ShadowCalculation(Light light)
     return shadow;
 }  
 
-
 vec3 CalcDirLight(Light light, vec3 normal, vec3 viewDir, vec3 Color)
 {
     vec3 lightDir = normalize(-light.direction);

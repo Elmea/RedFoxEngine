@@ -535,11 +535,82 @@ namespace RedFoxEngine
             nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
 
         m_kernels = (Kernel*)MyMalloc(arena, sizeof(Kernel) * m_maxKernel);
+        m_postProcessShaders = (Shader*)MyMalloc(arena, sizeof(Shader) * m_maxPostProcessShader);
+        glCreateFramebuffers(1, &m_evenPostProcessFramebuffer);
+        glCreateFramebuffers(1, &m_oddPostProcessFramebuffer);
+
+        // Even
+        {
+            glCreateTextures(GL_TEXTURE_2D, 1, &m_evenPostProcessTexture);
+            glTextureParameteri(m_evenPostProcessTexture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTextureParameteri(m_evenPostProcessTexture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTextureStorage2D(m_evenPostProcessTexture, 1, GL_RGBA8, m_sceneTextureDimension.width,
+                m_sceneTextureDimension.height);
+
+            glNamedFramebufferTexture(m_evenPostProcessFramebuffer, GL_COLOR_ATTACHMENT0,
+                m_evenPostProcessTexture, 0);
+            unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0 };
+            glNamedFramebufferDrawBuffers(m_evenPostProcessFramebuffer, 1, attachments);
+        }   
+        // Odd
+        {
+            glCreateTextures(GL_TEXTURE_2D, 1, &m_oddPostProcessTexture);
+            glTextureParameteri(m_oddPostProcessTexture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTextureParameteri(m_oddPostProcessTexture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTextureStorage2D(m_oddPostProcessTexture, 1, GL_RGBA8, m_sceneTextureDimension.width,
+                m_sceneTextureDimension.height);
+            glNamedFramebufferTexture(m_oddPostProcessFramebuffer, GL_COLOR_ATTACHMENT0,
+                            m_oddPostProcessTexture, 0);
+
+            glNamedFramebufferTexture(m_oddPostProcessFramebuffer, GL_COLOR_ATTACHMENT0,
+                                        m_oddPostProcessTexture, 0);
+            unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0 };
+            glNamedFramebufferDrawBuffers(m_oddPostProcessFramebuffer, 1, attachments);
+        }        
     }
     
     void Graphics::PostProcessingPass()
     {
+        // Shaders pass
         glBindTextureUnit(1, m_sceneTexture);
+        glViewport(0, 0, m_sceneTextureDimension.width, m_sceneTextureDimension.height);
+        for (int i = 0; i < m_postProcessShaderCount; i++)
+        {
+            if (i%2 == 1)
+            {
+                glBindFramebuffer(GL_FRAMEBUFFER, m_oddPostProcessFramebuffer);
+
+                // clear screen
+                glEnable(GL_BLEND);
+                glBindProgramPipeline(m_postProcessShaders[i].pipeline);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+                glDisable(GL_DEPTH_TEST);
+                glBindVertexArray(m_quadVAO);
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                glEnable(GL_DEPTH_TEST);
+                glBindTextureUnit(1, m_oddPostProcessTexture);
+            }
+            else
+            {
+                glBindFramebuffer(GL_FRAMEBUFFER, m_evenPostProcessFramebuffer);
+
+                // clear screen
+                glEnable(GL_BLEND);
+                glBindProgramPipeline(m_postProcessShaders[i].pipeline);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+                glDisable(GL_DEPTH_TEST);
+                glBindVertexArray(m_quadVAO);
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                glEnable(GL_DEPTH_TEST);
+                glBindTextureUnit(1, m_evenPostProcessTexture);   
+            }
+        }
+
+        // Kernels pass
         glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
         glViewport(0, 0, dimension.width, dimension.height);
         glNamedBufferSubData(m_kernelSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount, m_kernelsMatrices);
