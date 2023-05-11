@@ -53,8 +53,7 @@ public:
     int sceneNodeCount;
     int m_width, m_height;
     bool isPaused = true;
-    
-    RedFoxMaths::Mat4 *m_modelMatrices;
+
     u64 *m_modelCountIndex;
 
     GameObject *gameObjects = nullptr;

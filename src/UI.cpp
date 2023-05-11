@@ -101,21 +101,21 @@ void Engine::InitIMGUI()
 #pragma endregion
 
     ImGui_ImplWin32_Init(m_platform.m_window);
-    ImGui_ImplOpenGL3_Init("#version 450");
+    ImGui_ImplOpenGL3_Init("#version 330");
 
     m_imgui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
     m_imgui.gizmoMode = ImGuizmo::MODE::LOCAL;
 
-    m_imgui.icons[0] = (void*)(u64)LoadTextureFromMemory(new_scene_icon, sizeof(new_scene_icon), false, false, false);
-    m_imgui.icons[1] = (void*)(u64)LoadTextureFromMemory(save_scene_icon, sizeof(save_scene_icon), false, false, false);
-    m_imgui.icons[2] = (void*)(u64)LoadTextureFromMemory(pause_icon, sizeof(pause_icon), false, false, false);
-    m_imgui.icons[3] = (void*)(u64)LoadTextureFromMemory(resume_icon, sizeof(resume_icon), false, false, false);
-    m_imgui.icons[4] = (void*)(u64)LoadTextureFromMemory(translate_icon, sizeof(translate_icon), false, false, false);
-    m_imgui.icons[5] = (void*)(u64)LoadTextureFromMemory(rotate_icon, sizeof(rotate_icon), false, false, false);
-    m_imgui.icons[6] = (void*)(u64)LoadTextureFromMemory(scale_icon, sizeof(scale_icon), false, false, false);
-    m_imgui.icons[7] = (void*)(u64)LoadTextureFromMemory(new_entity_icon, sizeof(new_entity_icon), false, false, false);
-    m_imgui.icons[8] = (void*)(u64)LoadTextureFromMemory(new_cube_icon, sizeof(new_cube_icon), false, false, false);
-    m_imgui.icons[9] = (void*)(u64)LoadTextureFromMemory(new_sphere_icon, sizeof(new_sphere_icon), false, false, false);
+    m_imgui.icons[0] = (void*)(u64)LoadTextureFromMemory(new_scene_icon , sizeof(new_scene_icon));
+    m_imgui.icons[1] = (void*)(u64)LoadTextureFromMemory(save_scene_icon, sizeof(save_scene_icon));
+    m_imgui.icons[2] = (void*)(u64)LoadTextureFromMemory(pause_icon     , sizeof(pause_icon));
+    m_imgui.icons[3] = (void*)(u64)LoadTextureFromMemory(resume_icon    , sizeof(resume_icon));
+    m_imgui.icons[4] = (void*)(u64)LoadTextureFromMemory(translate_icon , sizeof(translate_icon));
+    m_imgui.icons[5] = (void*)(u64)LoadTextureFromMemory(rotate_icon    , sizeof(rotate_icon));
+    m_imgui.icons[6] = (void*)(u64)LoadTextureFromMemory(scale_icon     , sizeof(scale_icon));
+    m_imgui.icons[7] = (void*)(u64)LoadTextureFromMemory(new_entity_icon, sizeof(new_entity_icon));
+    m_imgui.icons[8] = (void*)(u64)LoadTextureFromMemory(new_cube_icon  , sizeof(new_cube_icon));
+    m_imgui.icons[9] = (void*)(u64)LoadTextureFromMemory(new_sphere_icon, sizeof(new_sphere_icon));
 }
 
 void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight)
@@ -923,8 +923,6 @@ void Engine::DrawAssetsBrowser()
                 {
                     ObjModelPush(path.data);
                     m_graphics.InitModel(&m_models[m_modelCount - 1]);
-                    m_graphics.m_models = m_models;
-                    m_graphics.m_modelCount = m_modelCount;
                     assignString(path, "");
                     CloseCurrentPopup();
                 }

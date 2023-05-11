@@ -84,6 +84,8 @@ layout(std430, binding = 6) buffer ShadowMaps
 
 const float specularFloat = 32;
 
+layout (location = 1) uniform int materialOffset;
+
 float ShadowCalculation(Light light)
 {
     vec3 FragPosition = fs_in.Position;
@@ -126,7 +128,7 @@ vec3 CalcDirLight(Light light, vec3 normal, vec3 viewDir, vec3 Color)
 
     vec3 halfwayDir = normalize(lightDir + viewDir);
 
-    float spec = pow(max(dot(viewDir, halfwayDir), 0.0), mat.material[fs_in.materialID].Shininess);
+    float spec = pow(max(dot(viewDir, halfwayDir), 0.0), mat.material[fs_in.materialID + materialOffset].Shininess);
 
     vec3 ambient = light.ambient * Color;
     vec3 diffuse = light.diffuse * diff * Color;
@@ -140,7 +142,7 @@ vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 C
     vec3 lightDir = normalize(light.position - fragPos);
     float diff = max(dot(normal, lightDir), 0.0);
     vec3 halfwayDir = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(viewDir, halfwayDir), 0.0), mat.material[fs_in.materialID].Shininess);
+    float spec = pow(max(dot(viewDir, halfwayDir), 0.0), mat.material[fs_in.materialID + materialOffset].Shininess);
     
     float distance = length(light.position - fragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
@@ -160,7 +162,7 @@ vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 Co
     vec3 lightDir     = normalize(light.position - fragPos);
     float diff        = max(dot(normal, lightDir), 0.0);
     vec3 halfwayDir = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(viewDir, halfwayDir), 0.0), mat.material[fs_in.materialID].Shininess);
+    float spec = pow(max(dot(viewDir, halfwayDir), 0.0), mat.material[fs_in.materialID + materialOffset].Shininess);
     float distance    = length(light.position - fragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
     float theta       = dot(lightDir, normalize(-light.direction)); 
@@ -179,22 +181,17 @@ vec3 CalcSpotLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 Co
 
 void main()
 {
-    vec3 Color;
+    vec3 Color = fs_in.Color;
     vec3 FragPosition = fs_in.Position;
     vec3 Normal       = fs_in.Normal;
 
     mat3 TBN = mat3(1.0f);
-    if (mat.material[fs_in.materialID].diffuseMap == -1)
+    if (mat.material[fs_in.materialID + materialOffset].diffuseMap != -1)
+        Color = texture(sampler2D(sb_Texture.data[mat.material[fs_in.materialID + materialOffset].diffuseMap]), fs_in.TexCoord).xyz;
+
+    if (mat.material[fs_in.materialID + materialOffset].normalMap != -1)
     {
-        Color = fs_in.Color;
-    }
-    else
-    {
-        Color = texture(sampler2D(sb_Texture.data[mat.material[fs_in.materialID].diffuseMap]), fs_in.TexCoord).xyz;
-    }
-    if (mat.material[fs_in.materialID].normalMap != -1)
-    {
-        Normal = normalize(texture(sampler2D(sb_Texture.data[mat.material[fs_in.materialID].normalMap]), fs_in.TexCoord) * 2.0 - 1.0).xyz;
+        Normal = normalize(texture(sampler2D(sb_Texture.data[mat.material[fs_in.materialID + materialOffset].normalMap]), fs_in.TexCoord) * 2.0 - 1.0).xyz;
         vec3 q1 = dFdx(vec3(fs_in.TexCoord, 0.0));
         vec3 q2 = dFdy(vec3(fs_in.TexCoord, 0.0));
         vec3 T = normalize(q1 * q2.y - q2 * q1.y);

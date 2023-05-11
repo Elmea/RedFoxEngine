@@ -134,6 +134,7 @@ private:
     void UpdateIMGUI();
     void UpdateEditorCamera();
     void UpdateModelMatrices();
+    // void UpdateModelMatrices(Camera currentCamera);
     void ObjModelPush(const char *objPath);
     void InitIMGUI();
     void LoadScene(const char *fileName);
@@ -142,8 +143,8 @@ private:
     void initSphericalManyGameObjects(int count); //TODO: remove
     void AddUIBehaviour(const char* name, functionBehaviour function);
     void AddObjectBehaviour(const char* name, functionBehaviour function);
-    u32 LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat, bool flip);
-    u32 LoadTextureFromMemory(u8* memory, int size, bool resident, bool repeat, bool flip);
+    u32 LoadTextureFromFilePath(const char *filePath, bool resident = false, bool repeat = false, bool flip = false);
+    u32 LoadTextureFromMemory(u8* memory, int size, bool resident = false, bool repeat = false, bool flip = false);
 
 public:
     Engine(int width, int height);

@@ -117,7 +117,7 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
         static Float3 cameraRotation;
         cameraRotation += {(f32)input.mouseYDelta * deltaTime, (f32)input.mouseXDelta * deltaTime, 0}; 
         scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
-        
+
         Float3 inputDirection(0, 0, 0);
         if (input.W || input.Up)    inputDirection.z += -1;
         if (input.S || input.Down)  inputDirection.z +=  1;

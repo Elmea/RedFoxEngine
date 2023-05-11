@@ -780,7 +780,7 @@ int ParseModel(ObjModel *result, const char *path)
                 case '/': {
                     if (tempIndex != -1)
                     {
-#ifdef DEBUG
+#ifdef _DEBUG
                         if (tempIndex > tempParser.PosCount && j % 3 == 0)
                             __debugbreak();
                         if (tempIndex > tempParser.NormalCount && j % 3 == 2)

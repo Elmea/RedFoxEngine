@@ -142,6 +142,7 @@ public:
     void UpdateImGUIFrameBuffer(WindowDimension& dimension, WindowDimension content);
     void UpdateModelMatrices(GameObject* objects, int gameObjectCount, Memory* temp);
     void PushMaterial(Material *materials, int count);
+    void PushModelMatrices(RedFoxMaths::Mat4 *matrices, int count);
     void Draw(Scene *m_scene, WindowDimension p_windowDimension, float p_time, float p_delta);
     void DrawShadowMaps(u64* modelCountIndex);
     void DrawSkyDome(SkyDome skyDome, float dt);

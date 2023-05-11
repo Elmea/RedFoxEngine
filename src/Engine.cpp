@@ -20,7 +20,6 @@ using namespace RedFoxMaths;
 
 BUTTONBEHAIVOUR(DefaultBehaviour)
 {
-    
 }
 
 BUTTONBEHAIVOUR(TestObjectBehaviour)
@@ -67,27 +66,21 @@ Engine::Engine(int width, int height) :
     m_modelsName = (MyString*)m_memoryManager.PersistentAllocation(sizeof(MyString) * 100);
     for (int i = 0; i < 100; i++)
         m_modelsName->capacity   = 64;
+    m_graphics.lightStorage.lights = (Light*)m_memoryManager.PersistentAllocation(sizeof(Light) * 1000);
+    m_graphics.lightStorage.shadowMaps = (unsigned int*)m_memoryManager.PersistentAllocation(sizeof(unsigned int) * 1000);
 
     m_models[m_modelCount].obj = CreateCube(&m_memoryManager.m_memory.arena);
     m_models[m_modelCount].hash = 1;
     m_modelsName[0] = initStringChar("Cube", 4, &m_memoryManager.m_memory.arena);
-    m_modelsName[0].capacity = 4;
     m_modelCount++;
     m_models[m_modelCount].obj = CreateSphere(30, 25, &m_memoryManager.m_memory.arena);
     m_models[m_modelCount].hash = 2;
     m_modelsName[1] = initStringChar("Sphere", 6, &m_memoryManager.m_memory.arena);
-    m_modelsName[1].capacity = 6;
     m_modelCount++;
-    //ObjModelPush("ts_bot912.obj");
-    // ObjModelPush("vortigaunt.obj");
-    // ObjModelPush("barbarian.obj");
-
-    m_graphics.m_models = m_models;
-    m_graphics.m_modelCount = m_modelCount;
 
     //Init UI GameBehaviour
     m_scene.gameUIBehaviours = (GameBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameBehaviour) * 100);
-    
+
     //Add UI behaviours here
     AddUIBehaviour("AbortMission"    , AbortMission);
     AddUIBehaviour("DefaultBehaviour", DefaultBehaviour);
@@ -131,8 +124,6 @@ Engine::Engine(int width, int height) :
     m_scene.gameObjects[0].scale = { 1, 1, 1 };
     m_scene.gameObjects->modelIndex = -1;
 
-    m_graphics.lightStorage.lights = (Light*)m_memoryManager.PersistentAllocation(sizeof(Light) * 1000);
-    m_graphics.lightStorage.shadowMaps = (unsigned int*)m_memoryManager.PersistentAllocation(sizeof(unsigned int) * 1000);
     m_scene.gameObjectCount++;
 
     //TODO transition to an instance based model 'model'
@@ -201,7 +192,7 @@ Engine::Engine(int width, int height) :
         m_testMusic->position = {0.f, 0.f, 0.f};
         m_testMusic->Play3D();
     }
-    
+
     m_graphics.InitFont(&m_memoryManager.m_memory.temp);
 }
 
@@ -220,7 +211,7 @@ void Engine::ObjModelPush(const char *path)
         length++;
     m_models[m_modelCount - 1].hash = MeowU64From(MeowHash(MeowDefaultSeed,
         (u64)length, (void *)path), 0);
-    
+
     u64 len = strlen(path);
     m_modelsName[m_modelCount - 1] = initStringChar(path, len, &m_memoryManager.m_memory.arena);
     m_modelsName[m_modelCount - 1].capacity = len;
@@ -311,45 +302,54 @@ void Engine::UpdateEditorCamera()
     m_editorCamera.m_parameters.aspect = m_platform.m_windowDimension.width / (f32)m_platform.m_windowDimension.height;
 }
 
+static Material materialFromObjMaterial(ObjMaterial modelMaterial, Float3 color)
+{
+    Material material = {};
+    Float3 zero = {};
+    if (memcmp(&color, &zero, sizeof(Float3)))
+        material.diffuse = color;
+    else
+        material.diffuse = {modelMaterial.diffuse.x,
+                                modelMaterial.diffuse.y,
+                                modelMaterial.diffuse.z};
+    material.Shininess = modelMaterial.Shininess;
+    if (modelMaterial.hasTexture == 0)
+        material.diffuseMap = -1;
+    else
+        material.diffuseMap = modelMaterial.diffuseMap.index0;
+    if (modelMaterial.hasNormal == 0)
+        material.normalMap = -1;
+    else
+        material.normalMap = modelMaterial.normalMap.index0;
+    return (material);
+}
+
 void Engine::UpdateModelMatrices()
 {
-    m_scene.m_modelMatrices = (RedFoxMaths::Mat4 *)m_memoryManager.TemporaryAllocation(
+    ResourcesManager *m = &m_memoryManager;
+    Mat4 *modelMatrices = (RedFoxMaths::Mat4 *)m->TemporaryAllocation(
         sizeof(RedFoxMaths::Mat4) * m_scene.gameObjectCount);
-    m_scene.m_modelCountIndex = (u64 *)m_memoryManager.TemporaryAllocation(sizeof(u64)
+    m_scene.m_modelCountIndex = (u64 *)m->TemporaryAllocation(sizeof(u64)
                                                          * (m_modelCount + 1));
     memset(m_scene.m_modelCountIndex, 0, sizeof(u64) * (m_modelCount + 1));
     int totalIndex = 0;
     
-    Material *materials = (Material *)m_memoryManager.TemporaryAllocation(sizeof(Material) * m_scene.gameObjectCount);
+    Material *materials = (Material *)m->TemporaryAllocation(sizeof(Material) * m_scene.gameObjectCount);
     for (int modelIndex = 0; modelIndex < (int)m_modelCount; modelIndex++)
     {
         for(int index = 0;index < (int)m_scene.gameObjectCount; index++)
         {
             if (m_scene.gameObjects[index].modelIndex == modelIndex)
             {
-                Model *model = &m_models[modelIndex];
-                Material *material = &materials[totalIndex];
+                Float3    color    = m_scene.gameObjects[index].Color;
+                Model    *model    = &m_models[modelIndex];
                 for (int i = 0; i < (int)model->obj.materials.count; i++)
                 {
-                    Float3 zero = {};
-                    if (memcmp(&m_scene.gameObjects[index].Color, &zero, sizeof(Float3)))
-                        material->diffuse = m_scene.gameObjects[index].Color;
-                    else 
-                        material->diffuse = {model->obj.materials.material[i].diffuse.x, 
-                                                model->obj.materials.material[i].diffuse.y,
-                                                model->obj.materials.material[i].diffuse.z};
-                    material->Shininess = model->obj.materials.material[i].Shininess;
-                    if (model->obj.materials.material[i].hasTexture == 0)
-                        material->diffuseMap = -1;
-                    else
-                        material->diffuseMap = model->obj.materials.material[i].diffuseMap.index0;
-                    if (model->obj.materials.material[i].hasNormal == 0)
-                        material->normalMap = -1;
-                    else
-                        material->normalMap = model->obj.materials.material[i].normalMap.index0;
+                    ObjMaterial objMaterial = model->obj.materials.material[i];
+                    materials[totalIndex] = materialFromObjMaterial(objMaterial, color);
                 }
-                
-                m_scene.m_modelMatrices[totalIndex] =
+
+                modelMatrices[totalIndex] =
                     m_scene.GetWorldMatrix(index).GetTransposedMatrix();
                 m_scene.m_modelCountIndex[modelIndex]++;
                 totalIndex++;
@@ -357,12 +357,15 @@ void Engine::UpdateModelMatrices()
         }
     }
     m_graphics.PushMaterial(materials, totalIndex);
+    m_graphics.PushModelMatrices(modelMatrices, totalIndex);
+    m_graphics.m_models = m_models;
+    m_graphics.m_modelCount = m_modelCount;
 }
 
 void Engine::UpdateSkyDome()
 {
-    m_scene.skyDome.model.mat16[3] = m_editorCamera.position.x;
-    m_scene.skyDome.model.mat16[7] = m_editorCamera.position.y;
+    m_scene.skyDome.model.mat16[3]  = m_editorCamera.position.x;
+    m_scene.skyDome.model.mat16[7]  = m_editorCamera.position.y;
     m_scene.skyDome.model.mat16[11] = m_editorCamera.position.z;
     m_scene.skyDome.sunPosition.x = cosf(m_time.current / 500);
     m_scene.skyDome.sunPosition.y = sinf(m_time.current / 500);
@@ -370,6 +373,11 @@ void Engine::UpdateSkyDome()
 
 void Engine::Update()
 {
+    Camera *currentCamera;
+    if (m_scene.isPaused)
+        currentCamera = &m_editorCamera;
+    else
+        currentCamera = &m_scene.m_gameCamera;
     ProcessInputs();
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
     UpdateEditorCamera();
@@ -380,37 +388,31 @@ void Engine::Update()
     m_game.update(&m_scene, &m_physx, m_input, 1.0 / 60.0);
     UpdateModelMatrices();
     UpdateIMGUI();
+    for (int i = 0; i < (int)m_scene.gameUICount; i++)
+    {
+        if (m_scene.gameUIs[i].isPressed)
+            m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex].function(&m_scene);
+    }
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
-}
-
-
-
-void Engine::Draw()
-{
     if (m_time.delta < 1.0 / 100.0)
     {
         timeBeginPeriod(1);
         Sleep(10);
         timeEndPeriod(1);
     }
-    // Camera *currentCamera = &m_scene.m_gameCamera; //TODO game camera
+}
+
+void Engine::Draw()
+{
     Camera *currentCamera;
     if (m_scene.isPaused)
         currentCamera = &m_editorCamera;
     else
         currentCamera = &m_scene.m_gameCamera;
-    
+
+    m_graphics.BindKernelBuffer(&m_memoryManager.m_memory.temp);
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
     m_graphics.Draw(&m_scene, m_platform.m_windowDimension, m_time.current, m_time.delta);
-    m_graphics.BindKernelBuffer(&m_memoryManager.m_memory.temp);
-    for (int i = 0; i < (int)m_scene.gameUICount; i++)
-    {
-        m_graphics.RenderText(m_scene.gameUIs[i]);
-        if (m_scene.gameUIs[i].isPressed)
-            m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex].function(&m_scene);
-
-    }
-    m_graphics.PostProcessingPass();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -423,14 +425,14 @@ u32 Engine::LoadTextureFromFilePath(const char *filePath, bool resident, bool re
 {
     int width, height, comp;
     MyString file = OpenAndReadEntireFile(filePath, &m_memoryManager.m_memory.temp);
-    return (LoadTextureFromMemory((u8*)file.data, file.size, resident, repeat, flip));
+    return (LoadTextureFromMemory((u8 *)file.data, file.size, resident, repeat, flip));
 }
 
 u32 Engine::LoadTextureFromMemory(u8* memory, int size, bool resident, bool repeat, bool flip)
 {
     int width, height, comp;
     stbi_set_flip_vertically_on_load(flip);
-    char* data = (char*)stbi_load_from_memory((u8*)memory, size, &width, &height, &comp, 4);
+    char *data = (char *)stbi_load_from_memory((u8 *)memory, size, &width, &height, &comp, 4);
     GLuint texture = m_graphics.InitTexture(data, width, height, resident, repeat);
     stbi_image_free(data);
     return (texture);
@@ -443,11 +445,11 @@ void Engine::InitSkyDome()
     m_scene.skyDome.model = RedFoxMaths::Mat4::GetScale({ skyDrawDistance,
         skyDrawDistance, skyDrawDistance });
 
-    m_scene.skyDome.topTint = LoadTextureFromFilePath("topSkyTint.png", false, true, false);
-    m_scene.skyDome.botTint = LoadTextureFromFilePath("botSkyTint.png", false, false, false);
-    m_scene.skyDome.sun     = LoadTextureFromFilePath("sun.png", false, false, false);
-    m_scene.skyDome.moon    = LoadTextureFromFilePath("moon.png", false, false, false);
-    m_scene.skyDome.clouds  = LoadTextureFromFilePath("clouds.png", false, false, false);
+    m_scene.skyDome.topTint = LoadTextureFromFilePath("topSkyTint.png", false, true);
+    m_scene.skyDome.botTint = LoadTextureFromFilePath("botSkyTint.png");
+    m_scene.skyDome.sun     = LoadTextureFromFilePath("sun.png");
+    m_scene.skyDome.moon    = LoadTextureFromFilePath("moon.png");
+    m_scene.skyDome.clouds  = LoadTextureFromFilePath("clouds.png");
 }
 
 Engine::~Engine()

@@ -211,15 +211,14 @@ namespace RedFoxEngine
         // vertex buffer containing triangle vertices
         model->vertexOffset = m_vertexCount;
         model->indexOffset = m_indexCount;
-        // model->mesh.count = model->obj.meshCount;
         model->indexCount = model->obj.indexCount;
+        model->materialOffset = m_materialCount;
+        int tempTexture = m_textures.textureCount;
         InitModelTextures(&model->obj);
         
         Material materials[100] = {};
 
         int temp = m_materialCount;
-        for (int i = 0; i < (int)model->obj.vertexCount; i++)
-           model->obj.vertices[i].materialID += m_materialCount;
         for (int i = 0; i < (int)model->obj.materials.count; i++)
         {
             materials[i].diffuse = {model->obj.materials.material[i].diffuse.x, 
@@ -229,11 +228,11 @@ namespace RedFoxEngine
             if (model->obj.materials.material[i].hasTexture == 0)
                 materials[i].diffuseMap = -1;
             else
-                materials[i].diffuseMap = model->obj.materials.material[i].diffuseMap.index0;
+                materials[i].diffuseMap = model->obj.materials.material[i].diffuseMap.index0 + tempTexture;
             if (model->obj.materials.material[i].hasNormal == 0)
                 materials[i].normalMap = -1;
             else
-                materials[i].normalMap = model->obj.materials.material[i].normalMap.index0;
+                materials[i].normalMap = model->obj.materials.material[i].normalMap.index0 + tempTexture;
             m_materialCount++;
         }
 
@@ -286,14 +285,8 @@ namespace RedFoxEngine
 
     void Graphics::InitModelTextures(ObjModel* model)
     {
-        // TODO(V. Caraulan): Wrap in waiting for thread function
         WaitForSingleObject(model->images.thread, INFINITE);
 
-        for (int i = 0; i < (int)model->materials.count; i++)
-        {//TODO: if we ever have 1 model draw function, we nedd to get rid of this
-            model->materials.material[i].diffuseMap.index0 += m_textures.textureCount;
-            model->materials.material[i].normalMap.index0 += m_textures.textureCount;
-        }
         for (int i = 0; i < (int)model->images.count; i++)
         {
             if (model->images.data[i].height && model->images.data[i].width)
@@ -404,12 +397,11 @@ namespace RedFoxEngine
             GL_UNSIGNED_INT, (void *)(sphere->indexOffset * sizeof(u32)), 1, sphere->vertexOffset, 0);
     }
 
-    void Graphics::Draw(Scene *m_scene, WindowDimension p_windowDimension, float p_time, float p_delta)
+    void Graphics::Draw(Scene *p_scene, WindowDimension p_windowDimension, float p_time, float p_delta)
     {
         dimension = p_windowDimension;
         glBindVertexArray(m_vertexArrayObject);
         //
-        glNamedBufferSubData(m_matrixSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_scene->gameObjectCount, m_scene->m_modelMatrices);
         GLuint64 textureHandles[128];
         for (int i = 0; i < (int)m_textures.textureCount; i++)
             textureHandles[i] = glGetTextureSamplerHandleARB(m_textures.textures[i], m_textureSampler);
@@ -418,7 +410,7 @@ namespace RedFoxEngine
         static float shadowMapUpdate;
         if (shadowMapUpdate > 0.016)
         {
-            DrawShadowMaps(m_scene->m_modelCountIndex);
+            DrawShadowMaps(p_scene->m_modelCountIndex);
             shadowMapUpdate = 0;
         }
         shadowMapUpdate += p_delta;
@@ -430,12 +422,15 @@ namespace RedFoxEngine
         glClearColor(0, 0, 0, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         glDisable(GL_CULL_FACE);
-        DrawSkyDome(m_scene->skyDome, p_time / 500);
+        DrawSkyDome(p_scene->skyDome, p_time / 500);
 
         glEnable(GL_CULL_FACE);
-        DrawGameObjects(m_scene->m_modelCountIndex);
-        // swap the buffers to show output
-
+        DrawGameObjects(p_scene->m_modelCountIndex);
+        for (int i = 0; i < (int)p_scene->gameUICount; i++)
+            RenderText(p_scene->gameUIs[i]);
+        glViewport(0, 0, dimension.width, dimension.height);
+        glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
+        PostProcessingPass();
     }
 
     static void bindBuffer(int bindingPoint, GLuint buffer, int size)
@@ -451,13 +446,11 @@ namespace RedFoxEngine
         GLint u_matrix = 0; //location inside shader
         glProgramUniformMatrix4fv(m_blinnPhong.vertex, u_matrix, 1, GL_TRUE,
             m_viewProjection.AsPtr());
-
         glBindProgramPipeline(m_blinnPhong.pipeline);
         glBindVertexArray(m_vertexArrayObject);
 
         BindLights();
         bindBuffer(4, m_textureSSBO, m_textures.textureCount * sizeof(u64));
-        // bindBuffer(5, m_materialSSBO, materialCount * sizeof(Material));
         bindBuffer(6, m_shadowMapsSSBO, lightStorage.lightCount * sizeof(u64));
 
         int totalCount = 0;
@@ -467,12 +460,12 @@ namespace RedFoxEngine
             {
                 Model *model = &m_models[i];
                 int instanceCount = modelCountIndex[i];
+                glProgramUniform1i(m_blinnPhong.fragment, 1, model->materialOffset);
                 if (model->obj.materials.material->hasTexture)
-                    glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 5, m_materialSSBO, 0, m_materialCount * sizeof(Material));
+                    bindBuffer(5, m_materialSSBO, m_materialCount * sizeof(Material));
                 else
                     glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 5, m_materialSSBO, (totalCount + m_materialCount) * sizeof(Material), instanceCount * sizeof(Material));
                 glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 3, m_matrixSSBO, totalCount * sizeof(RedFoxMaths::Mat4), instanceCount * sizeof(RedFoxMaths::Mat4));
-                // (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount, GLint basevertex, GLuint baseinstance)
                 glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, model->indexCount,
                     GL_UNSIGNED_INT, (void *)(model->indexOffset * sizeof(u32)), instanceCount, model->vertexOffset, 0);
             }
@@ -519,6 +512,11 @@ namespace RedFoxEngine
         glNamedBufferSubData(m_shadowMapsSSBO, 0, sizeof(u64) * (lightStorage.lightCount), shadowMapsHandles);
     }
 
+    void Graphics::PushModelMatrices(RedFoxMaths::Mat4 *matrices, int count)
+    {
+        glNamedBufferSubData(m_matrixSSBO, 0, sizeof(RedFoxMaths::Mat4) * count, matrices);
+    }
+
     void Graphics::PushMaterial(Material *materials, int count)
     {
         glNamedBufferSubData(m_materialSSBO, m_materialCount * sizeof(Material), sizeof(Material) * count, materials);
@@ -529,8 +527,7 @@ namespace RedFoxEngine
         // provide vertex input
         glBindProgramPipeline(m_shadow.pipeline);
         glBindVertexArray(m_vertexArrayObject);
-        glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, m_matrixSSBO, 0, instanceCount);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_matrixSSBO);
+        bindBuffer(0, m_matrixSSBO, sizeof(RedFoxMaths::Mat4) * instanceCount);
         glDrawElementsInstanced(GL_TRIANGLES, model->obj.indexCount, GL_UNSIGNED_INT,
             0, instanceCount);
     }
@@ -548,13 +545,7 @@ namespace RedFoxEngine
     void Graphics::PostProcessingPass()
     {
         glBindTextureUnit(1, m_sceneTexture);
-        glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
-        glViewport(0, 0, dimension.width, dimension.height);
-        glNamedBufferSubData(m_kernelSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount, m_kernelsMatrices);
-
-        if (m_kernelCount > 0)
-            glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0,m_kernelSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount);
-        
+        bindBuffer(0, m_kernelSSBO, sizeof(RedFoxMaths::Mat4) * m_kernelCount);
         // clear screen
         glEnable(GL_BLEND);
         glBindProgramPipeline(m_postProcess.pipeline);
@@ -651,5 +642,6 @@ namespace RedFoxEngine
                 count++;
             }
         }
+        glNamedBufferSubData(m_kernelSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount, m_kernelsMatrices);
     }
 } // namespace RedFoxEngine

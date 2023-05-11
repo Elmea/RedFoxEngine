@@ -18,6 +18,8 @@ namespace RedFoxEngine
     };
     struct Model
     {
+        u32 textureOffset;
+        u32 materialOffset;
         u32 vertexOffset;
         u32 indexOffset;
         u32 indexCount;
