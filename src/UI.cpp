@@ -4,6 +4,8 @@
 #include "Engine.hpp"
 #include <unordered_map>
 
+#include "Fonts.hpp"
+
 using namespace RedFoxEngine;
 using namespace ImGui;
 
@@ -97,8 +99,9 @@ void Engine::InitIMGUI()
     style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
     style.Colors[ImGuiCol_DragDropTarget] = RF_ORANGE;
     style.Colors[ImGuiCol_NavHighlight] = ImVec4(0.26f, 0.59f, 0.98f, 1.f);
-    m_imgui.defaultFont = m_imgui.io->Fonts->AddFontFromFileTTF("D-DIN.otf", 14);
 #pragma endregion
+
+    m_imgui.defaultFont = m_imgui.io->Fonts->AddFontFromMemoryTTF(ddinFont, sizeof(ddinFont), 14);
 
     ImGui_ImplWin32_Init(m_platform.m_window);
     ImGui_ImplOpenGL3_Init("#version 450");

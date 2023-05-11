@@ -258,6 +258,7 @@
     <ClInclude Include="..\external\include\wglext.h" />
     <ClInclude Include="..\include\Camera.hpp" />
     <ClInclude Include="..\include\Engine.hpp" />
+    <ClInclude Include="..\include\Fonts.hpp" />
     <ClInclude Include="..\include\GameObject.hpp" />
     <ClInclude Include="..\include\GameUI.hpp" />
     <ClInclude Include="..\include\Icons.hpp" />
