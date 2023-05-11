@@ -75,5 +75,18 @@ void RedFoxEngine::Graphics::InitShaders(Memory *tempArena)
     fragmentShaderSource = OpenAndReadEntireFile(
         "PostProcess.frag", tempArena);
     CompileShader(vertexShaderSource.data, fragmentShaderSource.data,m_postProcess);
+}
 
+void RedFoxEngine::Graphics::AddPostProcessShader(Memory *tempArena, const char* fragPath)
+{
+    MyString vertexShaderSource = OpenAndReadEntireFile("PostProcess.vert", tempArena);
+    MyString fragmentShaderSource = OpenAndReadEntireFile(fragPath, tempArena);
+
+    Shader result;
+
+    CompileShader(vertexShaderSource.data, fragmentShaderSource.data, result);
+
+    // TODO : array gestion stuff
+    m_postProcessShaders[m_postProcessShaderCount] = result;
+    m_postProcessShaderCount++;
 }

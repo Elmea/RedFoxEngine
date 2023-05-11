@@ -179,6 +179,8 @@ Engine::Engine(int width, int height) :
         RedFoxMaths::Mat4 secondKernelMat = blur;
         // m_graphics.AddKernel(secondKernelMat);
         // m_graphics.AddKernel(kernelMat);
+
+        m_graphics.AddPostProcessShader(&m_memoryManager.m_memory.temp, "postProcessTest.frag");
     }
 
 #endif
