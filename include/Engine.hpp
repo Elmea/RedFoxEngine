@@ -29,9 +29,10 @@ namespace RedFoxEngine
 
 struct ImGUI
 {
-    bool manipulatingGizmo = false;
-    bool editorMenuOpen = false;
-    bool sceneGraphScrollButtonHovered = false;
+    bool lockEditor;
+    bool manipulatingGizmo;
+    bool editorMenuOpen;
+    bool sceneGraphScrollButtonHovered;
     int selectedObject;
     int selectedUI;
     int selectedModelAsset;
@@ -97,6 +98,7 @@ private:
     Model *m_models = nullptr;
     MyString* m_modelsName;
     u64 m_modelCount = 0;
+    u64 m_maxModel = 100;
 
     Camera m_editorCamera;
     //Game dll, library

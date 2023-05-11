@@ -40,29 +40,23 @@ namespace RedFoxEngine
 	{
 	private:
 		irrklang::ISoundEngine* m_soundEngine;
-
-		int m_maxSounds = 100;
-		int m_soundCount = 0;
 		int m_freedSound = 0;
 
+	public:
+		int m_soundCount = 0;
+		const int m_maxSounds = 100;
 		Sound* m_sounds;
 		MyString* m_soundsName;
-	public:
+
 		void Init(Memory* memAllocator);
 		Sound* CreateSound(const char* file, Memory* memAllocator);
-		void deleteSound(int index);
+		void DeleteSound(int index);
 
-		// Play a sound by his Index, return the corresponding sound
 		Sound* PlaySoundByIndex(int index);
-
-		// Play a sound by his Index with 3D, return the corresponding sound
 		Sound* PlaySoundByIndex3D(int index);
 
 		void UpdateListener(RedFoxMaths::Float3 position, RedFoxMaths::Float3 rotation);
 		void SetMasterVolume(float volume);
-
-		int GetSoundCount();
-		MyString* GetSoundsName();
 
 		~SoundManager();
 	};

@@ -120,6 +120,7 @@ public:
     Platform() = default;
     Platform(int width, int height);
     void Maximize();
+    int FileExist(const char *file);
     void FatalError(const char *message);
     void MessageProcessing(Input *input);
     WindowDimension GetWindowDimension();

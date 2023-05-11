@@ -546,7 +546,7 @@ void Engine::DrawEditor()
         }
         SetItemAllowOverlap();
 
-        if (m_imgui.selectedObject != 0 && m_scene.isPaused)
+        if (m_imgui.selectedObject != 0 && m_scene.isPaused && !m_imgui.lockEditor)
         {
             ImGuizmo::SetDrawlist();
             GetCurrentWindow();
@@ -630,7 +630,7 @@ void Engine::DrawEditor()
             RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
             ray_world.Normalize();
 
-            if (IsMouseClicked(ImGuiMouseButton_Left) && !m_imgui.manipulatingGizmo)
+            if (IsMouseClicked(ImGuiMouseButton_Left) && !m_imgui.manipulatingGizmo && !m_imgui.lockEditor)
             {
                 RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
                 physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
@@ -897,22 +897,23 @@ void Engine::DrawAssetsBrowser()
     {
         if (BeginTable("AssetsTable", 2, m_imgui.tableFlags))
         {
+            const ImVec2 popupDim(400, 70);
+            ImVec2 windowPos = ImGui::GetIO().DisplaySize;
+
             TableNextRow();
             TableSetColumnIndex(0);
-            //TODO(a.perche): Display max models value (make a struct of maximum resources allowed)
-            Text("Models (%d)", m_modelCount);
+            Text("Models (%d/%d)", m_modelCount, m_maxModel);
             SameLine();
 
-            if (Button("Import"))
+            if (Button("Import model"))
             {
                 OpenPopup("Importing a model...");
             }
-            const ImVec2 popupDim(400, 70);
-            ImVec2 windowPos = ImGui::GetIO().DisplaySize;
             SetNextWindowPos((windowPos - popupDim) / 2);
             SetNextWindowSize(popupDim);
             if (BeginPopupModal("Importing a model..."))
             {
+                m_imgui.lockEditor = true;
                 SetItemDefaultFocus();
                 static MyString path = initStringChar("", 256, &m_memoryManager.m_memory.arena);
                 Text("Path:");
@@ -921,26 +922,67 @@ void Engine::DrawAssetsBrowser()
                 InputText("Path", (char*)path.data, path.capacity);
                 if (Button("Import"))
                 {
-                    ObjModelPush(path.data);
-                    m_graphics.InitModel(&m_models[m_modelCount - 1]);
-                    m_graphics.m_models = m_models;
-                    m_graphics.m_modelCount = m_modelCount;
+                    if (m_platform.FileExist(path.data))
+                    {
+                        ObjModelPush(path.data);
+                        m_graphics.InitModel(&m_models[m_modelCount - 1]);
+                        m_graphics.m_models = m_models;
+                        m_graphics.m_modelCount = m_modelCount;
+                        m_imgui.lockEditor = false;
+                        CloseCurrentPopup();
+                    }
                     assignString(path, "");
-                    CloseCurrentPopup();
                 }
                 SameLine();
                 if (Button("Cancel"))
                 {
                     assignString(path, "");
+                    m_imgui.lockEditor = false;
+                    CloseCurrentPopup();
+                }
+                EndPopup();
+            }
+
+            TableSetColumnIndex(1);
+            Text("Sounds (%d/%d)", m_soundManager.m_soundCount, m_soundManager.m_maxSounds);
+            SameLine();
+
+            if (Button("Import sound"))
+            {
+                OpenPopup("Importing a sound...");
+            }
+            SetNextWindowPos((windowPos - popupDim) / 2);
+            SetNextWindowSize(popupDim);
+            if (BeginPopupModal("Importing a sound..."))
+            {
+                m_imgui.lockEditor = true;
+                SetItemDefaultFocus();
+                static MyString path = initStringChar("", 256, &m_memoryManager.m_memory.arena);
+                Text("Path:");
+                SameLine();
+                SetNextItemWidth(-FLT_MIN);
+                InputText("Path", (char*)path.data, path.capacity);
+                if (Button("Import"))
+                {
+                    if (m_platform.FileExist(path.data))
+                    {
+                        m_soundManager.CreateSound(path.data, &m_memoryManager.m_memory.arena);
+                        m_imgui.lockEditor = false;
+                        CloseCurrentPopup();
+                    }
+                    assignString(path, "");
+                }
+                SameLine();
+                if (Button("Cancel"))
+                {
+                    assignString(path, "");
+                    m_imgui.lockEditor = false;
                     CloseCurrentPopup();
                 }
                 EndPopup();
             }
             
-            TableSetColumnIndex(1);
-            Text("Sounds");
             TableNextRow();
-
             TableSetColumnIndex(0);
             if (BeginListBox("ModelsList", ImVec2(-FLT_MIN, 5 * GetTextLineHeightWithSpacing())))
             {
@@ -959,10 +1001,10 @@ void Engine::DrawAssetsBrowser()
             TableSetColumnIndex(1);
             if (BeginListBox("SoundsList", ImVec2(-FLT_MIN, 5 * GetTextLineHeightWithSpacing())))
             {
-                for (int i = 0; i < m_soundManager.GetSoundCount(); i++)
+                for (int i = 0; i < m_soundManager.m_soundCount; i++)
                 {
                     bool is_selected = m_imgui.selectedSoundAsset == i;
-                    if (Selectable(m_soundManager.GetSoundsName()[i].data, is_selected))
+                    if (Selectable(m_soundManager.m_soundsName[i].data, is_selected))
                         m_imgui.selectedSoundAsset = i;
 
                     if (is_selected)
