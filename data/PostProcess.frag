@@ -48,5 +48,7 @@ void main()
         }
     }
     
+    result = result / kernels.length();
+    
     o_color = vec4(result, 1.0f);
 }
