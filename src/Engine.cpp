@@ -318,8 +318,8 @@ void Engine::UpdateModelMatrices()
     m_scene.m_modelMatrices = (RedFoxMaths::Mat4 *)m_memoryManager.TemporaryAllocation(
         sizeof(RedFoxMaths::Mat4) * m_scene.gameObjectCount);
     m_scene.m_modelCountIndex = (u64 *)m_memoryManager.TemporaryAllocation(sizeof(u64)
-                                                         * m_modelCount);
-    memset(m_scene.m_modelCountIndex, 0, sizeof(u64) * m_modelCount);
+                                                         * (m_modelCount + 1));
+    memset(m_scene.m_modelCountIndex, 0, sizeof(u64) * (m_modelCount + 1));
     int totalIndex = 0;
     
     Material *materials = (Material *)m_memoryManager.TemporaryAllocation(sizeof(Material) * m_scene.gameObjectCount);
