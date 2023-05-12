@@ -527,11 +527,6 @@ namespace RedFoxEngine
 
     void Graphics::InitPostProcess(Memory* arena)
     {
-        glCreateBuffers(1, &m_kernelSSBO);
-        glNamedBufferStorage(m_kernelSSBO,
-            100000 * sizeof(RedFoxMaths::Mat4),
-            nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
-
         m_kernels = (Kernel*)MyMalloc(arena, sizeof(Kernel) * m_maxKernel);
         glCreateFramebuffers(1, &m_evenPostProcessFramebuffer);
         glCreateFramebuffers(1, &m_oddPostProcessFramebuffer);
@@ -566,63 +561,108 @@ namespace RedFoxEngine
         }        
     }
     
-    void Graphics::PostProcessingPass()
+    void Graphics::PostProcessDrawQuad()
     {
-        // Shaders pass
-        glBindTextureUnit(1, m_sceneTexture);
-        glViewport(0, 0, m_sceneTextureDimension.width, m_sceneTextureDimension.height);
-        for (int i = 0; i < m_postProcessShaders.size(); i++)
-        {
-            if (i%2 == 1)
-            {
-                glBindFramebuffer(GL_FRAMEBUFFER, m_oddPostProcessFramebuffer);
+        glBindVertexArray(m_quadVAO);
 
-                // clear screen
-                glEnable(GL_BLEND);
-                glBindProgramPipeline(m_postProcessShaders[i].pipeline);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-                glDisable(GL_DEPTH_TEST);
-                glBindVertexArray(m_quadVAO);
-                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                glEnable(GL_DEPTH_TEST);
-                glBindTextureUnit(1, m_oddPostProcessTexture);
-            }
-            else
-            {
-                glBindFramebuffer(GL_FRAMEBUFFER, m_evenPostProcessFramebuffer);
-
-                // clear screen
-                glEnable(GL_BLEND);
-                glBindProgramPipeline(m_postProcessShaders[i].pipeline);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-                glDisable(GL_DEPTH_TEST);
-                glBindVertexArray(m_quadVAO);
-                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                glEnable(GL_DEPTH_TEST);
-                glBindTextureUnit(1, m_evenPostProcessTexture);   
-            }
-        }
-
-        // Kernels pass
-        glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
-        glViewport(0, 0, dimension.width, dimension.height);
-        glNamedBufferSubData(m_kernelSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount, m_kernelsMatrices);
-
-        if (m_kernelCount > 0)
-            glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0,m_kernelSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount);
-        
         // clear screen
         glEnable(GL_BLEND);
-        glBindProgramPipeline(m_postProcess.pipeline);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         glDisable(GL_DEPTH_TEST);
-        glBindVertexArray(m_quadVAO);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    }
+
+    void Graphics::PostProcessingPass()
+    {
+        // Shaders passes
+        glBindTextureUnit(1, m_sceneTexture);
+        glViewport(0, 0, m_sceneTextureDimension.width, m_sceneTextureDimension.height);
+        if (m_kernelCount > 0)
+        {
+            for (int i = 0; i < m_postProcessShaders.size(); i++)
+            {
+                for (int k = 0; k < m_kernelCount; k++)
+                {
+                    if (k % 2 == 1)
+                    {
+                        glBindFramebuffer(GL_FRAMEBUFFER, m_oddPostProcessFramebuffer);
+                        glBindProgramPipeline(m_postProcessShaders[i].pipeline);
+                        glProgramUniformMatrix4fv(m_postProcess.fragment, 0, 1, 0, m_kernelsMatrices[k].AsPtr());
+                        PostProcessDrawQuad();
+                        glBindTextureUnit(1, m_oddPostProcessTexture);
+                    }
+                    else
+                    {
+                        glBindFramebuffer(GL_FRAMEBUFFER, m_evenPostProcessFramebuffer);
+                        glBindProgramPipeline(m_postProcessShaders[i].pipeline);
+                        glProgramUniformMatrix4fv(m_postProcess.fragment, 0, 1, 0, m_kernelsMatrices[k].AsPtr());
+                        PostProcessDrawQuad();
+                        glBindTextureUnit(1, m_evenPostProcessTexture);
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < m_postProcessShaders.size(); i++)
+            {
+                if (i % 2 == 1)
+                {
+                    glBindFramebuffer(GL_FRAMEBUFFER, m_oddPostProcessFramebuffer);
+                    glBindProgramPipeline(m_postProcessShaders[i].pipeline);
+                    PostProcessDrawQuad();
+                    glBindTextureUnit(1, m_oddPostProcessTexture);
+                }
+                else
+                {
+                    glBindFramebuffer(GL_FRAMEBUFFER, m_evenPostProcessFramebuffer);
+                    glBindProgramPipeline(m_postProcessShaders[i].pipeline);
+                    PostProcessDrawQuad();
+                    glBindTextureUnit(1, m_evenPostProcessTexture);
+                }
+            }
+        }
+
+        // Kernels passes
+        glBindProgramPipeline(m_postProcess.pipeline);
+        glBindVertexArray(m_quadVAO);
+
+        if (useKernelInFinalPass)
+        {
+            for (int i = 0; i < m_kernelCount; i++)
+            {
+                if (i % 2 == 1)
+                {
+                    glBindFramebuffer(GL_FRAMEBUFFER, m_oddPostProcessFramebuffer);
+                    glProgramUniformMatrix4fv(m_postProcess.fragment, 0, 1, 0, m_kernelsMatrices[i].AsPtr());
+                    PostProcessDrawQuad();
+                    glBindTextureUnit(1, m_oddPostProcessTexture);
+                }
+                else
+                {
+                    glBindFramebuffer(GL_FRAMEBUFFER, m_evenPostProcessFramebuffer);
+                    glProgramUniformMatrix4fv(m_postProcess.fragment, 0, 1, 0, m_kernelsMatrices[i].AsPtr());
+                    PostProcessDrawQuad();
+                    glBindTextureUnit(1, m_evenPostProcessTexture);
+                }
+            }
+        }
+
+        // Identity kernel to draw the final render
+        glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
+        glViewport(0, 0, dimension.width, dimension.height);
+
+        static float identity[16] = {
+            0.f, 0.f, 0.f, 0.f,
+            0.f, 1.f, 0.f, 0.f,
+            0.f, 0.f, 0.f, 0.f,
+            0.f, 0.f, 0.f, 0.f
+        };
+
+        glProgramUniformMatrix4fv(m_postProcess.fragment, 0, 1, 0, identity);
+        
+        PostProcessDrawQuad();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glEnable(GL_DEPTH_TEST);
     }

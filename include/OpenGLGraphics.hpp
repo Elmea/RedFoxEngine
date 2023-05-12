@@ -101,7 +101,6 @@ private:
     u32    m_matrixSSBO;
     u32    m_textureSSBO;
     u32    m_shadowMapsSSBO;
-    u32    m_kernelSSBO;
 
     stbtt_bakedchar cdata[96];
     GLuint m_gFontTexture;
@@ -118,7 +117,10 @@ private:
     GLuint m_evenPostProcessFramebuffer;
     GLuint m_oddPostProcessFramebuffer;
     
+    void PostProcessDrawQuad();
+
 public:
+    bool useKernelInFinalPass = false;
     int m_kernelCount;
     const int m_maxKernel = 5;
     const int m_maxPostProcessShader = 5;
