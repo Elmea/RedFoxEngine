@@ -532,6 +532,15 @@ void RedFoxEngine::Platform::FatalError(const char *message)
     ExitProcess(0);
 }
 
+int RedFoxEngine::Platform::FileExist(const char *path)
+{
+    WIN32_FIND_DATA FindFileData;
+    HANDLE handle = FindFirstFileA(path, &FindFileData);
+    int found = (handle != INVALID_HANDLE_VALUE);
+    if (found) FindClose(handle);
+    return found;
+}
+
 void RedFoxEngine::Platform::SwapFramebuffers()
 {
     HDC dc = GetDC(m_window);

@@ -26,9 +26,9 @@ Engine::Engine(int width, int height) :
     InitIMGUI();
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
     m_editorCameraSpeed = 1;
-    m_models = (Model *)m_memoryManager.PersistentAllocation(sizeof(Model) * 100);
+    m_models = (Model *)m_memoryManager.PersistentAllocation(sizeof(Model) * m_maxModel);
 
-    m_modelsName = (MyString*)m_memoryManager.PersistentAllocation(sizeof(MyString) * 100);
+    m_modelsName = (MyString*)m_memoryManager.PersistentAllocation(sizeof(MyString) * m_maxModel);
     for (int i = 0; i < 100; i++)
         m_modelsName->capacity = 64;
 
@@ -406,6 +406,4 @@ Engine::~Engine()
 {
     for (int i = 0; i < (int)m_modelCount; i++)
         DeInitObj(&m_models[i].obj);
-    m_imgui.defaultFont->ContainerAtlas->Clear();
-    ImGui::DestroyContext();
 }

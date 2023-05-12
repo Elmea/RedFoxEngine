@@ -97,6 +97,8 @@ Sound* SoundManager::CreateSound(const char* file, Memory* memAllocator)
 
     Sound newOne;
     newOne.m_source = m_soundEngine->addSoundSourceFromFile(file);
+    if (!newOne.m_source)
+        return nullptr;
     newOne.m_soundEngine = m_soundEngine;
     m_soundsName[m_soundCount] = initStringChar(file, strlen(file), memAllocator);
     
@@ -120,7 +122,7 @@ Sound* SoundManager::CreateSound(const char* file, Memory* memAllocator)
     return &m_sounds[newOne.m_index];
 }
 
-void SoundManager::deleteSound(int index)
+void SoundManager::DeleteSound(int index)
 {
     if (m_sounds[index].m_free)
         return;
@@ -170,22 +172,10 @@ void SoundManager::SetMasterVolume(float volume)
     m_soundEngine->setSoundVolume(volume);
 }
 
-int SoundManager::GetSoundCount()
-{
-    return m_soundCount;
-}
-
-MyString* SoundManager::GetSoundsName()
-{
-    return m_soundsName;
-}
-
 SoundManager::~SoundManager()
 {
     if (m_soundEngine)
         m_soundEngine->drop();
 }
-
-
 
 #pragma endregion 
