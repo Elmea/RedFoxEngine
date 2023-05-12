@@ -1288,6 +1288,7 @@ void Engine::DrawWorldProperties()
             const bool noKernel = (m_graphics.m_kernelCount <= 0);
             const bool kernelLimitReached = (m_graphics.m_kernelCount >= m_graphics.m_maxKernel);
             if (kernelLimitReached) BeginDisabled();
+            //TODO: Fix crash when psuhing a kernel after deleting all of them (probably a memory issue)
             if (ButtonEx("Push kernel", ImVec2(GetContentRegionAvail().x, 20)))
             {
                 float mat[4][4] = { 0 }; mat[1][1] = 1;
