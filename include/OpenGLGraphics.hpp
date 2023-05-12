@@ -120,7 +120,7 @@ private:
     void PostProcessDrawQuad();
 
 public:
-    bool useKernelInFinalPass = false;
+    bool useKernelInFinalPass = true;
     int m_kernelCount;
     const int m_maxKernel = 5;
     const int m_maxPostProcessShader = 5;
