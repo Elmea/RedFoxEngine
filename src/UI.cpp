@@ -1184,7 +1184,7 @@ void Engine::DrawProperties()
             SeparatorText("Behaviour");
             SetNextItemWidth(-FLT_MIN);
             static const char* currentBehaviour = m_scene.gameUIBehaviours[1].name.data;
-
+            //TODO: Attributes a behaviour to the game object
             if (ImGui::BeginCombo("BehaviourList", currentBehaviour))
             {
                 for (int i = 0; i < m_scene.gameUIBehaviourCount; i++)

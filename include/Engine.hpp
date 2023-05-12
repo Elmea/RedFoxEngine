@@ -136,6 +136,7 @@ private:
     void UpdateIMGUI();
     void UpdateEditorCamera();
     void UpdateModelMatrices();
+    void UpdateBehaviours();
     void ObjModelPush(const char *objPath);
     void InitIMGUI();
     void LoadScene(const char *fileName);

@@ -40,11 +40,7 @@ static Float3 RotateVectorByQuaternion(Quaternion q, Float3 test)
 
 BEHAVIOUR(Test)
 {
-    static float time = 0;
-    time += deltaTime;
-    if (time > 3.4e38) time = 0;
-    RedFoxMaths::Float3 velocity(time * cosf(time), 0, time * sinf(time));
-    self->body->addForce(physx::PxVec3(velocity.x, 0, velocity.z));
+    self->body->addForce(physx::PxVec3(deltaTime * cosf(deltaTime), 0, deltaTime * sinf(deltaTime)));
 }
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
@@ -99,7 +95,7 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
                     if (!actor->isSleeping())
                     {
                         transform = actor->getGlobalPose();
-                        gameObjects[i].transform   = {{transform.p.x, transform.p.y, transform.p.z}, gameObjects[i].scale, {transform.q.w, transform.q.x, transform.q.y, transform.q.z}};
+                        gameObjects[i].transform = {{transform.p.x, transform.p.y, transform.p.z}, gameObjects[i].scale, {transform.q.w, transform.q.x, transform.q.y, transform.q.z}};
                     }
                 }
             }

@@ -27,7 +27,6 @@ namespace RedFoxEngine
         int actorCount = 0;
     private:
     public:
-        bool gpuSimulated;
         void CreateCubeCollider(GameObject* object, physx::PxU32 size, physx::PxReal halfExtent);
         void CreateSphereCollider(GameObject* object);
         void CreatePlayerCollider(GameObject* object, physx::PxF32 radius, physx::PxF32 height, physx::PxF32 contactOffset, physx::PxF32 stepOffset, physx::PxF32 maxJumpHeight);

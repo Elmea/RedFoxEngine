@@ -53,9 +53,11 @@ void Physx::InitPhysics(Scene scene, int sphereIndex)
 	PxPvdTransport* transport = PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
 	pvd = PxCreatePvd(*foundation);
 	pvd->connect(*transport, PxPvdInstrumentationFlag::eALL);
+	physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, PxTolerancesScale(), true, pvd);
+#else
+	physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, PxTolerancesScale(), false);
 #endif
 
-	physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, PxTolerancesScale(), true, pvd);
 
 	PxCudaContextManagerDesc cudaContextManagerDesc;
 	cudaContextManager = PxCreateCudaContextManager(*foundation, cudaContextManagerDesc, PxGetProfilerCallback());
@@ -67,12 +69,6 @@ void Physx::InitPhysics(Scene scene, int sphereIndex)
 	sceneDesc.cpuDispatcher = dispatcher;
 	sceneDesc.filterShader = PxDefaultSimulationFilterShader;
 
-	if (cudaContextManager->contextIsValid() && gpuSimulated)
-	{
-		sceneDesc.cudaContextManager = cudaContextManager;
-		sceneDesc.flags |= PxSceneFlag::eENABLE_GPU_DYNAMICS;
-		sceneDesc.broadPhaseType = PxBroadPhaseType::eGPU;
-	}
 	m_scene = physics->createScene(sceneDesc);
 	controllerManager = PxCreateControllerManager(*m_scene);
 	controllerManager->setPreciseSweeps(false); // Less precise but faster according to PhysX doc

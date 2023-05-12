@@ -40,7 +40,7 @@ Engine::Engine(int width, int height) :
     m_models[m_modelCount].hash = 2;
     m_modelsName[1] = initStringChar("Sphere", 6, &m_memoryManager.m_memory.arena);
     m_modelCount++;
-    //ObjModelPush("ts_bot912.obj");
+    // ObjModelPush("ts_bot912.obj");
     // ObjModelPush("vortigaunt.obj");
     // ObjModelPush("barbarian.obj");
 
@@ -70,7 +70,7 @@ Engine::Engine(int width, int height) :
     for (int i = 1; i < 100; i++)
     {
         m_scene.gameUIs[i].parent = 0;
-        m_scene.gameUIs[i].behaviourIndex = 0;
+        m_scene.gameUIs[i].behaviourIndex = -1;
     }
 
     //Init GameObject
@@ -324,6 +324,13 @@ void Engine::UpdateSkyDome()
     m_scene.skyDome.sunPosition.y = sinf(m_time.current / 500);
 }
 
+void Engine::UpdateBehaviours()
+{
+    for (int i = 1; i < (int)m_scene.gameObjectCount; i++)
+        if (!m_scene.isPaused && m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex].function != nullptr)
+            m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex].function(&m_scene.gameObjects[i], m_time.delta, &m_scene);
+}
+
 void Engine::Update()
 {
     ProcessInputs();
@@ -336,9 +343,7 @@ void Engine::Update()
     m_game.update(&m_scene, &m_physx, m_input, 1.0 / 60.0);
     UpdateModelMatrices();
     UpdateIMGUI();
-    for (int i = 1; i < (int)m_scene.gameObjectCount; i++)
-        if (!m_scene.isPaused && m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex].function != nullptr)
-            m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex].function(&m_scene.gameObjects[i], m_time.delta, &m_scene);
+    
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 
