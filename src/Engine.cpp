@@ -16,42 +16,6 @@
 using namespace RedFoxEngine;
 using namespace RedFoxMaths;
 
-//Write behaviours here
-
-BUTTONBEHAIVOUR(DefaultBehaviour)
-{
-    
-}
-
-BUTTONBEHAIVOUR(TestObjectBehaviour)
-{
-    printf("ObjectBehaviour\n");
-}
-
-
-BUTTONBEHAIVOUR(AbortMission)
-{
-    exit(0);
-}
-
-
-
-void Engine::AddUIBehaviour(const char* name, functionBehaviour function)
-{
-    m_scene.gameUIBehaviours[m_scene.gameUIBehaviourCount].name = initStringChar(name, 255, &m_memoryManager.m_memory.arena);
-    m_scene.gameUIBehaviours[m_scene.gameUIBehaviourCount].function = function;
-    m_scene.gameUIBehaviourCount++ ;
-}
-
-void Engine::AddObjectBehaviour(const char* name, functionBehaviour function)
-{
-    m_scene.gameObjectBehaviours[m_scene.gameObjectBehaviourCount].name = initStringChar(name, 255, &m_memoryManager.m_memory.arena);
-    m_scene.gameObjectBehaviours[m_scene.gameObjectBehaviourCount].function = function;
-    m_scene.gameObjectBehaviourCount++;
-}
-
-
-
 Engine::Engine(int width, int height) :
     m_scene(width, height),
     m_editorCamera(projectionType::PERSPECTIVE, width / (f32)height),
@@ -66,17 +30,15 @@ Engine::Engine(int width, int height) :
 
     m_modelsName = (MyString*)m_memoryManager.PersistentAllocation(sizeof(MyString) * 100);
     for (int i = 0; i < 100; i++)
-        m_modelsName->capacity   = 64;
+        m_modelsName->capacity = 64;
 
     m_models[m_modelCount].obj = CreateCube(&m_memoryManager.m_memory.arena);
     m_models[m_modelCount].hash = 1;
     m_modelsName[0] = initStringChar("Cube", 4, &m_memoryManager.m_memory.arena);
-    m_modelsName[0].capacity = 4;
     m_modelCount++;
     m_models[m_modelCount].obj = CreateSphere(30, 25, &m_memoryManager.m_memory.arena);
     m_models[m_modelCount].hash = 2;
     m_modelsName[1] = initStringChar("Sphere", 6, &m_memoryManager.m_memory.arena);
-    m_modelsName[1].capacity = 6;
     m_modelCount++;
     //ObjModelPush("ts_bot912.obj");
     // ObjModelPush("vortigaunt.obj");
@@ -85,16 +47,17 @@ Engine::Engine(int width, int height) :
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
 
-    //Init UI GameBehaviour
-    m_scene.gameUIBehaviours = (GameBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameBehaviour) * 100);
-    
-    //Add UI behaviours here
-    AddUIBehaviour("AbortMission"    , AbortMission);
-    AddUIBehaviour("DefaultBehaviour", DefaultBehaviour);
+    //Init behaviours buffer
+    m_scene.gameObjectBehaviours = (Behaviour*)m_memoryManager.PersistentAllocation(sizeof(Behaviour) * 100);
+    m_scene.gameUIBehaviours = (Behaviour*)m_memoryManager.PersistentAllocation(sizeof(Behaviour) * 100);
+    for (int i = 0; i < 100; i += 4)
+    {
+        m_scene.gameObjectBehaviours[i].name = initString(64, &m_memoryManager.m_memory.arena);
+        m_scene.gameObjectBehaviours[i].function = nullptr;
+        m_scene.gameUIBehaviours[i].name = initString(64, &m_memoryManager.m_memory.arena);
+        m_scene.gameUIBehaviours[i].function = nullptr;
+    }
 
-    for (int i = 2; i < 100; i++)
-        AddUIBehaviour("DefaultBehaviour", DefaultBehaviour);
-    m_scene.gameUIBehaviourCount = 2;
 
     //Init GameUI
     m_scene.gameUIs = (GameUI*)m_memoryManager.PersistentAllocation(sizeof(GameUI) * 100);
@@ -109,17 +72,6 @@ Engine::Engine(int width, int height) :
         m_scene.gameUIs[i].parent = 0;
         m_scene.gameUIs[i].behaviourIndex = 0;
     }
-
-    //Init Object GameBehaviour
-    m_scene.gameObjectBehaviours = (GameBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameBehaviour) * 100);
-
-    //Add object behaviours here
-    AddObjectBehaviour("DefaultBehaviour", DefaultBehaviour);
-    AddObjectBehaviour("TestObjectBehaviour", TestObjectBehaviour);
-
-    for (int i = 2; i < 100; i++)
-        AddObjectBehaviour("DefaultBehaviour", DefaultBehaviour);
-    m_scene.gameObjectBehaviourCount = 2;
 
     //Init GameObject
     m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);
@@ -384,6 +336,9 @@ void Engine::Update()
     m_game.update(&m_scene, &m_physx, m_input, 1.0 / 60.0);
     UpdateModelMatrices();
     UpdateIMGUI();
+    for (int i = 1; i < (int)m_scene.gameObjectCount; i++)
+        if (!m_scene.isPaused && m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex].function != nullptr)
+            m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex].function(&m_scene.gameObjects[i], m_time.delta, &m_scene);
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
 }
 
@@ -406,12 +361,7 @@ void Engine::Draw()
     m_graphics.Draw(&m_scene, m_platform.m_windowDimension, m_time.current, m_time.delta);
     m_graphics.BindKernelBuffer(&m_memoryManager.m_memory.temp);
     for (int i = 0; i < (int)m_scene.gameUICount; i++)
-    {
         m_graphics.RenderText(m_scene.gameUIs[i]);
-        if (m_scene.gameUIs[i].isPressed)
-            m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex].function(&m_scene);
-
-    }
     m_graphics.PostProcessingPass();
 
     ImGui::Render();

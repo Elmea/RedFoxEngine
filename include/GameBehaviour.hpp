@@ -4,20 +4,17 @@
 
 namespace RedFoxEngine
 {
+	class Scene;
+	class GameObject;
 
-class Scene;
+	#define BEHAVIOUR(name) \
+	void name(RedFoxEngine::GameObject* self, const float deltaTime, RedFoxEngine::Scene *scene)
 
-#define BUTTONBEHAIVOUR(name) \
-void name(RedFoxEngine::Scene *scene)
+	typedef BEHAVIOUR(functionBehaviour);
 
-typedef BUTTONBEHAIVOUR(functionBehaviour);
-
-class GameBehaviour
-{
-
-public:
-	MyString name;
-	functionBehaviour *function;
-};
-
+	struct Behaviour
+	{
+		MyString name;
+		functionBehaviour* function;
+	};
 }

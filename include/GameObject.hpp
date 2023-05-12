@@ -3,6 +3,12 @@
 #include "RedfoxMaths.hpp"
 #include "Model.hpp"
 
+namespace physx
+{
+    class PxRigidDynamic;
+    class PxController;
+}
+
 namespace RedFoxEngine
 {
     struct Transform
@@ -29,8 +35,11 @@ namespace RedFoxEngine
         float radius;
         RedFoxMaths::Float3 boxExtents;
         RedFoxMaths::Float3 Color;
+        
+        physx::PxRigidDynamic* body;
+        physx::PxController* controller;
 
-        int behaviourIndex = 0;
+        int behaviourIndex;
 
         RedFoxMaths::Mat4 GetLocalMatrix();
     };

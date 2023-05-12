@@ -7,41 +7,59 @@
 using namespace RedFoxEngine;
 using namespace physx;
 
-void Physx::CreateCubeCollider(RedFoxMaths::Float3 position, PxU32 size, PxReal halfExtent)
+void Physx::CreateCubeCollider(GameObject* object, PxU32 size, PxReal halfExtent)
 {
-	PxTransform t(position.x, position.y, position.z);
+	PxTransform t(object->position.x, object->position.y, object->position.z);
 	PxShape* shape = physics->createShape(PxBoxGeometry(halfExtent, halfExtent, halfExtent), *material);
-	PxRigidDynamic* body = physics->createRigidDynamic(t);
-	body->attachShape(*shape);
-	PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
-	m_scene->addActor(*body);
+	object->body = physics->createRigidDynamic(t);
+	object->body->attachShape(*shape);
+	PxRigidBodyExt::updateMassAndInertia(*object->body, 10.0f);
+	m_scene->addActor(*object->body);
 	shape->release();
 }
 
-void Physx::CreateSphereCollider(RedFoxMaths::Float3 position, PxReal radius)
+void Physx::CreateSphereCollider(GameObject* object)
 {
+	RedFoxMaths::Float3 position = object->position;
+	PxReal radius = object->radius;
 	PxTransform t(position.x, position.y, position.z);
 	PxShape* shape = physics->createShape(PxSphereGeometry(radius), *material);
-	PxRigidDynamic* body = physics->createRigidDynamic(t);
-	body->attachShape(*shape);
-	PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
-	m_scene->addActor(*body);
+	object->body = physics->createRigidDynamic(t);
+	object->body->attachShape(*shape);
+	PxRigidBodyExt::updateMassAndInertia(*object->body, 10.0f);
+	m_scene->addActor(*object->body);
 	shape->release();
+}
+
+void Physx::CreatePlayerCollider(GameObject* object, PxF32 radius, PxF32 height, PxF32 contactOffset, PxF32 stepOffset, PxF32 maxJumpHeight)
+{
+	PxCapsuleControllerDesc capsuleControllerDesc = {};
+	PxExtendedVec3 pos(object->position.x, object->position.y, object->position.z);
+	capsuleControllerDesc.position = pos;
+	capsuleControllerDesc.radius = radius;
+	capsuleControllerDesc.height = height;
+	capsuleControllerDesc.contactOffset = contactOffset;
+	capsuleControllerDesc.stepOffset = stepOffset;
+	capsuleControllerDesc.maxJumpHeight = maxJumpHeight;
+	capsuleControllerDesc.climbingMode = PxCapsuleClimbingMode::eCONSTRAINED;
+	object->controller = controllerManager->createController(capsuleControllerDesc);
 }
 
 void Physx::InitPhysics(Scene scene, int sphereIndex)
 {
 	foundation = PxCreateFoundation(PX_PHYSICS_VERSION, allocator, errorCallback);
 
+#if _DEBUG
 	PxPvdTransport* transport = PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
 	pvd = PxCreatePvd(*foundation);
 	pvd->connect(*transport, PxPvdInstrumentationFlag::eALL);
+#endif
 
 	physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, PxTolerancesScale(), true, pvd);
 
 	PxCudaContextManagerDesc cudaContextManagerDesc;
 	cudaContextManager = PxCreateCudaContextManager(*foundation, cudaContextManagerDesc, PxGetProfilerCallback());
-	
+
 	PxSceneDesc sceneDesc(physics->getTolerancesScale());
 	sceneDesc.gravity = PxVec3(0.0f, -30.f /*-9.81f*/, 0.0f);
 
@@ -49,13 +67,18 @@ void Physx::InitPhysics(Scene scene, int sphereIndex)
 	sceneDesc.cpuDispatcher = dispatcher;
 	sceneDesc.filterShader = PxDefaultSimulationFilterShader;
 
-	if (cudaContextManager->contextIsValid())
+	if (cudaContextManager->contextIsValid() && gpuSimulated)
 	{
 		sceneDesc.cudaContextManager = cudaContextManager;
 		sceneDesc.flags |= PxSceneFlag::eENABLE_GPU_DYNAMICS;
 		sceneDesc.broadPhaseType = PxBroadPhaseType::eGPU;
 	}
 	m_scene = physics->createScene(sceneDesc);
+	controllerManager = PxCreateControllerManager(*m_scene);
+	controllerManager->setPreciseSweeps(false); // Less precise but faster according to PhysX doc
+	controllerManager->setOverlapRecoveryModule(true); // Move the CCT to a safe place
+
+#if _DEBUG
 	m_scene->setVisualizationParameter(PxVisualizationParameter::eACTOR_AXES, 1);
 	m_scene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1);
 
@@ -66,47 +89,46 @@ void Physx::InitPhysics(Scene scene, int sphereIndex)
 		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
 		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
 	}
+#endif
+
 	material = physics->createMaterial(0.5f, 0.5f, 0.1f);
 
-	// TODO: Replace with scene loaded context
 	PxRigidStatic* groundPlane = PxCreatePlane(*physics, PxPlane(0, 1, 0, 10), *material);
 	m_scene->addActor(*groundPlane);
 
 	for (u32 i = 1; i < (u32)scene.gameObjectCount; i++)
 	{
 		if (scene.gameObjects[i].modelIndex == sphereIndex)
-			CreateSphereCollider(scene.gameObjects[i].position, scene.gameObjects[i].radius);
+			CreateSphereCollider(&scene.gameObjects[i]);
 		else
-			CreateCubeCollider(scene.gameObjects[i].position, 1, 1);
+			CreateCubeCollider(&scene.gameObjects[i], 1, 1);
 	}
 }
 
 void Physx::SetTransform(int index, Transform transform)
 {
-	int temp = m_scene->getNbActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC);
+	int temp = m_scene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC);
 	if (index < temp)
 	{
-		PxActor *actor;
-		m_scene->getActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC, (physx::PxActor**)&actor, 1, index);
-		if (actor && actor->is<physx::PxRigidDynamic>())
+		PxActor* actor;
+		m_scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC, (PxActor**)&actor, 1, index);
+		if (actor && actor->is<PxRigidDynamic>())
 		{
-			physx::PxTransform t;
-			t.p = {transform.position.x, transform.position.y, transform.position.z};
-			t.q = {transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a};
-			actor->is<physx::PxRigidDynamic>()->setGlobalPose(t);
+			PxTransform t;
+			t.p = { transform.position.x, transform.position.y, transform.position.z };
+			t.q = { transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a };
+			actor->is<PxRigidDynamic>()->setGlobalPose(t);
 		}
 	}
 }
 void Physx::UpdatePhysics(f32 deltaTime, ResourcesManager m, bool isPaused)
 {
-	int temp = m_scene->getNbActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC);
-	if (temp)
+	actorCount = m_scene->getNbActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC);
+	if (actorCount)
 	{
-		if(!isPaused)
+		if (!isPaused)
 			m_scene->simulate(deltaTime);
-		
-		actorCount = temp;
-		actors = (PxRigidActor **)m.TemporaryAllocation(sizeof(actors) * actorCount);
-		m_scene->getActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC, (physx::PxActor**)actors, actorCount);
+		actors = (PxRigidActor**)m.TemporaryAllocation(sizeof(actors) * actorCount);
+		m_scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC, (PxActor**)actors, actorCount);
 	}
 }

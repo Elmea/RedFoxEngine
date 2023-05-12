@@ -9,34 +9,37 @@
 namespace RedFoxEngine
 {
 
-class Physx
-{
-  private:
-    physx::PxDefaultAllocator allocator;
-    physx::PxDefaultErrorCallback errorCallback;
-    physx::PxFoundation *foundation = nullptr;
-    physx::PxPhysics *physics = nullptr;
-    physx::PxDefaultCpuDispatcher *dispatcher = nullptr;
-    physx::PxMaterial *material = nullptr;
-    physx::PxPvd *pvd = nullptr;
-    physx::PxCudaContextManager *cudaContextManager = nullptr;
-  public:
-    physx::PxScene *m_scene = nullptr;
-    physx::PxRigidActor **actors;
-    int actorCount = 0;
-  private:
-  public:
-    void CreateCubeCollider(RedFoxMaths::Float3 position, physx::PxU32 size, physx::PxReal halfExtent);
-    void CreateSphereCollider(RedFoxMaths::Float3 position, physx::PxReal radius);
-    void InitPhysics(Scene scene, int sphereIndex);
-    virtual void SetTransform(int index, Transform transform);
-    void UpdatePhysics(f32 deltaTime, ResourcesManager m, bool isPaused);
+    class Physx
+    {
+    private:
+        physx::PxDefaultAllocator allocator;
+        physx::PxDefaultErrorCallback errorCallback;
+        physx::PxFoundation* foundation;
+        physx::PxPhysics* physics;
+        physx::PxDefaultCpuDispatcher* dispatcher;
+        physx::PxMaterial* material;
+        physx::PxPvd* pvd;
+        physx::PxCudaContextManager* cudaContextManager;
+    public:
+        physx::PxScene* m_scene;
+        physx::PxRigidActor** actors;
+        physx::PxControllerManager* controllerManager;
+        int actorCount = 0;
+    private:
+    public:
+        bool gpuSimulated;
+        void CreateCubeCollider(GameObject* object, physx::PxU32 size, physx::PxReal halfExtent);
+        void CreateSphereCollider(GameObject* object);
+        void CreatePlayerCollider(GameObject* object, physx::PxF32 radius, physx::PxF32 height, physx::PxF32 contactOffset, physx::PxF32 stepOffset, physx::PxF32 maxJumpHeight);
+        void InitPhysics(Scene scene, int sphereIndex);
+        virtual void SetTransform(int index, Transform transform);
+        void UpdatePhysics(f32 deltaTime, ResourcesManager m, bool isPaused);
 
-  ~Physx()
-  {
-    if (cudaContextManager)
-      cudaContextManager->release();
-  };
-};
+        ~Physx()
+        {
+            if (cudaContextManager)
+                cudaContextManager->release();
+        };
+    };
 
 }

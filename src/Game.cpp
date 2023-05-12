@@ -38,15 +38,13 @@ static Float3 RotateVectorByQuaternion(Quaternion q, Float3 test)
     return result.GetXYZF3();
 }
 
-
-BUTTONBEHAIVOUR(Test)
+BEHAVIOUR(Test)
 {
-    printf("f");
-}
-
-BUTTONBEHAIVOUR(Best)
-{
-    printf("b");
+    static float time = 0;
+    time += deltaTime;
+    if (time > 3.4e38) time = 0;
+    RedFoxMaths::Float3 velocity(time * cosf(time), 0, time * sinf(time));
+    self->body->addForce(physx::PxVec3(velocity.x, 0, velocity.z));
 }
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
@@ -62,15 +60,10 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     RedFoxEngine::Scene *scene = (RedFoxEngine::Scene *)s;
 
     static bool init = false;
-
     if (!init)
     {
-        scene->gameUIBehaviours[scene->gameUIBehaviourCount].name = assignString(scene->gameUIBehaviours[scene->gameUIBehaviourCount].name, "Test");
-        scene->gameUIBehaviours[scene->gameUIBehaviourCount].function = Test;
-        scene->gameUIBehaviourCount++;
-        scene->gameUIBehaviours[scene->gameUIBehaviourCount].name = assignString(scene->gameUIBehaviours[scene->gameUIBehaviourCount].name, "Best");
-        scene->gameUIBehaviours[scene->gameUIBehaviourCount].function = Best;
-        scene->gameUIBehaviourCount++;
+        //scene->AddUIBehavior("Test", Test);
+        scene->AddGameObjectBehavior("Test", Test);
         init = true;
     }
 
@@ -107,8 +100,6 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
                     {
                         transform = actor->getGlobalPose();
                         gameObjects[i].transform   = {{transform.p.x, transform.p.y, transform.p.z}, gameObjects[i].scale, {transform.q.w, transform.q.x, transform.q.y, transform.q.z}};
-                        if(!scene->isPaused)
-                            scene->gameObjectBehaviours[scene->gameObjects[i].behaviourIndex].function(scene);
                     }
                 }
             }
