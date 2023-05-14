@@ -22,10 +22,22 @@ extern "C"
 
 namespace RedFoxEngine
 {
-    void Graphics::InitGraphics(Memory* tempArena, WindowDimension p_dimension)
+    void Graphics::InitGraphics(ResourcesManager *resources, WindowDimension p_dimension)
     {
+        m = resources;
         dimension = p_dimension;
-        InitShaders(tempArena);
+
+        m_font.fragmentPath        = initStringChar("font.frag", 10, &m->m_memory.arena);
+        m_font.vertexPath          = initStringChar("font.vert", 10, &m->m_memory.arena);
+        m_blinnPhong.fragmentPath  = initStringChar("blinn_phong.frag.glsl", 21, &m->m_memory.arena);
+        m_blinnPhong.vertexPath    = initStringChar("blinn_phong.vert.glsl", 21, &m->m_memory.arena);
+        m_shadow.fragmentPath      = initStringChar("ShadowShader.frag", 24, &m->m_memory.arena);
+        m_shadow.vertexPath        = initStringChar("ShadowShader.vert", 24, &m->m_memory.arena);
+        m_sky.fragmentPath         = initStringChar("skydome.frag", 16, &m->m_memory.arena);
+        m_sky.vertexPath           = initStringChar("skydome.vert", 16, &m->m_memory.arena);
+        m_postProcess.fragmentPath = initStringChar("PostProcess.frag", 16, &m->m_memory.arena);
+        m_postProcess.vertexPath   = initStringChar("PostProcess.vert", 16, &m->m_memory.arena);
+        InitShaders();
         // setup global GL state
         {
             glEnable(GL_BLEND);
@@ -57,7 +69,6 @@ namespace RedFoxEngine
         glSamplerParameteri(m_textureSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glSamplerParameteri(m_textureSampler, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glSamplerParameteri(m_textureSampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
         {
             glCreateBuffers(1, &m_vertexBufferObject);
             glNamedBufferStorage(m_vertexBufferObject, 1000000 * (sizeof(ObjVertex)), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
@@ -211,6 +222,7 @@ namespace RedFoxEngine
         // vertex buffer containing triangle vertices
         model->vertexOffset = m_vertexCount;
         model->indexOffset = m_indexCount;
+        // model->mesh.count = model->obj.meshCount; //TODO: obj independent engine models
         model->indexCount = model->obj.indexCount;
         model->materialOffset = m_materialCount;
         int tempTexture = m_textures.textureCount;
@@ -251,11 +263,11 @@ namespace RedFoxEngine
         DeInitGraphicsObj(&model->obj);
     }
 
-    void Graphics::InitFont(Memory* temp)
+    void Graphics::InitFont()
     {
-        unsigned char* temp_bitmap = (unsigned char*)MyMalloc(temp, 512 * 512);
+        u8* temp_bitmap = (u8 *)m->TemporaryAllocation(512 * 512);
 
-        MyString file = OpenAndReadEntireFile("VictorMono-Bold.ttf", temp);
+        MyString file = OpenAndReadEntireFile("VictorMono-Bold.ttf", &m->m_memory.temp);
         stbtt_BakeFontBitmap((const unsigned char *)file.data, 0, 32.0, temp_bitmap, 512, 512, 32, 96, cdata); // no guarantee this fits!
         glGenTextures(1, &m_gFontTexture);
         glBindTexture(GL_TEXTURE_2D, m_gFontTexture);
@@ -285,7 +297,7 @@ namespace RedFoxEngine
 
     void Graphics::InitModelTextures(ObjModel* model)
     {
-        WaitForSingleObject(model->images.thread, INFINITE);
+        Platform::WaitForThread(model->images.thread);
 
         for (int i = 0; i < (int)model->images.count; i++)
         {
@@ -410,6 +422,7 @@ namespace RedFoxEngine
         static float shadowMapUpdate;
         if (shadowMapUpdate > 0.016)
         {
+            UpdateShaders();
             DrawShadowMaps(p_scene->m_modelCountIndex);
             shadowMapUpdate = 0;
         }
@@ -540,12 +553,88 @@ namespace RedFoxEngine
             nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
 
         m_kernels = (Kernel*)MyMalloc(arena, sizeof(Kernel) * m_maxKernel);
+        glCreateFramebuffers(1, &m_evenPostProcessFramebuffer);
+        glCreateFramebuffers(1, &m_oddPostProcessFramebuffer);
+
+        // Even
+        {
+            glCreateTextures(GL_TEXTURE_2D, 1, &m_evenPostProcessTexture);
+            glTextureParameteri(m_evenPostProcessTexture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTextureParameteri(m_evenPostProcessTexture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTextureStorage2D(m_evenPostProcessTexture, 1, GL_RGBA8, m_sceneTextureDimension.width,
+                m_sceneTextureDimension.height);
+
+            glNamedFramebufferTexture(m_evenPostProcessFramebuffer, GL_COLOR_ATTACHMENT0,
+                m_evenPostProcessTexture, 0);
+            unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0 };
+            glNamedFramebufferDrawBuffers(m_evenPostProcessFramebuffer, 1, attachments);
+        }   
+        // Odd
+        {
+            glCreateTextures(GL_TEXTURE_2D, 1, &m_oddPostProcessTexture);
+            glTextureParameteri(m_oddPostProcessTexture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTextureParameteri(m_oddPostProcessTexture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTextureStorage2D(m_oddPostProcessTexture, 1, GL_RGBA8, m_sceneTextureDimension.width,
+                m_sceneTextureDimension.height);
+            glNamedFramebufferTexture(m_oddPostProcessFramebuffer, GL_COLOR_ATTACHMENT0,
+                            m_oddPostProcessTexture, 0);
+
+            glNamedFramebufferTexture(m_oddPostProcessFramebuffer, GL_COLOR_ATTACHMENT0,
+                                        m_oddPostProcessTexture, 0);
+            unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0 };
+            glNamedFramebufferDrawBuffers(m_oddPostProcessFramebuffer, 1, attachments);
+        }        
     }
     
     void Graphics::PostProcessingPass()
     {
+        // Shaders pass
         glBindTextureUnit(1, m_sceneTexture);
-        bindBuffer(0, m_kernelSSBO, sizeof(RedFoxMaths::Mat4) * m_kernelCount);
+        glViewport(0, 0, m_sceneTextureDimension.width, m_sceneTextureDimension.height);
+        for (int i = 0; i < (int)m_postProcessShaders.size(); i++)
+        {
+            if (i%2 == 1)
+            {
+                glBindFramebuffer(GL_FRAMEBUFFER, m_oddPostProcessFramebuffer);
+
+                // clear screen
+                glEnable(GL_BLEND);
+                glBindProgramPipeline(m_postProcessShaders[i].pipeline);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+                glDisable(GL_DEPTH_TEST);
+                glBindVertexArray(m_quadVAO);
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                glEnable(GL_DEPTH_TEST);
+                glBindTextureUnit(1, m_oddPostProcessTexture);
+            }
+            else
+            {
+                glBindFramebuffer(GL_FRAMEBUFFER, m_evenPostProcessFramebuffer);
+
+                // clear screen
+                glEnable(GL_BLEND);
+                glBindProgramPipeline(m_postProcessShaders[i].pipeline);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+                glDisable(GL_DEPTH_TEST);
+                glBindVertexArray(m_quadVAO);
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                glEnable(GL_DEPTH_TEST);
+                glBindTextureUnit(1, m_evenPostProcessTexture);   
+            }
+        }
+
+        // Kernels pass
+        glBindFramebuffer(GL_FRAMEBUFFER, m_imguiFramebuffer);
+        glViewport(0, 0, dimension.width, dimension.height);
+        glNamedBufferSubData(m_kernelSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount, m_kernelsMatrices);
+
+        if (m_kernelCount > 0)
+            glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0,m_kernelSSBO, 0, sizeof(RedFoxMaths::Mat4) * m_kernelCount);
+        
         // clear screen
         glEnable(GL_BLEND);
         glBindProgramPipeline(m_postProcess.pipeline);

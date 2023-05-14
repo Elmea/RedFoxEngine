@@ -49,4 +49,3 @@ RedFoxMaths::Mat4 Camera::GetVP()
 {
     return m_projection * GetViewMatrix();
 }
-

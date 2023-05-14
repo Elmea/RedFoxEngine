@@ -30,17 +30,13 @@ struct Light {
 
 struct Material
 {
-    vec3 ambient;
-    float Opaqueness;
-
     vec3 diffuse;
     float Shininess;
 
-    vec3 specular;
+    float Opaqueness;
     int diffuseMap;
-
-    vec3 emissive;
     int normalMap;
+    int _padding;
 };
 
 layout(location = 0)in FS_IN
@@ -99,7 +95,7 @@ float ShadowCalculation(Light light)
     projCoords = projCoords * 0.5 + 0.5;
 
     // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
-    float closestDepth = texture(sampler2D(sb_ShadowMaps.data[0]), projCoords.xy).r; 
+    float closestDepth = texture(sampler2D(sb_ShadowMaps.data[light.shadowParameters.index]), projCoords.xy).r; 
     // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
     // check whether current frag pos is in shadow
@@ -118,7 +114,6 @@ float ShadowCalculation(Light light)
     shadow /= 16.0;
     return shadow;
 }  
-
 
 vec3 CalcDirLight(Light light, vec3 normal, vec3 viewDir, vec3 Color)
 {

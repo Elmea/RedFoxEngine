@@ -6,6 +6,8 @@
 #define _AMD64_
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
+#define NOMINMAX
 #include <memoryapi.h>
 #include <windows.h>
 #endif

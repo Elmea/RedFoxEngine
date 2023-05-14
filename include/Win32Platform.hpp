@@ -126,17 +126,26 @@ public:
     void SetMousePosition(int x, int y);
     static u64 GetTimerFrequency();
     static f64 GetTimer();
+    static void WaitForThread(HANDLE thread);
     void SwapFramebuffers();
     GameLibrary LoadGameLibrary(const char *functionName, const char *libraryPath, GameLibrary game);
 };
+
 } // namespace RedFoxEngine
 
 #define STR2(x) #x
 #define STR(x) STR2(x)
 
+#ifdef _DEBUG
 #define Assert(cond)                                                                                                   \
     do                                                                                                                 \
     {                                                                                                                  \
         if (!(cond))                                                                                                   \
             __debugbreak();                                                                                            \
     } while (0)
+#else
+#define Assert(cond)                                                                                                   \
+    do                                                                                                                 \
+    {                                                                                                                  \
+    } while (0)
+#endif

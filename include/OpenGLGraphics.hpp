@@ -5,6 +5,8 @@
 #include "Win32Platform.hpp"
 #endif
 
+#include <utility>
+#include <vector>
 #include <GL/gl.h>
 #include "OpenGLFunctions.hpp"
 #include "ObjParser.hpp"
@@ -19,17 +21,13 @@ namespace RedFoxEngine
 
 struct Material
 {
-    RedFoxMaths::Float3 ambient;
-    float Opaqueness;
-
     RedFoxMaths::Float3 diffuse;
     float Shininess;
 
-    RedFoxMaths::Float3 specular;
+    float Opaqueness;
     int diffuseMap;
-
-    RedFoxMaths::Float3 emissive;
     int normalMap;
+    int _padding;
 };
 
 struct LightStorage
@@ -56,6 +54,9 @@ struct Textures
 struct Shader
 {
     GLuint vertex, fragment, pipeline;
+    MyString vertexPath, fragmentPath;
+    FILETIME vertexTime;
+    FILETIME fragmentTime;
 };
 
 class Graphics;
@@ -74,6 +75,7 @@ public:
 class Graphics
 {
 private:
+    ResourcesManager *m = nullptr;
     GLuint m_textureSampler;
     Textures m_textures = {};
     u32 m_materialCount;
@@ -110,10 +112,17 @@ private:
     int m_kernelCreated = 0;
     RedFoxMaths::Mat4* m_kernelsMatrices;
     WindowDimension m_sceneTextureDimension;
+
+    std::vector<Shader> m_postProcessShaders;
+    GLuint m_evenPostProcessTexture;
+    GLuint m_oddPostProcessTexture;
+    GLuint m_evenPostProcessFramebuffer;
+    GLuint m_oddPostProcessFramebuffer;
     
 public:
     int m_kernelCount;
     const int m_maxKernel = 5;
+    const int m_maxPostProcessShader = 5;
     Kernel* m_kernels;
 
     WindowDimension dimension;
@@ -124,25 +133,31 @@ public:
     LightStorage lightStorage;
     bool postProcessingEnabled;
     
+    // void InitGraphics(Memory *persistent, Memory* tempArena, WindowDimension p_dimension);
+    void InitGraphics(ResourcesManager *manager, WindowDimension p_dimension);
     void InitModel(Model *model);
     void InitLights();
-    void InitFont(Memory* temp);
+    void InitFont();
     void InitQuad();
     void InitModelTextures(ObjModel *model);
-    u32 InitTexture(void *data, int width, int height, bool resident, bool repeat);
+    u32  InitTexture(void *data, int width, int height, bool resident, bool repeat);
     void InitFramebuffer();
-    void InitShaders(Memory *tempArena);
-    void InitGraphics(Memory *tempArena, WindowDimension dimension);
+    void InitShaders();
     void InitImGUIFramebuffer(WindowDimension dimension);
     void InitSceneFramebuffer(WindowDimension dimension);
     void InitPostProcess(Memory* arena);
+    
     void BindLights();
+    
     void SetViewProjectionMatrix(RedFoxMaths::Mat4 vp);
     void FillLightBuffer(LightInfo* lights, LightType type);
+    void UpdateShaders();
     void UpdateImGUIFrameBuffer(WindowDimension& dimension, WindowDimension content);
     void UpdateModelMatrices(GameObject* objects, int gameObjectCount, Memory* temp);
     void PushMaterial(Material *materials, int count);
     void PushModelMatrices(RedFoxMaths::Mat4 *matrices, int count);
+
+    
     void Draw(Scene *m_scene, WindowDimension p_windowDimension, float p_time, float p_delta);
     void DrawShadowMaps(u64* modelCountIndex);
     void DrawSkyDome(SkyDome skyDome, float dt);
@@ -151,6 +166,7 @@ public:
         RedFoxMaths::Mat4* modelMatrices, int instanceCount);
     void DrawModelShadowInstances(Model* model, int instanceCount);
     void RenderText(GameUI ui);
+    
     void ResetKernel(int id);
 
     void PostProcessingPass();
@@ -162,6 +178,10 @@ public:
     // Setting an existing kernel by his index.
     void EditKernel(int id, RedFoxMaths::Mat4 kernel);
     void BindKernelBuffer(Memory* tempAlocator);
+
+    void AddPostProcessShader(Memory *tempArena, const char* fragPath);
+    void SwapPostProcessShader(int idFirst, int idSecond);
+    void RemovePostProcessShader(int id);
 };
 } // namespace RedFoxEngine
 

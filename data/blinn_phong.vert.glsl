@@ -12,17 +12,13 @@ layout(std430, binding = 3) buffer MatrixBlock
 
 struct Material
 {
-    vec3 ambient;
-    float Opaqueness;
-
     vec3 diffuse;
     float Shininess;
 
-    vec3 specular;
+    float Opaqueness;
     int diffuseMap;
-
-    vec3 emissive;
     int normalMap;
+    int _padding;
 };
 
 layout(std430, binding = 5) buffer Materials

@@ -221,6 +221,12 @@ void Platform::SetMousePosition(int x, int y)
 {
     SetCursorPos(x, y);
 }
+
+void Platform::WaitForThread(HANDLE thread)
+{
+    WaitForSingleObject(thread, INFINITE);
+}
+
 }
 
 static void updateMouse(RedFoxEngine::Window m_window,
