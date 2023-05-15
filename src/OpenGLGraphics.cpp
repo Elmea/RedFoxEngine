@@ -578,12 +578,19 @@ namespace RedFoxEngine
         // Shaders passes
         glBindTextureUnit(1, m_sceneTexture);
         glViewport(0, 0, m_sceneTextureDimension.width, m_sceneTextureDimension.height);
-        if (m_kernelCount > 0)
+        int nextTexture = 0;
+        for (int i = 0; i < m_postProcessShaders.size(); i++)
         {
-            for (int i = 0; i < m_postProcessShaders.size(); i++)
+            if (!m_postProcessShaders[i].active)
+                continue;
+
+            if (m_postProcessShaders[i].useKernels && m_kernelCount > 0)
             {
                 for (int k = 0; k < m_kernelCount; k++)
                 {
+                    if (!m_kernels[i].active)
+                        continue;
+                    
                     if (k % 2 == 1)
                     {
                         glBindFramebuffer(GL_FRAMEBUFFER, m_oddPostProcessFramebuffer);
@@ -600,12 +607,10 @@ namespace RedFoxEngine
                         PostProcessDrawQuad();
                         glBindTextureUnit(1, m_evenPostProcessTexture);
                     }
+                    nextTexture = (k+1) % 2; 
                 }
             }
-        }
-        else
-        {
-            for (int i = 0; i < m_postProcessShaders.size(); i++)
+            else
             {
                 if (i % 2 == 1)
                 {
@@ -621,6 +626,7 @@ namespace RedFoxEngine
                     PostProcessDrawQuad();
                     glBindTextureUnit(1, m_evenPostProcessTexture);
                 }
+                nextTexture = (i+1) % 2; 
             }
         }
 
@@ -632,7 +638,10 @@ namespace RedFoxEngine
         {
             for (int i = 0; i < m_kernelCount; i++)
             {
-                if (i % 2 == 1)
+                if (!m_kernels[i].active)
+                    continue;
+                
+                if ((nextTexture + i) % 2 == 1)
                 {
                     glBindFramebuffer(GL_FRAMEBUFFER, m_oddPostProcessFramebuffer);
                     glProgramUniformMatrix4fv(m_postProcess.fragment, 0, 1, 0, m_kernelsMatrices[i].AsPtr());

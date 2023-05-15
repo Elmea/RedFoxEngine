@@ -5,6 +5,7 @@
 #include "Win32Platform.hpp"
 #endif
 
+#include <string>
 #include <utility>
 #include <vector>
 #include <GL/gl.h>
@@ -59,6 +60,14 @@ struct Shader
     GLuint vertex, fragment, pipeline;
 };
 
+struct PostProcessShader
+{
+    bool active;
+    bool useKernels;
+    std::string name;
+    GLuint vertex, fragment, pipeline;
+};
+    
 class Graphics;
 
 class Kernel
@@ -111,7 +120,6 @@ private:
     RedFoxMaths::Mat4* m_kernelsMatrices;
     WindowDimension m_sceneTextureDimension;
 
-    std::vector<Shader> m_postProcessShaders;
     GLuint m_evenPostProcessTexture;
     GLuint m_oddPostProcessTexture;
     GLuint m_evenPostProcessFramebuffer;
@@ -125,6 +133,7 @@ public:
     const int m_maxKernel = 5;
     const int m_maxPostProcessShader = 5;
     Kernel* m_kernels;
+    std::vector<PostProcessShader> m_postProcessShaders;
 
     WindowDimension dimension;
     GLuint m_imguiTexture;

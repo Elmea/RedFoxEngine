@@ -82,9 +82,16 @@ void RedFoxEngine::Graphics::AddPostProcessShader(Memory *tempArena, const char*
     MyString vertexShaderSource = OpenAndReadEntireFile("PostProcess.vert", tempArena);
     MyString fragmentShaderSource = OpenAndReadEntireFile(fragPath, tempArena);
 
-    Shader result;
+    Shader temp;
 
-    CompileShader(vertexShaderSource.data, fragmentShaderSource.data, result);
+    CompileShader(vertexShaderSource.data, fragmentShaderSource.data, temp);
+
+    PostProcessShader result;
+    result.pipeline = temp.pipeline;
+    result.vertex = temp.vertex;
+    result.fragment = temp.fragment;
+    result.active = true;
+    result.name = fragPath;
 
     m_postProcessShaders.push_back(result);
 }
