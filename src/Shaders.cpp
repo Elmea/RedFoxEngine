@@ -126,7 +126,6 @@ void RedFoxEngine::Graphics::AddPostProcessShader(Memory *tempArena, const char*
     result.fragment = temp.fragment;
     result.active = true;
     result.name = fragPath;
-
     m_postProcessShaders.push_back(result);
 }
 
