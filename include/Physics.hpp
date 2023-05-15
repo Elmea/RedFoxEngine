@@ -26,7 +26,7 @@ class Physx
     int actorCount = 0;
   private:
   public:
-    void CreateCubeCollider(RedFoxMaths::Float3 position, physx::PxU32 size, physx::PxReal halfExtent);
+    void CreateCubeCollider(RedFoxMaths::Float3 position, RedFoxMaths::Float3 scale);
     void CreateSphereCollider(RedFoxMaths::Float3 position, physx::PxReal radius);
     void InitPhysics(Scene scene, int sphereIndex);
     virtual void SetTransform(int index, Transform transform);

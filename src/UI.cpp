@@ -237,7 +237,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->orientation = { 1,0,0,0 };
         newGameObject->scale = { 1,1,1 };
         newGameObject->modelIndex = 0;
-        m_physx.CreateCubeCollider({}, 1, 1);
+        m_physx.CreateCubeCollider(newGameObject->position, newGameObject->scale);
     }
 
     SameLine();
@@ -253,7 +253,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->orientation = { 1,0,0,0 };
         newGameObject->scale = { 1,1,1 };
         newGameObject->modelIndex = 1;
-        m_physx.CreateSphereCollider({}, 1);
+        m_physx.CreateSphereCollider(newGameObject->position, newGameObject->scale.x);
     }
 
     SameLine();
@@ -1210,7 +1210,54 @@ void Engine::DrawWorldProperties()
 {
     if (Begin("WorldProperties", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
-        if (CollapsingHeader("Global Post-Process", m_imgui.propertiesFlags))
+        if (CollapsingHeader("Shaders", m_imgui.propertiesFlags))
+        {
+            BeginTable("PostProcessTable", 2, m_imgui.tableFlags);
+            TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+            TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
+            for (int i = 0; i < m_graphics.m_postProcessShaders.size(); i++)
+            {
+                TableNextRow();
+                TableSetColumnIndex(0);
+                Text(m_graphics.m_postProcessShaders[i].name.c_str());
+                TableSetColumnIndex(1);
+                Checkbox("Is active", &m_graphics.m_postProcessShaders[i].active);
+                Checkbox("Use kernels", &m_graphics.m_postProcessShaders[i].useKernels);
+            }
+            EndTable();
+            if (Button("Import", ImVec2(GetContentRegionAvail().x, 20)) && m_graphics.m_postProcessShaders.size() < m_graphics.m_maxPostProcessShader)
+            {
+                OpenPopup("Importing a shader...");
+            }
+            const ImVec2 popupDim(400, 70);
+            ImVec2 windowPos = ImGui::GetIO().DisplaySize;
+            SetNextWindowPos((windowPos - popupDim) / 2);
+            SetNextWindowSize(popupDim);
+            if (BeginPopupModal("Importing a shader..."))
+            {
+                SetItemDefaultFocus();
+                static MyString path = initStringChar("", 256, &m_memoryManager.m_memory.arena);
+                Text("Path:");
+                SameLine();
+                SetNextItemWidth(-FLT_MIN);
+                InputText("Path", (char*)path.data, path.capacity);
+                if (Button("Import"))
+                {
+                    m_graphics.AddPostProcessShader(&m_memoryManager.m_memory.temp, path.data);
+                    assignString(path, "");
+                    CloseCurrentPopup();
+                }
+                SameLine();
+                if (Button("Cancel"))
+                {
+                    assignString(path, "");
+                    CloseCurrentPopup();
+                }
+                EndPopup();
+            }
+        }
+        
+        if (CollapsingHeader("Kernels", m_imgui.propertiesFlags))
         {
             BeginTable("PostProcessTable", 2, ImGuiTableFlags_RowBg);
             TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
@@ -1227,6 +1274,8 @@ void Engine::DrawWorldProperties()
                 DragFloat3("KernelRow2" + i, &m_graphics.m_kernels[i].kernel.mat16[4], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                 SetNextItemWidth(-FLT_MIN);
                 DragFloat3("KernelRow3" + i, &m_graphics.m_kernels[i].kernel.mat16[8], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                Checkbox("Is active", &m_graphics.m_kernels[i].active);
+                
                 m_graphics.EditKernel(i, m_graphics.m_kernels[i].kernel);
             }
             EndTable();
@@ -1235,6 +1284,7 @@ void Engine::DrawWorldProperties()
                 float mat[4][4] = { 0 }; mat[1][1] = 1;
                 Kernel* k = m_graphics.AddKernel(RedFoxMaths::Mat4(mat));
             }
+            Checkbox("Use kernel in final shader", &m_graphics.useKernelInFinalPass);
         }
     }
     End();

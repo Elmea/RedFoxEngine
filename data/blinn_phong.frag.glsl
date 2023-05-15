@@ -39,6 +39,8 @@ struct Material
     int _padding;
 };
 
+layout (location = 0) uniform invariant vec3 viewPos;
+
 layout(location = 0)in FS_IN
 {
     vec3 Position;
@@ -51,31 +53,31 @@ layout(location = 0)in FS_IN
 layout (location=0)
 out vec4 o_color;  // output fragment data location 0
 
-layout(std430, binding = 0) buffer PointLightBlock {
-    readonly Light pointLight[];
+layout(std430, binding = 0) readonly restrict buffer PointLightBlock {
+    Light pointLight[];
 } u_pointLightBlock;
 
-layout(std430, binding = 1) buffer DirLightBlock {
-    readonly Light   dirLight[];
+layout(std430, binding = 1) readonly restrict buffer DirLightBlock {
+    Light   dirLight[];
 } u_dirLightBlock;
 
-layout(std430, binding = 2) buffer SpotLightBlock {
-    readonly Light  spotLight[];
+layout(std430, binding = 2) readonly restrict buffer SpotLightBlock {
+    Light  spotLight[];
 } u_spotLightBlock;
 
-layout(std430, binding = 4) buffer Texture
+layout(std430, binding = 4) readonly restrict buffer Texture
 {
-    readonly uvec2 data[];
+    uvec2 data[];
 } sb_Texture;
 
-layout(std430, binding = 5) buffer Materials
+layout(std430, binding = 5) readonly restrict buffer Materials
 {
-    readonly Material material[];
+    Material material[];
 } mat;
 
-layout(std430, binding = 6) buffer ShadowMaps
+layout(std430, binding = 6) readonly restrict buffer ShadowMaps
 {
-    readonly uvec2 data[];
+    uvec2 data[];
 } sb_ShadowMaps;
 
 const float specularFloat = 32;
@@ -123,7 +125,8 @@ vec3 CalcDirLight(Light light, vec3 normal, vec3 viewDir, vec3 Color)
 
     vec3 halfwayDir = normalize(lightDir + viewDir);
 
-    float spec = pow(max(dot(viewDir, halfwayDir), 0.0), mat.material[fs_in.materialID + materialOffset].Shininess);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), mat.material[fs_in.materialID].Shininess);
+    // float spec = pow(max(dot(viewDir, halfwayDir), 0.0), mat.material[fs_in.materialID].Shininess);
 
     vec3 ambient = light.ambient * Color;
     vec3 diffuse = light.diffuse * diff * Color;
@@ -179,7 +182,7 @@ void main()
     vec3 Color = fs_in.Color;
     vec3 FragPosition = fs_in.Position;
     vec3 Normal       = fs_in.Normal;
-
+    vec3 viewDir = normalize(viewPos - FragPosition);
     mat3 TBN = mat3(1.0f);
     if (mat.material[fs_in.materialID + materialOffset].diffuseMap != -1)
         Color = texture(sampler2D(sb_Texture.data[mat.material[fs_in.materialID + materialOffset].diffuseMap]), fs_in.TexCoord).xyz;
@@ -196,18 +199,18 @@ void main()
     }
     vec3 result = vec3(0, 0, 0);
     for (int i = 0; i < u_dirLightBlock.dirLight.length(); i++)
-        result += CalcDirLight(u_dirLightBlock.dirLight[i], Normal, vec3(0, 0, 0), Color);
+        result += CalcDirLight(u_dirLightBlock.dirLight[i], Normal, viewDir, Color);
     for (int i = 0; i < u_pointLightBlock.pointLight.length(); i++)
     {
         Light light = u_pointLightBlock.pointLight[i];
         light.position = TBN * light.position;
-        result += CalcPointLight(light, Normal, FragPosition, vec3(0, 0, 0), Color);
+        result += CalcPointLight(light, Normal, FragPosition, viewDir, Color);
     }
     for (int i = 0; i < u_spotLightBlock.spotLight.length(); i++)
     {
         Light light = u_spotLightBlock.spotLight[i];
         light.position = TBN * light.position;
-        result += CalcSpotLight(light, Normal, FragPosition, vec3(0, 0, 0), Color);
+        result += CalcSpotLight(light, Normal, FragPosition, viewDir, Color);
     }
     o_color = vec4(result, 1);
 }

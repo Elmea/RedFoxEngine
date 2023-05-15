@@ -17,6 +17,8 @@ extern "C" {
 
 #if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
 #define WIN32_LEAN_AND_MEAN 1
+#define VC_EXTRALEAN
+#define NOMINMAX
 #include <windows.h>
 #endif
 

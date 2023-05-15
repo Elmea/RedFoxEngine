@@ -5,6 +5,7 @@
 #include "Win32Platform.hpp"
 #endif
 
+#include <string>
 #include <utility>
 #include <vector>
 #include <GL/gl.h>
@@ -18,7 +19,6 @@
 
 namespace RedFoxEngine
 {
-
 struct Material
 {
     RedFoxMaths::Float3 diffuse;
@@ -59,6 +59,14 @@ struct Shader
     FILETIME fragmentTime;
 };
 
+struct PostProcessShader
+{
+    bool active;
+    bool useKernels;
+    std::string name;
+    GLuint vertex, fragment, pipeline;
+};
+    
 class Graphics;
 
 class Kernel
@@ -102,7 +110,6 @@ private:
     u32    m_matrixSSBO;
     u32    m_textureSSBO;
     u32    m_shadowMapsSSBO;
-    u32    m_kernelSSBO;
 
     stbtt_bakedchar cdata[96];
     GLuint m_gFontTexture;
@@ -113,17 +120,20 @@ private:
     RedFoxMaths::Mat4* m_kernelsMatrices;
     WindowDimension m_sceneTextureDimension;
 
-    std::vector<Shader> m_postProcessShaders;
     GLuint m_evenPostProcessTexture;
     GLuint m_oddPostProcessTexture;
     GLuint m_evenPostProcessFramebuffer;
     GLuint m_oddPostProcessFramebuffer;
     
+    void PostProcessDrawQuad();
+
 public:
+    bool useKernelInFinalPass = true;
     int m_kernelCount;
     const int m_maxKernel = 5;
     const int m_maxPostProcessShader = 5;
     Kernel* m_kernels;
+    std::vector<PostProcessShader> m_postProcessShaders;
 
     WindowDimension dimension;
     GLuint m_imguiTexture;
@@ -158,10 +168,10 @@ public:
     void PushModelMatrices(RedFoxMaths::Mat4 *matrices, int count);
 
     
-    void Draw(Scene *m_scene, WindowDimension p_windowDimension, float p_time, float p_delta);
+    void Draw(Scene *m_scene, WindowDimension p_windowDimension, float p_time, float p_delta, RedFoxMaths::Float3 position);
     void DrawShadowMaps(u64* modelCountIndex);
     void DrawSkyDome(SkyDome skyDome, float dt);
-    void DrawGameObjects(u64* modelCountIndex);
+    void DrawGameObjects(u64* modelCountIndex, RedFoxMaths::Float3 view);
     void DrawModelInstances(Model* model,
         RedFoxMaths::Mat4* modelMatrices, int instanceCount);
     void DrawModelShadowInstances(Model* model, int instanceCount);

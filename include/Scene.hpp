@@ -48,8 +48,6 @@ public:
 
     SkyDome skyDome;
     Camera m_gameCamera;
-    SceneNode *first;
-    SceneNode *last;
     int sceneNodeCount;
     int m_width, m_height;
     bool isPaused = true;
@@ -63,26 +61,6 @@ public:
 
     Scene(int width, int height):m_gameCamera(projectionType::PERSPECTIVE,
         width / (f32)height){}
-    void InitScene(Memory *persistent)
-    {
-        first = (SceneNode *)MyMalloc(persistent, sizeof(SceneNode) * 100000);
-        sceneNodeCount = 0;
-        *first = {};
-        first->type = SN_NONE;
-        first->next = &first[sceneNodeCount + 1];        
-        last = first->next;
-        *last = {};
-        last->previous = first;
-        sceneNodeCount++;
-    }
-    void addNode(void *data, SceneNodeType type)
-    {
-        last->data     = data;
-        last->next     = nullptr;
-        last->previous = &first[sceneNodeCount];
-        last->type     = type;
-        sceneNodeCount++;
-    }
     RedFoxMaths::Mat4 GetWorldMatrix(int gameObjectindex)
     {
         GameObject *current = &gameObjects[gameObjectindex];

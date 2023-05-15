@@ -31,6 +31,7 @@
     X(PFNGLGENPROGRAMPIPELINESPROC, glGenProgramPipelines)                    \
     X(PFNGLUSEPROGRAMSTAGESPROC, glUseProgramStages)                          \
     X(PFNGLBINDPROGRAMPIPELINEPROC, glBindProgramPipeline)                    \
+    X(PFNGLPROGRAMUNIFORM3FPROC, glProgramUniform3f)                          \
     X(PFNGLPROGRAMUNIFORM3FVPROC, glProgramUniform3fv)                        \
     X(PFNGLPROGRAMUNIFORM4FVPROC, glProgramUniform4fv)                        \
     X(PFNGLPROGRAMUNIFORMMATRIX2FVPROC, glProgramUniformMatrix2fv)            \

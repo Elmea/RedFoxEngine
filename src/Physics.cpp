@@ -7,10 +7,10 @@
 using namespace RedFoxEngine;
 using namespace physx;
 
-void Physx::CreateCubeCollider(RedFoxMaths::Float3 position, PxU32 size, PxReal halfExtent)
+void Physx::CreateCubeCollider(RedFoxMaths::Float3 position, RedFoxMaths::Float3 scale)
 {
 	PxTransform t(position.x, position.y, position.z);
-	PxShape* shape = physics->createShape(PxBoxGeometry(halfExtent, halfExtent, halfExtent), *material);
+	PxShape* shape = physics->createShape(PxBoxGeometry(scale.x, scale.y, scale.z), *material);
 	PxRigidDynamic* body = physics->createRigidDynamic(t);
 	body->attachShape(*shape);
 	PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
@@ -75,9 +75,9 @@ void Physx::InitPhysics(Scene scene, int sphereIndex)
 	for (u32 i = 1; i < (u32)scene.gameObjectCount; i++)
 	{
 		if (scene.gameObjects[i].modelIndex == sphereIndex)
-			CreateSphereCollider(scene.gameObjects[i].position, scene.gameObjects[i].radius);
+			CreateSphereCollider(scene.gameObjects[i].position, scene.gameObjects[i].scale.x);
 		else
-			CreateCubeCollider(scene.gameObjects[i].position, 1, 1);
+			CreateCubeCollider(scene.gameObjects[i].position, scene.gameObjects[i].scale);
 	}
 }
 

@@ -132,7 +132,16 @@ Engine::Engine(int width, int height) :
     InitSkyDome();
     m_memoryManager.m_sceneUsedMemory = m_memoryManager.m_memory.arena.usedSize;
 #if 0
-    LoadScene("Sample Scene.scene");
+    LoadScene("Sample Scene");
+    Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
+    dir->lightInfo.constant = 1.0f;
+    dir->lightInfo.linear = 0.09f;
+    dir->lightInfo.quadratic = 0.032f;
+    dir->lightInfo.position = {0.0f, 75.0f, 0.0f};
+    dir->lightInfo.direction = { 0.3f, -0.8f, -0.5f };
+    dir->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
+    dir->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
+    dir->lightInfo.specular = {0.1f, 0.1f, 0.1f};
 #else
     initSphericalManyGameObjects(5000);
     m_scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
@@ -235,9 +244,9 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
         m_scene.gameObjects[i].parent = 0;
         m_scene.gameObjects[i].modelIndex = i % m_modelCount;
         if (m_scene.gameObjects[i].modelIndex == 0)
-            m_scene.gameObjects[i].boxExtents = { 0.5, 0.5, 0.5 };
+            m_scene.gameObjects[i].scale = { 0.5, 0.5, 0.5 };
         else if (m_scene.gameObjects[i].modelIndex == 1)
-            m_scene.gameObjects[i].radius = 1;
+            m_scene.gameObjects[i].scale = {1, 1, 1};
         m_scene.gameObjects[i].scale.x = m_scene.gameObjects[i].scale.y = m_scene.gameObjects[i].scale.z = 1;
         m_scene.gameObjects[i].orientation.a = 1;
         char tmp[255];
@@ -416,7 +425,7 @@ void Engine::Draw()
 
     m_graphics.BindKernelBuffer(&m_memoryManager.m_memory.temp);
     m_graphics.SetViewProjectionMatrix(currentCamera->GetVP());
-    m_graphics.Draw(&m_scene, m_platform.m_windowDimension, m_time.current, m_time.delta);
+    m_graphics.Draw(&m_scene, m_platform.m_windowDimension, m_time.current, m_time.delta, currentCamera->position);
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

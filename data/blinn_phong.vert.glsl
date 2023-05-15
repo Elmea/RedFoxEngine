@@ -5,9 +5,9 @@ layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aTexCoord;
 layout(location = 3) in uint aMaterialID;
 
-layout(std430, binding = 3) buffer MatrixBlock 
+layout(std430, binding = 3) readonly restrict buffer MatrixBlock 
 {
-    readonly mat4 worldMatrix[];
+    mat4 worldMatrix[];
 };
 
 struct Material
@@ -21,9 +21,9 @@ struct Material
     int _padding;
 };
 
-layout(std430, binding = 5) buffer Materials
+layout(std430, binding = 5) readonly restrict buffer Materials
 {
-    readonly Material material[];
+    Material material[];
 } mat;
 
 layout (location = 0) uniform mat4 vp;
@@ -33,7 +33,7 @@ layout (location = 0) out VS_OUT
     vec3 Position;
     vec3 Normal;
     vec2 TexCoords;
-    flat uint materialID;
+    invariant flat uint materialID;
     vec3 Color;
 } vs_out;
 

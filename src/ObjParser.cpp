@@ -1053,7 +1053,7 @@ ObjModel CreateCube(Memory *memory)
     result.materials.material->ambient = {1, 1, 1};
     result.materials.material->diffuse = {1, 1, 1};
     result.materials.material->Opaqueness = 1.f;
-    result.materials.material->Shininess = 1.f;
+    result.materials.material->Shininess = 25.f;
     return (result);
 }
 
@@ -1131,6 +1131,6 @@ ObjModel CreateSphere(int latitudeCount, int longitudeCount, ArenaAllocator *mem
     result.materials.material->ambient = {1, 1, 1};
     result.materials.material->diffuse = {1, 1, 1};
     result.materials.material->Opaqueness = 1.f;
-    result.materials.material->Shininess = 1.f;
+    result.materials.material->Shininess = 25.f;
     return result;
 }

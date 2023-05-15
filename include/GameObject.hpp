@@ -26,8 +26,6 @@ namespace RedFoxEngine
         };
         int parent;
         int modelIndex;
-        float radius;
-        RedFoxMaths::Float3 boxExtents;
         RedFoxMaths::Float3 Color;
 
         int behaviourIndex = 0;
