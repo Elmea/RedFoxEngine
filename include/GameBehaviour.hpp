@@ -6,9 +6,10 @@ namespace RedFoxEngine
 {
 	class Scene;
 	class GameObject;
+	class Input;
 
 	#define BEHAVIOUR(name) \
-	void name(RedFoxEngine::GameObject* self, const float deltaTime, RedFoxEngine::Scene *scene)
+	void name(RedFoxEngine::GameObject* self, const float deltaTime, RedFoxEngine::Scene *scene, RedFoxEngine::Input *input)
 
 	typedef BEHAVIOUR(functionBehaviour);
 

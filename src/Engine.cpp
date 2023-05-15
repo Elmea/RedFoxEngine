@@ -328,7 +328,7 @@ void Engine::UpdateBehaviours()
 {
     for (int i = 1; i < (int)m_scene.gameObjectCount; i++)
         if (!m_scene.isPaused && m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex].function != nullptr)
-            m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex].function(&m_scene.gameObjects[i], m_time.delta, &m_scene);
+            m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex].function(&m_scene.gameObjects[i], m_time.delta, &m_scene, &m_input);
 }
 
 void Engine::Update()

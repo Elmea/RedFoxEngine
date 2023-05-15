@@ -92,13 +92,16 @@ void Physx::InitPhysics(Scene scene, int sphereIndex)
 	PxRigidStatic* groundPlane = PxCreatePlane(*physics, PxPlane(0, 1, 0, 10), *material);
 	m_scene->addActor(*groundPlane);
 
-	for (u32 i = 1; i < (u32)scene.gameObjectCount; i++)
+	CreatePlayerCollider(&scene.gameObjects[1], 1.f, 2.f, 1.f, 1.f, 1.f);
+	/*
+	for (u32 i = 2; i < (u32)scene.gameObjectCount; i++)
 	{
 		if (scene.gameObjects[i].modelIndex == sphereIndex)
 			CreateSphereCollider(&scene.gameObjects[i]);
 		else
 			CreateCubeCollider(&scene.gameObjects[i], 1, 1);
 	}
+	*/
 }
 
 void Physx::SetTransform(int index, Transform transform)

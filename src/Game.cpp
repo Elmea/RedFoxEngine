@@ -38,9 +38,26 @@ static Float3 RotateVectorByQuaternion(Quaternion q, Float3 test)
     return result.GetXYZF3();
 }
 
-BEHAVIOUR(Test)
+BEHAVIOUR(Player)
 {
-    self->body->addForce(physx::PxVec3(deltaTime * cosf(deltaTime), 0, deltaTime * sinf(deltaTime)));
+    scene->m_gameCamera.position = { self->position.x, self->position.y, self->position.z };
+    static Float3 cameraRotation;
+    cameraRotation += {(f32)input->mouseYDelta* deltaTime, (f32)input->mouseXDelta* deltaTime, 0};
+    scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
+
+    Float3 inputDirection(0, -9.81f, 0);
+    if (input->W || input->Up)    inputDirection.z += -1;
+    if (input->S || input->Down)  inputDirection.z += 1;
+    if (input->A || input->Left)  inputDirection.x += -1;
+    if (input->D || input->Right) inputDirection.x += 1;
+    if (input->W || input->S || input->A || input->D)
+    {
+        inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
+        inputDirection.Normalize();
+        inputDirection = inputDirection * 200.f;
+        physx::PxController* player = self->controller;
+        player->move({ inputDirection.x, inputDirection.y, inputDirection.z }, 1.f, deltaTime, physx::PxControllerFilters());
+    }
 }
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
@@ -59,7 +76,8 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     if (!init)
     {
         //scene->AddUIBehavior("Test", Test);
-        scene->AddGameObjectBehavior("Test", Test);
+        scene->AddGameObjectBehavior("Player", Player);
+        scene->gameObjects[1].behaviourIndex = 0;
         init = true;
     }
 
@@ -98,38 +116,6 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
                         gameObjects[i].transform = {{transform.p.x, transform.p.y, transform.p.z}, gameObjects[i].scale, {transform.q.w, transform.q.x, transform.q.y, transform.q.z}};
                     }
                 }
-            }
-        }
-        scene->m_gameCamera.position = {gameObjects[1].position.x, gameObjects[1].position.y, gameObjects[1].position.z};
-        static Float3 cameraRotation;
-        cameraRotation += {(f32)input.mouseYDelta * deltaTime, (f32)input.mouseXDelta * deltaTime, 0}; 
-        scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
-        
-        Float3 inputDirection(0, 0, 0);
-        if (input.W || input.Up)    inputDirection.z += -1;
-        if (input.S || input.Down)  inputDirection.z +=  1;
-        if (input.A || input.Left)  inputDirection.x += -1;
-        if (input.D || input.Right) inputDirection.x +=  1;
-        if (input.W || input.S || input.A || input.D)
-        {
-            inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
-            inputDirection.Normalize();
-            inputDirection = inputDirection * 200.f;
-            physx::PxRigidActor *player = actors[1];
-            Quaternion orientation = {1, 0, 0, 0};
-            float speed = 5;
-            physx::PxRigidDynamic *tPlayer = player->is<physx::PxRigidDynamic>();
-            physx::PxVec3 velocity;
-            if (tPlayer)
-            {
-                velocity = tPlayer->getLinearVelocity();
-
-                velocity.x = speed * deltaTime * inputDirection.x;
-                velocity.y = speed * deltaTime * inputDirection.y;
-                //velocity.z = speed * deltaTime * inputDirection.z;
-                tPlayer->setLinearVelocity(velocity);
-                physx::PxTransform transform;
-                // transform = tPlayer->getGlobalPose();
             }
         }
     }
