@@ -103,8 +103,6 @@ void RedFoxEngine::Graphics::SwapPostProcessShader(int idFirst, int idSecond)
 
 void RedFoxEngine::Graphics::RemovePostProcessShader(Memory* arena, int id)
 {
-    MyFree(arena, sizeof(Kernel) * MAX_KERNEL);
-
     auto it = m_postProcessShaders.begin();
     std::advance(it, id);
     m_postProcessShaders.erase(it);
