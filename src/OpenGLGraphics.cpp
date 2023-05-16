@@ -584,9 +584,9 @@ namespace RedFoxEngine
             if (!m_postProcessShaders[i].active)
                 continue;
 
-            if (m_postProcessShaders[i].useKernels && m_postProcessShaders[i].kernelCount > 0)
+            if (m_postProcessShaders[i].useKernels && m_postProcessShaders[i].kernels.size() > 0)
             {
-                for (int k = 0; k < m_postProcessShaders[i].kernelCount; k++)
+                for (int k = 0; k < m_postProcessShaders[i].kernels.size(); k++)
                 {
                     if (!m_postProcessShaders[i].kernels[i].active)
                         continue;
@@ -754,7 +754,7 @@ namespace RedFoxEngine
             if (!m_postProcessShaders[i].active)
                 continue;
 
-            if (m_postProcessShaders[i].useKernels && m_postProcessShaders[i].kernelCount > 0)
+            if (m_postProcessShaders[i].useKernels && m_postProcessShaders[i].kernels.size() > 0)
             {
                 m_postProcessShaders[i].BindKernelBuffer(tempAlocator);
             }

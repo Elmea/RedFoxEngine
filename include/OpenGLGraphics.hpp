@@ -79,23 +79,21 @@ public:
 class PostProcessShader
 {
 private:
-    int kernelCreated = 0;
     RedFoxMaths::Mat4* kernelsMatrices;
     
     GLuint vertex, fragment, pipeline;
 public:
     bool active = true;
     bool useKernels;
-    int kernelCount = 0;
     std::string name;
 
-    Kernel* kernels;
+    std::vector<Kernel> kernels;
+    
     Kernel* AddKernel(RedFoxMaths::Mat4 kernel);
     void DeleteKernel(int id);
     void EditKernel(int id, RedFoxMaths::Mat4 kernel);
     void BindKernelBuffer(Memory* tempAlocator);
     void ResetKernel(int id);
-    PostProcessShader(Memory* arena);
     friend class Graphics;
 };
     

@@ -1226,7 +1226,7 @@ void Engine::DrawWorldProperties()
                 Checkbox("Is active", &m_graphics.m_postProcessShaders[i].active);
                 Checkbox("Use kernels", &m_graphics.m_postProcessShaders[i].useKernels);
 
-                for (int j = 0; j < m_graphics.m_postProcessShaders[i].kernelCount; j++)
+                for (int j = 0; j < m_graphics.m_postProcessShaders[i].kernels.size(); j++)
                 {
                     TableNextRow();
                     TableSetColumnIndex(0);
@@ -1238,12 +1238,12 @@ void Engine::DrawWorldProperties()
                     DragFloat3("KernelRow2" + j, &m_graphics.m_postProcessShaders[i].kernels[j].kernel.mat16[4], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                     SetNextItemWidth(-FLT_MIN);
                     DragFloat3("KernelRow3" + j, &m_graphics.m_postProcessShaders[i].kernels[j].kernel.mat16[8], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-                    Checkbox("Is active", &m_graphics.m_postProcessShaders[i].kernels[j].active);
+                    Checkbox("Is active" + j, &m_graphics.m_postProcessShaders[i].kernels[j].active);
                 
                     m_graphics.EditKernel(i, m_graphics.m_kernels[j].kernel);
                 }
                 
-                if (Button("Add empty kernel") && m_graphics.m_postProcessShaders[i].kernelCount < MAX_KERNEL)
+                if (Button("Add empty kernel") && m_graphics.m_postProcessShaders[i].kernels.size() < MAX_KERNEL)
                 {
                     float mat[4][4] = { 0 }; mat[1][1] = 1;
                     Kernel* k = m_graphics.m_postProcessShaders[i].AddKernel(RedFoxMaths::Mat4(mat));
@@ -1299,12 +1299,12 @@ void Engine::DrawWorldProperties()
                 DragFloat3("KernelRow2" + i, &m_graphics.m_kernels[i].kernel.mat16[4], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                 SetNextItemWidth(-FLT_MIN);
                 DragFloat3("KernelRow3" + i, &m_graphics.m_kernels[i].kernel.mat16[8], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-                Checkbox("Is active", &m_graphics.m_kernels[i].active);
+                Checkbox("Is active" + i, &m_graphics.m_kernels[i].active);
                 
                 m_graphics.EditKernel(i, m_graphics.m_kernels[i].kernel);
             }
             EndTable();
-            if (Button("Add empty", ImVec2(GetContentRegionAvail().x, 20)) && m_graphics.m_kernelCount < MAX_KERNEL)
+            if (Button("Add empty kernel", ImVec2(GetContentRegionAvail().x, 20)) && m_graphics.m_kernelCount < MAX_KERNEL)
             {
                 float mat[4][4] = { 0 }; mat[1][1] = 1;
                 Kernel* k = m_graphics.AddKernel(RedFoxMaths::Mat4(mat));
