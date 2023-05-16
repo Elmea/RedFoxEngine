@@ -175,7 +175,8 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
 
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
-    if (ImageButton("SAVE SCENE", m_imgui.icons[1], ImVec2(buttonHeight, buttonHeight)))
+    if (ImageButton("SAVE SCENE", m_imgui.icons[1], ImVec2(buttonHeight, buttonHeight))
+        || (IsKeyDown(ImGuiKey_S) && IsKeyDown(ImGuiKey_LeftCtrl)) ) //TODO Add security on CTRL+S to only add SaveScene when there is a change
     {
         SaveScene(m_scene.m_name.data, m_scene);
     }
