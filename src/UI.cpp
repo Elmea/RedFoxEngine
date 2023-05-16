@@ -801,6 +801,7 @@ void Engine::DrawSceneGraph()
 {
     if (Begin("Scene Graph", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
+
         if (TreeNodeEx("_TREENODE", m_imgui.rootNodeFlags, " %s", m_scene.m_name.data))
         {
             if (BeginPopupContextItem("RenameScenePopup"))
@@ -816,6 +817,17 @@ void Engine::DrawSceneGraph()
             if (IsMouseDoubleClicked(ImGuiMouseButton_Left) && IsItemHovered() && !m_imgui.sceneGraphScrollButtonHovered)
             {
                 OpenPopup("RenameScenePopup");
+            }
+
+            if (IsKeyPressed(ImGuiKey_D) && IsKeyPressed(ImGuiKey_LeftCtrl))
+            {
+                GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
+                *newGameObject = m_scene.gameObjects[m_imgui.selectedObject];
+
+                char tmp[255];
+                int size = snprintf(tmp, 255, "New entity #%d", m_scene.gameObjectCount - 1);
+                newGameObject->name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
+
             }
 
             if (BeginDragDropTarget())
