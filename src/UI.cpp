@@ -181,6 +181,13 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     }
 
     SameLine();
+    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
+    if (Button("LOAD SCENE", ImVec2(100, 25)))
+    {
+        LoadScene(m_scene.m_name.data);
+    }
+
+    SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
     if (ImageButton("PAUSE", m_scene.isPaused ? m_imgui.icons[3] : m_imgui.icons[2], ImVec2(buttonHeight, buttonHeight)))
         m_scene.isPaused = !m_scene.isPaused;
@@ -697,6 +704,21 @@ void Engine::DrawUIGraph()
                 OpenPopup("RenameScenePopup");
             }
 
+            if (BeginPopupContextItem("RenameUIPopup"))
+            {
+                if (IsKeyPressed(ImGuiKey_Enter))
+                    CloseCurrentPopup();
+
+                SameLine();
+                InputText(" ", (char*)m_scene.gameUIs[m_imgui.selectedUI].name.data, m_scene.gameUIs[m_imgui.selectedObject].name.capacity);
+                EndPopup();
+            }
+
+            if (IsKeyPressed(ImGuiKey_F2, false))
+            {
+                OpenPopup("RenameUIPopup");
+            }
+
             if (BeginDragDropTarget())
             {
                 if (const ImGuiPayload* payload = AcceptDragDropPayload("_SCENENODE"))
@@ -796,7 +818,8 @@ void Engine::DrawSceneGraph()
             }
 
             if (BeginDragDropTarget())
-            {
+            {             
+                
                 if (const ImGuiPayload* payload = AcceptDragDropPayload("_SCENENODE"))
                 {
                     if (payload->IsDelivery())
@@ -806,6 +829,21 @@ void Engine::DrawSceneGraph()
                     }
                     EndDragDropTarget();
                 }
+            }
+
+            if (BeginPopupContextItem("RenameItemPopup"))
+            {
+                if (IsKeyPressed(ImGuiKey_Enter))
+                    CloseCurrentPopup();
+
+                SameLine();
+                InputText(" ", (char*)m_scene.gameObjects[m_imgui.selectedObject].name.data, m_scene.gameObjects[m_imgui.selectedObject].name.capacity);
+                EndPopup();
+            }
+
+            if (IsKeyPressed(ImGuiKey_F2,false))
+            {
+                OpenPopup("RenameItemPopup");
             }
 
             if (IsKeyPressed(ImGuiKey_Delete, false))
