@@ -90,7 +90,9 @@ struct Input
 };
 
 #define UPDATEGAME(name) void name(void *s, \
-                                   void *p, RedFoxEngine::Input input, float deltaTime)
+                                   void *p, \
+                                   RedFoxEngine::Input input, \
+                                   float deltaTime)
 typedef UPDATEGAME(_updategame);
 
 struct GameLibrary
@@ -120,6 +122,7 @@ public:
     Platform() = default;
     Platform(int width, int height);
     void Maximize();
+    int FileExist(const char *file);
     void FatalError(const char *message);
     void MessageProcessing(Input *input);
     WindowDimension GetWindowDimension();

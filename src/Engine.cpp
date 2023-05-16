@@ -16,41 +16,6 @@
 using namespace RedFoxEngine;
 using namespace RedFoxMaths;
 
-//Write behaviours here
-
-BUTTONBEHAIVOUR(DefaultBehaviour)
-{
-}
-
-BUTTONBEHAIVOUR(TestObjectBehaviour)
-{
-    printf("ObjectBehaviour\n");
-}
-
-
-BUTTONBEHAIVOUR(AbortMission)
-{
-    exit(0);
-}
-
-
-
-void Engine::AddUIBehaviour(const char* name, functionBehaviour function)
-{
-    m_scene.gameUIBehaviours[m_scene.gameUIBehaviourCount].name = initStringChar(name, 255, &m_memoryManager.m_memory.arena);
-    m_scene.gameUIBehaviours[m_scene.gameUIBehaviourCount].function = function;
-    m_scene.gameUIBehaviourCount++ ;
-}
-
-void Engine::AddObjectBehaviour(const char* name, functionBehaviour function)
-{
-    m_scene.gameObjectBehaviours[m_scene.gameObjectBehaviourCount].name = initStringChar(name, 255, &m_memoryManager.m_memory.arena);
-    m_scene.gameObjectBehaviours[m_scene.gameObjectBehaviourCount].function = function;
-    m_scene.gameObjectBehaviourCount++;
-}
-
-
-
 Engine::Engine(int width, int height) :
     m_scene(width, height),
     m_editorCamera(projectionType::PERSPECTIVE, width / (f32)height),
@@ -61,11 +26,11 @@ Engine::Engine(int width, int height) :
     InitIMGUI();
     m_editorCamera.position = Float3(0.0f, 0.0f, 4.0f);
     m_editorCameraSpeed = 1;
-    m_models = (Model *)m_memoryManager.PersistentAllocation(sizeof(Model) * 100);
+    m_models = (Model *)m_memoryManager.PersistentAllocation(sizeof(Model) * m_maxModel);
 
-    m_modelsName = (MyString*)m_memoryManager.PersistentAllocation(sizeof(MyString) * 100);
+    m_modelsName = (MyString*)m_memoryManager.PersistentAllocation(sizeof(MyString) * m_maxModel);
     for (int i = 0; i < 100; i++)
-        m_modelsName->capacity   = 64;
+          m_modelsName->capacity   = 64;
     m_graphics.lightStorage.lights = (Light*)m_memoryManager.PersistentAllocation(sizeof(Light) * 1000);
     m_graphics.lightStorage.shadowMaps = (unsigned int*)m_memoryManager.PersistentAllocation(sizeof(unsigned int) * 1000);
 
@@ -78,59 +43,31 @@ Engine::Engine(int width, int height) :
     m_modelsName[1] = initStringChar("Sphere", 6, &m_memoryManager.m_memory.arena);
     m_modelCount++;
 
-    //Init UI GameBehaviour
-    m_scene.gameUIBehaviours = (GameBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameBehaviour) * 100);
-
-    //Add UI behaviours here
-    AddUIBehaviour("AbortMission"    , AbortMission);
-    AddUIBehaviour("DefaultBehaviour", DefaultBehaviour);
-
-    for (int i = 2; i < 100; i++)
-        AddUIBehaviour("DefaultBehaviour", DefaultBehaviour);
-    m_scene.gameUIBehaviourCount = 2;
-
-    //Init GameUI
-    m_scene.gameUIs = (GameUI*)m_memoryManager.PersistentAllocation(sizeof(GameUI) * 100);
-    m_scene.gameUIs[0] = {};
-    m_scene.gameUIs[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
-    m_scene.gameUIs[0].name.capacity = 255;
-    m_scene.gameUIs[0].screenPosition = { 0, 0 };
-    m_scene.gameUIs[0].size = { 200,200 };
-    m_scene.gameUICount++;
-    for (int i = 1; i < 100; i++)
-    {
-        m_scene.gameUIs[i].parent = 0;
-        m_scene.gameUIs[i].behaviourIndex = 0;
-    }
-
-    //Init Object GameBehaviour
-    m_scene.gameObjectBehaviours = (GameBehaviour*)m_memoryManager.PersistentAllocation(sizeof(GameBehaviour) * 100);
-
-    //Add object behaviours here
-    AddObjectBehaviour("DefaultBehaviour", DefaultBehaviour);
-    AddObjectBehaviour("TestObjectBehaviour", TestObjectBehaviour);
-
-    for (int i = 2; i < 100; i++)
-        AddObjectBehaviour("DefaultBehaviour", DefaultBehaviour);
-    m_scene.gameObjectBehaviourCount = 2;
-
-    //Init GameObject
-    m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);
-    m_scene.gameObjects[0] = {};
-    m_scene.gameObjects[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
-    m_scene.gameObjects[0].name.capacity = 255;
-    m_scene.gameObjects[0].position = { 0, 0, 0 };
-    m_scene.gameObjects[0].orientation = { 1, 0, 0, 0 };
-    m_scene.gameObjects[0].scale = { 1, 1, 1 };
-    m_scene.gameObjects->modelIndex = -1;
-
-    m_scene.gameObjectCount++;
-
-    //TODO transition to an instance based model 'model'
+    m_graphics.m_models = m_models;
+    m_graphics.m_modelCount = m_modelCount;
     for (int i = 0; i < (int)m_modelCount; i++)
         m_graphics.InitModel(&m_models[i]);
+
+    m_physx.InitPhysics();
     InitSkyDome();
+    m_soundManager.Init(&m_memoryManager.m_memory.arena);
+    m_soundManager.SetMasterVolume(1);
+    
+    m_testMusic = m_soundManager.CreateSound("music.ogg", &m_memoryManager.m_memory.arena);
+    if (m_testMusic)
+    {
+        m_testMusic->SetVolume(1);
+        m_testMusic->SetLoop(true);
+        m_testMusic->position = {0.f, 0.f, 0.f};
+        m_testMusic->Play3D();
+    }
+    m_scene.gameObjectBehaviours = (Behaviour*)m_memoryManager.PersistentAllocation(sizeof(Behaviour) * 100);
+    m_scene.gameUIBehaviours = (Behaviour*)m_memoryManager.PersistentAllocation(sizeof(Behaviour) * 100);
+    m_scene.gameUIs = (GameUI*)m_memoryManager.PersistentAllocation(sizeof(GameUI) * 100);
+    m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);
     m_memoryManager.m_sceneUsedMemory = m_memoryManager.m_memory.arena.usedSize;
+
+    //TODO transition to an instance based model 'model'
 #if 1
     LoadScene("Sample Scene");
     Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
@@ -192,20 +129,6 @@ Engine::Engine(int width, int height) :
     m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
     m_graphics.InitLights();
     m_graphics.InitQuad();
-    m_physx.InitPhysics(m_scene, 1);
-
-    m_soundManager.Init(&m_memoryManager.m_memory.arena);
-    m_soundManager.SetMasterVolume(1);
-    
-    m_testMusic = m_soundManager.CreateSound("music.ogg", &m_memoryManager.m_memory.arena);
-    if (m_testMusic)
-    {
-        m_testMusic->SetVolume(1);
-        m_testMusic->SetLoop(true);
-        m_testMusic->position = {0.f, 0.f, 0.f};
-        m_testMusic->Play3D();
-    }
-    
     m_graphics.InitFont();
 }
 
@@ -237,6 +160,38 @@ bool Engine::isRunning()
 
 void Engine::initSphericalManyGameObjects(int count) //TODO: remove
 {
+    //Init behaviours buffer
+    for (int i = 0; i < 100; i++)
+    {
+        m_scene.gameObjectBehaviours[i].name = initString(64, &m_memoryManager.m_memory.arena);
+        m_scene.gameObjectBehaviours[i].function = nullptr;
+        m_scene.gameUIBehaviours[i].name = initString(64, &m_memoryManager.m_memory.arena);
+        m_scene.gameUIBehaviours[i].function = nullptr;
+    }
+    //Init GameUI
+    m_scene.gameUIs[0] = {};
+    m_scene.gameUIs[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
+    m_scene.gameUIs[0].name.capacity = 255;
+    m_scene.gameUIs[0].screenPosition = { 0, 0 };
+    m_scene.gameUICount++;
+    for (int i = 1; i < 100; i++)
+    {
+        m_scene.gameUIs[i].parent = 0;
+        m_scene.gameUIs[i].behaviourIndex = -1;
+        m_scene.gameUIs[i].isPressed = false;
+        m_scene.gameUIs[i].isHovered = false;
+    }
+
+    //Init GameObject
+    m_scene.gameObjects[0] = {};
+    m_scene.gameObjects[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
+    m_scene.gameObjects[0].name.capacity = 255;
+    m_scene.gameObjects[0].position = { 0, 0, 0 };
+    m_scene.gameObjects[0].orientation = { 1, 0, 0, 0 };
+    m_scene.gameObjects[0].scale = { 1, 1, 1 };
+    m_scene.gameObjects->modelIndex = -1;
+
+    m_scene.gameObjectCount++;
     m_scene.gameObjectCount = count;
 
     for (int i = 1; i < (int)m_scene.gameObjectCount; i++)
@@ -247,6 +202,7 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
             m_scene.gameObjects[i].scale = { 0.5, 0.5, 0.5 };
         else if (m_scene.gameObjects[i].modelIndex == 1)
             m_scene.gameObjects[i].scale = {1, 1, 1};
+        m_scene.gameObjects[i].behaviourIndex = -1;
         m_scene.gameObjects[i].scale.x = m_scene.gameObjects[i].scale.y = m_scene.gameObjects[i].scale.z = 1;
         m_scene.gameObjects[i].orientation.a = 1;
         char tmp[255];
@@ -384,6 +340,22 @@ void Engine::UpdateSkyDome()
     m_scene.skyDome.sunPosition.y = sinf(m_time.current / 500);
 }
 
+void Engine::UpdateBehaviours()
+{
+    for (int i = 1; i < (int)m_scene.gameObjectCount; i++)
+    {
+        Behaviour* gameObjectBehavior = &m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex];
+        if (!m_scene.isPaused && gameObjectBehavior->function != nullptr)
+            gameObjectBehavior->function(&m_scene.gameObjects[i], m_time.delta, &m_scene, &m_input);
+    }
+    for (int i = 1; i < (int)m_scene.gameUICount; i++)
+    {
+        Behaviour* gameUIBehavior = &m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex];
+        if (!m_scene.isPaused && gameUIBehavior->function != nullptr)
+            gameUIBehavior->function(&m_scene.gameObjects[i], m_time.delta, &m_scene, &m_input);
+    }
+}
+
 void Engine::Update()
 {
     Camera *currentCamera;
@@ -397,15 +369,14 @@ void Engine::Update()
     UpdateSkyDome();
     m_soundManager.UpdateListener(m_editorCamera.position, m_editorCamera.orientation.ToEuler());
     UpdateLights(&m_graphics.lightStorage);
-    m_physx.UpdatePhysics(1.0 / 60.0, m_memoryManager, m_scene.isPaused);
+    m_physx.UpdatePhysics(1.0 / 60.0, &m_scene, m_memoryManager);
     m_game.update(&m_scene, &m_physx, m_input, 1.0 / 60.0);
+    if (!m_scene.isPaused)
+    {
+        UpdateBehaviours();
+    }
     UpdateModelMatrices();
     UpdateIMGUI();
-    for (int i = 0; i < (int)m_scene.gameUICount; i++)
-    {
-        if (m_scene.gameUIs[i].isPressed)
-            m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex].function(&m_scene);
-    }
     m_input.mouseXDelta = m_input.mouseYDelta = 0;
     if (m_time.delta < 1.0 / 100.0)
     {
@@ -469,6 +440,4 @@ Engine::~Engine()
 {
     for (int i = 0; i < (int)m_modelCount; i++)
         DeInitObj(&m_models[i].obj);
-    m_imgui.defaultFont->ContainerAtlas->Clear();
-    ImGui::DestroyContext();
 }

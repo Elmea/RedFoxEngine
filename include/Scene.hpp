@@ -56,8 +56,8 @@ public:
 
     GameObject *gameObjects = nullptr;
     GameUI* gameUIs = nullptr;
-    GameBehaviour* gameUIBehaviours = nullptr;
-    GameBehaviour* gameObjectBehaviours = nullptr;
+    Behaviour* gameUIBehaviours = nullptr;
+    Behaviour* gameObjectBehaviours = nullptr;
 
     Scene(int width, int height):m_gameCamera(projectionType::PERSPECTIVE,
         width / (f32)height){}
@@ -119,6 +119,21 @@ public:
         return (count);
     }
 
+    int AddUIBehavior(const char* name, functionBehaviour func)
+    {
+        this->gameUIBehaviours[this->gameUIBehaviourCount].name = assignString(this->gameUIBehaviours[this->gameUIBehaviourCount].name, name);
+        this->gameUIBehaviours[this->gameUIBehaviourCount].function = func;
+        this->gameUIBehaviourCount++;
+        return this->gameUIBehaviourCount - 1;
+    }
+
+    int AddGameObjectBehavior(const char* name, functionBehaviour func)
+    {
+        this->gameObjectBehaviours[this->gameObjectBehaviourCount].name = assignString(this->gameObjectBehaviours[this->gameObjectBehaviourCount].name, name);
+        this->gameObjectBehaviours[this->gameObjectBehaviourCount].function = func;
+        this->gameObjectBehaviourCount++;
+        return this->gameObjectBehaviourCount - 1;
+    }
 };
 
 }

@@ -60,6 +60,39 @@ static void ReadGameObjectFromFile(HANDLE file, RedFoxEngine::GameObject *curren
 
 void RedFoxEngine::Engine::LoadScene(const char *fileName)
 {
+    m_memoryManager.m_memory.arena.usedSize = m_memoryManager.m_sceneUsedMemory;
+    //Init behaviours buffer
+    for (int i = 0; i < 100; i++)
+    {
+        m_scene.gameObjectBehaviours[i].name = initString(64, &m_memoryManager.m_memory.arena);
+        m_scene.gameObjectBehaviours[i].function = nullptr;
+        m_scene.gameUIBehaviours[i].name = initString(64, &m_memoryManager.m_memory.arena);
+        m_scene.gameUIBehaviours[i].function = nullptr;
+    }
+    //Init GameUI
+    m_scene.gameUIs[0] = {};
+    m_scene.gameUIs[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
+    m_scene.gameUIs[0].name.capacity = 255;
+    m_scene.gameUIs[0].screenPosition = { 0, 0 };
+    m_scene.gameUICount++;
+    for (int i = 1; i < 100; i++)
+    {
+        m_scene.gameUIs[i].parent = 0;
+        m_scene.gameUIs[i].behaviourIndex = -1;
+        m_scene.gameUIs[i].isPressed = false;
+        m_scene.gameUIs[i].isHovered = false;
+    }
+
+    //Init GameObject
+    m_scene.gameObjects[0] = {};
+    m_scene.gameObjects[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
+    m_scene.gameObjects[0].name.capacity = 255;
+    m_scene.gameObjects[0].position = { 0, 0, 0 };
+    m_scene.gameObjects[0].orientation = { 1, 0, 0, 0 };
+    m_scene.gameObjects[0].scale = { 1, 1, 1 };
+    m_scene.gameObjects->modelIndex = -1;
+
+    m_scene.gameObjectCount++;
     HANDLE file = CreateFile(fileName, GENERIC_READ,
         FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -72,6 +105,7 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
         ReadGameObjectFromFile(file, &m_scene.gameObjects[i], m_models, m_modelCount, &m_memoryManager);
     }
     CloseHandle(file);
+    m_physx.InitScene(&m_scene, 1);
 }
 
 static void WriteStringToFile(HANDLE file, MyString string)

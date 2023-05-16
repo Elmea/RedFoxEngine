@@ -99,11 +99,11 @@ namespace RedFoxEngine
             glVertexArrayAttribBinding(m_vertexArrayObject, a_normal, vbuf_index);
 
             int a_uv = 2;
-            glEnableVertexArrayAttrib(m_vertexArrayObject , a_uv);
-            glVertexArrayAttribFormat(m_vertexArrayObject , a_uv, 2, GL_FLOAT, GL_FALSE, offsetof(struct ObjVertex, textureUV));
+            glEnableVertexArrayAttrib(m_vertexArrayObject, a_uv);
+            glVertexArrayAttribFormat(m_vertexArrayObject, a_uv, 2, GL_FLOAT, GL_FALSE, offsetof(struct ObjVertex, textureUV));
             glVertexArrayAttribBinding(m_vertexArrayObject, a_uv, vbuf_index);
             int a_materialID = 3;
-            glEnableVertexArrayAttrib(m_vertexArrayObject , a_materialID);
+            glEnableVertexArrayAttrib(m_vertexArrayObject, a_materialID);
             glVertexArrayAttribIFormat(m_vertexArrayObject, a_materialID, 1, GL_UNSIGNED_INT, offsetof(struct ObjVertex, materialID));
             glVertexArrayAttribBinding(m_vertexArrayObject, a_materialID, vbuf_index);
             // glVertexArrayBindingDivisor(model->vao, a_materialID, 1);
@@ -115,7 +115,7 @@ namespace RedFoxEngine
         WindowDimension sceneDimension;
         sceneDimension.height = 2160;
         sceneDimension.width = 3840;
-        
+
         InitSceneFramebuffer(sceneDimension);
     }
 
@@ -204,9 +204,9 @@ namespace RedFoxEngine
 
         if (glCheckNamedFramebufferStatus(m_sceneFramebuffer, GL_FRAMEBUFFER) !=
             GL_FRAMEBUFFER_COMPLETE)
-                __debugbreak();
+            __debugbreak();
     }
-    
+
     /*If the dimensions of the window change, we need to resize*/
     void Graphics::UpdateImGUIFrameBuffer(WindowDimension& dimension,
         WindowDimension content)
@@ -227,15 +227,15 @@ namespace RedFoxEngine
         model->materialOffset = m_materialCount;
         int tempTexture = m_textures.textureCount;
         InitModelTextures(&model->obj);
-        
+
         Material materials[100] = {};
 
         int temp = m_materialCount;
         for (int i = 0; i < (int)model->obj.materials.count; i++)
         {
-            materials[i].diffuse = {model->obj.materials.material[i].diffuse.x, 
+            materials[i].diffuse = { model->obj.materials.material[i].diffuse.x,
                                     model->obj.materials.material[i].diffuse.y,
-                                    model->obj.materials.material[i].diffuse.z};
+                                    model->obj.materials.material[i].diffuse.z };
             materials[i].Shininess = model->obj.materials.material[i].Shininess;
             if (model->obj.materials.material[i].hasTexture == 0)
                 materials[i].diffuseMap = -1;
@@ -251,7 +251,7 @@ namespace RedFoxEngine
         glNamedBufferSubData(m_materialSSBO, temp * sizeof(Material), (model->obj.materials.count) * sizeof(Material), materials);
         {
             // (GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data);
-            glNamedBufferSubData(m_vertexBufferObject, m_vertexCount * sizeof(ObjVertex), 
+            glNamedBufferSubData(m_vertexBufferObject, m_vertexCount * sizeof(ObjVertex),
                 model->obj.vertexCount * (sizeof(ObjVertex)), model->obj.vertices);
             m_vertexCount += model->obj.vertexCount;
         }
@@ -315,7 +315,7 @@ namespace RedFoxEngine
     }
 
     void Graphics::RenderText(GameUI ui)
-    {      
+    {
         if (ui.text.data == nullptr)
             return;
         glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFramebuffer);
@@ -329,7 +329,7 @@ namespace RedFoxEngine
         RedFoxMaths::Mat4 mat = RedFoxMaths::Mat4::GetOrthographicMatrix(dimension.width, 0, dimension.height, 0, 1, -1);
         if (*ui.text.data)
         {
-            RedFoxMaths::Float4 vertices[4] = 
+            RedFoxMaths::Float4 vertices[4] =
             {
                 // positions  // texture Coords
                 {xOffset, yOffset + ui.size.y,  0.0f, 1.0f},
@@ -342,8 +342,8 @@ namespace RedFoxEngine
                 glBindTextureUnit(0, ui.image);
             else
                 glBindTextureUnit(0, 0);
-        
-            if(ui.isHovered)
+
+            if (ui.isHovered)
                 glProgramUniform3fv(m_font.fragment, 2, 1, &ui.hoverColor.x);
             else
                 glProgramUniform3fv(m_font.fragment, 2, 1, &ui.selectedColor.x);
@@ -351,7 +351,7 @@ namespace RedFoxEngine
             glProgramUniformMatrix4fv(m_font.vertex, 0, 1, GL_TRUE, mat.mat16);
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         }
-        char *text = (char *)ui.text.data;
+        char* text = (char*)ui.text.data;
         float xPos = xOffset + ui.textOffset.x;
         float yPos = -yOffset - ui.textOffset.y;
         while (*text) {
@@ -404,9 +404,9 @@ namespace RedFoxEngine
         glProgramUniformMatrix4fv(m_sky.vertex, 1, 1, GL_TRUE, mvp.AsPtr());
         glProgramUniform1f(m_sky.fragment, 0, time);
 
-        Model *sphere = &m_models[1];
+        Model* sphere = &m_models[1];
         glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, sphere->indexCount,
-            GL_UNSIGNED_INT, (void *)(sphere->indexOffset * sizeof(u32)), 1, sphere->vertexOffset, 0);
+            GL_UNSIGNED_INT, (void*)(sphere->indexOffset * sizeof(u32)), 1, sphere->vertexOffset, 0);
     }
 
     void Graphics::Draw(Scene *p_scene, WindowDimension p_windowDimension, float p_time, float p_delta, RedFoxMaths::Float3 position)
@@ -451,7 +451,7 @@ namespace RedFoxEngine
         if (size)
             glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingPoint, buffer, 0, size);
         else
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, 0);    
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingPoint, 0);
     }
 
     void Graphics::DrawGameObjects(u64* modelCountIndex, RedFoxMaths::Float3 view)
@@ -473,7 +473,7 @@ namespace RedFoxEngine
         {
             if (modelCountIndex[i])
             {
-                Model *model = &m_models[i];
+                Model* model = &m_models[i];
                 int instanceCount = modelCountIndex[i];
                 glProgramUniform1i(m_blinnPhong.fragment, 1, model->materialOffset);
                 if (model->obj.materials.material->hasTexture)
@@ -482,7 +482,7 @@ namespace RedFoxEngine
                     glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 5, m_materialSSBO, (totalCount + m_materialCount) * sizeof(Material), instanceCount * sizeof(Material));
                 glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 3, m_matrixSSBO, totalCount * sizeof(RedFoxMaths::Mat4), instanceCount * sizeof(RedFoxMaths::Mat4));
                 glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, model->indexCount,
-                    GL_UNSIGNED_INT, (void *)(model->indexOffset * sizeof(u32)), instanceCount, model->vertexOffset, 0);
+                    GL_UNSIGNED_INT, (void*)(model->indexOffset * sizeof(u32)), instanceCount, model->vertexOffset, 0);
             }
             totalCount += modelCountIndex[i];
         }
@@ -516,7 +516,7 @@ namespace RedFoxEngine
                     glBindVertexArray(m_vertexArrayObject);
                     glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, m_matrixSSBO, sizeof(RedFoxMaths::Mat4) * totalIndex, sizeof(RedFoxMaths::Mat4) * countIndex);
                     glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, m_models[i].indexCount,
-                        GL_UNSIGNED_INT, (void *)(m_models[i].indexOffset * sizeof(u32)), countIndex, m_models[i].vertexOffset, 0);
+                        GL_UNSIGNED_INT, (void*)(m_models[i].indexOffset * sizeof(u32)), countIndex, m_models[i].vertexOffset, 0);
                     totalIndex += countIndex;
                 }
             }
@@ -709,7 +709,7 @@ namespace RedFoxEngine
                     m_kernels[i].kernel = kernel;
                     m_kernels[i].deleted = false;
                     m_kernels[i].active = true;
-                    
+
                     m_kernelCount++;
                     return &m_kernels[i];
                 }
@@ -719,7 +719,7 @@ namespace RedFoxEngine
         Kernel result;
         result.uniqueId = m_kernelCreated;
         result.kernel = kernel;
-        
+
         m_kernels[result.uniqueId] = result;
         m_kernelCount++;
         m_kernelCreated++;
@@ -745,6 +745,13 @@ namespace RedFoxEngine
 
         m_kernels[id].active = true;
         m_kernelCount--;
+    }
+
+    void Graphics::SwapKernel(int a, int b)
+    {
+        RedFoxMaths::Mat4 tmp = m_kernels[a].kernel;
+        m_kernels[a].kernel = m_kernels[b].kernel;
+        m_kernels[b].kernel = tmp;
     }
 
     void Graphics::EditKernel(int id, RedFoxMaths::Mat4 kernel)
