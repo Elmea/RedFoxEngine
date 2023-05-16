@@ -17,6 +17,8 @@
 
 #include "imstb_truetype.h"
 
+#define MAX_KERNEL 5
+
 namespace RedFoxEngine
 {
 struct Material
@@ -58,14 +60,6 @@ struct Shader
     FILETIME vertexTime;
     FILETIME fragmentTime;
 };
-
-struct PostProcessShader
-{
-    bool active;
-    bool useKernels;
-    std::string name;
-    GLuint vertex, fragment, pipeline;
-};
     
 class Graphics;
 
@@ -77,6 +71,28 @@ private:
 public:
     bool active = true;
     RedFoxMaths::Mat4 kernel;
+    friend class Graphics;
+    friend class PostProcessShader;
+};
+
+class PostProcessShader
+{
+private:
+    RedFoxMaths::Mat4* kernelsMatrices;
+    
+    GLuint vertex, fragment, pipeline;
+public:
+    bool active = true;
+    bool useKernels;
+    std::string name;
+
+    std::vector<Kernel> kernels;
+    
+    Kernel* AddKernel(RedFoxMaths::Mat4 kernel);
+    void DeleteKernel(int id);
+    void EditKernel(int id, RedFoxMaths::Mat4 kernel);
+    void BindKernelBuffer(Memory* tempAlocator);
+    void ResetKernel(int id);
     friend class Graphics;
 };
     
@@ -130,7 +146,6 @@ private:
 public:
     bool useKernelInFinalPass = true;
     int m_kernelCount;
-    const int m_maxKernel = 5;
     const int m_maxPostProcessShader = 5;
     Kernel* m_kernels;
     std::vector<PostProcessShader> m_postProcessShaders;
@@ -184,15 +199,13 @@ public:
     Kernel* AddKernel(RedFoxMaths::Mat4 kernel);
     // Delete a kernel from the kernels array by index.
     void DeleteKernel(int id);
-    void SwapKernel(int a, int b);
-    void DeactivateKernel(int id);
     // Setting an existing kernel by his index.
     void EditKernel(int id, RedFoxMaths::Mat4 kernel);
     void BindKernelBuffer(Memory* tempAlocator);
 
-    void AddPostProcessShader(Memory *tempArena, const char* fragPath);
+    void AddPostProcessShader(Allocators *allocator, const char* fragPath);
     void SwapPostProcessShader(int idFirst, int idSecond);
-    void RemovePostProcessShader(int id);
+    void RemovePostProcessShader(Memory* arena, int id);
 };
 } // namespace RedFoxEngine
 

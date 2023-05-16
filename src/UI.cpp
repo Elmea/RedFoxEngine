@@ -1318,6 +1318,29 @@ void Engine::DrawWorldProperties()
                 TableSetColumnIndex(1);
                 Checkbox("Is active", &m_graphics.m_postProcessShaders[i].active);
                 Checkbox("Use kernels", &m_graphics.m_postProcessShaders[i].useKernels);
+
+                for (int j = 0; j < m_graphics.m_postProcessShaders[i].kernels.size(); j++)
+                {
+                    TableNextRow();
+                    TableSetColumnIndex(0);
+                    Text("Kernel %d %s", i + 1, m_graphics.m_postProcessShaders[i].name.c_str());
+                    TableSetColumnIndex(1);
+                    SetNextItemWidth(-FLT_MIN);
+                    DragFloat3("KernelRow1" + i + j, &m_graphics.m_postProcessShaders[i].kernels[j].kernel.mat16[0], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    SetNextItemWidth(-FLT_MIN);
+                    DragFloat3("KernelRow2" + i + j, &m_graphics.m_postProcessShaders[i].kernels[j].kernel.mat16[4], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    SetNextItemWidth(-FLT_MIN);
+                    DragFloat3("KernelRow3" + i + j, &m_graphics.m_postProcessShaders[i].kernels[j].kernel.mat16[8], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    Checkbox("Is active" + i + j, &m_graphics.m_postProcessShaders[i].kernels[j].active);
+                
+                    m_graphics.m_postProcessShaders[i].EditKernel(i, m_graphics.m_postProcessShaders[i].kernels[j].kernel);
+                }
+                
+                if (Button("Add empty kernel") && m_graphics.m_postProcessShaders[i].kernels.size() < MAX_KERNEL)
+                {
+                    float mat[4][4] = { 0 }; mat[1][1] = 1;
+                    Kernel* k = m_graphics.m_postProcessShaders[i].AddKernel(RedFoxMaths::Mat4(mat));
+                }
             }
             EndTable();
             if (Button("Import", ImVec2(GetContentRegionAvail().x, 20)) && m_graphics.m_postProcessShaders.size() < m_graphics.m_maxPostProcessShader)
@@ -1338,7 +1361,7 @@ void Engine::DrawWorldProperties()
                 InputText("Path", (char*)path.data, path.capacity);
                 if (Button("Import"))
                 {
-                    m_graphics.AddPostProcessShader(&m_memoryManager.m_memory.temp, path.data);
+                    m_graphics.AddPostProcessShader(&m_memoryManager.m_memory, path.data);
                     assignString(path, "");
                     CloseCurrentPopup();
                 }
@@ -1352,52 +1375,33 @@ void Engine::DrawWorldProperties()
             }
         }
         
-        if (CollapsingHeader("Kernels", m_imgui.propertiesFlags))
+        if (CollapsingHeader("General Kernels", m_imgui.propertiesFlags))
         {
-            BeginTable("PostProcessTable", 3, m_imgui.tableFlags);
+            BeginTable("PostProcessTable", 2, m_imgui.tableFlags);
             TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+            TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch);
             for (int i = 0; i < m_graphics.m_kernelCount; i++)
             {
                 TableNextRow();
                 TableSetColumnIndex(0);
-                if (ArrowButton("KernelUp" + i, ImGuiDir_Up) && i > 0)
-                    m_graphics.SwapKernel(i - 1, i);
-                if (ArrowButton("KernelDown" + i, ImGuiDir_Down) && i + 1 < m_graphics.m_kernelCount)
-                    m_graphics.SwapKernel(i, i + 1);
-                TableSetColumnIndex(1);
                 Text("Kernel %d", i + 1);
-                char buf[10];
-                sprintf(buf, "Reset %d", i + 1);
-                if (Button(buf))
-                    m_graphics.ResetKernel(i);
-                TableSetColumnIndex(2);
+                TableSetColumnIndex(1);
                 SetNextItemWidth(-FLT_MIN);
                 DragFloat3("KernelRow1" + i, &m_graphics.m_kernels[i].kernel.mat16[0], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                 SetNextItemWidth(-FLT_MIN);
                 DragFloat3("KernelRow2" + i, &m_graphics.m_kernels[i].kernel.mat16[4], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                 SetNextItemWidth(-FLT_MIN);
                 DragFloat3("KernelRow3" + i, &m_graphics.m_kernels[i].kernel.mat16[8], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                Checkbox("Is active" + i, &m_graphics.m_kernels[i].active);
+                
                 m_graphics.EditKernel(i, m_graphics.m_kernels[i].kernel);
             }
             EndTable();
-
-            const bool noKernel = (m_graphics.m_kernelCount <= 0);
-            const bool kernelLimitReached = (m_graphics.m_kernelCount >= m_graphics.m_maxKernel);
-            if (kernelLimitReached) BeginDisabled();
-            //TODO: Fix crash when psuhing a kernel after deleting all of them (probably a memory issue)
-            if (ButtonEx("Push kernel", ImVec2(GetContentRegionAvail().x, 20)))
+            if (Button("Add empty kernel", ImVec2(GetContentRegionAvail().x, 20)) && m_graphics.m_kernelCount < MAX_KERNEL)
             {
                 float mat[4][4] = { 0 }; mat[1][1] = 1;
                 Kernel* k = m_graphics.AddKernel(RedFoxMaths::Mat4(mat));
             }
-            if (kernelLimitReached) EndDisabled();
-
-            if (noKernel) BeginDisabled();
-            if (ButtonEx("Pop kernel", ImVec2(GetContentRegionAvail().x, 20)))
-            {
-                m_graphics.DeleteKernel(m_graphics.m_kernelCount - 1);
-            }
-            if (noKernel) EndDisabled();
         }
     }
     End();
