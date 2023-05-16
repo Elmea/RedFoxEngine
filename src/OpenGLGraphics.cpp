@@ -527,7 +527,7 @@ namespace RedFoxEngine
 
     void Graphics::InitPostProcess(Memory* arena)
     {
-        m_kernels = (Kernel*)MyMalloc(arena, sizeof(Kernel) * m_maxKernel);
+        m_kernels = (Kernel*)MyMalloc(arena, sizeof(Kernel) * MAX_KERNEL);
         glCreateFramebuffers(1, &m_evenPostProcessFramebuffer);
         glCreateFramebuffers(1, &m_oddPostProcessFramebuffer);
 
@@ -584,18 +584,18 @@ namespace RedFoxEngine
             if (!m_postProcessShaders[i].active)
                 continue;
 
-            if (m_postProcessShaders[i].useKernels && m_kernelCount > 0)
+            if (m_postProcessShaders[i].useKernels && m_postProcessShaders[i].kernelCount > 0)
             {
-                for (int k = 0; k < m_kernelCount; k++)
+                for (int k = 0; k < m_postProcessShaders[i].kernelCount; k++)
                 {
-                    if (!m_kernels[i].active)
+                    if (!m_postProcessShaders[i].kernels[i].active)
                         continue;
                     
                     if (k % 2 == 1)
                     {
                         glBindFramebuffer(GL_FRAMEBUFFER, m_oddPostProcessFramebuffer);
                         glBindProgramPipeline(m_postProcessShaders[i].pipeline);
-                        glProgramUniformMatrix4fv(m_postProcess.fragment, 0, 1, 0, m_kernelsMatrices[k].AsPtr());
+                        glProgramUniformMatrix4fv(m_postProcess.fragment, 0, 1, 0, m_postProcessShaders[i].kernelsMatrices[k].AsPtr());
                         PostProcessDrawQuad();
                         glBindTextureUnit(1, m_oddPostProcessTexture);
                     }
@@ -603,7 +603,7 @@ namespace RedFoxEngine
                     {
                         glBindFramebuffer(GL_FRAMEBUFFER, m_evenPostProcessFramebuffer);
                         glBindProgramPipeline(m_postProcessShaders[i].pipeline);
-                        glProgramUniformMatrix4fv(m_postProcess.fragment, 0, 1, 0, m_kernelsMatrices[k].AsPtr());
+                        glProgramUniformMatrix4fv(m_postProcess.fragment, 0, 1, 0, m_postProcessShaders[i].kernelsMatrices[k].AsPtr());
                         PostProcessDrawQuad();
                         glBindTextureUnit(1, m_evenPostProcessTexture);
                     }
@@ -634,27 +634,24 @@ namespace RedFoxEngine
         glBindProgramPipeline(m_postProcess.pipeline);
         glBindVertexArray(m_quadVAO);
 
-        if (useKernelInFinalPass)
+        for (int i = 0; i < m_kernelCount; i++)
         {
-            for (int i = 0; i < m_kernelCount; i++)
+            if (!m_kernels[i].active)
+                continue;
+            
+            if ((nextTexture + i) % 2 == 1)
             {
-                if (!m_kernels[i].active)
-                    continue;
-                
-                if ((nextTexture + i) % 2 == 1)
-                {
-                    glBindFramebuffer(GL_FRAMEBUFFER, m_oddPostProcessFramebuffer);
-                    glProgramUniformMatrix4fv(m_postProcess.fragment, 0, 1, 0, m_kernelsMatrices[i].AsPtr());
-                    PostProcessDrawQuad();
-                    glBindTextureUnit(1, m_oddPostProcessTexture);
-                }
-                else
-                {
-                    glBindFramebuffer(GL_FRAMEBUFFER, m_evenPostProcessFramebuffer);
-                    glProgramUniformMatrix4fv(m_postProcess.fragment, 0, 1, 0, m_kernelsMatrices[i].AsPtr());
-                    PostProcessDrawQuad();
-                    glBindTextureUnit(1, m_evenPostProcessTexture);
-                }
+                glBindFramebuffer(GL_FRAMEBUFFER, m_oddPostProcessFramebuffer);
+                glProgramUniformMatrix4fv(m_postProcess.fragment, 0, 1, 0, m_kernelsMatrices[i].AsPtr());
+                PostProcessDrawQuad();
+                glBindTextureUnit(1, m_oddPostProcessTexture);
+            }
+            else
+            {
+                glBindFramebuffer(GL_FRAMEBUFFER, m_evenPostProcessFramebuffer);
+                glProgramUniformMatrix4fv(m_postProcess.fragment, 0, 1, 0, m_kernelsMatrices[i].AsPtr());
+                PostProcessDrawQuad();
+                glBindTextureUnit(1, m_evenPostProcessTexture);
             }
         }
 
@@ -716,15 +713,6 @@ namespace RedFoxEngine
             m_kernelCount--;
     }
 
-    void Graphics::DeactivateKernel(int id)
-    {
-        if (id > m_kernelCreated || m_kernels[id].deleted || m_kernels[id].active)
-            return;
-
-        m_kernels[id].active = true;
-        m_kernelCount--;
-    }
-
     void Graphics::EditKernel(int id, RedFoxMaths::Mat4 kernel)
     {
         if (id > m_kernelCreated || m_kernels[id].deleted)
@@ -758,6 +746,17 @@ namespace RedFoxEngine
             {
                 m_kernelsMatrices[count] = m_kernels[i].kernel;
                 count++;
+            }
+        }
+
+        for (int i = 0; i < m_postProcessShaders.size(); i++)
+        {
+            if (!m_postProcessShaders[i].active)
+                continue;
+
+            if (m_postProcessShaders[i].useKernels && m_postProcessShaders[i].kernelCount > 0)
+            {
+                m_postProcessShaders[i].BindKernelBuffer(tempAlocator);
             }
         }
     }

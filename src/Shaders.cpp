@@ -77,16 +77,16 @@ void RedFoxEngine::Graphics::InitShaders(Memory *tempArena)
     CompileShader(vertexShaderSource.data, fragmentShaderSource.data,m_postProcess);
 }
 
-void RedFoxEngine::Graphics::AddPostProcessShader(Memory *tempArena, const char* fragPath)
+void RedFoxEngine::Graphics::AddPostProcessShader(Allocators *allocator, const char* fragPath)
 {
-    MyString vertexShaderSource = OpenAndReadEntireFile("PostProcess.vert", tempArena);
-    MyString fragmentShaderSource = OpenAndReadEntireFile(fragPath, tempArena);
+    MyString vertexShaderSource = OpenAndReadEntireFile("PostProcess.vert", &allocator->temp);
+    MyString fragmentShaderSource = OpenAndReadEntireFile(fragPath, &allocator->temp);
 
     Shader temp;
 
     CompileShader(vertexShaderSource.data, fragmentShaderSource.data, temp);
 
-    PostProcessShader result;
+    PostProcessShader result { &allocator->arena };
     result.pipeline = temp.pipeline;
     result.vertex = temp.vertex;
     result.fragment = temp.fragment;
@@ -98,12 +98,96 @@ void RedFoxEngine::Graphics::AddPostProcessShader(Memory *tempArena, const char*
 
 void RedFoxEngine::Graphics::SwapPostProcessShader(int idFirst, int idSecond)
 {
-    std::swap(m_postProcessShaders[idFirst],m_postProcessShaders[idSecond]);
+    std::swap(m_postProcessShaders[idFirst], m_postProcessShaders[idSecond]);
 }
 
-void RedFoxEngine::Graphics::RemovePostProcessShader(int id)
+void RedFoxEngine::Graphics::RemovePostProcessShader(Memory* arena, int id)
 {
+    MyFree(arena, sizeof(Kernel) * MAX_KERNEL);
+
     auto it = m_postProcessShaders.begin();
     std::advance(it, id);
     m_postProcessShaders.erase(it);
+}
+
+RedFoxEngine::Kernel* RedFoxEngine::PostProcessShader::AddKernel(RedFoxMaths::Mat4 kernel)
+{
+    if (kernelCreated > kernelCount)
+    {
+        for (int i = 0; i < kernelCount; i++)
+        {
+            if (kernels[i].deleted)
+            {
+                kernels[i].kernel = kernel;
+                kernels[i].deleted = false;
+                kernels[i].active = true;
+                
+                kernelCount++;
+                return &kernels[i];
+            }
+        }
+    }
+
+    Kernel result;
+    result.uniqueId = kernelCreated;
+    result.kernel = kernel;
+    
+    kernels[result.uniqueId] = result;
+    kernelCount++;
+    kernelCreated++;
+
+    return &kernels[result.uniqueId];
+}
+
+void RedFoxEngine::PostProcessShader::DeleteKernel(int id)
+{
+    if (id > kernelCreated || kernels[id].deleted)
+        return;
+
+    kernels[id].deleted = true;
+
+    if (kernels[id].active)
+        kernelCount--;
+}
+
+void RedFoxEngine::PostProcessShader::EditKernel(int id, RedFoxMaths::Mat4 kernel)
+{
+    if (id > kernelCreated || kernels[id].deleted)
+        return;
+
+    kernels[id].kernel = kernel;
+}
+
+void RedFoxEngine::PostProcessShader::ResetKernel(int id)
+{
+    if (id > kernelCreated || kernels[id].deleted)
+        return;
+
+    float kernel[4][4] = {
+        {0.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, 1.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f, 0.0f}
+    };
+    
+    kernels[id].kernel = kernel;
+}
+
+void RedFoxEngine::PostProcessShader::BindKernelBuffer(Memory* tempAlocator)
+{
+    kernelsMatrices = (RedFoxMaths::Mat4*)MyMalloc(tempAlocator, sizeof(RedFoxMaths::Mat4) * kernelCount);
+    int count = 0;
+    for (int i = 0; i < kernelCreated; i++)
+    {
+        if (!kernels[i].deleted && kernels[i].active)
+        {
+            kernelsMatrices[count] = kernels[i].kernel;
+            count++;
+        }
+    }
+}
+
+RedFoxEngine::PostProcessShader::PostProcessShader(Memory* arena)
+{
+    kernels = (Kernel*)MyMalloc(arena, sizeof(Kernel) * MAX_KERNEL);
 }

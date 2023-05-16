@@ -1225,6 +1225,29 @@ void Engine::DrawWorldProperties()
                 TableSetColumnIndex(1);
                 Checkbox("Is active", &m_graphics.m_postProcessShaders[i].active);
                 Checkbox("Use kernels", &m_graphics.m_postProcessShaders[i].useKernels);
+
+                for (int j = 0; j < m_graphics.m_postProcessShaders[i].kernelCount; j++)
+                {
+                    TableNextRow();
+                    TableSetColumnIndex(0);
+                    Text("Kernel %d %s", i + 1, m_graphics.m_postProcessShaders[i].name.c_str());
+                    TableSetColumnIndex(1);
+                    SetNextItemWidth(-FLT_MIN);
+                    DragFloat3("KernelRow1" + j, &m_graphics.m_postProcessShaders[i].kernels[j].kernel.mat16[0], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    SetNextItemWidth(-FLT_MIN);
+                    DragFloat3("KernelRow2" + j, &m_graphics.m_postProcessShaders[i].kernels[j].kernel.mat16[4], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    SetNextItemWidth(-FLT_MIN);
+                    DragFloat3("KernelRow3" + j, &m_graphics.m_postProcessShaders[i].kernels[j].kernel.mat16[8], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    Checkbox("Is active", &m_graphics.m_postProcessShaders[i].kernels[j].active);
+                
+                    m_graphics.EditKernel(i, m_graphics.m_kernels[j].kernel);
+                }
+                
+                if (Button("Add empty kernel") && m_graphics.m_postProcessShaders[i].kernelCount < MAX_KERNEL)
+                {
+                    float mat[4][4] = { 0 }; mat[1][1] = 1;
+                    Kernel* k = m_graphics.m_postProcessShaders[i].AddKernel(RedFoxMaths::Mat4(mat));
+                }
             }
             EndTable();
             if (Button("Import", ImVec2(GetContentRegionAvail().x, 20)) && m_graphics.m_postProcessShaders.size() < m_graphics.m_maxPostProcessShader)
@@ -1245,7 +1268,7 @@ void Engine::DrawWorldProperties()
                 InputText("Path", (char*)path.data, path.capacity);
                 if (Button("Import"))
                 {
-                    m_graphics.AddPostProcessShader(&m_memoryManager.m_memory.temp, path.data);
+                    m_graphics.AddPostProcessShader(&m_memoryManager.m_memory, path.data);
                     assignString(path, "");
                     CloseCurrentPopup();
                 }
@@ -1259,7 +1282,7 @@ void Engine::DrawWorldProperties()
             }
         }
         
-        if (CollapsingHeader("Kernels", m_imgui.propertiesFlags))
+        if (CollapsingHeader("General Kernels", m_imgui.propertiesFlags))
         {
             BeginTable("PostProcessTable", 2, ImGuiTableFlags_RowBg);
             TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
@@ -1281,12 +1304,11 @@ void Engine::DrawWorldProperties()
                 m_graphics.EditKernel(i, m_graphics.m_kernels[i].kernel);
             }
             EndTable();
-            if (Button("Add empty", ImVec2(GetContentRegionAvail().x, 20)) && m_graphics.m_kernelCount < m_graphics.m_maxKernel)
+            if (Button("Add empty", ImVec2(GetContentRegionAvail().x, 20)) && m_graphics.m_kernelCount < MAX_KERNEL)
             {
                 float mat[4][4] = { 0 }; mat[1][1] = 1;
                 Kernel* k = m_graphics.AddKernel(RedFoxMaths::Mat4(mat));
             }
-            Checkbox("Use kernel in final shader", &m_graphics.useKernelInFinalPass);
         }
     }
     End();
