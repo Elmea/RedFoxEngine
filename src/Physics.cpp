@@ -31,18 +31,17 @@ void Physx::CreateSphereCollider(GameObject* object)
 	shape->release();
 }
 
-void Physx::CreatePlayerCollider(GameObject* object, PxF32 radius, PxF32 height, PxF32 contactOffset, PxF32 stepOffset, PxF32 maxJumpHeight)
+void Physx::CreateCapsuleCollider(GameObject* object, PxF32 radius, PxF32 halfHeight)
 {
-	PxCapsuleControllerDesc capsuleControllerDesc = {};
-	PxExtendedVec3 pos(object->position.x, object->position.y, object->position.z);
-	capsuleControllerDesc.position = pos;
-	capsuleControllerDesc.radius = radius;
-	capsuleControllerDesc.height = height;
-	capsuleControllerDesc.contactOffset = contactOffset;
-	capsuleControllerDesc.stepOffset = stepOffset;
-	capsuleControllerDesc.maxJumpHeight = maxJumpHeight;
-	capsuleControllerDesc.climbingMode = PxCapsuleClimbingMode::eCONSTRAINED;
-	object->controller = controllerManager->createController(capsuleControllerDesc);
+	RedFoxMaths::Float3 position = object->position;
+	PxTransform t(position.x, position.y, position.z);
+	PxShape* shape = physics->createShape(PxCapsuleGeometry(radius, halfHeight), *material);
+	object->body = physics->createRigidDynamic(t);
+	object->body->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z, true);
+	object->body->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_X, true);
+	PxRigidBodyExt::updateMassAndInertia(*object->body, 10.0f);
+	m_scene->addActor(*object->body);
+	shape->release();
 }
 
 void Physx::InitPhysics(Scene scene, int sphereIndex)
@@ -58,7 +57,6 @@ void Physx::InitPhysics(Scene scene, int sphereIndex)
 	physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, PxTolerancesScale(), false);
 #endif
 
-
 	PxCudaContextManagerDesc cudaContextManagerDesc;
 	cudaContextManager = PxCreateCudaContextManager(*foundation, cudaContextManagerDesc, PxGetProfilerCallback());
 
@@ -70,10 +68,6 @@ void Physx::InitPhysics(Scene scene, int sphereIndex)
 	sceneDesc.filterShader = PxDefaultSimulationFilterShader;
 
 	m_scene = physics->createScene(sceneDesc);
-	controllerManager = PxCreateControllerManager(*m_scene);
-	controllerManager->setPreciseSweeps(false); // Less precise but faster according to PhysX doc
-	controllerManager->setOverlapRecoveryModule(true); // Move the CCT to a safe place
-
 #if _DEBUG
 	m_scene->setVisualizationParameter(PxVisualizationParameter::eACTOR_AXES, 1);
 	m_scene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1);
@@ -92,8 +86,12 @@ void Physx::InitPhysics(Scene scene, int sphereIndex)
 	PxRigidStatic* groundPlane = PxCreatePlane(*physics, PxPlane(0, 1, 0, 10), *material);
 	m_scene->addActor(*groundPlane);
 
-	CreatePlayerCollider(&scene.gameObjects[1], 1.f, 2.f, 1.f, 1.f, 1.f);
-	/*
+	
+	CreateCapsuleCollider(&scene.gameObjects[1], 1, 2);
+	scene.gameObjects[1].body->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z, true);
+	scene.gameObjects[1].body->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_X, true);
+
+	// If commented, the game code moving the player capsule crashes
 	for (u32 i = 2; i < (u32)scene.gameObjectCount; i++)
 	{
 		if (scene.gameObjects[i].modelIndex == sphereIndex)
@@ -101,7 +99,7 @@ void Physx::InitPhysics(Scene scene, int sphereIndex)
 		else
 			CreateCubeCollider(&scene.gameObjects[i], 1, 1);
 	}
-	*/
+	
 }
 
 void Physx::SetTransform(int index, Transform transform)
@@ -120,14 +118,32 @@ void Physx::SetTransform(int index, Transform transform)
 		}
 	}
 }
-void Physx::UpdatePhysics(f32 deltaTime, ResourcesManager m, bool isPaused)
+void Physx::UpdatePhysics(f32 deltaTime, Scene* scene, ResourcesManager m)
 {
 	actorCount = m_scene->getNbActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC);
 	if (actorCount)
 	{
-		if (!isPaused)
+		if (!scene->isPaused)
+		{
 			m_scene->simulate(deltaTime);
-		actors = (PxRigidActor**)m.TemporaryAllocation(sizeof(actors) * actorCount);
-		m_scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC, (PxActor**)actors, actorCount);
+			m_scene->fetchResults(true);
+		}
+		physx::PxTransform transform;
+		for (int i = 1; i < (int)scene->gameObjectCount && i < actorCount; i++)
+		{
+			if (scene->gameObjects[i].body)
+			{
+				physx::PxRigidDynamic* actor = scene->gameObjects[i].body->is<physx::PxRigidDynamic>();
+				if (actor && !actor->isSleeping())
+				{
+					transform = actor->getGlobalPose();
+					scene->gameObjects[i].transform = {
+						{transform.p.x, transform.p.y, transform.p.z},
+						scene->gameObjects[i].scale,
+						{transform.q.w, transform.q.x, transform.q.y, transform.q.z}
+					};
+				}
+			}
+		}
 	}
 }

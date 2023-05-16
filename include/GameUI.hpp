@@ -9,7 +9,7 @@ namespace RedFoxEngine
         MyString name;
         int      parent;
 
-        int behaviourIndex=0;
+        int behaviourIndex;
 
         RedFoxMaths::Float2 screenPosition;
         RedFoxMaths::Float2 size;
@@ -21,8 +21,8 @@ namespace RedFoxEngine
         MyString text;
         u32 image = 0;
   
-        bool isPressed = false;
-        bool isHovered = false;
+        bool isPressed;
+        bool isHovered;
 
     };
 }

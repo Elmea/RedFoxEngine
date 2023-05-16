@@ -90,7 +90,9 @@ struct Input
 };
 
 #define UPDATEGAME(name) void name(void *s, \
-                                   void *p, RedFoxEngine::Input input, float deltaTime)
+                                   void *p, \
+                                   RedFoxEngine::Input input, \
+                                   float deltaTime)
 typedef UPDATEGAME(_updategame);
 
 struct GameLibrary

@@ -50,7 +50,7 @@ Engine::Engine(int width, int height) :
     //Init behaviours buffer
     m_scene.gameObjectBehaviours = (Behaviour*)m_memoryManager.PersistentAllocation(sizeof(Behaviour) * 100);
     m_scene.gameUIBehaviours = (Behaviour*)m_memoryManager.PersistentAllocation(sizeof(Behaviour) * 100);
-    for (int i = 0; i < 100; i += 4)
+    for (int i = 0; i < 100; i++)
     {
         m_scene.gameObjectBehaviours[i].name = initString(64, &m_memoryManager.m_memory.arena);
         m_scene.gameObjectBehaviours[i].function = nullptr;
@@ -65,12 +65,13 @@ Engine::Engine(int width, int height) :
     m_scene.gameUIs[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
     m_scene.gameUIs[0].name.capacity = 255;
     m_scene.gameUIs[0].screenPosition = { 0, 0 };
-    m_scene.gameUIs[0].size = { 200,200 };
     m_scene.gameUICount++;
     for (int i = 1; i < 100; i++)
     {
         m_scene.gameUIs[i].parent = 0;
         m_scene.gameUIs[i].behaviourIndex = -1;
+        m_scene.gameUIs[i].isPressed = false;
+        m_scene.gameUIs[i].isHovered = false;
     }
 
     //Init GameObject
@@ -199,6 +200,7 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
             m_scene.gameObjects[i].boxExtents = { 0.5, 0.5, 0.5 };
         else if (m_scene.gameObjects[i].modelIndex == 1)
             m_scene.gameObjects[i].radius = 1;
+        m_scene.gameObjects[i].behaviourIndex = -1;
         m_scene.gameObjects[i].scale.x = m_scene.gameObjects[i].scale.y = m_scene.gameObjects[i].scale.z = 1;
         m_scene.gameObjects[i].orientation.a = 1;
         char tmp[255];
@@ -327,8 +329,17 @@ void Engine::UpdateSkyDome()
 void Engine::UpdateBehaviours()
 {
     for (int i = 1; i < (int)m_scene.gameObjectCount; i++)
-        if (!m_scene.isPaused && m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex].function != nullptr)
-            m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex].function(&m_scene.gameObjects[i], m_time.delta, &m_scene, &m_input);
+    {
+        Behaviour* gameObjectBehavior = &m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex];
+        if (!m_scene.isPaused && gameObjectBehavior->function != nullptr)
+            gameObjectBehavior->function(&m_scene.gameObjects[i], m_time.delta, &m_scene, &m_input);
+    }
+    for (int i = 1; i < (int)m_scene.gameUICount; i++)
+    {
+        Behaviour* gameUIBehavior = &m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex];
+        if (!m_scene.isPaused && gameUIBehavior->function != nullptr)
+            gameUIBehavior->function(&m_scene.gameObjects[i], m_time.delta, &m_scene, &m_input);
+    }
 }
 
 void Engine::Update()
@@ -339,8 +350,12 @@ void Engine::Update()
     UpdateSkyDome();
     m_soundManager.UpdateListener(m_editorCamera.position, m_editorCamera.orientation.ToEuler());
     UpdateLights(&m_graphics.lightStorage);
-    m_physx.UpdatePhysics(1.0 / 60.0, m_memoryManager, m_scene.isPaused);
-    m_game.update(&m_scene, &m_physx, m_input, 1.0 / 60.0);
+    m_physx.UpdatePhysics(1.0 / 60.0, &m_scene, m_memoryManager);
+    if (!m_scene.isPaused)
+    {
+        m_game.update(&m_scene, &m_physx, m_input, 1.0 / 60.0);
+        UpdateBehaviours();
+    }
     UpdateModelMatrices();
     UpdateIMGUI();
     

@@ -22,17 +22,15 @@ namespace RedFoxEngine
         physx::PxCudaContextManager* cudaContextManager;
     public:
         physx::PxScene* m_scene;
-        physx::PxRigidActor** actors;
-        physx::PxControllerManager* controllerManager;
         int actorCount = 0;
     private:
     public:
         void CreateCubeCollider(GameObject* object, physx::PxU32 size, physx::PxReal halfExtent);
         void CreateSphereCollider(GameObject* object);
-        void CreatePlayerCollider(GameObject* object, physx::PxF32 radius, physx::PxF32 height, physx::PxF32 contactOffset, physx::PxF32 stepOffset, physx::PxF32 maxJumpHeight);
+        void CreateCapsuleCollider(GameObject* object, physx::PxF32 radius, physx::PxF32 halfHeight);
         void InitPhysics(Scene scene, int sphereIndex);
         virtual void SetTransform(int index, Transform transform);
-        void UpdatePhysics(f32 deltaTime, ResourcesManager m, bool isPaused);
+        void UpdatePhysics(f32 deltaTime, Scene* scene, ResourcesManager m);
 
         ~Physx()
         {

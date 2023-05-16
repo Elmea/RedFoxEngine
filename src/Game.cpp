@@ -31,21 +31,22 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     return TRUE;
 }
 
-static Float3 RotateVectorByQuaternion(Quaternion q, Float3 test)
+BEHAVIOUR(UI)
 {
-    Float4 result = {test, 1};
-    result = q.GetRotationMatrix() * result;
-    return result.GetXYZF3();
+    printf("Yup");
 }
 
 BEHAVIOUR(Player)
 {
-    scene->m_gameCamera.position = { self->position.x, self->position.y, self->position.z };
+    scene->m_gameCamera.position = self->position;
     static Float3 cameraRotation;
-    cameraRotation += {(f32)input->mouseYDelta* deltaTime, (f32)input->mouseXDelta* deltaTime, 0};
+    float sensitivity = 0.0001f; 
+    cameraRotation += {(f32)input->mouseYDelta* deltaTime * sensitivity, (f32)input->mouseXDelta* deltaTime* sensitivity, 0};
     scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
-
-    Float3 inputDirection(0, -9.81f, 0);
+    
+    Float3 inputDirection(0, 0, 0);
+    float speed = 5.f;
+    Float3 velocity;
     if (input->W || input->Up)    inputDirection.z += -1;
     if (input->S || input->Down)  inputDirection.z += 1;
     if (input->A || input->Left)  inputDirection.x += -1;
@@ -55,8 +56,10 @@ BEHAVIOUR(Player)
         inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
         inputDirection.Normalize();
         inputDirection = inputDirection * 200.f;
-        physx::PxController* player = self->controller;
-        player->move({ inputDirection.x, inputDirection.y, inputDirection.z }, 1.f, deltaTime, physx::PxControllerFilters());
+        velocity.x = speed * deltaTime * inputDirection.x;
+        velocity.y = 0;
+        velocity.z = speed * deltaTime * inputDirection.z;
+        self->body->addForce({ velocity.x, velocity.y, velocity.z }, physx::PxForceMode::eFORCE);
     }
 }
 
@@ -69,54 +72,19 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
  */
 #pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
 
-    RedFoxEngine::Physx *physx = (RedFoxEngine::Physx *)p;
     RedFoxEngine::Scene *scene = (RedFoxEngine::Scene *)s;
+    RedFoxEngine::Physx *physx = (RedFoxEngine::Physx *)p;
 
     static bool init = false;
     if (!init)
     {
-        //scene->AddUIBehavior("Test", Test);
-        scene->AddGameObjectBehavior("Player", Player);
-        scene->gameObjects[1].behaviourIndex = 0;
+        // Problem with that is this is not reflected in the editor UI at runtime, for both gameobject and gameUI
+        scene->gameObjects[1].behaviourIndex = scene->AddGameObjectBehavior("Player", Player);
+        scene->gameObjects[1].position = { 100, 20, 0 };
+        scene->gameObjects[1].UpdateTransform();
+        
+        // This UI object must be initialized in editor before playing
+        scene->gameUIs[1].behaviourIndex = scene->AddUIBehavior("UI", UI);
         init = true;
-    }
-
-    RedFoxEngine::GameObject *gameObjects = scene->gameObjects;
-    int gameObjectCount = scene->gameObjectCount;
-    gameObjects[0].position =
-    {
-        0, -11, 0
-    };
-    gameObjects[0].orientation =
-    {
-        1, 0, 0, 0
-    };
-    gameObjects[0].scale =
-    {
-        10000, 2, 10000
-    };
-    physx::PxRigidActor **actors = physx->actors;
-    if (physx->actorCount)
-    {
-        if (!scene->isPaused)
-            physx->m_scene->fetchResults(true);
-        physx::PxRigidActor *player = actors[1];
-        physx::PxTransform transform;
-
-        for (int i = 1; i < (int)gameObjectCount && i < physx->actorCount; i++)
-        {
-            if (actors[i])
-            {
-                physx::PxRigidDynamic *actor = actors[i]->is<physx::PxRigidDynamic>();
-                if (actor)
-                {
-                    if (!actor->isSleeping())
-                    {
-                        transform = actor->getGlobalPose();
-                        gameObjects[i].transform = {{transform.p.x, transform.p.y, transform.p.z}, gameObjects[i].scale, {transform.q.w, transform.q.x, transform.q.y, transform.q.z}};
-                    }
-                }
-            }
-        }
     }
 }

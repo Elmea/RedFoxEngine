@@ -37,10 +37,10 @@ namespace RedFoxEngine
         RedFoxMaths::Float3 Color;
         
         physx::PxRigidDynamic* body;
-        physx::PxController* controller;
 
         int behaviourIndex;
 
         RedFoxMaths::Mat4 GetLocalMatrix();
+        void UpdateTransform();
     };
 }
