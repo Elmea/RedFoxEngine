@@ -738,7 +738,15 @@ namespace RedFoxEngine
 
     void Graphics::BindKernelBuffer(Memory* tempAlocator)
     {
-        m_kernelsMatrices = (RedFoxMaths::Mat4*)MyMalloc(tempAlocator, sizeof(RedFoxMaths::Mat4) * m_kernelCount);
+        int activeCount = 0;
+        for (int i = 0; i < m_kernelCreated; i++)
+        {
+            if (m_kernels[i].active)
+                activeCount++;
+        }
+        
+        m_kernelsMatrices = (RedFoxMaths::Mat4*)MyMalloc(tempAlocator, sizeof(RedFoxMaths::Mat4) * activeCount);
+        
         int count = 0;
         for (int i = 0; i < m_kernelCreated; i++)
         {

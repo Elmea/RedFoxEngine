@@ -153,7 +153,14 @@ void RedFoxEngine::PostProcessShader::ResetKernel(int id)
 
 void RedFoxEngine::PostProcessShader::BindKernelBuffer(Memory* tempAlocator)
 {
-    kernelsMatrices = (RedFoxMaths::Mat4*)MyMalloc(tempAlocator, sizeof(RedFoxMaths::Mat4) * kernels.size());
+    int activeCount = 0;
+    for (int i = 0; i < kernels.size(); i++)
+    {
+        if (kernels[i].active)
+            activeCount++;
+    }
+    
+    kernelsMatrices = (RedFoxMaths::Mat4*)MyMalloc(tempAlocator, sizeof(RedFoxMaths::Mat4) * activeCount);
     int count = 0;
     for (int i = 0; i < kernels.size(); i++)
     {

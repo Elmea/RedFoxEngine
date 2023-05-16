@@ -1233,14 +1233,14 @@ void Engine::DrawWorldProperties()
                     Text("Kernel %d %s", i + 1, m_graphics.m_postProcessShaders[i].name.c_str());
                     TableSetColumnIndex(1);
                     SetNextItemWidth(-FLT_MIN);
-                    DragFloat3("KernelRow1" + j, &m_graphics.m_postProcessShaders[i].kernels[j].kernel.mat16[0], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    DragFloat3("KernelRow1" + i + j, &m_graphics.m_postProcessShaders[i].kernels[j].kernel.mat16[0], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                     SetNextItemWidth(-FLT_MIN);
-                    DragFloat3("KernelRow2" + j, &m_graphics.m_postProcessShaders[i].kernels[j].kernel.mat16[4], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    DragFloat3("KernelRow2" + i + j, &m_graphics.m_postProcessShaders[i].kernels[j].kernel.mat16[4], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                     SetNextItemWidth(-FLT_MIN);
-                    DragFloat3("KernelRow3" + j, &m_graphics.m_postProcessShaders[i].kernels[j].kernel.mat16[8], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-                    Checkbox("Is active" + j, &m_graphics.m_postProcessShaders[i].kernels[j].active);
+                    DragFloat3("KernelRow3" + i + j, &m_graphics.m_postProcessShaders[i].kernels[j].kernel.mat16[8], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    Checkbox("Is active" + i + j, &m_graphics.m_postProcessShaders[i].kernels[j].active);
                 
-                    m_graphics.EditKernel(i, m_graphics.m_kernels[j].kernel);
+                    m_graphics.m_postProcessShaders[i].EditKernel(i, m_graphics.m_postProcessShaders[i].kernels[j].kernel);
                 }
                 
                 if (Button("Add empty kernel") && m_graphics.m_postProcessShaders[i].kernels.size() < MAX_KERNEL)
