@@ -131,7 +131,7 @@ Engine::Engine(int width, int height) :
         m_graphics.InitModel(&m_models[i]);
     InitSkyDome();
     m_memoryManager.m_sceneUsedMemory = m_memoryManager.m_memory.arena.usedSize;
-#if 0
+#if 1
     LoadScene("Sample Scene");
     Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
     dir->lightInfo.constant = 1.0f;
