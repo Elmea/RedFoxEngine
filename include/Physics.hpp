@@ -25,13 +25,16 @@ namespace RedFoxEngine
         int actorCount = 0;
     private:
     public:
-        void CreateCubeCollider(GameObject* object);
-        void CreateSphereCollider(GameObject* object);
-        void CreateCapsuleCollider(GameObject* object);
+        void CreateStaticCube(GameObject* object);
+        void CreateStaticSphere(GameObject* object);
+        void CreateDynamicCube(GameObject* object);
+        void CreateDynamicSphere(GameObject* object);
+        void CreateDynamicCapsule(GameObject* object);
+        void LockDynamicBody(GameObject* object, bool x, bool y, bool z);
         void InitPhysics();
         void InitScene(Scene *scene, int sphereIndex);
         virtual void SetTransform(int index, Transform transform);
-        void UpdatePhysics(f32 deltaTime, Scene* scene, ResourcesManager m);
+        void UpdatePhysics(f32 deltaTime, Scene *scene, ResourcesManager m);
 
         ~Physx()
         {

@@ -63,6 +63,7 @@ static UIBEHAVIOUR(DefaultUIBehaviour) { }
 
 void RedFoxEngine::Engine::LoadScene(const char *fileName)
 {
+    m_scene.isInit = false;
     m_scene.gameObjectCount = 0;
     m_scene.gameUICount = 0;
     m_scene.gameUIBehaviourCount = 0;

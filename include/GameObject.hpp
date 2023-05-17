@@ -5,8 +5,7 @@
 
 namespace physx
 {
-    class PxRigidDynamic;
-    class PxController;
+    class PxRigidActor;
 }
 
 namespace RedFoxEngine
@@ -34,7 +33,7 @@ namespace RedFoxEngine
         int modelIndex;
         RedFoxMaths::Float3 Color;
         
-        physx::PxRigidDynamic* body;
+        physx::PxRigidActor* body;
 
         int behaviourIndex;
 

@@ -62,7 +62,7 @@ BEHAVIOUR(Player)
         velocity.x = speed * deltaTime * inputDirection.x;
         velocity.y = 0;
         velocity.z = speed * deltaTime * inputDirection.z;
-        self->body->addForce({ velocity.x, velocity.y, velocity.z }, physx::PxForceMode::eFORCE);
+        self->body->is<physx::PxRigidDynamic>()->addForce({ velocity.x, velocity.y, velocity.z }, physx::PxForceMode::eFORCE);
     }
 }
 
@@ -81,9 +81,9 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     if (!scene->isInit)
     {
         // Problem with that is this is not reflected in the editor UI at runtime, for both gameobject and gameUI
-        scene->gameObjects[1].behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
-        scene->gameObjects[1].position = { 100, 20, 0 };
-        scene->gameObjects[1].UpdateTransform();
+        RedFoxEngine::GameObject* player = &scene->gameObjects[2];
+        player->behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
+        player->UpdateTransform();
         
         // This UI object must be initialized in editor before playing
         scene->gameUIs[1].behaviourIndex = scene->AddUIBehaviour("UI", UI);
