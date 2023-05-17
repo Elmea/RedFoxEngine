@@ -37,8 +37,6 @@ UIBEHAVIOUR(UI)
 {
     if (self->isPressed)
         printf("Pressed\n");
-    if (self->isHovered)
-        printf("Hovered\n");
 }
 
 BEHAVIOUR(Player)

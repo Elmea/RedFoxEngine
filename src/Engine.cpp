@@ -16,9 +16,6 @@
 using namespace RedFoxEngine;
 using namespace RedFoxMaths;
 
-static BEHAVIOUR(DefaultBehaviour) { }
-static UIBEHAVIOUR(DefaultUIBehaviour) { }
-
 Engine::Engine(int width, int height) :
     m_scene(width, height),
     m_editorCamera(projectionType::PERSPECTIVE, width / (f32)height),
