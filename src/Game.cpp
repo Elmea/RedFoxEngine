@@ -33,9 +33,12 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     return TRUE;
 }
 
-BEHAVIOUR(UI)
+UIBEHAVIOUR(UI)
 {
-    printf("Yup");
+    if (self->isPressed)
+        printf("Pressed\n");
+    if (self->isHovered)
+        printf("Hovered\n");
 }
 
 BEHAVIOUR(Player)
@@ -77,16 +80,15 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     RedFoxEngine::Scene *scene = (RedFoxEngine::Scene *)s;
     RedFoxEngine::Physx *physx = (RedFoxEngine::Physx *)p;
 
-    static bool init = false;
-    if (!init)
+    if (!scene->isInit)
     {
         // Problem with that is this is not reflected in the editor UI at runtime, for both gameobject and gameUI
-        scene->gameObjects[1].behaviourIndex = scene->AddGameObjectBehavior("Player", Player);
+        scene->gameObjects[1].behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
         scene->gameObjects[1].position = { 100, 20, 0 };
         scene->gameObjects[1].UpdateTransform();
         
         // This UI object must be initialized in editor before playing
-        scene->gameUIs[1].behaviourIndex = scene->AddUIBehavior("UI", UI);
-        init = true;
+        scene->gameUIs[1].behaviourIndex = scene->AddUIBehaviour("UI", UI);
+        scene->isInit = true;
     }
 }

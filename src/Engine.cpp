@@ -16,6 +16,9 @@
 using namespace RedFoxEngine;
 using namespace RedFoxMaths;
 
+static BEHAVIOUR(DefaultBehaviour) { }
+static UIBEHAVIOUR(DefaultUIBehaviour) { }
+
 Engine::Engine(int width, int height) :
     m_scene(width, height),
     m_editorCamera(projectionType::PERSPECTIVE, width / (f32)height),
@@ -61,8 +64,10 @@ Engine::Engine(int width, int height) :
         m_testMusic->position = {0.f, 0.f, 0.f};
         m_testMusic->Play3D();
     }
+
     m_scene.gameObjectBehaviours = (Behaviour*)m_memoryManager.PersistentAllocation(sizeof(Behaviour) * 100);
-    m_scene.gameUIBehaviours = (Behaviour*)m_memoryManager.PersistentAllocation(sizeof(Behaviour) * 100);
+    m_scene.gameUIBehaviours = (UIBehaviour*)m_memoryManager.PersistentAllocation(sizeof(UIBehaviour) * 100);
+
     m_scene.gameUIs = (GameUI*)m_memoryManager.PersistentAllocation(sizeof(GameUI) * 100);
     m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);
     m_memoryManager.m_sceneUsedMemory = m_memoryManager.m_memory.arena.usedSize;
@@ -177,7 +182,7 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     for (int i = 1; i < 100; i++)
     {
         m_scene.gameUIs[i].parent = 0;
-        m_scene.gameUIs[i].behaviourIndex = -1;
+        m_scene.gameUIs[i].behaviourIndex = 0;
         m_scene.gameUIs[i].isPressed = false;
         m_scene.gameUIs[i].isHovered = false;
     }
@@ -189,7 +194,6 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
     m_scene.gameObjects[0].position = { 0, 0, 0 };
     m_scene.gameObjects[0].orientation = { 1, 0, 0, 0 };
     m_scene.gameObjects[0].scale = { 1, 1, 1 };
-    m_scene.gameObjects->modelIndex = -1;
 
     m_scene.gameObjectCount++;
     m_scene.gameObjectCount = count;
@@ -202,7 +206,7 @@ void Engine::initSphericalManyGameObjects(int count) //TODO: remove
             m_scene.gameObjects[i].scale = { 0.5, 0.5, 0.5 };
         else if (m_scene.gameObjects[i].modelIndex == 1)
             m_scene.gameObjects[i].scale = {1, 1, 1};
-        m_scene.gameObjects[i].behaviourIndex = -1;
+        m_scene.gameObjects[i].behaviourIndex = 0;
         m_scene.gameObjects[i].scale.x = m_scene.gameObjects[i].scale.y = m_scene.gameObjects[i].scale.z = 1;
         m_scene.gameObjects[i].orientation.a = 1;
         char tmp[255];
@@ -345,14 +349,16 @@ void Engine::UpdateBehaviours()
     for (int i = 1; i < (int)m_scene.gameObjectCount; i++)
     {
         Behaviour* gameObjectBehavior = &m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex];
-        if (!m_scene.isPaused && gameObjectBehavior->function != nullptr)
-            gameObjectBehavior->function(&m_scene.gameObjects[i], m_time.delta, &m_scene, &m_input);
+        gameObjectBehavior->function(&m_scene.gameObjects[i], m_time.delta, &m_scene, &m_input);
     }
+}
+
+void Engine::UpdateUIBehaviours()
+{
     for (int i = 1; i < (int)m_scene.gameUICount; i++)
     {
-        Behaviour* gameUIBehavior = &m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex];
-        if (!m_scene.isPaused && gameUIBehavior->function != nullptr)
-            gameUIBehavior->function(&m_scene.gameObjects[i], m_time.delta, &m_scene, &m_input);
+        UIBehaviour* gameUIBehavior = &m_scene.gameUIBehaviours[m_scene.gameUIs[i].behaviourIndex];
+        gameUIBehavior->function(&m_scene.gameUIs[i], m_time.delta, &m_scene, &m_input);
     }
 }
 
@@ -375,6 +381,7 @@ void Engine::Update()
     {
         UpdateBehaviours();
     }
+    UpdateUIBehaviours();
     UpdateModelMatrices();
     UpdateIMGUI();
     m_input.mouseXDelta = m_input.mouseYDelta = 0;

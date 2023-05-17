@@ -278,7 +278,6 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameUI->name.capacity = 255;
         newGameUI->text = initStringChar("", 254, &m_memoryManager.m_memory.arena);
         newGameUI->size = {100, 100};
-        newGameUI->behaviourIndex = -1;
     }
     PopStyleVar();
     End();
@@ -1123,10 +1122,8 @@ void Engine::DrawProperties()
                 SetNextItemWidth(-FLT_MIN);
                 
                 int* curBehaviourIndex = &m_scene.gameObjects[m_imgui.selectedObject].behaviourIndex;
-                if (ImGui::BeginCombo("BehaviourList", *curBehaviourIndex == -1 ? "None" : m_scene.gameObjectBehaviours[*curBehaviourIndex].name.data))
+                if (ImGui::BeginCombo("BehaviourList", m_scene.gameObjectBehaviours[*curBehaviourIndex].name.data))
                 {
-                    if (ImGui::Selectable("None", *curBehaviourIndex == -1))
-                        *curBehaviourIndex = -1;
                     for (int i = 0; i < m_scene.gameObjectBehaviourCount; i++)
                     {
                         bool is_selected = (*curBehaviourIndex == i);
@@ -1234,10 +1231,8 @@ void Engine::DrawProperties()
             SetNextItemWidth(-FLT_MIN);
 
             int* curBehaviourIndex = &m_scene.gameUIs[m_imgui.selectedUI].behaviourIndex;
-            if (ImGui::BeginCombo("BehaviourList", *curBehaviourIndex == -1 ? "None" : m_scene.gameUIBehaviours[*curBehaviourIndex].name.data))
+            if (ImGui::BeginCombo("BehaviourList", m_scene.gameUIBehaviours[*curBehaviourIndex].name.data))
             {
-                if (ImGui::Selectable("None", *curBehaviourIndex == -1))
-                    *curBehaviourIndex = -1;
                 for (int i = 0; i < m_scene.gameUIBehaviourCount; i++)
                 {
                     bool is_selected = (*curBehaviourIndex == i);

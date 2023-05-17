@@ -58,27 +58,27 @@ static void ReadGameObjectFromFile(HANDLE file, RedFoxEngine::GameObject *curren
     }
 }
 
+static BEHAVIOUR(DefaultBehaviour) { }
+static UIBEHAVIOUR(DefaultUIBehaviour) { }
+
 void RedFoxEngine::Engine::LoadScene(const char *fileName)
 {
+    m_scene.gameObjectCount = 0;
+    m_scene.gameUICount = 0;
+    m_scene.gameUIBehaviourCount = 0;
+    m_scene.gameObjectBehaviourCount = 0;
     m_memoryManager.m_memory.arena.usedSize = m_memoryManager.m_sceneUsedMemory;
-    //Init behaviours buffer
-    for (int i = 0; i < 100; i++)
-    {
-        m_scene.gameObjectBehaviours[i].name = initString(64, &m_memoryManager.m_memory.arena);
-        m_scene.gameObjectBehaviours[i].function = nullptr;
-        m_scene.gameUIBehaviours[i].name = initString(64, &m_memoryManager.m_memory.arena);
-        m_scene.gameUIBehaviours[i].function = nullptr;
-    }
+
     //Init GameUI
     m_scene.gameUIs[0] = {};
     m_scene.gameUIs[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
     m_scene.gameUIs[0].name.capacity = 255;
     m_scene.gameUIs[0].screenPosition = { 0, 0 };
-    m_scene.gameUICount++;
+    m_scene.gameUICount = 1;
     for (int i = 1; i < 100; i++)
     {
         m_scene.gameUIs[i].parent = 0;
-        m_scene.gameUIs[i].behaviourIndex = -1;
+        m_scene.gameUIs[i].behaviourIndex = 0;
         m_scene.gameUIs[i].isPressed = false;
         m_scene.gameUIs[i].isHovered = false;
     }
@@ -91,8 +91,7 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
     m_scene.gameObjects[0].orientation = { 1, 0, 0, 0 };
     m_scene.gameObjects[0].scale = { 1, 1, 1 };
     m_scene.gameObjects->modelIndex = -1;
-
-    m_scene.gameObjectCount++;
+    m_scene.gameObjectCount = 1;
     HANDLE file = CreateFile(fileName, GENERIC_READ,
         FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -105,6 +104,17 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
         ReadGameObjectFromFile(file, &m_scene.gameObjects[i], m_models, m_modelCount, &m_memoryManager);
     }
     CloseHandle(file);
+
+    //Init behaviours buffer
+    for (int i = 0; i < 100; i++)
+    {
+        m_scene.gameObjectBehaviours[i].name = initStringChar("None", 64, &m_memoryManager.m_memory.arena);
+        m_scene.gameObjectBehaviours[i].function = DefaultBehaviour;
+        m_scene.gameUIBehaviours[i].name = initStringChar("None", 64, &m_memoryManager.m_memory.arena);
+        m_scene.gameUIBehaviours[i].function = DefaultUIBehaviour;
+    }
+    m_scene.gameObjectBehaviourCount = 1;
+    m_scene.gameUIBehaviourCount = 1;
     m_physx.InitScene(&m_scene, 1);
 }
 

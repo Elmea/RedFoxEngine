@@ -59,6 +59,7 @@ void Physx::InitPhysics()
 
 	PxCudaContextManagerDesc cudaContextManagerDesc;
 	cudaContextManager = PxCreateCudaContextManager(*foundation, cudaContextManagerDesc, PxGetProfilerCallback());
+	dispatcher = PxDefaultCpuDispatcherCreate(std::thread::hardware_concurrency());
 }
 
 void Physx::InitScene(Scene *scene, int sphereIndex)
@@ -70,7 +71,6 @@ void Physx::InitScene(Scene *scene, int sphereIndex)
 	PxSceneDesc sceneDesc(physics->getTolerancesScale());
 	sceneDesc.gravity = PxVec3(0.0f, -30.f /*-9.81f*/, 0.0f);//TODO: back to -9.81 gravity and heavier objects ??
 
-	dispatcher = PxDefaultCpuDispatcherCreate(std::thread::hardware_concurrency());
 	sceneDesc.cpuDispatcher = dispatcher;
 	sceneDesc.filterShader = PxDefaultSimulationFilterShader;	
 	m_scene = physics->createScene(sceneDesc);

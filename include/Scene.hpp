@@ -51,12 +51,13 @@ public:
     int sceneNodeCount;
     int m_width, m_height;
     bool isPaused = true;
+    bool isInit = false;
 
     u64 *m_modelCountIndex;
 
     GameObject *gameObjects = nullptr;
     GameUI* gameUIs = nullptr;
-    Behaviour* gameUIBehaviours = nullptr;
+    UIBehaviour* gameUIBehaviours = nullptr;
     Behaviour* gameObjectBehaviours = nullptr;
 
     Scene(int width, int height):m_gameCamera(projectionType::PERSPECTIVE,
@@ -119,7 +120,7 @@ public:
         return (count);
     }
 
-    int AddUIBehavior(const char* name, functionBehaviour func)
+    int AddUIBehaviour(const char* name, uiBehaviour func)
     {
         this->gameUIBehaviours[this->gameUIBehaviourCount].name = assignString(this->gameUIBehaviours[this->gameUIBehaviourCount].name, name);
         this->gameUIBehaviours[this->gameUIBehaviourCount].function = func;
@@ -127,7 +128,7 @@ public:
         return this->gameUIBehaviourCount - 1;
     }
 
-    int AddGameObjectBehavior(const char* name, functionBehaviour func)
+    int AddGameObjectBehaviour(const char* name, functionBehaviour func)
     {
         this->gameObjectBehaviours[this->gameObjectBehaviourCount].name = assignString(this->gameObjectBehaviours[this->gameObjectBehaviourCount].name, name);
         this->gameObjectBehaviours[this->gameObjectBehaviourCount].function = func;
