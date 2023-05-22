@@ -114,6 +114,7 @@ private:
     bool m_editorCameraEnabled = false;
     ImGUI m_imgui = {};
     Physx m_physx {};
+    SoundManager m_soundManager;
 
 public:
     bool isGame = false;

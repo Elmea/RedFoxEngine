@@ -60,7 +60,7 @@ public:
     GameUI* gameUIs = nullptr;
     UIBehaviour* gameUIBehaviours = nullptr;
     Behaviour* gameObjectBehaviours = nullptr;
-    SoundManager m_soundManager;
+    SoundManager* soundManager;
 
     Scene(int width, int height):m_gameCamera(projectionType::PERSPECTIVE,
         width / (f32)height){}
