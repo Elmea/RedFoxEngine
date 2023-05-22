@@ -235,6 +235,17 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->modelIndex = -1;
     }
 
+    if (IsKeyDown(ImGuiKey_LeftCtrl) && IsKeyPressed(ImGuiKey_D)) //TODO Position and Rotation cant be changed
+    {
+        GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
+        *newGameObject = m_scene.gameObjects[m_imgui.selectedObject];
+
+        char tmp[255];
+        int size = snprintf(tmp, 255, "New entity #%d", m_scene.gameObjectCount - 1);
+        newGameObject->name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
+    }
+
+
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
     if (ImageButton("ADD CUBE", m_imgui.icons[8], ImVec2(buttonHeight, buttonHeight)))
@@ -816,16 +827,6 @@ void Engine::DrawSceneGraph()
                 OpenPopup("RenameScenePopup");
             }
 
-            if (IsKeyDown(ImGuiKey_LeftCtrl) && IsKeyPressed(ImGuiKey_D))
-            {
-                GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
-                *newGameObject = m_scene.gameObjects[m_imgui.selectedObject];
-
-                char tmp[255];
-                int size = snprintf(tmp, 255, "New entity #%d", m_scene.gameObjectCount - 1);
-                newGameObject->name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
-
-            }
 
             if (BeginDragDropTarget())
             {             
