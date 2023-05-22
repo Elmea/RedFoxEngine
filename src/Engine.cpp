@@ -50,24 +50,17 @@ Engine::Engine(int width, int height) :
 
     m_physx.InitPhysics();
     InitSkyDome();
-    m_soundManager.Init(&m_memoryManager.m_memory.arena);
-    m_soundManager.SetMasterVolume(1);
-    
-    m_testMusic = m_soundManager.CreateSound("music.ogg", &m_memoryManager.m_memory.arena);
-    if (m_testMusic)
-    {
-        m_testMusic->SetVolume(1);
-        m_testMusic->SetLoop(true);
-        m_testMusic->position = {0.f, 0.f, 0.f};
-        m_testMusic->Play3D();
-    }
+
 
     m_scene.gameObjectBehaviours = (Behaviour*)m_memoryManager.PersistentAllocation(sizeof(Behaviour) * 100);
     m_scene.gameUIBehaviours = (UIBehaviour*)m_memoryManager.PersistentAllocation(sizeof(UIBehaviour) * 100);
 
     m_scene.gameUIs = (GameUI*)m_memoryManager.PersistentAllocation(sizeof(GameUI) * 100);
     m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);
+    m_scene.m_soundManager.Init(&m_memoryManager.m_memory.arena);
+    m_scene.m_soundManager.SetMasterVolume(1);
     m_memoryManager.m_sceneUsedMemory = m_memoryManager.m_memory.arena.usedSize;
+
 
     //TODO transition to an instance based model 'model'
 #if 1

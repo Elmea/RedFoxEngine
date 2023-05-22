@@ -3,6 +3,7 @@
 #include "GameObject.hpp"
 #include "GameUI.hpp"
 #include "GameBehaviour.hpp"
+#include "SoundManager.hpp"
 
 namespace RedFoxEngine
 {
@@ -59,6 +60,7 @@ public:
     GameUI* gameUIs = nullptr;
     UIBehaviour* gameUIBehaviours = nullptr;
     Behaviour* gameObjectBehaviours = nullptr;
+    SoundManager m_soundManager;
 
     Scene(int width, int height):m_gameCamera(projectionType::PERSPECTIVE,
         width / (f32)height){}

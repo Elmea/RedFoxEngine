@@ -992,7 +992,8 @@ void Engine::DrawAssetsBrowser()
             }
 
             TableSetColumnIndex(1);
-            Text("Sounds (%d/%d)", m_soundManager.m_soundCount, m_soundManager.m_maxSounds);
+            Text("Sounds (%d/%d)", m_scene.m_soundManager.SoundCount(), m_scene.m_soundManager.m_maxSounds);
+            
             SameLine();
 
             if (Button("Import sound"))
@@ -1014,7 +1015,7 @@ void Engine::DrawAssetsBrowser()
                 {
                     if (m_platform.FileExist(path.data))
                     {
-                        m_soundManager.CreateSound(path.data, &m_memoryManager.m_memory.arena);
+                        m_scene.m_soundManager.CreateSound(path.data, &m_memoryManager.m_memory.arena);
                         m_imgui.lockEditor = false;
                         CloseCurrentPopup();
                     }
@@ -1049,10 +1050,10 @@ void Engine::DrawAssetsBrowser()
             TableSetColumnIndex(1);
             if (BeginListBox("SoundsList", ImVec2(-FLT_MIN, 5 * GetTextLineHeightWithSpacing())))
             {
-                for (int i = 0; i < m_soundManager.m_soundCount; i++)
+                for (int i = 0; i < m_scene.m_soundManager.SoundCount(); i++)
                 {
                     bool is_selected = m_imgui.selectedSoundAsset == i;
-                    if (Selectable(m_soundManager.m_soundsName[i].data, is_selected))
+                    if (Selectable(m_scene.m_soundManager.SoundName(i).data, is_selected))
                         m_imgui.selectedSoundAsset = i;
 
                     if (is_selected)
