@@ -2,6 +2,7 @@
 #include "ObjParser.hpp"
 #include "RedfoxMaths.hpp"
 #include "Model.hpp"
+#include "Transform.hpp"
 
 namespace physx
 {
@@ -10,12 +11,6 @@ namespace physx
 
 namespace RedFoxEngine
 {
-    struct Transform
-    {
-        RedFoxMaths::Float3 position;
-        RedFoxMaths::Float3 scale;
-        RedFoxMaths::Quaternion orientation;
-    };
     struct GameObject
     {
         MyString name;

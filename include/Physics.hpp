@@ -25,11 +25,11 @@ namespace RedFoxEngine
         int actorCount = 0;
     private:
     public:
-        void CreateStaticCube(GameObject* object);
-        void CreateStaticSphere(GameObject* object);
-        void CreateDynamicCube(GameObject* object);
-        void CreateDynamicSphere(GameObject* object);
-        void CreateDynamicCapsule(GameObject* object);
+        void CreateStaticCube(GameObject* object, Transform transform);
+        void CreateStaticSphere(GameObject* object, Transform transform);
+        void CreateDynamicCube(GameObject* object, Transform transform);
+        void CreateDynamicSphere(GameObject* object, Transform transform);
+        void CreateDynamicCapsule(GameObject* object, Transform transform);
         void LockDynamicBody(GameObject* object, bool x, bool y, bool z);
         void InitPhysics();
         void InitScene(Scene *scene, int sphereIndex);

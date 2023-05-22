@@ -7,21 +7,22 @@
 using namespace RedFoxEngine;
 using namespace physx;
 
-void Physx::CreateStaticCube(GameObject* object)
+void Physx::CreateStaticCube(GameObject* object, Transform transform)
 {
-	PxTransform t(object->position.x, object->position.y, object->position.z);
+	PxQuat q(object->orientation.b, object->orientation.c, object->orientation.d, object->orientation.a);
+	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
 	PxShape* shape = physics->createShape(PxBoxGeometry(object->scale.x, object->scale.y, object->scale.z), *material);
-	object->body = physics->createRigidDynamic(t);
+	object->body = physics->createRigidStatic(t);
 	object->body->attachShape(*shape);
 	m_scene->addActor(*object->body);
 	shape->release();
 }
 
-void Physx::CreateStaticSphere(GameObject* object)
+void Physx::CreateStaticSphere(GameObject* object, Transform transform)
 {
-	RedFoxMaths::Float3 position = object->position;
 	PxReal radius = object->scale.x;
-	PxTransform t(position.x, position.y, position.z);
+	PxQuat q(object->orientation.b, object->orientation.c, object->orientation.d, object->orientation.a);
+	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
 	PxShape* shape = physics->createShape(PxSphereGeometry(radius), *material);
 	object->body = physics->createRigidStatic(t);
 	object->body->attachShape(*shape);
@@ -29,9 +30,10 @@ void Physx::CreateStaticSphere(GameObject* object)
 	shape->release();
 }
 
-void Physx::CreateDynamicCube(GameObject* object)
+void Physx::CreateDynamicCube(GameObject* object, Transform transform)
 {
-	PxTransform t(object->position.x, object->position.y, object->position.z);
+	PxQuat q(object->orientation.b, object->orientation.c, object->orientation.d, object->orientation.a);
+	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
 	PxShape* shape = physics->createShape(PxBoxGeometry(object->scale.x, object->scale.y, object->scale.z), *material);
 	object->body = physics->createRigidDynamic(t);
 	object->body->attachShape(*shape);
@@ -40,11 +42,10 @@ void Physx::CreateDynamicCube(GameObject* object)
 	shape->release();
 }
 
-void Physx::CreateDynamicSphere(GameObject* object)
+void Physx::CreateDynamicSphere(GameObject* object, Transform transform)
 {
-	RedFoxMaths::Float3 position = object->position;
 	PxReal radius = object->scale.x;
-	PxTransform t(position.x, position.y, position.z);
+	PxTransform t(transform.position.x, transform.position.y, transform.position.z);
 	PxShape* shape = physics->createShape(PxSphereGeometry(radius), *material);
 	object->body = physics->createRigidDynamic(t);
 	object->body->attachShape(*shape);
@@ -53,12 +54,13 @@ void Physx::CreateDynamicSphere(GameObject* object)
 	shape->release();
 }
 
-void Physx::CreateDynamicCapsule(GameObject* object)
+void Physx::CreateDynamicCapsule(GameObject* object, Transform transform)
 {
-	RedFoxMaths::Float3 position = object->position;
-	PxTransform t(position.x, position.y, position.z);
-	PxShape* shape = physics->createShape(PxCapsuleGeometry(object->scale.z, object->scale.y), *material);
+	PxQuat q(object->orientation.b, object->orientation.c, object->orientation.d, object->orientation.a);
+	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
+	PxShape* shape = physics->createShape(PxCapsuleGeometry(object->scale.x, object->scale.y), *material);
 	object->body = physics->createRigidDynamic(t);
+	object->body->attachShape(*shape);
 	PxRigidBodyExt::updateMassAndInertia(*object->body->is<PxRigidBody>(), 10.0f);
 	m_scene->addActor(*object->body);
 	shape->release();
@@ -71,7 +73,6 @@ void Physx::LockDynamicBody(GameObject* object, bool x, bool y, bool z)
 	body->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_Y, y);
 	body->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z, z);
 }
-
 
 void Physx::InitPhysics()
 {
@@ -119,7 +120,8 @@ void Physx::InitScene(Scene *scene, int sphereIndex)
 	material = physics->createMaterial(0.5f, 0.5f, 0.1f);
 	
 	RedFoxEngine::GameObject* player = &scene->gameObjects[2];
-	CreateDynamicCapsule(player); //TODO: Make it as a floating sphere
+	player->orientation = RedFoxMaths::Quaternion({ 90.f, 0.f, 0.f });
+	CreateDynamicCapsule(player, scene->GetWorldTransform(2));
 	LockDynamicBody(player, true, false, true);
 
 	// If commented, the game code moving the player capsule crashes
@@ -128,12 +130,13 @@ void Physx::InitScene(Scene *scene, int sphereIndex)
 		if (i != 2)
 		{
 			if (scene->gameObjects[i].modelIndex == sphereIndex)
-				CreateStaticSphere(&scene->gameObjects[i]);
+				CreateStaticSphere(&scene->gameObjects[i], scene->GetWorldTransform(i));
 			else
-				CreateStaticCube(&scene->gameObjects[i]);
+				CreateStaticCube(&scene->gameObjects[i], scene->GetWorldTransform(i));
 		}
 	}
 }
+
 void Physx::SetTransform(int index, Transform transform)
 {
 	int temp = m_scene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC);
@@ -141,12 +144,12 @@ void Physx::SetTransform(int index, Transform transform)
 	{
 		PxActor* actor;
 		m_scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC, (PxActor**)&actor, 1, index);
-		if (actor && actor->is<PxRigidDynamic>())
+		if (actor)
 		{
 			PxTransform t;
 			t.p = { transform.position.x, transform.position.y, transform.position.z };
 			t.q = { transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a };
-			actor->is<PxRigidDynamic>()->setGlobalPose(t);
+			actor->is<PxRigidActor>()->setGlobalPose(t);
 		}
 	}
 }
@@ -170,11 +173,8 @@ void Physx::UpdatePhysics(f32 deltaTime, Scene* scene, ResourcesManager m)
 				if (dynamicActor && !dynamicActor->isSleeping())
 				{
 					transform = dynamicActor->getGlobalPose();
-					scene->gameObjects[i].transform = {
-						{transform.p.x, transform.p.y, transform.p.z},
-						scene->gameObjects[i].scale,
-						{transform.q.w, transform.q.x, transform.q.y, transform.q.z}
-					};
+
+					scene->gameObjects[i].transform = scene->GetLocalTransformFromParent(i);
 				}
 			}
 		}

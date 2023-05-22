@@ -3,6 +3,7 @@
 #include "GameObject.hpp"
 #include "GameUI.hpp"
 #include "GameBehaviour.hpp"
+#include "Transform.hpp"
 
 namespace RedFoxEngine
 {
@@ -62,6 +63,7 @@ public:
 
     Scene(int width, int height):m_gameCamera(projectionType::PERSPECTIVE,
         width / (f32)height){}
+
     RedFoxMaths::Mat4 GetWorldMatrix(int gameObjectindex)
     {
         GameObject *current = &gameObjects[gameObjectindex];
@@ -70,6 +72,26 @@ public:
             return current->GetLocalMatrix() * GetWorldMatrix(current->parent);
         }
         return gameObjects[gameObjectindex].GetLocalMatrix();
+    };
+
+    RedFoxEngine::Transform GetLocalTransformFromParent(int gameObjectIndex)
+    {
+        GameObject* current = &gameObjects[gameObjectIndex];
+        if (current->parent)
+        {
+            return current->transform + GetLocalTransformFromParent(current->parent).Inverse();
+        }
+        return gameObjects[gameObjectIndex].transform;
+    }
+
+    RedFoxEngine::Transform GetWorldTransform(int gameObjectindex)
+    {
+        GameObject* current = &gameObjects[gameObjectindex];
+        if (current->parent)
+        {
+            return current->transform * GetWorldTransform(current->parent);
+        }
+        return gameObjects[gameObjectindex].transform;
     };
 
     int *GetChildren(int gameObjectIndex, Memory *temp)
