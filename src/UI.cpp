@@ -339,8 +339,8 @@ void Engine::DrawSceneNodes(bool is_child, int index)
         flags |= ImGuiTreeNodeFlags_Selected;
     flags |= ImGuiTreeNodeFlags_SpanFullWidth;
 
-    bool nodeOpen = TreeNodeEx((char*)m_scene.gameObjects[index].name.data, flags, "%s",
-        (char*)m_scene.gameObjects[index].name.data);
+    char* gameObjectName = (char*)m_scene.gameObjects[index].name.data;
+    bool nodeOpen = TreeNodeEx(gameObjectName[0] == '\0' ? " " : gameObjectName, flags, "%s", gameObjectName);
     if ((IsItemClicked() && !IsItemToggledOpen()) || IsItemFocused())
     {
         m_imgui.selectedObject = index;
@@ -477,12 +477,7 @@ void Engine::DrawEditor()
                 m_imgui.mousePosEditor.y <= convertedPos.y + uiSize.y)
             {
                 m_scene.gameUIs[i].isHovered = true;
-                if (IsMouseClicked(ImGuiMouseButton_Left))
-                    m_scene.gameUIs[i].isPressed = true;
-
-                else
-                    m_scene.gameUIs[i].isPressed = false;
-
+                m_scene.gameUIs[i].isPressed = IsMouseClicked(ImGuiMouseButton_Left);
             }
             else
             {
@@ -856,7 +851,7 @@ void Engine::DrawSceneGraph()
                 EndPopup();
             }
 
-            if (IsKeyPressed(ImGuiKey_F2,false))
+            if (IsKeyPressed(ImGuiKey_F2, false) && m_imgui.selectedObject > 0)
             {
                 OpenPopup("RenameItemPopup");
             }
