@@ -821,7 +821,7 @@ void Engine::DrawSceneGraph()
                 OpenPopup("RenameScenePopup");
             }
 
-            if (IsKeyPressed(ImGuiKey_D) && IsKeyPressed(ImGuiKey_LeftCtrl))
+            if (IsKeyDown(ImGuiKey_LeftCtrl) && IsKeyPressed(ImGuiKey_D))
             {
                 GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
                 *newGameObject = m_scene.gameObjects[m_imgui.selectedObject];
