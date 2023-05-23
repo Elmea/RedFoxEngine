@@ -646,11 +646,13 @@ void Engine::DrawEditor()
                     physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
                     if (hit.actor)
                     {
-                        int hitIndex = hit.actor->getInternalActorIndex();
-                        if (hitIndex < (int)m_scene.gameObjectCount && hitIndex > 0)
+                        for (int i = 0; i < m_scene.gameObjectCount; i++)
                         {
-                            m_imgui.selectedObject = hitIndex;
-                            m_imgui.mousePickNodeIndex = hitIndex;
+                            if (m_scene.gameObjects[i].body == hit.actor)
+                            {
+                                m_imgui.selectedObject = i;
+                                break;
+                            }
                         }
                     }
                 }
@@ -1106,7 +1108,7 @@ void Engine::DrawProperties()
                     Text("Scale");
                     TableSetColumnIndex(1);
                     SetNextItemWidth(-FLT_MIN);
-                    DragFloat3("TransformScale", &m_scene.gameObjects[m_imgui.selectedObject].scale.x, m_imgui.dragSpeed, 0.00001f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    DragFloat3("TransformScale", &m_scene.gameObjects[m_imgui.selectedObject].scale.x, m_imgui.dragSpeed, 1.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                     EndTable();
                 }
             }

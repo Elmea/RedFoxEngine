@@ -11,7 +11,10 @@ void Physx::CreateStaticCube(GameObject* object, Transform transform)
 {
 	PxQuat q(transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a);
 	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
-	PxShape* shape = physics->createShape(PxBoxGeometry(object->scale.x, object->scale.y, object->scale.z), *staticMaterial);
+	if (transform.scale.x < 1) transform.scale.x = 1;
+	if (transform.scale.y < 1) transform.scale.y = 1;
+	if (transform.scale.z < 1) transform.scale.z = 1;
+	PxShape* shape = physics->createShape(PxBoxGeometry(transform.scale.x, transform.scale.y, transform.scale.z), *staticMaterial);
 	object->body = physics->createRigidStatic(t);
 	object->body->attachShape(*shape);
 	m_scene->addActor(*object->body);
@@ -34,7 +37,10 @@ void Physx::CreateDynamicCube(GameObject* object, Transform transform)
 {
 	PxQuat q(transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a);
 	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
-	PxShape* shape = physics->createShape(PxBoxGeometry(object->scale.x, object->scale.y, object->scale.z), *dynamicMaterial);
+	if (transform.scale.x < 1) transform.scale.x = 1;
+	if (transform.scale.y < 1) transform.scale.y = 1;
+	if (transform.scale.z < 1) transform.scale.z = 1;
+	PxShape* shape = physics->createShape(PxBoxGeometry(transform.scale.x, transform.scale.y, transform.scale.z), *dynamicMaterial);
 	object->body = physics->createRigidDynamic(t);
 	object->body->attachShape(*shape);
 	PxRigidBodyExt::updateMassAndInertia(*object->body->is<PxRigidBody>(), 10.0f);
@@ -153,8 +159,13 @@ void Physx::SetTransform(int index, Transform transform)
 			PxTransform t;
 			t.p = { transform.position.x, transform.position.y, transform.position.z };
 			t.q = { transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a };
-			actor->is<PxRigidActor>()->setGlobalPose(t);
-		}
+			PxRigidActor* body = actor->is<PxRigidActor>();
+			body->setGlobalPose(t);
+			PxShape* bodyShape;
+			body->getShapes(&bodyShape, 1);
+			if (&bodyShape->getGeometry())
+				bodyShape->setGeometry(PxBoxGeometry(transform.scale.x, transform.scale.y, transform.scale.z));
+		}		
 	}
 }
 
