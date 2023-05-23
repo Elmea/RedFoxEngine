@@ -42,27 +42,33 @@ UIBEHAVIOUR(UI)
 BEHAVIOUR(Player)
 {
     scene->m_gameCamera.position = self->position;
+
     static Float3 cameraRotation;
-    float sensitivity = 0.0001f; 
-    cameraRotation += {(f32)input->mouseYDelta* deltaTime * sensitivity, (f32)input->mouseXDelta* deltaTime* sensitivity, 0};
+    cameraRotation += {(f32)input->mouseYDelta* deltaTime, (f32)input->mouseXDelta* deltaTime, 0};
+    if (cameraRotation.x > M_PI_2 + deltaTime) cameraRotation.x = M_PI_2;
+    if (cameraRotation.x < -M_PI_2) cameraRotation.x = -M_PI_2;
     scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
     
     Float3 inputDirection(0, 0, 0);
     float speed = 5.f;
-    Float3 velocity;
     if (input->W || input->Up)    inputDirection.z += -1;
     if (input->S || input->Down)  inputDirection.z += 1;
     if (input->A || input->Left)  inputDirection.x += -1;
     if (input->D || input->Right) inputDirection.x += 1;
+    
+    Float3 velocity(0, 0, 0);
     if (input->W || input->S || input->A || input->D)
     {
         inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
         inputDirection.Normalize();
-        inputDirection = inputDirection * 200.f;
         velocity.x = speed * deltaTime * inputDirection.x;
         velocity.y = 0;
         velocity.z = speed * deltaTime * inputDirection.z;
-        self->body->addForce({ velocity.x, velocity.y, velocity.z }, physx::PxForceMode::eFORCE);
+        physx::PxRigidDynamic* playerCapsule = self->body->is<physx::PxRigidDynamic>();
+        if (playerCapsule)
+        {
+            playerCapsule->addForce({ velocity.x, velocity.y, velocity.z }, physx::PxForceMode::eVELOCITY_CHANGE);
+        }
     }
 }
 
@@ -81,9 +87,9 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     if (!scene->isInit)
     {
         // Problem with that is this is not reflected in the editor UI at runtime, for both gameobject and gameUI
-        scene->gameObjects[1].behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
-        scene->gameObjects[1].position = { 100, 20, 0 };
-        scene->gameObjects[1].UpdateTransform();
+        RedFoxEngine::GameObject* player = &scene->gameObjects[2];
+        player->behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
+        //player->UpdateTransform();
         
         // This UI object must be initialized in editor before playing
         scene->gameUIs[1].behaviourIndex = scene->AddUIBehaviour("UI", UI);

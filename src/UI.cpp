@@ -259,7 +259,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->orientation = { 1,0,0,0 };
         newGameObject->scale = { 1,1,1 };
         newGameObject->modelIndex = 0;
-        m_physx.CreateCubeCollider(newGameObject);
+        //m_physx.CreateCubeCollider(newGameObject);
     }
 
     SameLine();
@@ -275,7 +275,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->orientation = { 1,0,0,0 };
         newGameObject->scale = { 1,1,1 };
         newGameObject->modelIndex = 1;
-        m_physx.CreateSphereCollider(newGameObject);
+        //m_physx.CreateSphereCollider(newGameObject);
     }
 
     SameLine();
@@ -628,7 +628,7 @@ void Engine::DrawEditor()
                 m_scene.gameObjects[m_imgui.selectedObject].scale.x = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_imgui.selectedObject].scale.x, 1, 10000);
                 m_scene.gameObjects[m_imgui.selectedObject].scale.y = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_imgui.selectedObject].scale.y, 1, 10000);
                 m_scene.gameObjects[m_imgui.selectedObject].scale.z = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_imgui.selectedObject].scale.z, 1, 10000);
-                m_physx.SetTransform(m_imgui.selectedObject, m_scene.gameObjects[m_imgui.selectedObject].transform);
+                m_physx.SetTransform(m_imgui.selectedObject, m_scene.GetWorldTransform(m_imgui.selectedObject));
             }
         }
 
@@ -646,7 +646,7 @@ void Engine::DrawEditor()
             RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
             ray_world.Normalize();
 
-            if (IsMouseClicked(ImGuiMouseButton_Left) && !m_imgui.manipulatingGizmo && !m_imgui.lockEditor)
+            if (IsMouseClicked(ImGuiMouseButton_Left) && !m_imgui.manipulatingGizmo && !m_imgui.lockEditor && m_scene.isPaused)
             {
                 RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
                 physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
@@ -1114,7 +1114,7 @@ void Engine::DrawProperties()
 
             if (CollapsingHeader("Behaviour", m_imgui.propertiesFlags))
             {
-                SeparatorText("Behaviour");
+                Text("GameObject ID: %d", m_imgui.selectedObject);
                 SetNextItemWidth(-FLT_MIN);
                 
                 int* curBehaviourIndex = &m_scene.gameObjects[m_imgui.selectedObject].behaviourIndex;
@@ -1137,7 +1137,7 @@ void Engine::DrawProperties()
                 int* modelIndex = &m_scene.gameObjects[m_imgui.selectedObject].modelIndex;
                 SeparatorText("Model");
                 SetNextItemWidth(-FLT_MIN);
-                if (BeginCombo(" ", (*modelIndex != -1) ? (char*)m_modelsName[*modelIndex].data : "Select model"))
+                if (BeginCombo(" ", (*modelIndex != -1) ? (char*)m_modelsName[*modelIndex].data : "None"))
                 {
                     for (int i = 0; i < (int)m_modelCount; i++)
                     {
