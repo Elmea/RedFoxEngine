@@ -96,7 +96,7 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
         FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL, nullptr);
 
-    ReadFile(file, &m_scene, sizeof(Scene) - (sizeof(void *) * 6), nullptr, nullptr);
+    ReadFile(file, &m_scene, sizeof(Scene) - (sizeof(void *) * 7), nullptr, nullptr);
     ReadStringFromFile(file, &m_scene.m_name, &m_memoryManager);
     ReadFile(file, &m_scene.gameObjectCount, sizeof(u32), nullptr, nullptr);
     for(int i = 0; i < (int)m_scene.gameObjectCount; i++)
