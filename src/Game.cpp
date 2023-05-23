@@ -39,6 +39,14 @@ UIBEHAVIOUR(UI)
         printf("Pressed\n");
 }
 
+BEHAVIOUR(Gun)
+{
+    if (input->mouseLClick)
+    {
+        printf("Clic");
+    }
+}
+
 BEHAVIOUR(Player)
 {
     scene->m_gameCamera.position = self->position;
@@ -93,6 +101,9 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
         
         // This UI object must be initialized in editor before playing
         scene->gameUIs[1].behaviourIndex = scene->AddUIBehaviour("UI", UI);
+
+        player->behaviourIndex = scene->AddGameObjectBehaviour("Gun", Gun);
+
         scene->isInit = true;
     }
 }
