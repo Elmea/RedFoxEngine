@@ -50,7 +50,7 @@ BEHAVIOUR(Player)
     scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
     
     Float3 inputDirection(0, 0, 0);
-    float speed = 5.f;
+    float speed = 300.f;
     if (input->W || input->Up)    inputDirection.z += -1;
     if (input->S || input->Down)  inputDirection.z += 1;
     if (input->A || input->Left)  inputDirection.x += -1;
@@ -68,6 +68,8 @@ BEHAVIOUR(Player)
         if (playerCapsule)
         {
             playerCapsule->addForce({ velocity.x, velocity.y, velocity.z }, physx::PxForceMode::eVELOCITY_CHANGE);
+            if (velocity.Magnitude() >= 100.f)
+                playerCapsule->clearForce(physx::PxForceMode::eVELOCITY_CHANGE);
         }
     }
 }
@@ -84,15 +86,17 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     RedFoxEngine::Scene *scene = (RedFoxEngine::Scene *)s;
     RedFoxEngine::Physx *physx = (RedFoxEngine::Physx *)p;
 
+    RedFoxEngine::GameObject* player = &scene->gameObjects[2];
     if (!scene->isInit)
     {
         // Problem with that is this is not reflected in the editor UI at runtime, for both gameobject and gameUI
-        RedFoxEngine::GameObject* player = &scene->gameObjects[2];
         player->behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
-        //player->UpdateTransform();
+        player->UpdateTransform();
         
         // This UI object must be initialized in editor before playing
         scene->gameUIs[1].behaviourIndex = scene->AddUIBehaviour("UI", UI);
         scene->isInit = true;
     }
+
+    player->UpdateTransform();
 }

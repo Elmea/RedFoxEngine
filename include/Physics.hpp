@@ -17,7 +17,8 @@ namespace RedFoxEngine
         physx::PxFoundation* foundation;
         physx::PxPhysics* physics;
         physx::PxDefaultCpuDispatcher* dispatcher;
-        physx::PxMaterial* material;
+        physx::PxMaterial* staticMaterial;
+        physx::PxMaterial* dynamicMaterial;
         physx::PxPvd* pvd;
         physx::PxCudaContextManager* cudaContextManager;
     public:
