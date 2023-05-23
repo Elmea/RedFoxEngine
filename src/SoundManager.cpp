@@ -178,4 +178,10 @@ SoundManager::~SoundManager()
         m_soundEngine->drop();
 }
 
+Sound* SoundManager::GetSound(int index)
+{
+    return &m_sounds[index];
+}
+
+
 #pragma endregion 

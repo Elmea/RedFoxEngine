@@ -54,6 +54,7 @@ namespace RedFoxEngine
 
 		Sound* PlaySoundByIndex(int index);
 		Sound* PlaySoundByIndex3D(int index);
+		Sound* GetSound(int index);
 
 		void UpdateListener(RedFoxMaths::Float3 position, RedFoxMaths::Float3 rotation);
 		void SetMasterVolume(float volume);
