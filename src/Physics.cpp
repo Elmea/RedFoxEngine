@@ -9,7 +9,7 @@ using namespace physx;
 
 void Physx::CreateStaticCube(GameObject* object, Transform transform)
 {
-	PxQuat q(object->orientation.b, object->orientation.c, object->orientation.d, object->orientation.a);
+	PxQuat q(transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a);
 	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
 	PxShape* shape = physics->createShape(PxBoxGeometry(object->scale.x, object->scale.y, object->scale.z), *material);
 	object->body = physics->createRigidStatic(t);
@@ -21,7 +21,7 @@ void Physx::CreateStaticCube(GameObject* object, Transform transform)
 void Physx::CreateStaticSphere(GameObject* object, Transform transform)
 {
 	PxReal radius = object->scale.x;
-	PxQuat q(object->orientation.b, object->orientation.c, object->orientation.d, object->orientation.a);
+	PxQuat q(transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a);
 	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
 	PxShape* shape = physics->createShape(PxSphereGeometry(radius), *material);
 	object->body = physics->createRigidStatic(t);
@@ -32,7 +32,7 @@ void Physx::CreateStaticSphere(GameObject* object, Transform transform)
 
 void Physx::CreateDynamicCube(GameObject* object, Transform transform)
 {
-	PxQuat q(object->orientation.b, object->orientation.c, object->orientation.d, object->orientation.a);
+	PxQuat q(transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a);
 	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
 	PxShape* shape = physics->createShape(PxBoxGeometry(object->scale.x, object->scale.y, object->scale.z), *material);
 	object->body = physics->createRigidDynamic(t);
@@ -44,7 +44,7 @@ void Physx::CreateDynamicCube(GameObject* object, Transform transform)
 
 void Physx::CreateDynamicSphere(GameObject* object, Transform transform)
 {
-	PxReal radius = object->scale.x;
+	PxReal radius = transform.scale.x;
 	PxTransform t(transform.position.x, transform.position.y, transform.position.z);
 	PxShape* shape = physics->createShape(PxSphereGeometry(radius), *material);
 	object->body = physics->createRigidDynamic(t);
@@ -56,10 +56,12 @@ void Physx::CreateDynamicSphere(GameObject* object, Transform transform)
 
 void Physx::CreateDynamicCapsule(GameObject* object, Transform transform)
 {
-	PxQuat q(object->orientation.b, object->orientation.c, object->orientation.d, object->orientation.a);
+	PxQuat q(transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a);
 	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
-	PxShape* shape = physics->createShape(PxCapsuleGeometry(object->scale.x, object->scale.y), *material);
 	object->body = physics->createRigidDynamic(t);
+	PxTransform relativePose(PxQuat(PxHalfPi, PxVec3(0, 0, 1)));
+	PxShape* shape = PxRigidActorExt::createExclusiveShape(*object->body, PxCapsuleGeometry(transform.scale.x, transform.scale.y), *material);
+	shape->setLocalPose(relativePose);
 	object->body->attachShape(*shape);
 	PxRigidBodyExt::updateMassAndInertia(*object->body->is<PxRigidBody>(), 10.0f);
 	m_scene->addActor(*object->body);
@@ -119,9 +121,11 @@ void Physx::InitScene(Scene *scene, int sphereIndex)
 
 	material = physics->createMaterial(0.5f, 0.5f, 0.1f);
 	
-	RedFoxEngine::GameObject* player = &scene->gameObjects[2];
-	player->orientation = RedFoxMaths::Quaternion({ 90.f, 0.f, 0.f });
-	CreateDynamicCapsule(player, scene->GetWorldTransform(2));
+	GameObject* player = &scene->gameObjects[2];
+	Transform playerTransform = { { player->position.x, player->position.y, player->position.z },
+								{ 0.5f, 1.f, player->scale.z },
+								RedFoxMaths::Quaternion::AngleAxis(RedFoxMaths::Float3(1,0,0), M_PI_2) };
+	CreateDynamicCapsule(player, playerTransform);
 	LockDynamicBody(player, true, false, true);
 
 	// If commented, the game code moving the player capsule crashes
