@@ -133,6 +133,16 @@ static void WriteGameObjectToFile(HANDLE file, RedFoxEngine::GameObject *current
     WriteFile(file, &m_models[current->modelIndex].hash, sizeof(u64), nullptr, nullptr);
 }
 
+static void WriteGameUIToFile(HANDLE file, RedFoxEngine::GameUI* current, RedFoxEngine::Model* m_models)
+{
+    WriteStringToFile(file, current->name);
+    int size = sizeof(RedFoxEngine::GameObject) - sizeof(MyString);
+    WriteFile(file, &current->screenPosition, size, nullptr, nullptr);
+
+    WriteStringToFile(file, current->text);
+    
+}
+
 void RedFoxEngine::Engine::SaveScene(const char *fileName, Scene scene)
 {
     HANDLE file = CreateFile(fileName, GENERIC_WRITE,
@@ -147,6 +157,15 @@ void RedFoxEngine::Engine::SaveScene(const char *fileName, Scene scene)
         GameObject *current = &m_scene.gameObjects[i];
         WriteGameObjectToFile(file, current, m_models);
     }
+
+    WriteFile(file, &m_scene.gameUICount, sizeof(u32), nullptr, nullptr);
+    for (int i = 0; i < (int)m_scene.gameUICount; i++)
+    {
+        GameUI *current = &m_scene.gameUIs[i];
+        WriteGameUIToFile(file, current, m_models);
+    }
+
+
     CloseHandle(file);
 }
 
