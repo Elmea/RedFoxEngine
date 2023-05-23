@@ -1091,13 +1091,11 @@ void Engine::DrawProperties()
                     Text("Rotation");
                     TableSetColumnIndex(1);
                     SetNextItemWidth(-FLT_MIN);
-                    static RedFoxMaths::Float3 rotation;
+                    RedFoxMaths::Float3 rotation = m_scene.gameObjects[m_imgui.selectedObject].orientation.ToEuler() * RAD2DEG; 
                     if (DragFloat3("TransformRotation", &rotation.x, m_imgui.dragSpeed, -360.f, 360.f, "%.3f", ImGuiSliderFlags_AlwaysClamp))
                     {
-                        rotation *= DEG2RAD;
-                        m_scene.gameObjects[m_imgui.selectedObject].orientation =
-                            RedFoxMaths::Quaternion::SLerp(m_scene.gameObjects[m_imgui.selectedObject].orientation,
-                                RedFoxMaths::Quaternion::FromEuler(rotation), 0.5);
+                        RedFoxMaths::Float3 radRotation = rotation * DEG2RAD;
+                        m_scene.gameObjects[m_imgui.selectedObject].orientation = radRotation;
                         m_scene.gameObjects[m_imgui.selectedObject].orientation.Normalize();
                         m_physx.SetTransform(m_imgui.selectedObject, m_scene.gameObjects[m_imgui.selectedObject].transform);
                     }
