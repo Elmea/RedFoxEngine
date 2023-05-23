@@ -89,7 +89,7 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
         // Problem with that is this is not reflected in the editor UI at runtime, for both gameobject and gameUI
         RedFoxEngine::GameObject* player = &scene->gameObjects[2];
         player->behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
-        //player->UpdateTransform();
+        player->UpdateTransform();
         
         // This UI object must be initialized in editor before playing
         scene->gameUIs[1].behaviourIndex = scene->AddUIBehaviour("UI", UI);
