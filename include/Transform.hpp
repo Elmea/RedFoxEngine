@@ -230,7 +230,7 @@ namespace RedFoxEngine
 		{
 			return {
 				position + orientation * t.position,
-				scale * t.scale,
+				scale,
 				orientation * t.orientation
 			};
 		}
