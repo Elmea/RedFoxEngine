@@ -34,20 +34,17 @@ Engine::Engine(int width, int height) :
     m_graphics.lightStorage.lights = (Light*)m_memoryManager.PersistentAllocation(sizeof(Light) * 1000);
     m_graphics.lightStorage.shadowMaps = (unsigned int*)m_memoryManager.PersistentAllocation(sizeof(unsigned int) * 1000);
 
-    m_models[m_modelCount].obj = CreateCube(&m_memoryManager.m_memory.arena);
+    m_graphics.InitModel(&m_models[0], CreateCube(&m_memoryManager.m_memory.arena));
     m_models[m_modelCount].hash = 1;
     m_modelsName[0] = initStringChar("Cube", 4, &m_memoryManager.m_memory.arena);
     m_modelCount++;
-    m_models[m_modelCount].obj = CreateSphere(30, 25, &m_memoryManager.m_memory.arena);
+    m_graphics.InitModel(&m_models[1], CreateSphere(30, 25, &m_memoryManager.m_memory.arena));
     m_models[m_modelCount].hash = 2;
     m_modelsName[1] = initStringChar("Sphere", 6, &m_memoryManager.m_memory.arena);
     m_modelCount++;
 
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
-    for (int i = 0; i < (int)m_modelCount; i++)
-        m_graphics.InitModel(&m_models[i]);
-
     m_physx.InitPhysics();
     InitSkyDome();
     m_soundManager.Init(&m_memoryManager.m_memory.arena);
@@ -136,13 +133,21 @@ Engine::Engine(int width, int height) :
 
 void Engine::ObjModelPush(const char *path)
 {
-    if (ParseModel(&m_models[m_modelCount++].obj, path))
+    ObjModel temp = {};
+    if (ParseModel(&temp, path))
     {
         m_modelCount--;
 #if _DEBUG 
         __debugbreak();
 #endif
         return;
+    }
+    else
+    {
+        m_graphics.InitModel(&m_models[m_modelCount], temp);
+        m_modelCount++;
+        m_graphics.m_models = m_models;
+        m_graphics.m_modelCount = m_modelCount;
     }
     u32 length = 0;
     while (path[length] != '\0')
@@ -304,29 +309,23 @@ void Engine::UpdateModelMatrices()
     memset(m_scene.m_modelCountIndex, 0, sizeof(u64) * (m_modelCount + 1));
     int totalIndex = 0;
     
-    Material *materials = (Material *)m->TemporaryAllocation(sizeof(Material) * m_scene.gameObjectCount);
     for (int modelIndex = 0; modelIndex < (int)m_modelCount; modelIndex++)
     {
         for(int index = 0;index < (int)m_scene.gameObjectCount; index++)
         {
             if (m_scene.gameObjects[index].modelIndex == modelIndex)
             {
-                Float3    color    = m_scene.gameObjects[index].Color;
-                Model    *model    = &m_models[modelIndex];
-                for (int i = 0; i < (int)model->obj.materials.count; i++)
-                {
-                    ObjMaterial objMaterial = model->obj.materials.material[i];
-                    materials[totalIndex] = materialFromObjMaterial(objMaterial, color);
-                }
+                Model *model                               = &m_models[modelIndex];
+                m_graphics.m_materials[m_graphics.m_materialCount + totalIndex]         = m_graphics.m_materials[model->materialOffset];
+                m_graphics.m_materials[m_graphics.m_materialCount + totalIndex].diffuse = m_scene.gameObjects[index].Color;
 
-                modelMatrices[totalIndex] =
-                    m_scene.GetWorldMatrix(index).GetTransposedMatrix();
+                modelMatrices[totalIndex] = m_scene.GetWorldMatrix(index).GetTransposedMatrix();
                 m_scene.m_modelCountIndex[modelIndex]++;
                 totalIndex++;
             }
         }
     }
-    m_graphics.PushMaterial(materials, totalIndex);
+    m_graphics.PushMaterial(totalIndex);
     m_graphics.PushModelMatrices(modelMatrices, totalIndex);
     m_graphics.m_models = m_models;
     m_graphics.m_modelCount = m_modelCount;
@@ -442,6 +441,4 @@ void Engine::InitSkyDome()
 
 Engine::~Engine()
 {
-    for (int i = 0; i < (int)m_modelCount; i++)
-        DeInitObj(&m_models[i].obj);
 }

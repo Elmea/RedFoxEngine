@@ -973,9 +973,6 @@ void Engine::DrawAssetsBrowser()
                     if (m_platform.FileExist(path.data))
                     {
                         ObjModelPush(path.data);
-                        m_graphics.InitModel(&m_models[m_modelCount - 1]);
-                        m_graphics.m_models = m_models;
-                        m_graphics.m_modelCount = m_modelCount;
                         m_imgui.lockEditor = false;
                         CloseCurrentPopup();
                     }

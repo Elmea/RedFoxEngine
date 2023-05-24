@@ -40,10 +40,10 @@ struct LightStorage
     GLuint dirLightSSBO;
     u32    pointLightCount;
     GLuint pointLightSSBO;
-    int lightCount;
-    Light* lights;
-    unsigned int* shadowMaps;
-    Light* CreateLight(LightType type);
+    int    lightCount;
+    Light *lights;
+    u32   *shadowMaps;
+    Light *CreateLight(LightType type);
     void RemoveLight(int lightIndex);
 };
 
@@ -102,7 +102,6 @@ private:
     ResourcesManager *m = nullptr;
     GLuint m_textureSampler;
     Textures m_textures = {};
-    u32 m_materialCount;
     RedFoxMaths::Mat4 m_viewProjection;
 
     Shader m_blinnPhong;
@@ -151,20 +150,23 @@ public:
     std::vector<PostProcessShader> m_postProcessShaders;
 
     WindowDimension dimension;
-    GLuint m_imguiTexture;
-    GLuint m_sceneTexture;
-    Model* m_models = nullptr;
-    u32    m_modelCount;
-    LightStorage lightStorage;
-    bool postProcessingEnabled;
+    GLuint          m_imguiTexture;
+    GLuint          m_sceneTexture;
+    Model          *m_models = nullptr;
+    Material       *m_materials;
+    u32             m_materialCount;
+    u32             m_modelCount;
+    LightStorage    lightStorage;
+    bool            postProcessingEnabled;
     
     // void InitGraphics(Memory *persistent, Memory* tempArena, WindowDimension p_dimension);
     void InitGraphics(ResourcesManager *manager, WindowDimension p_dimension);
-    void InitModel(Model *model);
+    void InitModel(Model* model, ObjModel obj);
     void InitLights();
     void InitFont();
     void InitQuad();
-    void InitModelTextures(ObjModel *model);
+    // void InitModelTextures(ObjModel *model);
+    void InitModelTextures(ObjImages* images);
     u32  InitTexture(void *data, int width, int height, bool resident, bool repeat);
     void InitFramebuffer();
     void InitShaders();
@@ -179,7 +181,7 @@ public:
     void UpdateShaders();
     void UpdateImGUIFrameBuffer(WindowDimension& dimension, WindowDimension content);
     void UpdateModelMatrices(GameObject* objects, int gameObjectCount, Memory* temp);
-    void PushMaterial(Material *materials, int count);
+    void PushMaterial(int count);
     void PushModelMatrices(RedFoxMaths::Mat4 *matrices, int count);
 
     
