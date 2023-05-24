@@ -194,6 +194,9 @@
     <ClInclude Include="..\include\Fonts.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Transform.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="blinn_phong.frag.glsl">

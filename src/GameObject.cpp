@@ -13,10 +13,8 @@ namespace RedFoxEngine
 
     void GameObject::UpdateTransform()
     {
-        physx::PxTransform bodyTransform = {
-            { transform.position.x, transform.position.y, transform.position.z },
-            { transform.orientation.a, transform.orientation.b, transform.orientation.c, transform.orientation.d }
-        };
-        body->setGlobalPose(bodyTransform);
+        physx::PxTransform bodyTransform = body->getGlobalPose();
+        transform.position = { bodyTransform.p.x, bodyTransform.p.y, bodyTransform.p.z };
+        transform.orientation = { bodyTransform.q.w, bodyTransform.q.x, bodyTransform.q.y, bodyTransform.q.z };
     }
 }
