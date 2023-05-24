@@ -346,7 +346,7 @@ void Engine::UpdateBehaviours()
     for (int i = 1; i < (int)m_scene.gameObjectCount; i++)
     {
         Behaviour* gameObjectBehavior = &m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex];
-        gameObjectBehavior->function(&m_scene.gameObjects[i], m_time.delta, &m_scene, &m_input);
+        gameObjectBehavior->function(&m_scene.gameObjects[i], m_time.delta, &m_scene, &m_input, &m_physx);
     }
 }
 

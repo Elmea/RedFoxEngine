@@ -5,16 +5,17 @@
 namespace RedFoxEngine
 {
 	class Scene;
+	class Physx;
 	class GameObject;
 	class Input;
 
 	#define BEHAVIOUR(name) \
-	void name(RedFoxEngine::GameObject* self, const float deltaTime, RedFoxEngine::Scene *scene, RedFoxEngine::Input *input)
+	void name(RedFoxEngine::GameObject* self, const float deltaTime, RedFoxEngine::Scene *scene, RedFoxEngine::Input *input, RedFoxEngine::Physx *physx)
 	
 	#define UIBEHAVIOUR(name) \
 	void name(RedFoxEngine::GameUI* self, const float deltaTime, RedFoxEngine::Scene *scene, RedFoxEngine::Input *input)
 
-	typedef BEHAVIOUR(functionBehaviour);
+	typedef BEHAVIOUR(functionBehaviour); 
 	typedef UIBEHAVIOUR(uiBehaviour);
 
 	struct Behaviour
