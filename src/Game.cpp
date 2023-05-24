@@ -12,6 +12,7 @@
 
 #include "Physics.hpp"
 #include "Scene.hpp"
+// #include "Camera.hpp"
 
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
@@ -39,9 +40,9 @@ UIBEHAVIOUR(UI)
         printf("Pressed\n");
 }
 
+/*
 void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
 {
-    /*
     if (IsMouseClicked(ImGuiMouseButton_Left) && !m_imgui.manipulatingGizmo && !m_imgui.lockEditor && m_scene.isPaused)
     {
         RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
@@ -63,57 +64,28 @@ void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngin
         }
     }
 
-    */
-
 
     if (input->mouseLClick)
     {
         printf("Clic\n");
 
-        /*
-        RedFoxMaths::Float3 ray_ndc = {
-            0.5,
-            0.5,
-            1
-        };
-        RedFoxMaths::Float4 ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };
-        RedFoxMaths::Float4 ray_eye = m_editorCamera.m_projection.GetInverseMatrix() * ray_clip;
+        RedFoxMaths::Float4 ray_clip = { 0, 0, -1, 1 };
+        RedFoxMaths::Float4 ray_eye = scene->m_gameCamera.m_projection.GetInverseMatrix() * ray_clip;
         ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };
-
-        RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
+        RedFoxMaths::Float4 ray_world = scene->m_gameCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
         ray_world.Normalize();
-
-        RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
+        RedFoxMaths::Mat4 view = scene->m_gameCamera.GetViewMatrix().GetInverseMatrix();
         physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
-        */
-      
-        scene->m_gameCamera.position = self->position;
-        
-        /*
-        scene->m_gameCamera.position = self->position;
-
         physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
-
-
         physx::PxRaycastBuffer hitCalls;
-        if (physx->m_scene->raycast(origin, unitDir, m_editorCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
+        if (physx->m_scene->raycast(origin, unitDir, scene->m_gameCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
         {
             physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
-            if (hit.actor)
-            {
-                int hitIndex = hit.actor->getInternalActorIndex();
-                if (hitIndex < (int)scene.gameObjectCount && hitIndex > 0)
-                {
-
-                }
-            }
+            if (hit.actor) printf("OEUF\n");
         } 
-        */
-        
     }
-
-
 }
+*/
 
 BEHAVIOUR(Player)
 {
@@ -149,7 +121,7 @@ BEHAVIOUR(Player)
         }
     }
     
-    Gun(self, scene, input, physx);
+    //Gun(self, scene, input, physx);
 }
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
@@ -163,7 +135,8 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
 
     RedFoxEngine::Scene *scene = (RedFoxEngine::Scene *)s;
     RedFoxEngine::Physx *physx = (RedFoxEngine::Physx *)p;
-
+    RedFoxEngine::Input* inputs = (RedFoxEngine::Input*)i;
+    
     RedFoxEngine::GameObject* player = &scene->gameObjects[2];
     if (!scene->isInit)
     {

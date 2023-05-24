@@ -346,7 +346,7 @@ void Engine::UpdateBehaviours()
     for (int i = 1; i < (int)m_scene.gameObjectCount; i++)
     {
         Behaviour* gameObjectBehavior = &m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex];
-        gameObjectBehavior->function(&m_scene.gameObjects[i], m_time.delta, &m_scene, &m_input, &m_physx);
+        gameObjectBehavior->function(&m_scene.gameObjects[i], m_time.delta, &m_scene, &m_input, &m_physx, &m_platform.m_windowDimension);
     }
 }
 
@@ -373,7 +373,7 @@ void Engine::Update()
     m_soundManager.UpdateListener(m_editorCamera.position, m_editorCamera.orientation.ToEuler());
     UpdateLights(&m_graphics.lightStorage);
     m_physx.UpdatePhysics(1.0 / 60.0, &m_scene, m_memoryManager);
-    m_game.update(&m_scene, &m_physx, m_input, 1.0 / 60.0);
+    m_game.update(&m_scene, &m_physx, &m_input, 1.0 / 60.0);
     if (!m_scene.isPaused)
     {
         UpdateBehaviours();

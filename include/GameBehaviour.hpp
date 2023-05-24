@@ -8,9 +8,14 @@ namespace RedFoxEngine
 	class Physx;
 	class GameObject;
 	class Input;
+	class WindowDimension;
 
 	#define BEHAVIOUR(name) \
-	void name(RedFoxEngine::GameObject* self, const float deltaTime, RedFoxEngine::Scene *scene, RedFoxEngine::Input *input, RedFoxEngine::Physx *physx)
+	void name(RedFoxEngine::GameObject* self, const float deltaTime, \
+		RedFoxEngine::Scene *scene, \
+		RedFoxEngine::Input *input, \
+		RedFoxEngine::Physx *physx, \
+		RedFoxEngine::WindowDimension *windowDimension)
 	
 	#define UIBEHAVIOUR(name) \
 	void name(RedFoxEngine::GameUI* self, const float deltaTime, RedFoxEngine::Scene *scene, RedFoxEngine::Input *input)

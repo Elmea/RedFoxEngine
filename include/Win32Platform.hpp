@@ -89,9 +89,9 @@ struct Input
     u8 Delete : 1;
 };
 
-#define UPDATEGAME(name) void name(void *s, \
-                                   void *p, \
-                                   RedFoxEngine::Input input, \
+#define UPDATEGAME(name) void name(void *s,  \
+                                   void *p,  \
+                                   void* i,  \
                                    float deltaTime)
 typedef UPDATEGAME(_updategame);
 
