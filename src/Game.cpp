@@ -40,9 +40,10 @@ UIBEHAVIOUR(UI)
         printf("Pressed\n");
 }
 
-/*
+
 void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
 {
+    /*
     if (IsMouseClicked(ImGuiMouseButton_Left) && !m_imgui.manipulatingGizmo && !m_imgui.lockEditor && m_scene.isPaused)
     {
         RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
@@ -64,11 +65,11 @@ void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngin
         }
     }
 
-
+    */
     if (input->mouseLClick)
     {
         printf("Clic\n");
-
+        /*
         RedFoxMaths::Float4 ray_clip = { 0, 0, -1, 1 };
         RedFoxMaths::Float4 ray_eye = scene->m_gameCamera.m_projection.GetInverseMatrix() * ray_clip;
         ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };
@@ -83,29 +84,30 @@ void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngin
             physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
             if (hit.actor) printf("OEUF\n");
         } 
+        */
     }
 }
-*/
+
 
 BEHAVIOUR(Player)
 {
     scene->m_gameCamera.position = self->position;
 
     static Float3 cameraRotation;
-    cameraRotation += {(f32)input->mouseYDelta* deltaTime, (f32)input->mouseXDelta* deltaTime, 0};
+    cameraRotation += {(f32)inputs->mouseYDelta* deltaTime, (f32)inputs->mouseXDelta* deltaTime, 0};
     if (cameraRotation.x > M_PI_2 + deltaTime) cameraRotation.x = M_PI_2;
     if (cameraRotation.x < -M_PI_2) cameraRotation.x = -M_PI_2;
     scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
     
     Float3 inputDirection(0, 0, 0);
     float speed = 300.f;
-    if (input->W || input->Up)    inputDirection.z += -1;
-    if (input->S || input->Down)  inputDirection.z += 1;
-    if (input->A || input->Left)  inputDirection.x += -1;
-    if (input->D || input->Right) inputDirection.x += 1;
+    if (inputs->W || inputs->Up)    inputDirection.z += -1;
+    if (inputs->S || inputs->Down)  inputDirection.z += 1;
+    if (inputs->A || inputs->Left)  inputDirection.x += -1;
+    if (inputs->D || inputs->Right) inputDirection.x += 1;
     
     Float3 velocity(0, 0, 0);
-    if (input->W || input->S || input->A || input->D)
+    if (inputs->W || inputs->S || inputs->A || inputs->D)
     {
         inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
         inputDirection.Normalize();
@@ -121,7 +123,7 @@ BEHAVIOUR(Player)
         }
     }
     
-    //Gun(self, scene, input, physx);
+    Gun(self, scene, inputs, physx);
 }
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
