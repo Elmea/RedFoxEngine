@@ -273,6 +273,7 @@
     <ClInclude Include="..\include\RedFoxMaths\RedfoxMaths.hpp" />
     <ClInclude Include="..\include\Scene.hpp" />
     <ClInclude Include="..\include\SoundManager.hpp" />
+    <ClInclude Include="..\include\Transform.hpp" />
     <ClInclude Include="..\include\Win32Platform.hpp" />
   </ItemGroup>
   <ItemGroup>

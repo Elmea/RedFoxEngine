@@ -44,6 +44,7 @@ namespace RedFoxEngine
             m_parameters = parameters;
         }
         void SetViewLookAt(RedFoxMaths::Float3 target, RedFoxMaths::Float3 up);
+        
         RedFoxMaths::Mat4 GetViewMatrix();
         RedFoxMaths::Mat4 GetVP();
     };
