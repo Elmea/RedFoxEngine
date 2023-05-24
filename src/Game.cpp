@@ -39,7 +39,7 @@ UIBEHAVIOUR(UI)
         printf("Pressed\n");
 }
 
-void Gun(RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
+void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
 {
     /*
     if (IsMouseClicked(ImGuiMouseButton_Left) && !m_imgui.manipulatingGizmo && !m_imgui.lockEditor && m_scene.isPaused)
@@ -72,8 +72,8 @@ void Gun(RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::P
 
         /*
         RedFoxMaths::Float3 ray_ndc = {
-            (2.0f * m_imgui.mousePosEditor.x) / content.x - 1.0f,
-            1.0f - (2.0f * m_imgui.mousePosEditor.y) / content.y,
+            0.5,
+            0.5,
             1
         };
         RedFoxMaths::Float4 ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };
@@ -86,14 +86,15 @@ void Gun(RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::P
         RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
         physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
         */
-
-
+      
+        scene->m_gameCamera.position = self->position;
+        
         /*
         scene->m_gameCamera.position = self->position;
 
-
-
         physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
+
+
         physx::PxRaycastBuffer hitCalls;
         if (physx->m_scene->raycast(origin, unitDir, m_editorCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
         {
@@ -148,7 +149,7 @@ BEHAVIOUR(Player)
         }
     }
     
-    Gun(scene, input, physx);
+    Gun(self, scene, input, physx);
 }
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)

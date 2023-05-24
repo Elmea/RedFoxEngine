@@ -242,6 +242,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
 
         char tmp[255];
         int size = snprintf(tmp, 255, "New entity #%d", m_scene.gameObjectCount - 1);
+        newGameObject->parent = 0;
         newGameObject->name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
     }
 
