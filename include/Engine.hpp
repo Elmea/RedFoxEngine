@@ -29,6 +29,7 @@ namespace RedFoxEngine
 
 struct ImGUI
 {
+    bool captureMouse;
     bool lockEditor;
     bool manipulatingGizmo;
     bool editorMenuOpen;

@@ -194,8 +194,26 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
     if (ImageButton("PAUSE", m_scene.isPaused ? m_imgui.icons[3] : m_imgui.icons[2], ImVec2(buttonHeight, buttonHeight)))
+    {
         m_scene.isPaused = !m_scene.isPaused;
+        if (!m_imgui.captureMouse && !m_scene.isPaused)
+        {
+            SetCapture(m_platform.m_window);
+            m_imgui.captureMouse = true;
+            m_input.HideCursor(true);
+        }
+    }
 
+    if (m_imgui.captureMouse)
+    {
+        if (IsKeyPressed(ImGuiKey_Escape))
+        {
+            SetCapture(NULL);
+            m_imgui.captureMouse = false;
+            m_input.HideCursor(false);
+        }
+    }
+    
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
     if (ImageButton("TRANSLATE", m_imgui.icons[4], ImVec2(buttonHeight, buttonHeight), ImVec2(0, 0), ImVec2(1, 1),
