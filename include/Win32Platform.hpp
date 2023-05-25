@@ -95,11 +95,17 @@ struct Input
                                    float deltaTime)
 typedef UPDATEGAME(_updategame);
 
+#define STARTGAME(name) void name(void *s,  \
+                                   void *p,  \
+                                   void* i)
+typedef STARTGAME(_startgame);
+
 struct GameLibrary
 {
     HINSTANCE library;
     FILETIME lastTime;
-    _updategame *update;
+    _updategame* update;
+    _startgame* start;
 };
 
 class Platform
@@ -131,7 +137,7 @@ public:
     static f64 GetTimer();
     static void WaitForThread(HANDLE thread);
     void SwapFramebuffers();
-    GameLibrary LoadGameLibrary(const char *functionName, const char *libraryPath, GameLibrary game);
+    GameLibrary LoadGameLibrary(const char* startFunction, const char* updateFunction, const char *libraryPath, GameLibrary game);
 };
 
 } // namespace RedFoxEngine

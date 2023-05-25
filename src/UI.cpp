@@ -109,16 +109,17 @@ void Engine::InitIMGUI()
     m_imgui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
     m_imgui.gizmoMode = ImGuizmo::MODE::LOCAL;
 
-    m_imgui.icons[0] = (void*)(u64)LoadTextureFromMemory(new_scene_icon , sizeof(new_scene_icon));
-    m_imgui.icons[1] = (void*)(u64)LoadTextureFromMemory(save_scene_icon, sizeof(save_scene_icon));
-    m_imgui.icons[2] = (void*)(u64)LoadTextureFromMemory(pause_icon     , sizeof(pause_icon));
-    m_imgui.icons[3] = (void*)(u64)LoadTextureFromMemory(resume_icon    , sizeof(resume_icon));
-    m_imgui.icons[4] = (void*)(u64)LoadTextureFromMemory(translate_icon , sizeof(translate_icon));
-    m_imgui.icons[5] = (void*)(u64)LoadTextureFromMemory(rotate_icon    , sizeof(rotate_icon));
-    m_imgui.icons[6] = (void*)(u64)LoadTextureFromMemory(scale_icon     , sizeof(scale_icon));
-    m_imgui.icons[7] = (void*)(u64)LoadTextureFromMemory(new_entity_icon, sizeof(new_entity_icon));
-    m_imgui.icons[8] = (void*)(u64)LoadTextureFromMemory(new_cube_icon  , sizeof(new_cube_icon));
-    m_imgui.icons[9] = (void*)(u64)LoadTextureFromMemory(new_sphere_icon, sizeof(new_sphere_icon));
+    m_imgui.icons[0]  = (void*)LoadTextureFromMemory(new_scene_icon, sizeof(new_scene_icon));
+    m_imgui.icons[1]  = (void*)LoadTextureFromMemory(save_scene_icon, sizeof(save_scene_icon));
+    m_imgui.icons[2]  = (void*)LoadTextureFromMemory(pause_icon, sizeof(pause_icon));
+    m_imgui.icons[3]  = (void*)LoadTextureFromMemory(resume_icon, sizeof(resume_icon));
+    m_imgui.icons[4]  = (void*)LoadTextureFromMemory(translate_icon, sizeof(translate_icon));
+    m_imgui.icons[5]  = (void*)LoadTextureFromMemory(rotate_icon, sizeof(rotate_icon));
+    m_imgui.icons[6]  = (void*)LoadTextureFromMemory(scale_icon, sizeof(scale_icon));
+    m_imgui.icons[7]  = (void*)LoadTextureFromMemory(new_entity_icon, sizeof(new_entity_icon));
+    m_imgui.icons[8]  = (void*)LoadTextureFromMemory(new_cube_icon, sizeof(new_cube_icon));
+    m_imgui.icons[9]  = (void*)LoadTextureFromMemory(new_sphere_icon, sizeof(new_sphere_icon));
+    m_imgui.icons[10] = (void*)LoadTextureFromMemory(stop_button, sizeof(stop_button));
 }
 
 void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight)
@@ -183,19 +184,24 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     {
         SaveScene(m_scene.m_name.data, m_scene);
     }
-
-    SameLine();
-    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
-    if (Button("LOAD SCENE", ImVec2(100, 25)))
-    {
-        LoadScene(m_scene.m_name.data);
-    }
-
+    
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
     if (ImageButton("PAUSE", m_scene.isPaused ? m_imgui.icons[3] : m_imgui.icons[2], ImVec2(buttonHeight, buttonHeight)))
+    {
         m_scene.isPaused = !m_scene.isPaused;
+        if (!m_scene.isPaused)
+            m_game.start(&m_scene, &m_physx, &m_input);
+    }
 
+    SameLine();
+    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
+    if (ImageButton("STOP", m_imgui.icons[10], ImVec2(buttonHeight, buttonHeight)))
+    {
+        LoadScene(m_scene.m_name.data);
+        m_scene.isPaused = true;
+    }
+    
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
     if (ImageButton("TRANSLATE", m_imgui.icons[4], ImVec2(buttonHeight, buttonHeight), ImVec2(0, 0), ImVec2(1, 1),

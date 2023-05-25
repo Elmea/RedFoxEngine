@@ -49,6 +49,7 @@ Engine::Engine(int width, int height) :
         m_graphics.InitModel(&m_models[i]);
 
     m_physx.InitPhysics();
+
     InitSkyDome();
 
     m_soundManager.Init(&m_memoryManager.m_memory.arena);
@@ -121,7 +122,7 @@ Engine::Engine(int width, int height) :
     m_input = {};
     //TODO: ask user for what game to load ? or maybe save the game dll
     // path into the scene data ? maybe both
-    m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
+    m_game = m_platform.LoadGameLibrary("StartGame", "UpdateGame", "game.dll", m_game);
     m_graphics.InitLights();
     m_graphics.InitQuad();
     m_graphics.InitFont();
@@ -360,7 +361,7 @@ void Engine::Update()
     else
         currentCamera = &m_scene.m_gameCamera;
     ProcessInputs();
-    m_game = m_platform.LoadGameLibrary("UpdateGame", "game.dll", m_game);
+    m_game = m_platform.LoadGameLibrary("StartGame", "UpdateGame", "game.dll", m_game);
     UpdateEditorCamera();
     UpdateSkyDome();
     m_soundManager.UpdateListener(m_editorCamera.position, m_editorCamera.orientation.ToEuler());
@@ -405,7 +406,9 @@ void Engine::Draw()
 u32 Engine::LoadTextureFromFilePath(const char *filePath, bool resident, bool repeat, bool flip)
 {
     int width, height, comp;
+    int tmp = m_memoryManager.m_memory.temp.usedSize;
     MyString file = OpenAndReadEntireFile(filePath, &m_memoryManager.m_memory.temp);
+    m_memoryManager.m_memory.temp.usedSize = tmp;
     return (LoadTextureFromMemory((u8 *)file.data, file.size, resident, repeat, flip));
 }
 
@@ -421,16 +424,15 @@ u32 Engine::LoadTextureFromMemory(u8* memory, int size, bool resident, bool repe
 
 void Engine::InitSkyDome()
 {
-    m_scene.skyDome.sunPosition = { 0, 1, 0 };
-    float skyDrawDistance = m_editorCamera.m_parameters._far / 1.5;
-    m_scene.skyDome.model = RedFoxMaths::Mat4::GetScale({ skyDrawDistance,
-        skyDrawDistance, skyDrawDistance });
-
     m_scene.skyDome.topTint = LoadTextureFromFilePath("topSkyTint.png", false, true);
     m_scene.skyDome.botTint = LoadTextureFromFilePath("botSkyTint.png");
     m_scene.skyDome.sun     = LoadTextureFromFilePath("sun.png");
     m_scene.skyDome.moon    = LoadTextureFromFilePath("moon.png");
     m_scene.skyDome.clouds  = LoadTextureFromFilePath("clouds.png");
+    m_scene.skyDome.sunPosition = { 0, 1, 0 };
+    float skyDrawDistance = m_editorCamera.m_parameters._far / 1.5;
+    m_scene.skyDome.model = RedFoxMaths::Mat4::GetScale({ skyDrawDistance,
+        skyDrawDistance, skyDrawDistance });
 }
 
 Engine::~Engine()

@@ -93,6 +93,9 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
     m_scene.gameObjects[0].scale = { 1, 1, 1 };
     m_scene.gameObjects->modelIndex = -1;
     m_scene.gameObjectCount = 1;
+
+    SkyDome tmp = m_scene.skyDome;
+
     HANDLE file = CreateFile(fileName, GENERIC_READ,
         FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -116,6 +119,7 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
     }
     m_scene.gameObjectBehaviourCount = 1;
     m_scene.gameUIBehaviourCount = 1;
+    m_scene.skyDome = tmp;
     m_physx.InitScene(&m_scene, 1, 0);
 }
 

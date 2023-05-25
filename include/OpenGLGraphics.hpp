@@ -95,7 +95,7 @@ public:
     void ResetKernel(int id);
     friend class Graphics;
 };
-    
+
 class Graphics
 {
 private:
