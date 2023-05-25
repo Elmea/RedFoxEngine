@@ -1463,6 +1463,10 @@ void Engine::DrawLightsProperties()
                 case LightType::POINT:
                     text = "Point";
                     break;
+
+                default:
+                    text = "None";
+                    break;
                 }
                 
                 if (BeginCombo("Type", text))
@@ -1483,11 +1487,11 @@ void Engine::DrawLightsProperties()
                     EndCombo();
                 }
                 
-                DragFloat3("Position", &current->lightInfo.position.x);
+                DragFloat3("Position", &current->lightInfo.position.x, 0.1f);
 
                 RedFoxMaths::Float3 angles = current->rotation.ToEuler();
                 angles *= RAD2DEG;
-                if (DragFloat3("Direction", &angles.x, 0.5f, -180, 180))
+                if (DragFloat3("Rotation", &angles.x, 0.5f, -180, 180))
                     current->rotation = RedFoxMaths::Quaternion::FromEuler(angles * DEG2RAD);
     
                 if (current->GetType() == LightType::SPOT)
@@ -1512,6 +1516,19 @@ void Engine::DrawLightsProperties()
                 
                 EndTable();
             }
+        }
+
+        if (Button("Add light"))
+        {
+            Light* newOne = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
+            newOne->lightInfo.constant = 1.0f;
+            newOne->rotation = RedFoxMaths::Quaternion::FromEuler(-PI/2.f, 0.f, 0.f );
+            newOne->lightInfo.linear = 0.09f;
+            newOne->lightInfo.position = {0.0f, 75.0f, 0.0f};
+            newOne->lightInfo.quadratic = 0.032f;
+            newOne->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
+            newOne->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
+            newOne->lightInfo.specular = {0.1f, 0.1f, 0.1f};
         }
     }
     End();

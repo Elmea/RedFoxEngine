@@ -491,9 +491,10 @@ namespace RedFoxEngine
     void Graphics::DrawShadowMaps(u64* modelCountIndex)
     {
         glCullFace(GL_FRONT);
+        GLuint64 shadowMapsHandles[128];
         for (int lightIndex = 0; lightIndex < lightStorage.lightCount; lightIndex++)
         {
-            int totalIndex = 0;
+            int totalIndex = 0; int shadowDrawn = 0;
             if (lightStorage.lights[lightIndex].GetType() == LightType::NONE)
                 continue;
 
@@ -511,7 +512,7 @@ namespace RedFoxEngine
                 u64 countIndex = modelCountIndex[i];
                 if (countIndex)
                 {
-                    // DrawModelShadowInstances(&m_models[i], countIndex);
+                    DrawModelShadowInstances(&m_models[i], countIndex);
                     glBindProgramPipeline(m_shadow.pipeline);
                     glBindVertexArray(m_vertexArrayObject);
                     glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, m_matrixSSBO, sizeof(RedFoxMaths::Mat4) * totalIndex, sizeof(RedFoxMaths::Mat4) * countIndex);
@@ -520,10 +521,8 @@ namespace RedFoxEngine
                     totalIndex += countIndex;
                 }
             }
+            shadowMapsHandles[shadowDrawn] = glGetTextureHandleARB(lightStorage.lights[lightIndex].lightInfo.shadowParameters.depthMap);
         }
-        GLuint64 shadowMapsHandles[128];
-        for (int i = 0; i < (int)lightStorage.lightCount; i++)
-            shadowMapsHandles[i] = glGetTextureHandleARB(lightStorage.lights[i].lightInfo.shadowParameters.depthMap);
         glNamedBufferSubData(m_shadowMapsSSBO, 0, sizeof(u64) * (lightStorage.lightCount), shadowMapsHandles);
     }
 

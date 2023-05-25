@@ -66,11 +66,11 @@ Light* LightStorage::CreateLight(LightType type)
         }
     }
 
-    Light newLight { type , lightCount };
+    Light newLight { LightType::NONE , lightCount };
     newLight.lightInfo.shadowParameters.index = lightCount;
-    ModifyLightType(lightCount, type);
-
     lights[lightCount] = newLight;
+
+    ModifyLightType(lightCount, type);
     shadowMaps[lightCount] = lights[lightCount].lightInfo.shadowParameters.depthMap;
     lightCount++;
 
@@ -79,13 +79,6 @@ Light* LightStorage::CreateLight(LightType type)
 
 void LightStorage::RemoveLight(int lightIndex)
 {
-    switch(lights[lightIndex].GetType())
-    {
-        case POINT: pointLightCount--;break;
-        case SPOT: spotLightCount--;break;
-        case DIRECTIONAL: dirLightCount--;break;
-        case NONE: break;
-    }
     ModifyLightType(lightIndex, LightType::NONE);
 }
 
@@ -110,13 +103,13 @@ void LightStorage::ModifyLightType(int index, LightType type)
     case NONE: break;
     }
     
-    lights[index].SetProjection(type);
     lights[index].type = type;
+    lights[index].SetProjection(type);
 }
     
-void Light::SetProjection(LightType type)
+void Light::SetProjection(LightType _type)
 {
-    switch (type)
+    switch (_type)
     {
     case (LightType::DIRECTIONAL):
         projection = RedFoxMaths::Mat4::GetOrthographicMatrix(-100, 100, -100, 100, 1000.0001, 0.0001);
@@ -127,7 +120,7 @@ void Light::SetProjection(LightType type)
         break;
 
     case (LightType::SPOT):
-        projection = RedFoxMaths::Mat4::GetPerspectiveMatrix(1, 120, 1000, 0.0001);
+        projection = RedFoxMaths::Mat4::GetPerspectiveMatrix(1, 90, 1000, 0.0001);
         break;
 
     default:
