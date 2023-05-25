@@ -12,7 +12,6 @@
 
 #include "Physics.hpp"
 #include "Scene.hpp"
-// #include "Camera.hpp"
 
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"

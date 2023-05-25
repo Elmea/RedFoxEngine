@@ -33,7 +33,7 @@ void Physx::CreateStaticSphere(GameObject* object, Transform transform)
 	shape->release();
 }
 
-void Physx::CreateDynamicCube(GameObject* object, Transform transform)
+void Physx::CreateDynamicCube(GameObject* object, Transform transform, float mass)
 {
 	PxQuat q(transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a);
 	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
@@ -48,7 +48,7 @@ void Physx::CreateDynamicCube(GameObject* object, Transform transform)
 	shape->release();
 }
 
-void Physx::CreateDynamicSphere(GameObject* object, Transform transform)
+void Physx::CreateDynamicSphere(GameObject* object, Transform transform, float mass)
 {
 	PxReal radius = transform.scale.x;
 	PxTransform t(transform.position.x, transform.position.y, transform.position.z);
@@ -60,7 +60,7 @@ void Physx::CreateDynamicSphere(GameObject* object, Transform transform)
 	shape->release();
 }
 
-void Physx::CreateDynamicCapsule(GameObject* object, Transform transform)
+void Physx::CreateDynamicCapsule(GameObject* object, Transform transform, float mass)
 {
 	PxQuat q(transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a);
 	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
@@ -69,7 +69,7 @@ void Physx::CreateDynamicCapsule(GameObject* object, Transform transform)
 	PxShape* shape = physics->createShape(PxCapsuleGeometry(transform.scale.x, transform.scale.y), *dynamicMaterial);
 	shape->setLocalPose(relativePose);
 	object->body->attachShape(*shape);
-	PxRigidBodyExt::updateMassAndInertia(*object->body->is<PxRigidBody>(), 10.0f);
+	PxRigidBodyExt::updateMassAndInertia(*object->body->is<PxRigidBody>(), mass);
 	m_scene->addActor(*object->body);
 	shape->release();
 }
@@ -125,8 +125,8 @@ void Physx::InitScene(Scene *scene, int sphereIndex, int cubeIndex)
 	}
 #endif
 
-	staticMaterial = physics->createMaterial(1.f, 1.f, 0.5f);
-	dynamicMaterial = physics->createMaterial(1.f, 1.f, 0.5f);
+	staticMaterial = physics->createMaterial(1.5f, 0.5f, 0.01f);
+	dynamicMaterial = physics->createMaterial(1.5f, 0.5f, 0.01f);
 	GameObject* player = &scene->gameObjects[2];
 	Transform playerTransform = { { player->position.x, player->position.y, player->position.z },
 								{ player->scale.x, player->scale.y, player->scale.z },

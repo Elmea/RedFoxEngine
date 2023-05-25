@@ -878,12 +878,19 @@ void Engine::DrawSceneGraph()
             {
                 if (m_scene.gameObjectCount - 1 > 1 && m_imgui.selectedObject != 0)
                 {
-                    int* children = m_scene.GetChildren(m_imgui.selectedObject, &m_memoryManager.m_memory.temp);
-                    if (children != nullptr)
+                    int childrenCount = m_scene.GetChildrenCount(m_imgui.selectedObject);
+                    if (childrenCount)
                     {
-                        int childrenCount = m_scene.GetChildrenCount(m_imgui.selectedObject);
+                        int* children = m_scene.GetChildren(m_imgui.selectedObject, &m_memoryManager.m_memory.temp);
                         for (int i = 0; i < childrenCount; i++)
-                            m_scene.gameObjects[*children + i].parent = 0;
+                            m_scene.gameObjects[*children + i].parent = m_scene.gameObjects[m_imgui.selectedObject].parent;
+                    }
+                    childrenCount = m_scene.GetChildrenCount(m_scene.gameObjectCount - 1);
+                    if (childrenCount)
+                    {
+                        int* children = m_scene.GetChildren(m_scene.gameObjectCount - 1, &m_memoryManager.m_memory.temp);
+                        for (int i = 0; i < childrenCount; i++)
+                            m_scene.gameObjects[*children + i].parent = m_imgui.selectedObject;
                     }
                     m_scene.gameObjects[m_imgui.selectedObject] = m_scene.gameObjects[m_scene.gameObjectCount - 1];
                 }
@@ -1131,6 +1138,7 @@ void Engine::DrawProperties()
             if (CollapsingHeader("Behaviour", m_imgui.propertiesFlags))
             {
                 Text("GameObject ID: %d", m_imgui.selectedObject);
+                Text("Parent ID: %d", m_scene.gameObjects[m_imgui.selectedObject].parent);
                 SetNextItemWidth(-FLT_MIN);
                 
                 int* curBehaviourIndex = &m_scene.gameObjects[m_imgui.selectedObject].behaviourIndex;

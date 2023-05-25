@@ -154,7 +154,7 @@ void RedFoxEngine::Engine::SaveScene(const char *fileName, Scene scene)
         FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS,
         FILE_ATTRIBUTE_NORMAL, nullptr);
 
-    WriteFile(file, &m_scene, sizeof(Scene) - (sizeof(void *) * 6), nullptr, nullptr);
+    WriteFile(file, &m_scene, sizeof(Scene) - (sizeof(void *) * 7), nullptr, nullptr);
     WriteStringToFile(file, scene.m_name);    
     WriteFile(file, &m_scene.gameObjectCount, sizeof(u32), nullptr, nullptr);
     for(int i = 0; i < (int)m_scene.gameObjectCount; i++)
