@@ -44,6 +44,7 @@ struct LightStorage
     Light* lights;
     unsigned int* shadowMaps;
     Light* CreateLight(LightType type);
+    void ModifyLightType(int index, LightType type);
     void RemoveLight(int lightIndex);
 };
 

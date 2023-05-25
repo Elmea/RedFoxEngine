@@ -133,6 +133,7 @@ private:
     void DrawSceneGraph();
     void DrawProperties();
     void DrawWorldProperties();
+    void DrawLightsProperties();
     void UpdateIMGUI();
     void UpdateEditorCamera();
     void UpdateModelMatrices();

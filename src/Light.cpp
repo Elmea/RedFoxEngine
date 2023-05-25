@@ -61,24 +61,17 @@ Light* LightStorage::CreateLight(LightType type)
     {
         if (lights[i].GetType() == LightType::NONE)
         {
-            lights[i].SetType(type);
+            ModifyLightType(i, type);
             return &lights[i];
         }
     }
 
     Light newLight { type , lightCount };
     newLight.lightInfo.shadowParameters.index = lightCount;
-    newLight.SetType(type);
+    ModifyLightType(lightCount, type);
 
     lights[lightCount] = newLight;
     shadowMaps[lightCount] = lights[lightCount].lightInfo.shadowParameters.depthMap;
-    switch(type)
-    {
-        case POINT: pointLightCount++;break;
-        case SPOT: spotLightCount++;break;
-        case DIRECTIONAL: dirLightCount++;break;
-        case NONE: break;
-    }
     lightCount++;
 
     return &lights[lightCount-1];
@@ -93,9 +86,34 @@ void LightStorage::RemoveLight(int lightIndex)
         case DIRECTIONAL: dirLightCount--;break;
         case NONE: break;
     }
-    lights[lightIndex].SetType(LightType::NONE);
+    ModifyLightType(lightIndex, LightType::NONE);
 }
 
+void LightStorage::ModifyLightType(int index, LightType type)
+{
+    if (type == lights[index].type)
+        return;
+    
+    switch(type)
+    {
+        case POINT: pointLightCount++;break;
+        case SPOT: spotLightCount++;break;
+        case DIRECTIONAL: dirLightCount++;break;
+        case NONE: break;
+    }
+
+    switch(lights[index].type)
+    {
+    case POINT: pointLightCount--;break;
+    case SPOT: spotLightCount--;break;
+    case DIRECTIONAL: dirLightCount--;break;
+    case NONE: break;
+    }
+    
+    lights[index].SetProjection(type);
+    lights[index].type = type;
+}
+    
 void Light::SetProjection(LightType type)
 {
     switch (type)
@@ -116,13 +134,7 @@ void Light::SetProjection(LightType type)
         break;
     }
 }
-
-void Light::SetType(LightType _type)
-{
-    type = _type;
-    SetProjection(type);
-}
-
+    
 RedFoxMaths::Mat4 Light::GetProjection()
 {
     return projection;
@@ -199,7 +211,8 @@ void Engine::UpdateLights(LightStorage* lightStorage) //TODO: This function or s
         if (update)
         {
 
-            RedFoxMaths::Float3 rotation = RedFoxMaths::Float3::DirToEuler(current->lightInfo.direction);
+            RedFoxMaths::Float3 rotation = current->rotation.ToEuler();
+            current->lightInfo.direction = RedFoxMaths::Float3::EulerToDir(rotation);
 
             RedFoxMaths::Mat4 lightView = RedFoxMaths::Mat4::GetTranslation(current->lightInfo.position) * RedFoxMaths::Mat4::GetRotationY(rotation.y) *
                 RedFoxMaths::Mat4::GetRotationX(rotation.x) * RedFoxMaths::Mat4::GetRotationZ(rotation.z);
