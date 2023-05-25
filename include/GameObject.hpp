@@ -2,21 +2,15 @@
 #include "ObjParser.hpp"
 #include "RedfoxMaths.hpp"
 #include "Model.hpp"
+#include "Transform.hpp"
 
 namespace physx
 {
-    class PxRigidDynamic;
-    class PxController;
+    class PxRigidActor;
 }
 
 namespace RedFoxEngine
 {
-    struct Transform
-    {
-        RedFoxMaths::Float3 position;
-        RedFoxMaths::Float3 scale;
-        RedFoxMaths::Quaternion orientation;
-    };
     struct GameObject
     {
         MyString name;
@@ -34,11 +28,12 @@ namespace RedFoxEngine
         int modelIndex;
         RedFoxMaths::Float3 Color;
         
-        physx::PxRigidDynamic* body;
+        physx::PxRigidActor* body;
 
         int behaviourIndex;
 
         RedFoxMaths::Mat4 GetLocalMatrix();
+        void SetTransform(Transform transform);
         void UpdateTransform();
     };
 }

@@ -12,6 +12,7 @@
 
 #include "Physics.hpp"
 #include "Scene.hpp"
+// #include "Camera.hpp"
 
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
@@ -39,31 +40,90 @@ UIBEHAVIOUR(UI)
         printf("Pressed\n");
 }
 
+
+void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
+{
+    /*
+    if (IsMouseClicked(ImGuiMouseButton_Left) && !m_imgui.manipulatingGizmo && !m_imgui.lockEditor && m_scene.isPaused)
+    {
+        RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
+        physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
+        physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
+        physx::PxRaycastBuffer hitCalls;
+        if (m_physx.m_scene->raycast(origin, unitDir, m_editorCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
+        {
+            physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
+            if (hit.actor)
+            {
+                int hitIndex = hit.actor->getInternalActorIndex();
+                if (hitIndex < (int)m_scene.gameObjectCount && hitIndex > 0)
+                {
+                    m_imgui.selectedObject = hitIndex;
+                    m_imgui.mousePickNodeIndex = hitIndex;
+                }
+            }
+        }
+    }
+
+    */
+    if (input->mouseLClick)
+    {
+        printf("Clic\n");
+        /*
+        RedFoxMaths::Float4 ray_clip = { 0, 0, -1, 1 };
+        RedFoxMaths::Float4 ray_eye = scene->m_gameCamera.m_projection.GetInverseMatrix() * ray_clip;
+        ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };
+        RedFoxMaths::Float4 ray_world = scene->m_gameCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
+        ray_world.Normalize();
+        RedFoxMaths::Mat4 view = scene->m_gameCamera.GetViewMatrix().GetInverseMatrix();
+        physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
+        physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
+        physx::PxRaycastBuffer hitCalls;
+        if (physx->m_scene->raycast(origin, unitDir, scene->m_gameCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
+        {
+            physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
+            if (hit.actor) printf("OEUF\n");
+        } 
+        */
+    }
+}
+
+
 BEHAVIOUR(Player)
 {
     scene->m_gameCamera.position = self->position;
+
     static Float3 cameraRotation;
-    float sensitivity = 0.0001f; 
-    cameraRotation += {(f32)input->mouseYDelta* deltaTime * sensitivity, (f32)input->mouseXDelta* deltaTime* sensitivity, 0};
+    cameraRotation += {(f32)inputs->mouseYDelta* deltaTime, (f32)inputs->mouseXDelta* deltaTime, 0};
+    if (cameraRotation.x > M_PI_2 + deltaTime) cameraRotation.x = M_PI_2;
+    if (cameraRotation.x < -M_PI_2) cameraRotation.x = -M_PI_2;
     scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
     
     Float3 inputDirection(0, 0, 0);
-    float speed = 5.f;
-    Float3 velocity;
-    if (input->W || input->Up)    inputDirection.z += -1;
-    if (input->S || input->Down)  inputDirection.z += 1;
-    if (input->A || input->Left)  inputDirection.x += -1;
-    if (input->D || input->Right) inputDirection.x += 1;
-    if (input->W || input->S || input->A || input->D)
+    float speed = 300.f;
+    if (inputs->W || inputs->Up)    inputDirection.z += -1;
+    if (inputs->S || inputs->Down)  inputDirection.z += 1;
+    if (inputs->A || inputs->Left)  inputDirection.x += -1;
+    if (inputs->D || inputs->Right) inputDirection.x += 1;
+    
+    Float3 velocity(0, 0, 0);
+    if (inputs->W || inputs->S || inputs->A || inputs->D)
     {
         inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
         inputDirection.Normalize();
-        inputDirection = inputDirection * 200.f;
         velocity.x = speed * deltaTime * inputDirection.x;
         velocity.y = 0;
         velocity.z = speed * deltaTime * inputDirection.z;
-        self->body->addForce({ velocity.x, velocity.y, velocity.z }, physx::PxForceMode::eFORCE);
+        physx::PxRigidDynamic* playerCapsule = self->body->is<physx::PxRigidDynamic>();
+        if (playerCapsule)
+        {
+            playerCapsule->addForce({ velocity.x, velocity.y, velocity.z }, physx::PxForceMode::eVELOCITY_CHANGE);
+            if (velocity.Magnitude() >= 100.f)
+                playerCapsule->clearForce(physx::PxForceMode::eVELOCITY_CHANGE);
+        }
     }
+    
+    Gun(self, scene, inputs, physx);
 }
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
@@ -77,16 +137,21 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
 
     RedFoxEngine::Scene *scene = (RedFoxEngine::Scene *)s;
     RedFoxEngine::Physx *physx = (RedFoxEngine::Physx *)p;
-
+    RedFoxEngine::Input* inputs = (RedFoxEngine::Input*)i;
+    
+    RedFoxEngine::GameObject* player = &scene->gameObjects[2];
     if (!scene->isInit)
     {
         // Problem with that is this is not reflected in the editor UI at runtime, for both gameobject and gameUI
-        scene->gameObjects[1].behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
-        scene->gameObjects[1].position = { 100, 20, 0 };
-        scene->gameObjects[1].UpdateTransform();
+        player->behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
+        player->UpdateTransform();
         
         // This UI object must be initialized in editor before playing
         scene->gameUIs[1].behaviourIndex = scene->AddUIBehaviour("UI", UI);
+
+
         scene->isInit = true;
     }
+
+    player->UpdateTransform();
 }

@@ -3,6 +3,8 @@
 #include "GameObject.hpp"
 #include "GameUI.hpp"
 #include "GameBehaviour.hpp"
+#include "SoundManager.hpp"
+#include "Transform.hpp"
 
 namespace RedFoxEngine
 {
@@ -59,9 +61,11 @@ public:
     GameUI* gameUIs = nullptr;
     UIBehaviour* gameUIBehaviours = nullptr;
     Behaviour* gameObjectBehaviours = nullptr;
+    SoundManager* soundManager;
 
     Scene(int width, int height):m_gameCamera(projectionType::PERSPECTIVE,
         width / (f32)height){}
+
     RedFoxMaths::Mat4 GetWorldMatrix(int gameObjectindex)
     {
         GameObject *current = &gameObjects[gameObjectindex];
@@ -72,9 +76,29 @@ public:
         return gameObjects[gameObjectindex].GetLocalMatrix();
     };
 
+    RedFoxEngine::Transform GetWorldTransformFromLocal(Transform transform, int gameObjectIndex)
+    {
+        GameObject* current = &gameObjects[gameObjectIndex];
+        if (current->parent)
+        {
+            return current->transform + GetWorldTransform(current->parent).Inverse();
+        }
+        return gameObjects[gameObjectIndex].transform;
+    }
+
+    RedFoxEngine::Transform GetWorldTransform(int gameObjectindex)
+    {
+        GameObject* current = &gameObjects[gameObjectindex];
+        if (current->parent)
+        {
+            return current->transform * GetWorldTransform(current->parent);
+        }
+        return gameObjects[gameObjectindex].transform;
+    };
+
     int *GetChildren(int gameObjectIndex, Memory *temp)
     {
-        int *result = (int *)MyMalloc(temp, sizeof(int));
+        int *result = (int *)MyMalloc(temp, sizeof(int) * gameObjectCount);
         int count = 0;
         for (int i = 0; i < (int)gameObjectCount; i++)
         {

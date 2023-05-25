@@ -7,41 +7,79 @@
 using namespace RedFoxEngine;
 using namespace physx;
 
-void Physx::CreateCubeCollider(GameObject* object)
+void Physx::CreateStaticCube(GameObject* object, Transform transform)
 {
-	PxTransform t(object->position.x, object->position.y, object->position.z);
-	PxShape* shape = physics->createShape(PxBoxGeometry(object->scale.x, object->scale.y, object->scale.z), *material);
-	object->body = physics->createRigidDynamic(t);
+	PxQuat q(transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a);
+	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
+	if (transform.scale.x < 1) transform.scale.x = 1;
+	if (transform.scale.y < 1) transform.scale.y = 1;
+	if (transform.scale.z < 1) transform.scale.z = 1;
+	PxShape* shape = physics->createShape(PxBoxGeometry(transform.scale.x, transform.scale.y, transform.scale.z), *staticMaterial);
+	object->body = physics->createRigidStatic(t);
 	object->body->attachShape(*shape);
-	PxRigidBodyExt::updateMassAndInertia(*object->body, 10.0f);
 	m_scene->addActor(*object->body);
 	shape->release();
 }
 
-void Physx::CreateSphereCollider(GameObject* object)
+void Physx::CreateStaticSphere(GameObject* object, Transform transform)
 {
-	RedFoxMaths::Float3 position = object->position;
 	PxReal radius = object->scale.x;
-	PxTransform t(position.x, position.y, position.z);
-	PxShape* shape = physics->createShape(PxSphereGeometry(radius), *material);
-	object->body = physics->createRigidDynamic(t);
+	PxQuat q(transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a);
+	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
+	PxShape* shape = physics->createShape(PxSphereGeometry(radius), *staticMaterial);
+	object->body = physics->createRigidStatic(t);
 	object->body->attachShape(*shape);
-	PxRigidBodyExt::updateMassAndInertia(*object->body, 10.0f);
 	m_scene->addActor(*object->body);
 	shape->release();
 }
 
-void Physx::CreateCapsuleCollider(GameObject* object)
+void Physx::CreateDynamicCube(GameObject* object, Transform transform)
 {
-	RedFoxMaths::Float3 position = object->position;
-	PxTransform t(position.x, position.y, position.z);
-	PxShape* shape = physics->createShape(PxCapsuleGeometry(object->scale.z, object->scale.y), *material);
+	PxQuat q(transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a);
+	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
+	if (transform.scale.x < 1) transform.scale.x = 1;
+	if (transform.scale.y < 1) transform.scale.y = 1;
+	if (transform.scale.z < 1) transform.scale.z = 1;
+	PxShape* shape = physics->createShape(PxBoxGeometry(transform.scale.x, transform.scale.y, transform.scale.z), *dynamicMaterial);
 	object->body = physics->createRigidDynamic(t);
-	object->body->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z, true);
-	object->body->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_X, true);
-	PxRigidBodyExt::updateMassAndInertia(*object->body, 10.0f);
+	object->body->attachShape(*shape);
+	PxRigidBodyExt::updateMassAndInertia(*object->body->is<PxRigidBody>(), 10.0f);
 	m_scene->addActor(*object->body);
 	shape->release();
+}
+
+void Physx::CreateDynamicSphere(GameObject* object, Transform transform)
+{
+	PxReal radius = transform.scale.x;
+	PxTransform t(transform.position.x, transform.position.y, transform.position.z);
+	PxShape* shape = physics->createShape(PxSphereGeometry(radius), *dynamicMaterial);
+	object->body = physics->createRigidDynamic(t);
+	object->body->attachShape(*shape);
+	PxRigidBodyExt::updateMassAndInertia(*object->body->is<PxRigidBody>(), 10.0f);
+	m_scene->addActor(*object->body);
+	shape->release();
+}
+
+void Physx::CreateDynamicCapsule(GameObject* object, Transform transform)
+{
+	PxQuat q(transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a);
+	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
+	object->body = physics->createRigidDynamic(t);
+	PxTransform relativePose(PxQuat(PxHalfPi, PxVec3(0, 0, 1)));
+	PxShape* shape = physics->createShape(PxCapsuleGeometry(transform.scale.x, transform.scale.y), *dynamicMaterial);
+	shape->setLocalPose(relativePose);
+	object->body->attachShape(*shape);
+	PxRigidBodyExt::updateMassAndInertia(*object->body->is<PxRigidBody>(), 10.0f);
+	m_scene->addActor(*object->body);
+	shape->release();
+}
+
+void Physx::LockDynamicBody(GameObject* object, bool x, bool y, bool z)
+{
+	PxRigidDynamic* body = object->body->is<PxRigidDynamic>();
+	body->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_X, x);
+	body->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_Y, y);
+	body->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z, z);
 }
 
 void Physx::InitPhysics()
@@ -62,14 +100,14 @@ void Physx::InitPhysics()
 	dispatcher = PxDefaultCpuDispatcherCreate(std::thread::hardware_concurrency());
 }
 
-void Physx::InitScene(Scene *scene, int sphereIndex)
+void Physx::InitScene(Scene *scene, int sphereIndex, int cubeIndex)
 {
 	if  (m_scene != nullptr)
 	{
 		m_scene->release();
 	}
 	PxSceneDesc sceneDesc(physics->getTolerancesScale());
-	sceneDesc.gravity = PxVec3(0.0f, -30.f /*-9.81f*/, 0.0f);//TODO: back to -9.81 gravity and heavier objects ??
+	sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
 
 	sceneDesc.cpuDispatcher = dispatcher;
 	sceneDesc.filterShader = PxDefaultSimulationFilterShader;	
@@ -87,39 +125,26 @@ void Physx::InitScene(Scene *scene, int sphereIndex)
 	}
 #endif
 
-	material = physics->createMaterial(0.5f, 0.5f, 0.1f);
-
-	PxRigidStatic* groundPlane = PxCreatePlane(*physics, PxPlane(0, 1, 0, 10), *material);
-	m_scene->addActor(*groundPlane);
-	
-	CreateCapsuleCollider(&scene->gameObjects[1]);
-	scene->gameObjects[1].body->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z, true);
-	scene->gameObjects[1].body->setRigidDynamicLockFlag(PxRigidDynamicLockFlag::eLOCK_ANGULAR_X, true);
+	staticMaterial = physics->createMaterial(10.f, 10.f, 0.f);
+	dynamicMaterial = physics->createMaterial(10.f, 10.f, 0.f);
+	GameObject* player = &scene->gameObjects[2];
+	Transform playerTransform = { { player->position.x, player->position.y, player->position.z },
+								{ player->scale.x, player->scale.y, player->scale.z },
+								RedFoxMaths::Quaternion(1,0,0,0) };
+	CreateDynamicCapsule(player, playerTransform);
+	LockDynamicBody(player, true, true, true);
 
 	// If commented, the game code moving the player capsule crashes
-	for (u32 i = 2; i < (u32)scene->gameObjectCount; i++)
+	for (u32 i = 1; i < (u32)scene->gameObjectCount; i++)
 	{
-		if (scene->gameObjects[i].modelIndex == sphereIndex)
-			CreateSphereCollider(&scene->gameObjects[i]);
-		else
-			CreateCubeCollider(&scene->gameObjects[i]);
-	}
-}
-
-void Physx::SetTransform(int index, Transform transform)
-{
-	int temp = m_scene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC);
-	if (index < temp)
-	{
-		PxActor* actor;
-		m_scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC, (PxActor**)&actor, 1, index);
-		if (actor && actor->is<PxRigidDynamic>())
-		{
-			PxTransform t;
-			t.p = { transform.position.x, transform.position.y, transform.position.z };
-			t.q = { transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a };
-			actor->is<PxRigidDynamic>()->setGlobalPose(t);
-		}
+			if (i == 2)
+				continue;
+			if (scene->gameObjects[i].modelIndex == sphereIndex)
+				CreateStaticSphere(&scene->gameObjects[i], scene->GetWorldTransform(i));
+			else if(scene->gameObjects[i].modelIndex == cubeIndex)
+				CreateStaticCube(&scene->gameObjects[i], scene->GetWorldTransform(i));
+			else
+				scene->gameObjects[i].body = nullptr;
 	}
 }
 
@@ -128,25 +153,24 @@ void Physx::UpdatePhysics(f32 deltaTime, Scene* scene, ResourcesManager m)
 	actorCount = m_scene->getNbActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC);
 	if (actorCount)
 	{
-		if (!scene->isPaused)
-		{
+		// if (!scene->isPaused)
+		// {
 			m_scene->simulate(deltaTime);
 			m_scene->fetchResults(true);
-		}
+		// }
 		physx::PxTransform transform;
 		for (int i = 1; i < (int)scene->gameObjectCount; i++)
 		{
 			if (scene->gameObjects[i].body)
 			{
-				physx::PxRigidDynamic* actor = scene->gameObjects[i].body->is<physx::PxRigidDynamic>();
-				if (actor && !actor->isSleeping())
+				physx::PxRigidDynamic* dynamicActor = scene->gameObjects[i].body->is<physx::PxRigidDynamic>();
+				if (dynamicActor && !dynamicActor->isSleeping())
 				{
-					transform = actor->getGlobalPose();
-					scene->gameObjects[i].transform = {
-						{transform.p.x, transform.p.y, transform.p.z},
-						scene->gameObjects[i].scale,
-						{transform.q.w, transform.q.x, transform.q.y, transform.q.z}
-					};
+					transform = dynamicActor->getGlobalPose();
+					RedFoxMaths::Quaternion q = {transform.q.w, transform.q.x, transform.q.y, transform.q.z};
+					RedFoxMaths::Float3 p = {transform.p.x, transform.p.y, transform.p.z};
+					Transform t = {p, scene->gameObjects[i].scale, q};
+					scene->gameObjects[i].transform = scene->GetWorldTransformFromLocal(t, i);
 				}
 			}
 		}

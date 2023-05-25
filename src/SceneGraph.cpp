@@ -63,6 +63,7 @@ static UIBEHAVIOUR(DefaultUIBehaviour) { }
 
 void RedFoxEngine::Engine::LoadScene(const char *fileName)
 {
+    m_scene.isInit = false;
     m_scene.gameObjectCount = 0;
     m_scene.gameUICount = 0;
     m_scene.gameUIBehaviourCount = 0;
@@ -96,7 +97,7 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
         FILE_SHARE_READ | FILE_SHARE_WRITE,nullptr, OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL, nullptr);
 
-    ReadFile(file, &m_scene, sizeof(Scene) - (sizeof(void *) * 6), nullptr, nullptr);
+    ReadFile(file, &m_scene, sizeof(Scene) - (sizeof(void *) * 7), nullptr, nullptr);
     ReadStringFromFile(file, &m_scene.m_name, &m_memoryManager);
     ReadFile(file, &m_scene.gameObjectCount, sizeof(u32), nullptr, nullptr);
     for(int i = 0; i < (int)m_scene.gameObjectCount; i++)
@@ -115,7 +116,7 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
     }
     m_scene.gameObjectBehaviourCount = 1;
     m_scene.gameUIBehaviourCount = 1;
-    m_physx.InitScene(&m_scene, 1);
+    m_physx.InitScene(&m_scene, 1, 0);
 }
 
 static void WriteStringToFile(HANDLE file, MyString string)
@@ -133,6 +134,16 @@ static void WriteGameObjectToFile(HANDLE file, RedFoxEngine::GameObject *current
     WriteFile(file, &m_models[current->modelIndex].hash, sizeof(u64), nullptr, nullptr);
 }
 
+static void WriteGameUIToFile(HANDLE file, RedFoxEngine::GameUI* current, RedFoxEngine::Model* m_models)
+{
+    WriteStringToFile(file, current->name);
+    int size = sizeof(RedFoxEngine::GameObject) - sizeof(MyString);
+    WriteFile(file, &current->screenPosition, size, nullptr, nullptr);
+
+    WriteStringToFile(file, current->text);
+    
+}
+
 void RedFoxEngine::Engine::SaveScene(const char *fileName, Scene scene)
 {
     HANDLE file = CreateFile(fileName, GENERIC_WRITE,
@@ -147,6 +158,15 @@ void RedFoxEngine::Engine::SaveScene(const char *fileName, Scene scene)
         GameObject *current = &m_scene.gameObjects[i];
         WriteGameObjectToFile(file, current, m_models);
     }
+
+    WriteFile(file, &m_scene.gameUICount, sizeof(u32), nullptr, nullptr);
+    for (int i = 0; i < (int)m_scene.gameUICount; i++)
+    {
+        GameUI *current = &m_scene.gameUIs[i];
+        WriteGameUIToFile(file, current, m_models);
+    }
+
+
     CloseHandle(file);
 }
 

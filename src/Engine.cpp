@@ -47,23 +47,16 @@ Engine::Engine(int width, int height) :
     m_graphics.m_modelCount = m_modelCount;
     m_physx.InitPhysics();
     InitSkyDome();
+
     m_soundManager.Init(&m_memoryManager.m_memory.arena);
     m_soundManager.SetMasterVolume(1);
-    
-    m_testMusic = m_soundManager.CreateSound("music.ogg", &m_memoryManager.m_memory.arena);
-    if (m_testMusic)
-    {
-        m_testMusic->SetVolume(1);
-        m_testMusic->SetLoop(true);
-        m_testMusic->position = {0.f, 0.f, 0.f};
-        m_testMusic->Play3D();
-    }
 
     m_scene.gameObjectBehaviours = (Behaviour*)m_memoryManager.PersistentAllocation(sizeof(Behaviour) * 100);
     m_scene.gameUIBehaviours = (UIBehaviour*)m_memoryManager.PersistentAllocation(sizeof(UIBehaviour) * 100);
 
     m_scene.gameUIs = (GameUI*)m_memoryManager.PersistentAllocation(sizeof(GameUI) * 100);
     m_scene.gameObjects = (GameObject *)m_memoryManager.PersistentAllocation(sizeof(GameObject) * 100000);
+    m_scene.soundManager = &m_soundManager;
     m_memoryManager.m_sceneUsedMemory = m_memoryManager.m_memory.arena.usedSize;
 
     //TODO transition to an instance based model 'model'
@@ -345,7 +338,7 @@ void Engine::UpdateBehaviours()
     for (int i = 1; i < (int)m_scene.gameObjectCount; i++)
     {
         Behaviour* gameObjectBehavior = &m_scene.gameObjectBehaviours[m_scene.gameObjects[i].behaviourIndex];
-        gameObjectBehavior->function(&m_scene.gameObjects[i], m_time.delta, &m_scene, &m_input);
+        gameObjectBehavior->function(&m_scene.gameObjects[i], m_time.delta, &m_scene, &m_input, &m_physx, &m_platform.m_windowDimension);
     }
 }
 
@@ -372,7 +365,7 @@ void Engine::Update()
     m_soundManager.UpdateListener(m_editorCamera.position, m_editorCamera.orientation.ToEuler());
     UpdateLights(&m_graphics.lightStorage);
     m_physx.UpdatePhysics(1.0 / 60.0, &m_scene, m_memoryManager);
-    m_game.update(&m_scene, &m_physx, m_input, 1.0 / 60.0);
+    m_game.update(&m_scene, &m_physx, &m_input, 1.0 / 60.0);
     if (!m_scene.isPaused)
     {
         UpdateBehaviours();

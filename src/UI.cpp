@@ -235,6 +235,18 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->modelIndex = -1;
     }
 
+    if (IsKeyDown(ImGuiKey_LeftCtrl) && IsKeyPressed(ImGuiKey_D)) //TODO Position and Rotation cant be changed
+    {
+        GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
+        *newGameObject = m_scene.gameObjects[m_imgui.selectedObject];
+
+        char tmp[255];
+        int size = snprintf(tmp, 255, "New entity #%d", m_scene.gameObjectCount - 1);
+        newGameObject->parent = 0;
+        newGameObject->name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
+    }
+
+
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
     if (ImageButton("ADD CUBE", m_imgui.icons[8], ImVec2(buttonHeight, buttonHeight)))
@@ -248,7 +260,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->orientation = { 1,0,0,0 };
         newGameObject->scale = { 1,1,1 };
         newGameObject->modelIndex = 0;
-        m_physx.CreateCubeCollider(newGameObject);
+        m_physx.CreateStaticCube(newGameObject, newGameObject->transform);
     }
 
     SameLine();
@@ -264,7 +276,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->orientation = { 1,0,0,0 };
         newGameObject->scale = { 1,1,1 };
         newGameObject->modelIndex = 1;
-        m_physx.CreateSphereCollider(newGameObject);
+        m_physx.CreateStaticSphere(newGameObject, newGameObject->transform);
     }
 
     SameLine();
@@ -617,7 +629,15 @@ void Engine::DrawEditor()
                 m_scene.gameObjects[m_imgui.selectedObject].scale.x = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_imgui.selectedObject].scale.x, 1, 10000);
                 m_scene.gameObjects[m_imgui.selectedObject].scale.y = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_imgui.selectedObject].scale.y, 1, 10000);
                 m_scene.gameObjects[m_imgui.selectedObject].scale.z = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_imgui.selectedObject].scale.z, 1, 10000);
-                m_physx.SetTransform(m_imgui.selectedObject, m_scene.gameObjects[m_imgui.selectedObject].transform);
+                if (m_scene.gameObjects[m_imgui.selectedObject].body)
+                    m_scene.gameObjects[m_imgui.selectedObject].SetTransform(m_scene.GetWorldTransform(m_imgui.selectedObject));
+                int childrenCount = m_scene.GetChildrenCount(m_imgui.selectedObject);
+                int *indices = m_scene.GetChildren(m_imgui.selectedObject, &m_memoryManager.m_memory.temp);
+                for (int i = 0; i < childrenCount; i++)
+                {
+                    if (m_scene.gameObjects[indices[i]].body)
+                        m_scene.gameObjects[indices[i]].SetTransform(m_scene.GetWorldTransform(indices[i])); 
+                }
             }
         }
 
@@ -635,7 +655,7 @@ void Engine::DrawEditor()
             RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
             ray_world.Normalize();
 
-            if (IsMouseClicked(ImGuiMouseButton_Left) && !m_imgui.manipulatingGizmo && !m_imgui.lockEditor)
+            if (IsMouseClicked(ImGuiMouseButton_Left) && !m_imgui.manipulatingGizmo && !m_imgui.lockEditor && m_scene.isPaused)
             {
                 RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
                 physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
@@ -646,11 +666,13 @@ void Engine::DrawEditor()
                     physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
                     if (hit.actor)
                     {
-                        int hitIndex = hit.actor->getInternalActorIndex();
-                        if (hitIndex < (int)m_scene.gameObjectCount && hitIndex > 0)
+                        for (int i = 0; i < m_scene.gameObjectCount; i++)
                         {
-                            m_imgui.selectedObject = hitIndex;
-                            m_imgui.mousePickNodeIndex = hitIndex;
+                            if (m_scene.gameObjects[i].body == hit.actor)
+                            {
+                                m_imgui.selectedObject = i;
+                                break;
+                            }
                         }
                     }
                 }
@@ -816,16 +838,6 @@ void Engine::DrawSceneGraph()
                 OpenPopup("RenameScenePopup");
             }
 
-            if (IsKeyPressed(ImGuiKey_D) && IsKeyPressed(ImGuiKey_LeftCtrl))
-            {
-                GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
-                *newGameObject = m_scene.gameObjects[m_imgui.selectedObject];
-
-                char tmp[255];
-                int size = snprintf(tmp, 255, "New entity #%d", m_scene.gameObjectCount - 1);
-                newGameObject->name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
-
-            }
 
             if (BeginDragDropTarget())
             {             
@@ -989,7 +1001,8 @@ void Engine::DrawAssetsBrowser()
             }
 
             TableSetColumnIndex(1);
-            Text("Sounds (%d/%d)", m_soundManager.m_soundCount, m_soundManager.m_maxSounds);
+            Text("Sounds (%d/%d)", m_soundManager.SoundCount(), m_soundManager.m_maxSounds);
+            
             SameLine();
 
             if (Button("Import sound"))
@@ -1046,10 +1059,10 @@ void Engine::DrawAssetsBrowser()
             TableSetColumnIndex(1);
             if (BeginListBox("SoundsList", ImVec2(-FLT_MIN, 5 * GetTextLineHeightWithSpacing())))
             {
-                for (int i = 0; i < m_soundManager.m_soundCount; i++)
+                for (int i = 0; i < m_soundManager.SoundCount(); i++)
                 {
                     bool is_selected = m_imgui.selectedSoundAsset == i;
-                    if (Selectable(m_soundManager.m_soundsName[i].data, is_selected))
+                    if (Selectable(m_soundManager.SoundName(i).data, is_selected))
                         m_imgui.selectedSoundAsset = i;
 
                     if (is_selected)
@@ -1080,22 +1093,20 @@ void Engine::DrawProperties()
                     TableSetColumnIndex(1);
                     SetNextItemWidth(-FLT_MIN);
                     if (DragFloat3("TransformPosition", &m_scene.gameObjects[m_imgui.selectedObject].position.x, m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp))
-                        m_physx.SetTransform(m_imgui.selectedObject, m_scene.gameObjects[m_imgui.selectedObject].transform);
+                        m_scene.gameObjects[m_imgui.selectedObject].SetTransform(m_scene.gameObjects[m_imgui.selectedObject].transform);
 
                     TableNextRow();
                     TableSetColumnIndex(0);
                     Text("Rotation");
                     TableSetColumnIndex(1);
                     SetNextItemWidth(-FLT_MIN);
-                    static RedFoxMaths::Float3 rotation;
+                    RedFoxMaths::Float3 rotation = m_scene.gameObjects[m_imgui.selectedObject].orientation.ToEuler() * RAD2DEG; 
                     if (DragFloat3("TransformRotation", &rotation.x, m_imgui.dragSpeed, -360.f, 360.f, "%.3f", ImGuiSliderFlags_AlwaysClamp))
                     {
-                        rotation *= DEG2RAD;
-                        m_scene.gameObjects[m_imgui.selectedObject].orientation =
-                            RedFoxMaths::Quaternion::SLerp(m_scene.gameObjects[m_imgui.selectedObject].orientation,
-                                RedFoxMaths::Quaternion::FromEuler(rotation), 0.5);
+                        RedFoxMaths::Float3 radRotation = rotation * DEG2RAD;
+                        m_scene.gameObjects[m_imgui.selectedObject].orientation = radRotation;
                         m_scene.gameObjects[m_imgui.selectedObject].orientation.Normalize();
-                        m_physx.SetTransform(m_imgui.selectedObject, m_scene.gameObjects[m_imgui.selectedObject].transform);
+                        m_scene.gameObjects[m_imgui.selectedObject].SetTransform(m_scene.gameObjects[m_imgui.selectedObject].transform);
                     }
 
                     TableNextRow();
@@ -1103,14 +1114,14 @@ void Engine::DrawProperties()
                     Text("Scale");
                     TableSetColumnIndex(1);
                     SetNextItemWidth(-FLT_MIN);
-                    DragFloat3("TransformScale", &m_scene.gameObjects[m_imgui.selectedObject].scale.x, m_imgui.dragSpeed, 0.00001f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    DragFloat3("TransformScale", &m_scene.gameObjects[m_imgui.selectedObject].scale.x, m_imgui.dragSpeed, 1.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                     EndTable();
                 }
             }
 
             if (CollapsingHeader("Behaviour", m_imgui.propertiesFlags))
             {
-                SeparatorText("Behaviour");
+                Text("GameObject ID: %d", m_imgui.selectedObject);
                 SetNextItemWidth(-FLT_MIN);
                 
                 int* curBehaviourIndex = &m_scene.gameObjects[m_imgui.selectedObject].behaviourIndex;
@@ -1133,7 +1144,7 @@ void Engine::DrawProperties()
                 int* modelIndex = &m_scene.gameObjects[m_imgui.selectedObject].modelIndex;
                 SeparatorText("Model");
                 SetNextItemWidth(-FLT_MIN);
-                if (BeginCombo(" ", (*modelIndex != -1) ? (char*)m_modelsName[*modelIndex].data : "Select model"))
+                if (BeginCombo(" ", (*modelIndex != -1) ? (char*)m_modelsName[*modelIndex].data : "None"))
                 {
                     for (int i = 0; i < (int)m_modelCount; i++)
                     {
@@ -1348,9 +1359,12 @@ void Engine::DrawWorldProperties()
                 InputText("Path", (char*)path.data, path.capacity);
                 if (Button("Import"))
                 {
-                    m_graphics.AddPostProcessShader(&m_memoryManager.m_memory, path.data);
-                    assignString(path, "");
-                    CloseCurrentPopup();
+                    if (m_platform.FileExist(path.data))
+                    {
+                        m_graphics.AddPostProcessShader(&m_memoryManager.m_memory, path.data);
+                        assignString(path, "");
+                        CloseCurrentPopup();
+                    }
                 }
                 SameLine();
                 if (Button("Cancel"))

@@ -115,7 +115,6 @@ private:
     ImGUI m_imgui = {};
     Physx m_physx {};
     SoundManager m_soundManager;
-    Sound* m_testMusic;
 
 public:
     bool isGame = false;
