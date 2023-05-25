@@ -32,7 +32,7 @@ namespace RedFoxEngine
         physx::PxRigidActor* body;
 
         int behaviourIndex;
-
+        // RedFoxEngine::Material material;
         RedFoxMaths::Mat4 GetLocalMatrix();
         void SetTransform(Transform transform);
         void UpdateTransform();
