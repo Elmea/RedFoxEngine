@@ -461,13 +461,11 @@ f64 RedFoxEngine::Platform::GetTimer(void)
     return Result.QuadPart / (f64)GetTimerFrequency();
 }
 
+//NOTE We use an empty functions in case our library loading fails, so we don't crash
+STARTGAME(startStub) { }
+UPDATEGAME(updateStub) { }
 
-UPDATEGAME(updateStub)
-{
-//NOTE We use an empty function in case our library loading fails, so we don't crash
-}
-
-RedFoxEngine::GameLibrary RedFoxEngine::Platform::LoadGameLibrary(const char *functionName, const char *libraryPath, GameLibrary game)
+RedFoxEngine::GameLibrary RedFoxEngine::Platform::LoadGameLibrary(const char* startFunction, const char *updateFunction, const char *libraryPath, GameLibrary game)
 {
     FILETIME temp = game.lastTime;
     /*
@@ -483,10 +481,10 @@ RedFoxEngine::GameLibrary RedFoxEngine::Platform::LoadGameLibrary(const char *fu
     HANDLE File = CreateFileA("game.dll",                         // PATH 
                               GENERIC_READ,                       // Desired access
                               FILE_SHARE_WRITE | FILE_SHARE_READ, // Share Mode
-                              nullptr,                               // Security Attributes
+                              nullptr,                            // Security Attributes
                               OPEN_EXISTING,                      // Creation Disposition
                               FILE_ATTRIBUTE_NORMAL,              // Flags and attributes
-                              nullptr);                              // Template file
+                              nullptr);                           // Template file
     GetFileTime(File, nullptr, nullptr, &game.lastTime);
     CloseHandle(File);
     if (CompareFileTime(&temp, &game.lastTime) != 0)
@@ -496,13 +494,21 @@ RedFoxEngine::GameLibrary RedFoxEngine::Platform::LoadGameLibrary(const char *fu
         CopyFileA(libraryPath, "gameCopy.dll", false);
         game.library = LoadLibraryA("gameCopy.dll");
         if (game.library)
-            game.update = (_updategame *)GetProcAddress(game.library, functionName);
+        {
+            game.update = (_updategame*)GetProcAddress(game.library, updateFunction);
+            game.start  = (_startgame*)GetProcAddress(game.library, startFunction);
+        }
         if (game.update == nullptr)
             game.update = &updateStub;
+        if (game.start == nullptr)
+            game.start = &startStub;
     }
-    else if (File == INVALID_HANDLE_VALUE && game.update == nullptr)
+    else if (File == INVALID_HANDLE_VALUE)
     {
-        game.update = &updateStub;
+        if (game.update == nullptr)
+            game.update = &updateStub;
+        if (game.start == nullptr)
+            game.start = &startStub;
     }
     return (game);
 }
@@ -523,11 +529,11 @@ RedFoxEngine::Window RedFoxEngine::Platform::CreateRedFoxWindow(int Width, int H
                                  "RedFox Engine",              // Window text
                                  (WS_POPUP | WS_EX_APPWINDOW), // Window style
                                  CW_USEDEFAULT, CW_USEDEFAULT, // Position and Size
-                                 Width, Height,
-                                 nullptr,                  // Parent window
-                                 nullptr,                  // Menu
-                                 WindowClass.hInstance, // Instance handle
-                                 nullptr);                 // Additional application data
+                                 Width, Height,                
+                                 nullptr,                      // Parent window
+                                 nullptr,                      // Menu
+                                 WindowClass.hInstance,        // Instance handle
+                                 nullptr);                     // Additional application data
     }
     return (window);
 }

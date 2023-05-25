@@ -28,9 +28,9 @@ namespace RedFoxEngine
     public:
         void CreateStaticCube(GameObject* object, Transform transform);
         void CreateStaticSphere(GameObject* object, Transform transform);
-        void CreateDynamicCube(GameObject* object, Transform transform);
-        void CreateDynamicSphere(GameObject* object, Transform transform);
-        void CreateDynamicCapsule(GameObject* object, Transform transform);
+        void CreateDynamicCube(GameObject* object, Transform transform, float mass = 69);
+        void CreateDynamicSphere(GameObject* object, Transform transform, float mass = 69);
+        void CreateDynamicCapsule(GameObject* object, Transform transform, float mass = 69);
         void LockDynamicBody(GameObject* object, bool x, bool y, bool z);
         void InitPhysics();
         void InitScene(Scene *scene, int sphereIndex, int cubeIndex);
