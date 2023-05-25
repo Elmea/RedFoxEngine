@@ -3,6 +3,7 @@
 #include "RedfoxMaths.hpp"
 #include "Model.hpp"
 #include "Transform.hpp"
+#include "Material.hpp"
 
 namespace physx
 {
