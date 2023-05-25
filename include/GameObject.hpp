@@ -33,6 +33,7 @@ namespace RedFoxEngine
         int behaviourIndex;
 
         RedFoxMaths::Mat4 GetLocalMatrix();
+        void SetTransform(Transform transform);
         void UpdateTransform();
     };
 }

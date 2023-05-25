@@ -66,7 +66,7 @@ void Physx::CreateDynamicCapsule(GameObject* object, Transform transform)
 	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
 	object->body = physics->createRigidDynamic(t);
 	PxTransform relativePose(PxQuat(PxHalfPi, PxVec3(0, 0, 1)));
-	PxShape* shape = PxRigidActorExt::createExclusiveShape(*object->body, PxCapsuleGeometry(transform.scale.x, transform.scale.y), *dynamicMaterial);
+	PxShape* shape = physics->createShape(PxCapsuleGeometry(transform.scale.x, transform.scale.y), *dynamicMaterial);
 	shape->setLocalPose(relativePose);
 	object->body->attachShape(*shape);
 	PxRigidBodyExt::updateMassAndInertia(*object->body->is<PxRigidBody>(), 10.0f);
@@ -144,28 +144,6 @@ void Physx::InitScene(Scene *scene, int sphereIndex)
 			else
 				CreateStaticCube(&scene->gameObjects[i], scene->GetWorldTransform(i));
 		}
-	}
-}
-
-void Physx::SetTransform(int index, Transform transform)
-{
-	int temp = m_scene->getNbActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC);
-	if (index < temp)
-	{
-		PxActor* actor;
-		m_scene->getActors(PxActorTypeFlag::eRIGID_DYNAMIC | PxActorTypeFlag::eRIGID_STATIC, (PxActor**)&actor, 1, index);
-		if (actor)
-		{
-			PxTransform t;
-			t.p = { transform.position.x, transform.position.y, transform.position.z };
-			t.q = { transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a };
-			PxRigidActor* body = actor->is<PxRigidActor>();
-			body->setGlobalPose(t);
-			PxShape* bodyShape;
-			body->getShapes(&bodyShape, 1);
-			if (&bodyShape->getGeometry())
-				bodyShape->setGeometry(PxBoxGeometry(transform.scale.x, transform.scale.y, transform.scale.z));
-		}		
 	}
 }
 
