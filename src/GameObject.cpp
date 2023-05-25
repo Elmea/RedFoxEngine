@@ -20,8 +20,8 @@ namespace RedFoxEngine
 		t.q = { transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a };
 		body->setGlobalPose(t);
 		PxShape* bodyShape;
-		body->getShapes(&bodyShape, 1);
-		if (&bodyShape->getGeometry())
+		int numberOfBodies = body->getShapes(&bodyShape, 1);
+		if (numberOfBodies)
 		{
 			switch (bodyShape->getGeometryType())
 			{
@@ -31,6 +31,8 @@ namespace RedFoxEngine
 
 			case PxGeometryType::eSPHERE:
 				bodyShape->setGeometry(PxSphereGeometry(transform.scale.x));
+				break;
+			default:
 				break;
 			}
 		}

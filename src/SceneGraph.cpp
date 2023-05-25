@@ -116,7 +116,7 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
     }
     m_scene.gameObjectBehaviourCount = 1;
     m_scene.gameUIBehaviourCount = 1;
-    m_physx.InitScene(&m_scene, 1);
+    m_physx.InitScene(&m_scene, 1, 0);
 }
 
 static void WriteStringToFile(HANDLE file, MyString string)

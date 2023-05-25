@@ -100,7 +100,7 @@ void Physx::InitPhysics()
 	dispatcher = PxDefaultCpuDispatcherCreate(std::thread::hardware_concurrency());
 }
 
-void Physx::InitScene(Scene *scene, int sphereIndex)
+void Physx::InitScene(Scene *scene, int sphereIndex, int cubeIndex)
 {
 	if  (m_scene != nullptr)
 	{
@@ -137,13 +137,14 @@ void Physx::InitScene(Scene *scene, int sphereIndex)
 	// If commented, the game code moving the player capsule crashes
 	for (u32 i = 1; i < (u32)scene->gameObjectCount; i++)
 	{
-		if (i != 2)
-		{
+			if (i == 2)
+				continue;
 			if (scene->gameObjects[i].modelIndex == sphereIndex)
 				CreateStaticSphere(&scene->gameObjects[i], scene->GetWorldTransform(i));
-			else
+			else if(scene->gameObjects[i].modelIndex == cubeIndex)
 				CreateStaticCube(&scene->gameObjects[i], scene->GetWorldTransform(i));
-		}
+			else
+				scene->gameObjects[i].body = nullptr;
 	}
 }
 
@@ -152,11 +153,11 @@ void Physx::UpdatePhysics(f32 deltaTime, Scene* scene, ResourcesManager m)
 	actorCount = m_scene->getNbActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC);
 	if (actorCount)
 	{
-		if (!scene->isPaused)
-		{
+		// if (!scene->isPaused)
+		// {
 			m_scene->simulate(deltaTime);
 			m_scene->fetchResults(true);
-		}
+		// }
 		physx::PxTransform transform;
 		for (int i = 1; i < (int)scene->gameObjectCount; i++)
 		{
@@ -166,8 +167,10 @@ void Physx::UpdatePhysics(f32 deltaTime, Scene* scene, ResourcesManager m)
 				if (dynamicActor && !dynamicActor->isSleeping())
 				{
 					transform = dynamicActor->getGlobalPose();
-
-					scene->gameObjects[i].transform = scene->GetLocalTransformFromParent(i);
+					RedFoxMaths::Quaternion q = {transform.q.w, transform.q.x, transform.q.y, transform.q.z};
+					RedFoxMaths::Float3 p = {transform.p.x, transform.p.y, transform.p.z};
+					Transform t = {p, scene->gameObjects[i].scale, q};
+					scene->gameObjects[i].transform = scene->GetWorldTransformFromLocal(t, i);
 				}
 			}
 		}

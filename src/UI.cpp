@@ -629,7 +629,15 @@ void Engine::DrawEditor()
                 m_scene.gameObjects[m_imgui.selectedObject].scale.x = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_imgui.selectedObject].scale.x, 1, 10000);
                 m_scene.gameObjects[m_imgui.selectedObject].scale.y = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_imgui.selectedObject].scale.y, 1, 10000);
                 m_scene.gameObjects[m_imgui.selectedObject].scale.z = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_imgui.selectedObject].scale.z, 1, 10000);
-                m_scene.gameObjects[m_imgui.selectedObject].SetTransform(m_scene.GetWorldTransform(m_imgui.selectedObject));
+                if (m_scene.gameObjects[m_imgui.selectedObject].body)
+                    m_scene.gameObjects[m_imgui.selectedObject].SetTransform(m_scene.GetWorldTransform(m_imgui.selectedObject));
+                int childrenCount = m_scene.GetChildrenCount(m_imgui.selectedObject);
+                int *indices = m_scene.GetChildren(m_imgui.selectedObject, &m_memoryManager.m_memory.temp);
+                for (int i = 0; i < childrenCount; i++)
+                {
+                    if (m_scene.gameObjects[indices[i]].body)
+                        m_scene.gameObjects[indices[i]].SetTransform(m_scene.GetWorldTransform(indices[i])); 
+                }
             }
         }
 

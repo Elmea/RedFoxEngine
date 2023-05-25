@@ -76,12 +76,12 @@ public:
         return gameObjects[gameObjectindex].GetLocalMatrix();
     };
 
-    RedFoxEngine::Transform GetLocalTransformFromParent(int gameObjectIndex)
+    RedFoxEngine::Transform GetWorldTransformFromLocal(Transform transform, int gameObjectIndex)
     {
         GameObject* current = &gameObjects[gameObjectIndex];
         if (current->parent)
         {
-            return current->transform + GetLocalTransformFromParent(current->parent).Inverse();
+            return current->transform + GetWorldTransform(current->parent).Inverse();
         }
         return gameObjects[gameObjectIndex].transform;
     }
@@ -98,7 +98,7 @@ public:
 
     int *GetChildren(int gameObjectIndex, Memory *temp)
     {
-        int *result = (int *)MyMalloc(temp, sizeof(int));
+        int *result = (int *)MyMalloc(temp, sizeof(int) * gameObjectCount);
         int count = 0;
         for (int i = 0; i < (int)gameObjectCount; i++)
         {
