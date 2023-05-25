@@ -647,7 +647,15 @@ void Engine::DrawEditor()
                 m_scene.gameObjects[m_imgui.selectedObject].scale.x = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_imgui.selectedObject].scale.x, 1, 10000);
                 m_scene.gameObjects[m_imgui.selectedObject].scale.y = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_imgui.selectedObject].scale.y, 1, 10000);
                 m_scene.gameObjects[m_imgui.selectedObject].scale.z = RedFoxMaths::Misc::Clamp(m_scene.gameObjects[m_imgui.selectedObject].scale.z, 1, 10000);
-                m_physx.SetTransform(m_imgui.selectedObject, m_scene.GetWorldTransform(m_imgui.selectedObject));
+                if (m_scene.gameObjects[m_imgui.selectedObject].body)
+                    m_scene.gameObjects[m_imgui.selectedObject].SetTransform(m_scene.GetWorldTransform(m_imgui.selectedObject));
+                int childrenCount = m_scene.GetChildrenCount(m_imgui.selectedObject);
+                int *indices = m_scene.GetChildren(m_imgui.selectedObject, &m_memoryManager.m_memory.temp);
+                for (int i = 0; i < childrenCount; i++)
+                {
+                    if (m_scene.gameObjects[indices[i]].body)
+                        m_scene.gameObjects[indices[i]].SetTransform(m_scene.GetWorldTransform(indices[i])); 
+                }
             }
         }
 
@@ -1106,7 +1114,7 @@ void Engine::DrawProperties()
                     TableSetColumnIndex(1);
                     SetNextItemWidth(-FLT_MIN);
                     if (DragFloat3("TransformPosition", &m_scene.gameObjects[m_imgui.selectedObject].position.x, m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp))
-                        m_physx.SetTransform(m_imgui.selectedObject, m_scene.gameObjects[m_imgui.selectedObject].transform);
+                        m_scene.gameObjects[m_imgui.selectedObject].SetTransform(m_scene.gameObjects[m_imgui.selectedObject].transform);
 
                     TableNextRow();
                     TableSetColumnIndex(0);
@@ -1118,7 +1126,7 @@ void Engine::DrawProperties()
                     {
                         RedFoxMaths::Float3 radRotation = rotation * DEG2RAD;
                         m_scene.gameObjects[m_imgui.selectedObject].orientation = RedFoxMaths::Quaternion::FromEuler(radRotation);
-                        m_physx.SetTransform(m_imgui.selectedObject, m_scene.gameObjects[m_imgui.selectedObject].transform);
+                        m_scene.gameObjects[m_imgui.selectedObject].SetTransform(m_scene.gameObjects[m_imgui.selectedObject].transform);
                     }
 
                     TableNextRow();
