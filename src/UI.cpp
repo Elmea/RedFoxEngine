@@ -1020,9 +1020,12 @@ void Engine::DrawAssetsBrowser()
                 InputText("Path", (char*)path.data, path.capacity);
                 if (Button("Import"))
                 {
-                    if (m_platform.FileExist(path.data))
+                    char tmp[256];
+                    memset(tmp, 0, 256);
+                    int len = ImFormatString(tmp, 256, "../assets/Models/%s", path.data);
+                    if (m_platform.FileExist(tmp) && len >= 17)
                     {
-                        ObjModelPush(path.data);
+                        ObjModelPush(tmp);
                         m_imgui.lockEditor = false;
                         CloseCurrentPopup();
                     }
@@ -1060,9 +1063,12 @@ void Engine::DrawAssetsBrowser()
                 InputText("Path", (char*)path.data, path.capacity);
                 if (Button("Import"))
                 {
-                    if (m_platform.FileExist(path.data))
+                    char tmp[256];
+                    memset(tmp, 0, 256);
+                    int len = ImFormatString(tmp, 256, "../assets/Sounds/%s", path.data);
+                    if (m_platform.FileExist(tmp) && len >= 17)
                     {
-                        m_soundManager.CreateSound(path.data, &m_memoryManager.m_memory.arena);
+                        m_soundManager.CreateSound(tmp, &m_memoryManager.m_memory.arena);
                         m_imgui.lockEditor = false;
                         CloseCurrentPopup();
                     }
@@ -1397,9 +1403,12 @@ void Engine::DrawWorldProperties()
                 InputText("Path", (char*)path.data, path.capacity);
                 if (Button("Import"))
                 {
-                    if (m_platform.FileExist(path.data))
+                    char tmp[256];
+                    memset(tmp, 0, 256);
+                    int len = ImFormatString(tmp, 256, "../assets/Shaders/%s", path.data);
+                    if (m_platform.FileExist(tmp) && len >= 18)
                     {
-                        m_graphics.AddPostProcessShader(&m_memoryManager.m_memory, path.data);
+                        m_graphics.AddPostProcessShader(&m_memoryManager.m_memory, tmp);
                         assignString(path, "");
                         CloseCurrentPopup();
                     }

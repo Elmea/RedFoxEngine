@@ -105,8 +105,8 @@ void Engine::ObjModelPush(const char *path)
         (u64)length, (void *)path), 0);
 
     u64 len = strlen(path);
-    m_modelsName[m_modelCount - 1] = initStringChar(path, len, &m_memoryManager.m_memory.arena);
-    m_modelsName[m_modelCount - 1].capacity = len;
+    m_modelsName[m_modelCount - 1] = initStringChar(path + 17, len - 17, &m_memoryManager.m_memory.arena);
+    m_modelsName[m_modelCount - 1].capacity = len - 17;
 }
 
 bool Engine::isRunning()
