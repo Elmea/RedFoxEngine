@@ -473,9 +473,12 @@ namespace RedFoxEngine
             {
                 Model* model = &m_models[i];
                 int instanceCount = modelCountIndex[i];
-                glProgramUniform1i(m_blinnPhong.fragment, 1, model->materialOffset);
+                glProgramUniform1i(m_blinnPhong.fragment, 1, 0);
                 if (m_materials[model->materialOffset].diffuseMap != -1)
+                {
+                    glProgramUniform1i(m_blinnPhong.fragment, 1, model->materialOffset);
                     bindBuffer(5, m_materialSSBO, m_materialCount * sizeof(Material));
+                }
                 else
                     glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 5, m_materialSSBO, (totalCount + m_materialCount) * sizeof(Material), instanceCount * sizeof(Material));
                 glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 3, m_matrixSSBO, totalCount * sizeof(RedFoxMaths::Mat4), instanceCount * sizeof(RedFoxMaths::Mat4));

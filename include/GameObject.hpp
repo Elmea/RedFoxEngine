@@ -27,6 +27,9 @@ namespace RedFoxEngine
         };
         int parent;
         int modelIndex;
+        // int materialIndex;
+        // int materialIndex1;
+        // int materialIndex2;
         RedFoxMaths::Float3 Color;
         
         physx::PxRigidActor* body;

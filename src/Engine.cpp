@@ -61,7 +61,6 @@ Engine::Engine(int width, int height) :
     m_memoryManager.m_sceneUsedMemory = m_memoryManager.m_memory.arena.usedSize;
 
     //TODO transition to an instance based model 'model'
-#if 1
     LoadScene("Sample Scene");
     Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
     dir->lightInfo.constant = 1.0f;
@@ -72,50 +71,6 @@ Engine::Engine(int width, int height) :
     dir->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
     dir->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
     dir->lightInfo.specular = {0.1f, 0.1f, 0.1f};
-#else
-    initSphericalManyGameObjects(5000);
-    m_scene.m_name = initStringChar("Sample Scene", 255, &m_memoryManager.m_memory.arena);
-
-    // Some light for testing
-    {
-        Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
-        dir->lightInfo.constant = 1.0f;
-        dir->lightInfo.linear = 0.09f;
-        dir->lightInfo.quadratic = 0.032f;
-        dir->lightInfo.position = {0.0f, 75.0f, 0.0f};
-        dir->lightInfo.direction = { 0.3f, -0.8f, -0.5f };
-        dir->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
-        dir->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
-        dir->lightInfo.specular = {0.1f, 0.1f, 0.1f};
-    }
-    /*
-    // Post process tests
-    {
-
-        float edge[4][4] = {
-            { 1.f, 1.f, 1.f, 0.f },
-            { 1.f, -8.f, 1.f, 0.f },
-            { 1.f, 1.f, 1.f, 0.f },
-            { 0.f, 0.f, 0.f, 1.f }
-        };
-
-        float blur[4][4] = {
-            { 1.f / 16.f, 2.f / 16.f, 1.f / 16.f, 0.f },
-            { 2.f / 16.f, 4.f / 16.f, 2.f / 16.f, 0.f },
-            { 1.f / 16.f, 2.f / 16.f, 1.f / 16.f, 0.f },
-            { 0.f, 0.f, 0.f, 1.f }
-        };
-
-        RedFoxMaths::Mat4 kernelMat = edge;
-        RedFoxMaths::Mat4 secondKernelMat = blur;
-        m_graphics.AddKernel(kernelMat);
-        // m_graphics.AddKernel(secondKernelMat);
-
-        m_graphics.AddPostProcessShader(&m_memoryManager.m_memory.temp, "greyScale.frag");
-        m_graphics.AddPostProcessShader(&m_memoryManager.m_memory.temp, "invertColor.frag");
-    }*/
-
-#endif
     m_input = {};
     //TODO: ask user for what game to load ? or maybe save the game dll
     // path into the scene data ? maybe both
@@ -309,7 +264,7 @@ void Engine::UpdateModelMatrices()
         {
             if (m_scene.gameObjects[index].modelIndex == modelIndex)
             {
-                Model *model                               = &m_models[modelIndex];
+                Model *model = &m_models[modelIndex];
                 m_graphics.m_materials[m_graphics.m_materialCount + totalIndex]         = m_graphics.m_materials[model->materialOffset];
                 m_graphics.m_materials[m_graphics.m_materialCount + totalIndex].diffuse = m_scene.gameObjects[index].Color;
 

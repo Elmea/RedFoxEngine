@@ -102,7 +102,7 @@ BEHAVIOUR(Player)
     if (inputs->A || inputs->Left)  inputDirection.x += -1;
     if (inputs->D || inputs->Right) inputDirection.x += 1;
     
-    float speed = 1000000;
+    float speed = 5000000;
     Float3 velocity(0, 0, 0);
     if (inputs->W || inputs->S || inputs->A || inputs->D)
     {
