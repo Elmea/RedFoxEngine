@@ -212,7 +212,14 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
     if (ImageButton("STOP", m_imgui.icons[10], ImVec2(buttonHeight, buttonHeight)))
     {
-        LoadScene(m_scene.m_name.data);
+        char path[255] = "Scene/";
+        int i = 0;
+        while (path[i] != '\0')
+            i++;
+        int j = 0;
+        while (m_scene.m_name.data[j] != '\0')
+             path[i++] = m_scene.m_name.data[j++];
+        LoadScene(path);
         if (m_scene.isPaused == false)
         {
             SetCapture(NULL);
