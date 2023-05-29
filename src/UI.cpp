@@ -213,6 +213,12 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     if (ImageButton("STOP", m_imgui.icons[10], ImVec2(buttonHeight, buttonHeight)))
     {
         LoadScene(m_scene.m_name.data);
+        if (m_scene.isPaused == false)
+        {
+            SetCapture(NULL);
+            m_imgui.captureMouse = false;
+            m_input.HideCursor(false);
+        }
         m_scene.isPaused = true;
     }
     
@@ -255,7 +261,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->modelIndex = -1;
     }
 
-    if (IsKeyDown(ImGuiKey_LeftCtrl) && IsKeyPressed(ImGuiKey_D)) //TODO Position and Rotation cant be changed
+    if ((IsKeyDown(ImGuiKey_RightCtrl) || IsKeyDown(ImGuiKey_LeftCtrl)) && IsKeyPressed(ImGuiKey_D)) //TODO Position and Rotation cant be changed
     {
         GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
         *newGameObject = m_scene.gameObjects[m_imgui.selectedObject];
@@ -264,6 +270,11 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         int size = snprintf(tmp, 255, "New entity #%d", m_scene.gameObjectCount - 1);
         newGameObject->parent = 0;
         newGameObject->name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
+        m_imgui.selectedObject = m_scene.gameObjectCount - 1;
+        if (newGameObject->modelIndex == 0)
+            m_physx.CreateDynamicCube(newGameObject, newGameObject->transform);
+        else if (newGameObject->modelIndex == 1)
+            m_physx.CreateDynamicSphere(newGameObject, newGameObject->transform);
     }
 
 
