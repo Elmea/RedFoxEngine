@@ -54,7 +54,7 @@ struct ImGUI
     ImGuizmo::MODE gizmoMode;
     ImGuiIO* io;
     ImFont* defaultFont;
-    ImTextureID icons[10];
+    ImTextureID icons[11];
 
     const ImGuiDockNodeFlags dockingFlags =
         ImGuiDockNodeFlags_NoWindowMenuButton |

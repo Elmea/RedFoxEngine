@@ -12,7 +12,6 @@
 
 #include "Physics.hpp"
 #include "Scene.hpp"
-// #include "Camera.hpp"
 
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
@@ -41,9 +40,9 @@ UIBEHAVIOUR(UI)
 }
 
 
+/*
 void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
 {
-    /*
     if (IsMouseClicked(ImGuiMouseButton_Left) && !m_imgui.manipulatingGizmo && !m_imgui.lockEditor && m_scene.isPaused)
     {
         RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
@@ -65,11 +64,9 @@ void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngin
         }
     }
 
-    */
     if (input->mouseLClick)
     {
         printf("Clic\n");
-        /*
         RedFoxMaths::Float4 ray_clip = { 0, 0, -1, 1 };
         RedFoxMaths::Float4 ray_eye = scene->m_gameCamera.m_projection.GetInverseMatrix() * ray_clip;
         ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };
@@ -84,9 +81,9 @@ void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngin
             physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
             if (hit.actor) printf("OEUF\n");
         } 
-        */
     }
 }
+*/
 
 
 BEHAVIOUR(Player)
@@ -100,12 +97,12 @@ BEHAVIOUR(Player)
     scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
     
     Float3 inputDirection(0, 0, 0);
-    float speed = 300.f;
     if (inputs->W || inputs->Up)    inputDirection.z += -1;
     if (inputs->S || inputs->Down)  inputDirection.z += 1;
     if (inputs->A || inputs->Left)  inputDirection.x += -1;
     if (inputs->D || inputs->Right) inputDirection.x += 1;
     
+    float speed = 5000000;
     Float3 velocity(0, 0, 0);
     if (inputs->W || inputs->S || inputs->A || inputs->D)
     {
@@ -117,13 +114,17 @@ BEHAVIOUR(Player)
         physx::PxRigidDynamic* playerCapsule = self->body->is<physx::PxRigidDynamic>();
         if (playerCapsule)
         {
-            playerCapsule->addForce({ velocity.x, velocity.y, velocity.z }, physx::PxForceMode::eVELOCITY_CHANGE);
-            if (velocity.Magnitude() >= 100.f)
-                playerCapsule->clearForce(physx::PxForceMode::eVELOCITY_CHANGE);
+            playerCapsule->addForce({ velocity.x, velocity.y, velocity.z }, physx::PxForceMode::eFORCE);
         }
     }
     
-    Gun(self, scene, inputs, physx);
+    //Gun(self, scene, inputs, physx);
+}
+
+__declspec(dllexport) STARTGAME(StartGame)
+{
+#pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
+    printf("Started the game successfully!\n");
 }
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
@@ -138,19 +139,16 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     RedFoxEngine::Scene *scene = (RedFoxEngine::Scene *)s;
     RedFoxEngine::Physx *physx = (RedFoxEngine::Physx *)p;
     RedFoxEngine::Input* inputs = (RedFoxEngine::Input*)i;
-    
     RedFoxEngine::GameObject* player = &scene->gameObjects[2];
-    if (!scene->isInit)
+
+    static bool reloaded;
+    if (!scene->isInit || reloaded == false)
     {
-        // Problem with that is this is not reflected in the editor UI at runtime, for both gameobject and gameUI
         player->behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
         player->UpdateTransform();
-        
-        // This UI object must be initialized in editor before playing
         scene->gameUIs[1].behaviourIndex = scene->AddUIBehaviour("UI", UI);
-
-
         scene->isInit = true;
+        reloaded = true;
     }
 
     player->UpdateTransform();
