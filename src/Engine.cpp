@@ -64,7 +64,7 @@ Engine::Engine(int width, int height) :
 
     //TODO transition to an instance based model 'model'
 #if 1
-    LoadScene("Sample Scene");
+    LoadScene("Scene/Sample Scene");
     Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
     dir->lightInfo.constant = 1.0f;
     dir->lightInfo.linear = 0.09f;
@@ -426,11 +426,11 @@ void Engine::InitSkyDome()
     m_scene.skyDome.model = RedFoxMaths::Mat4::GetScale({ skyDrawDistance,
         skyDrawDistance, skyDrawDistance });
 
-    m_scene.skyDome.topTint = LoadTextureFromFilePath("topSkyTint.png", false, true);
-    m_scene.skyDome.botTint = LoadTextureFromFilePath("botSkyTint.png");
-    m_scene.skyDome.sun     = LoadTextureFromFilePath("sun.png");
-    m_scene.skyDome.moon    = LoadTextureFromFilePath("moon.png");
-    m_scene.skyDome.clouds  = LoadTextureFromFilePath("clouds.png");
+    m_scene.skyDome.topTint = LoadTextureFromFilePath("Skydome/topSkyTint.png", false, true);
+    m_scene.skyDome.botTint = LoadTextureFromFilePath("Skydome/botSkyTint.png");
+    m_scene.skyDome.sun     = LoadTextureFromFilePath("Skydome/sun.png");
+    m_scene.skyDome.moon    = LoadTextureFromFilePath("Skydome/moon.png");
+    m_scene.skyDome.clouds  = LoadTextureFromFilePath("Skydome/clouds.png");
 }
 
 Engine::~Engine()

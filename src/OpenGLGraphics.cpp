@@ -27,16 +27,16 @@ namespace RedFoxEngine
         m = resources;
         dimension = p_dimension;
 
-        m_font.fragmentPath        = initStringChar("font.frag", 10, &m->m_memory.arena);
-        m_font.vertexPath          = initStringChar("font.vert", 10, &m->m_memory.arena);
-        m_blinnPhong.fragmentPath  = initStringChar("blinn_phong.frag.glsl", 21, &m->m_memory.arena);
-        m_blinnPhong.vertexPath    = initStringChar("blinn_phong.vert.glsl", 21, &m->m_memory.arena);
-        m_shadow.fragmentPath      = initStringChar("ShadowShader.frag", 24, &m->m_memory.arena);
-        m_shadow.vertexPath        = initStringChar("ShadowShader.vert", 24, &m->m_memory.arena);
-        m_sky.fragmentPath         = initStringChar("skydome.frag", 16, &m->m_memory.arena);
-        m_sky.vertexPath           = initStringChar("skydome.vert", 16, &m->m_memory.arena);
-        m_postProcess.fragmentPath = initStringChar("PostProcess.frag", 16, &m->m_memory.arena);
-        m_postProcess.vertexPath   = initStringChar("PostProcess.vert", 16, &m->m_memory.arena);
+        m_font.fragmentPath        = initStringChar("Shaders/font.frag", 17, &m->m_memory.arena);
+        m_font.vertexPath          = initStringChar("Shaders/font.vert", 17, &m->m_memory.arena);
+        m_blinnPhong.fragmentPath  = initStringChar("Shaders/blinn_phong.frag.glsl", 29, &m->m_memory.arena);
+        m_blinnPhong.vertexPath    = initStringChar("Shaders/blinn_phong.vert.glsl", 29, &m->m_memory.arena);
+        m_shadow.fragmentPath      = initStringChar("Shaders/ShadowShader.frag", 25, &m->m_memory.arena);
+        m_shadow.vertexPath        = initStringChar("Shaders/ShadowShader.vert", 25, &m->m_memory.arena);
+        m_sky.fragmentPath         = initStringChar("Shaders/skydome.frag", 20, &m->m_memory.arena);
+        m_sky.vertexPath           = initStringChar("Shaders/skydome.vert", 20, &m->m_memory.arena);
+        m_postProcess.fragmentPath = initStringChar("Shaders/PostProcess.frag", 24, &m->m_memory.arena);
+        m_postProcess.vertexPath   = initStringChar("Shaders/PostProcess.vert", 24, &m->m_memory.arena);
         InitShaders();
         // setup global GL state
         {
