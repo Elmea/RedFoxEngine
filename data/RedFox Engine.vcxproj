@@ -275,6 +275,7 @@
     <ClInclude Include="..\include\SoundManager.hpp" />
     <ClInclude Include="..\include\Transform.hpp" />
     <ClInclude Include="..\include\Win32Platform.hpp" />
+    <ClInclude Include="resource1.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="blinn_phong.frag.glsl" />
@@ -291,6 +292,12 @@
   <ItemGroup>
     <Content Include="greyScale.frag" />
     <Content Include="invertColor.frag" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="logo.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RedFox Engine.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
