@@ -261,6 +261,7 @@ void RedFoxEngine::Platform::MessageProcessing(Input *input)
             int mouseY = input->mouseYPosition;
             input->mouseXPosition = LOWORD(Message.lParam);
             input->mouseYPosition = HIWORD(Message.lParam);
+                
             input->mouseXDelta = input->mouseXPosition - mouseX;
             input->mouseYDelta = input->mouseYPosition - mouseY;
             if (input->lockMouse)

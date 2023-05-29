@@ -61,24 +61,17 @@ Light* LightStorage::CreateLight(LightType type)
     {
         if (lights[i].GetType() == LightType::NONE)
         {
-            lights[i].SetType(type);
+            ModifyLightType(i, type);
             return &lights[i];
         }
     }
 
-    Light newLight { type , lightCount };
+    Light newLight { LightType::NONE , lightCount };
     newLight.lightInfo.shadowParameters.index = lightCount;
-    newLight.SetType(type);
-
     lights[lightCount] = newLight;
+
+    ModifyLightType(lightCount, type);
     shadowMaps[lightCount] = lights[lightCount].lightInfo.shadowParameters.depthMap;
-    switch(type)
-    {
-        case POINT: pointLightCount++;break;
-        case SPOT: spotLightCount++;break;
-        case DIRECTIONAL: dirLightCount++;break;
-        case NONE: break;
-    }
     lightCount++;
 
     return &lights[lightCount-1];
@@ -86,19 +79,37 @@ Light* LightStorage::CreateLight(LightType type)
 
 void LightStorage::RemoveLight(int lightIndex)
 {
-    switch(lights[lightIndex].GetType())
-    {
-        case POINT: pointLightCount--;break;
-        case SPOT: spotLightCount--;break;
-        case DIRECTIONAL: dirLightCount--;break;
-        case NONE: break;
-    }
-    lights[lightIndex].SetType(LightType::NONE);
+    ModifyLightType(lightIndex, LightType::NONE);
 }
 
-void Light::SetProjection(LightType type)
+void LightStorage::ModifyLightType(int index, LightType type)
 {
-    switch (type)
+    if (type == lights[index].type)
+        return;
+    
+    switch(type)
+    {
+        case POINT: pointLightCount++;break;
+        case SPOT: spotLightCount++;break;
+        case DIRECTIONAL: dirLightCount++;break;
+        case NONE: break;
+    }
+
+    switch(lights[index].type)
+    {
+    case POINT: pointLightCount--;break;
+    case SPOT: spotLightCount--;break;
+    case DIRECTIONAL: dirLightCount--;break;
+    case NONE: break;
+    }
+    
+    lights[index].type = type;
+    lights[index].SetProjection(type);
+}
+    
+void Light::SetProjection(LightType _type)
+{
+    switch (_type)
     {
     case (LightType::DIRECTIONAL):
         projection = RedFoxMaths::Mat4::GetOrthographicMatrix(-100, 100, -100, 100, 1000.0001, 0.0001);
@@ -109,20 +120,14 @@ void Light::SetProjection(LightType type)
         break;
 
     case (LightType::SPOT):
-        projection = RedFoxMaths::Mat4::GetPerspectiveMatrix(1, 120, 1000, 0.0001);
+        projection = RedFoxMaths::Mat4::GetPerspectiveMatrix(1, 90, 1000, 0.0001);
         break;
 
     default:
         break;
     }
 }
-
-void Light::SetType(LightType _type)
-{
-    type = _type;
-    SetProjection(type);
-}
-
+    
 RedFoxMaths::Mat4 Light::GetProjection()
 {
     return projection;
@@ -199,7 +204,8 @@ void Engine::UpdateLights(LightStorage* lightStorage) //TODO: This function or s
         if (update)
         {
 
-            RedFoxMaths::Float3 rotation = RedFoxMaths::Float3::DirToEuler(current->lightInfo.direction);
+            RedFoxMaths::Float3 rotation = current->rotation.ToEuler();
+            current->lightInfo.direction = RedFoxMaths::Float3::EulerToDir(rotation);
 
             RedFoxMaths::Mat4 lightView = RedFoxMaths::Mat4::GetTranslation(current->lightInfo.position) * RedFoxMaths::Mat4::GetRotationY(rotation.y) *
                 RedFoxMaths::Mat4::GetRotationX(rotation.x) * RedFoxMaths::Mat4::GetRotationZ(rotation.z);

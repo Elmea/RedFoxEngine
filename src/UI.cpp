@@ -190,10 +190,24 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     if (ImageButton("PAUSE", m_scene.isPaused ? m_imgui.icons[3] : m_imgui.icons[2], ImVec2(buttonHeight, buttonHeight)))
     {
         m_scene.isPaused = !m_scene.isPaused;
-        if (!m_scene.isPaused)
-            m_game.start(&m_scene, &m_physx, &m_input);
+        if (!m_imgui.captureMouse && !m_scene.isPaused)
+        {
+            SetCapture(m_platform.m_window);
+            m_imgui.captureMouse = true;
+            m_input.HideCursor(true);
+        }
     }
 
+    if (m_imgui.captureMouse)
+    {
+        if (IsKeyPressed(ImGuiKey_Escape))
+        {
+            SetCapture(NULL);
+            m_imgui.captureMouse = false;
+            m_input.HideCursor(false);
+        }
+    }
+    
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
     if (ImageButton("STOP", m_imgui.icons[10], ImVec2(buttonHeight, buttonHeight)))
@@ -231,7 +245,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     if (ImageButton("ADD ENTITY", m_imgui.icons[7], ImVec2(buttonHeight, buttonHeight)))
     {
         GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
-        *newGameObject = { 0 };
+        *newGameObject = { };
         char tmp[255];
         int size = snprintf(tmp, 255, "New entity #%d", m_scene.gameObjectCount - 1);
         newGameObject->name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
@@ -1117,8 +1131,7 @@ void Engine::DrawProperties()
                     if (DragFloat3("TransformRotation", &rotation.x, m_imgui.dragSpeed, -360.f, 360.f, "%.3f", ImGuiSliderFlags_AlwaysClamp))
                     {
                         RedFoxMaths::Float3 radRotation = rotation * DEG2RAD;
-                        m_scene.gameObjects[m_imgui.selectedObject].orientation = radRotation;
-                        m_scene.gameObjects[m_imgui.selectedObject].orientation.Normalize();
+                        m_scene.gameObjects[m_imgui.selectedObject].orientation = RedFoxMaths::Quaternion::FromEuler(radRotation);
                         m_scene.gameObjects[m_imgui.selectedObject].SetTransform(m_scene.gameObjects[m_imgui.selectedObject].transform);
                     }
 
@@ -1422,6 +1435,112 @@ void Engine::DrawWorldProperties()
     End();
 }
 
+void Engine::DrawLightsProperties()
+{
+    if (Begin("Lights Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
+    {
+        bool shouldRemoveLights = false;
+        for (int i = 0; i < m_graphics.lightStorage.lightCount; i++)
+        {
+            if (m_graphics.lightStorage.lights[i].GetType() == LightType::NONE)
+                continue;
+
+            
+            Light* current = &m_graphics.lightStorage.lights[i];
+            std::string name = "Light " + std::to_string(i + 1);
+            if (CollapsingHeader(name.c_str(), m_imgui.propertiesFlags))
+            {
+                BeginTable(name.c_str(), 1, m_imgui.tableFlags);
+                TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+                TableNextRow();
+
+                TableSetColumnIndex(0);
+
+                SeparatorText("Type");
+
+                const char* text;
+                switch (current->type)
+                {
+                case LightType::DIRECTIONAL:
+                    text = "Directional";
+                    break;
+                case LightType::SPOT:
+                    text = "Spot";
+                    break;
+                case LightType::POINT:
+                    text = "Point";
+                    break;
+
+                default:
+                    text = "None";
+                    break;
+                }
+                
+                if (BeginCombo("Type", text))
+                {
+                    bool is_selected = false;
+                    if (Selectable("Directional", is_selected))
+                        m_graphics.lightStorage.ModifyLightType(i, LightType::DIRECTIONAL);
+
+                    if (Selectable("Spot", is_selected))
+                        m_graphics.lightStorage.ModifyLightType(i, LightType::SPOT);
+                    
+                    if (Selectable("Point", is_selected))
+                        m_graphics.lightStorage.ModifyLightType(i, LightType::POINT);
+                    
+                    if (is_selected)
+                        SetItemDefaultFocus();
+
+                    EndCombo();
+                }
+                
+                DragFloat3("Position", &current->lightInfo.position.x, 0.1f);
+
+                RedFoxMaths::Float3 angles = current->rotation.ToEuler();
+                angles *= RAD2DEG;
+                if (DragFloat3("Rotation", &angles.x, 0.5f, -180, 180))
+                    current->rotation = RedFoxMaths::Quaternion::FromEuler(angles * DEG2RAD);
+    
+                if (current->GetType() == LightType::SPOT)
+                {
+                    DragFloat("Cutoff", &current->lightInfo.cutOff, 1, 0, 1);
+                    DragFloat("OutterCutoff", &current->lightInfo.outerCutOff, 1, 0, 1);
+                }
+
+                if (CollapsingHeader("Ambiant"))
+                    ColorPicker3("AmbiantColor", &current->lightInfo.ambient.x, ImGuiColorEditFlags_PickerHueWheel);
+
+                if (CollapsingHeader("Diffuse"))
+                    ColorPicker3("DiffuseColor", &current->lightInfo.diffuse.x, ImGuiColorEditFlags_PickerHueWheel);
+
+                if (CollapsingHeader("Specular"))
+                    ColorPicker3("SpecularColor", &current->lightInfo.specular.x, ImGuiColorEditFlags_PickerHueWheel);
+                
+                if (Button("Remove"))
+                {
+                    m_graphics.lightStorage.RemoveLight(i);
+                }
+                
+                EndTable();
+            }
+        }
+
+        if (Button("Add light"))
+        {
+            Light* newOne = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
+            newOne->lightInfo.constant = 1.0f;
+            newOne->rotation = RedFoxMaths::Quaternion::FromEuler(-PI/2.f, 0.f, 0.f );
+            newOne->lightInfo.linear = 0.09f;
+            newOne->lightInfo.position = {0.0f, 75.0f, 0.0f};
+            newOne->lightInfo.quadratic = 0.032f;
+            newOne->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
+            newOne->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
+            newOne->lightInfo.specular = {0.1f, 0.1f, 0.1f};
+        }
+    }
+    End();
+}
+
 void Engine::UpdateIMGUI()
 {
     ImGui_ImplWin32_NewFrame();
@@ -1438,6 +1557,7 @@ void Engine::UpdateIMGUI()
     DrawUIGraph();
     DrawSceneGraph();
     DrawWorldProperties();
+    DrawLightsProperties();
     DrawProperties();
     DrawAssetsBrowser();
     PopFont();

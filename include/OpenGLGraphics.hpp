@@ -30,10 +30,11 @@ struct LightStorage
     GLuint dirLightSSBO;
     u32    pointLightCount;
     GLuint pointLightSSBO;
-    int    lightCount;
-    Light *lights;
-    u32   *shadowMaps;
-    Light *CreateLight(LightType type);
+    int lightCount;
+    Light* lights;
+    unsigned int* shadowMaps;
+    Light* CreateLight(LightType type);
+    void ModifyLightType(int index, LightType type);
     void RemoveLight(int lightIndex);
 };
 

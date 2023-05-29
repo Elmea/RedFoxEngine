@@ -31,8 +31,11 @@ struct WindowDimension
     int height;
 };
 
-struct Input
+class Input
 {
+    bool hideCursor;
+
+public:
     bool lockMouse = false;
     int mouseXPosition;
     int mouseYPosition;
@@ -87,6 +90,15 @@ struct Input
     u8 Left : 1;
     u8 Right : 1;
     u8 Delete : 1;
+    
+    void HideCursor(bool state)
+    {
+        if (state != hideCursor)
+        {
+            hideCursor = state;
+            ShowCursor(!state);  
+        }
+    }
 };
 
 #define UPDATEGAME(name) void name(void *s,  \
