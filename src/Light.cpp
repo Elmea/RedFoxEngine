@@ -207,7 +207,8 @@ void Engine::UpdateLights(LightStorage* lightStorage) //TODO: This function or s
             RedFoxMaths::Float3 rotation = current->rotation.ToEuler();
             current->lightInfo.direction = RedFoxMaths::Float3::EulerToDir(rotation);
 
-            RedFoxMaths::Mat4 lightView = RedFoxMaths::Mat4::GetTranslation(current->lightInfo.position) * RedFoxMaths::Mat4::GetRotationY(rotation.y) *
+            RedFoxMaths::Mat4 lightView = RedFoxMaths::Mat4::GetTranslation(current->lightInfo.position) *
+                RedFoxMaths::Mat4::GetRotationY(rotation.y) *
                 RedFoxMaths::Mat4::GetRotationX(rotation.x) * RedFoxMaths::Mat4::GetRotationZ(rotation.z);
 
             current->lightInfo.VP = (lightStorage->lights[i].GetProjection() * lightView.GetInverseMatrix()).GetTransposedMatrix();
