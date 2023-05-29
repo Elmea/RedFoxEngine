@@ -115,7 +115,7 @@ void RedFoxEngine::Graphics::AddPostProcessShader(Allocators *allocator, const c
     
 
     Shader temp;
-    temp.vertexPath = initStringChar("PostProcess.vert", 24, &allocator->arena);
+    temp.vertexPath = initStringChar("Shaders/PostProcess.vert", 24, &allocator->arena);
     temp.fragmentPath = initStringChar(fragPath, 24, &allocator->arena);
     CompileShader(temp, &allocator->temp);
 
