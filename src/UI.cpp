@@ -240,6 +240,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         {
             SetCapture(m_platform.m_window);
             m_imgui.captureMouse = true;
+            m_input.lockMouse = true;
             m_input.HideCursor(true);
         }
     }
@@ -250,6 +251,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         {
             SetCapture(NULL);
             m_imgui.captureMouse = false;
+            m_input.lockMouse = false;
             m_input.HideCursor(false);
         }
     }
@@ -762,14 +764,17 @@ void Engine::DrawEditor()
                 }
             }
 
-            if (IsMouseDown(ImGuiMouseButton_Right))
+            if (m_scene.isPaused)
             {
-                m_input.lockMouse = m_editorCameraEnabled = true;
-            }
-            else
-            {
-                m_editorCameraVelocity = { 0.f, 0.f, 0.f };
-                m_input.lockMouse = m_editorCameraEnabled = false;
+                if (IsMouseDown(ImGuiMouseButton_Right))
+                {
+                    m_input.lockMouse = m_editorCameraEnabled = true;
+                }
+                else
+                {
+                    m_editorCameraVelocity = { 0.f, 0.f, 0.f };
+                    m_input.lockMouse = m_editorCameraEnabled = false;
+                }
             }
         }
 
