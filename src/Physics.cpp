@@ -43,7 +43,7 @@ void Physx::CreateDynamicCube(GameObject* object, Transform transform, float mas
 	PxShape* shape = physics->createShape(PxBoxGeometry(transform.scale.x, transform.scale.y, transform.scale.z), *dynamicMaterial);
 	object->body = physics->createRigidDynamic(t);
 	object->body->attachShape(*shape);
-	PxRigidBodyExt::updateMassAndInertia(*object->body->is<PxRigidBody>(), 10.0f);
+	PxRigidBodyExt::updateMassAndInertia(*object->body->is<PxRigidBody>(), mass);
 	m_scene->addActor(*object->body);
 	shape->release();
 }
@@ -55,7 +55,7 @@ void Physx::CreateDynamicSphere(GameObject* object, Transform transform, float m
 	PxShape* shape = physics->createShape(PxSphereGeometry(radius), *dynamicMaterial);
 	object->body = physics->createRigidDynamic(t);
 	object->body->attachShape(*shape);
-	PxRigidBodyExt::updateMassAndInertia(*object->body->is<PxRigidBody>(), 10.0f);
+	PxRigidBodyExt::updateMassAndInertia(*object->body->is<PxRigidBody>(), mass);
 	m_scene->addActor(*object->body);
 	shape->release();
 }
@@ -147,7 +147,7 @@ void Physx::InitScene(Scene *scene, int sphereIndex, int cubeIndex)
 	}
 }
 
-void Physx::UpdatePhysics(f32 deltaTime, Scene* scene, ResourcesManager m)
+void Physx::UpdatePhysics(f32 deltaTime, Scene* scene)
 {
 	static bool wasPaused;
 	actorCount = m_scene->getNbActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC);
@@ -164,18 +164,18 @@ void Physx::UpdatePhysics(f32 deltaTime, Scene* scene, ResourcesManager m)
 				if (dynamicActor)
 				{
 					if (!scene->isPaused)
-					{
 						wasPaused = true;
+					if (dynamicActor->getRigidBodyFlags().isSet(PxRigidBodyFlag::eKINEMATIC))
 						dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, false);
-						physx::PxTransform transform = dynamicActor->getGlobalPose();
-						RedFoxMaths::Quaternion q = { transform.q.w, transform.q.x, transform.q.y, transform.q.z };
-						RedFoxMaths::Float3 p = { transform.p.x, transform.p.y, transform.p.z };
-						Transform t = { p, scene->gameObjects[i].scale, q };
-						scene->gameObjects[i].transform = scene->GetWorldTransformFromLocal(t, i);
-					}
-					else
+					physx::PxTransform transform = dynamicActor->getGlobalPose();
+					RedFoxMaths::Quaternion q = { transform.q.w, transform.q.x, transform.q.y, transform.q.z };
+					RedFoxMaths::Float3 p = { transform.p.x, transform.p.y, transform.p.z };
+					Transform t = { p, scene->gameObjects[i].scale, q };
+					scene->gameObjects[i].transform = scene->GetLocalTransformFromWorld(t, i);
+					if (scene->isPaused)
 					{
-						dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
+						if (i == 2)
+						 dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
 					}
 					if (wasPaused)
 					{

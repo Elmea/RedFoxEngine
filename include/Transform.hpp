@@ -216,16 +216,6 @@ namespace RedFoxEngine
 		RedFoxMaths::Float3 scale;
 		RedFoxMaths::Quaternion orientation;
 
-		Transform operator+(const Transform& t) const
-		{
-			return { position + t.position, scale + t.scale, orientation + t.orientation };
-		}
-
-		Transform operator*(const float& f)
-		{
-			return { position * f, scale * f, orientation * f };
-		}
-
 		Transform operator*(const Transform& t) const
 		{
 			return {
@@ -239,7 +229,7 @@ namespace RedFoxEngine
 		{
 			return {
 				Inversed(orientation) * Negate(position),
-				scale,
+				{-scale.x, -scale.y, -scale.z},
 				Inversed(orientation)
 			};
 		}

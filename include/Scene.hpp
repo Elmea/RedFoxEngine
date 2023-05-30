@@ -76,14 +76,14 @@ public:
         return gameObjects[gameObjectindex].GetLocalMatrix();
     };
 
-    RedFoxEngine::Transform GetWorldTransformFromLocal(Transform transform, int gameObjectIndex)
+    RedFoxEngine::Transform GetLocalTransformFromWorld(Transform transform, int gameObjectIndex)
     {
         GameObject* current = &gameObjects[gameObjectIndex];
         if (current->parent)
         {
-            return current->transform + GetWorldTransform(current->parent).Inverse();
+            return transform * GetWorldTransform(current->parent).Inverse();
         }
-        return gameObjects[gameObjectIndex].transform;
+        return transform;
     }
 
     RedFoxEngine::Transform GetWorldTransform(int gameObjectindex)

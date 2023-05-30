@@ -145,11 +145,8 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     if (!scene->isInit || reloaded == false)
     {
         player->behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
-        player->UpdateTransform();
         scene->gameUIs[1].behaviourIndex = scene->AddUIBehaviour("UI", UI);
         scene->isInit = true;
         reloaded = true;
     }
-
-    player->UpdateTransform();
 }
