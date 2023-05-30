@@ -182,7 +182,51 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     if (ImageButton("SAVE SCENE", m_imgui.icons[1], ImVec2(buttonHeight, buttonHeight))
         || (IsKeyDown(ImGuiKey_S) && IsKeyDown(ImGuiKey_LeftCtrl)) ) //TODO Add security on CTRL+S to only add SaveScene when there is a change
     {
-        SaveScene(m_scene.m_name.data, m_scene);
+        char tmp[272];
+        memset(tmp, 0, 272);
+        int len = ImFormatString(tmp, 272, "../assets/Scene/%s", m_scene.m_name.data);
+        SaveScene(tmp, m_scene);
+    }
+
+    SetNextWindowPos((m_imgui.windowSize - m_imgui.popupDim) / 2);
+    SetNextWindowSize(m_imgui.popupDim);
+    if (BeginPopupModal("Load scene"))
+    {
+        m_imgui.lockEditor = true;
+        SetItemDefaultFocus();
+        static MyString path = initStringChar("", 256, &m_memoryManager.m_memory.arena);
+        Text("Path:");
+        SameLine();
+        SetNextItemWidth(-FLT_MIN);
+        InputText("Path", (char*)path.data, path.capacity);
+        if (Button("Load"))
+        {
+            char tmp[272];
+            memset(tmp, 0, 272);
+            int len = ImFormatString(tmp, 272, "../assets/Scene/%s", path.data);
+            if (m_platform.FileExist(tmp) && len >= 16)
+            {
+                LoadScene(tmp);
+                m_imgui.lockEditor = false;
+                CloseCurrentPopup();
+            }
+            assignString(path, "");
+        }
+        SameLine();
+        if (Button("Cancel"))
+        {
+            assignString(path, "");
+            m_imgui.lockEditor = false;
+            CloseCurrentPopup();
+        }
+        EndPopup();
+    }
+
+    SameLine();
+    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
+    if (Button("LOAD SCENE", { 0, buttonHeight }))
+    {
+        OpenPopup("Load scene");
     }
     
     SameLine();
@@ -212,7 +256,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
     if (ImageButton("STOP", m_imgui.icons[10], ImVec2(buttonHeight, buttonHeight)))
     {
-        char path[255] = "Scene/";
+        char path[255] = "../assets/Scene/";
         int i = 0;
         while (path[i] != '\0')
             i++;
@@ -750,7 +794,10 @@ void Engine::DrawUIGraph()
             if (BeginPopupContextItem("RenameScenePopup"))
             {
                 if (IsKeyPressed(ImGuiKey_Enter))
+                {
+                    m_scene.m_name.size = strlen(m_scene.m_name.data);
                     CloseCurrentPopup();
+                }
 
                 SameLine();
                 InputText(" ", (char*)m_scene.m_name.data, m_scene.m_name.capacity);
@@ -864,7 +911,10 @@ void Engine::DrawSceneGraph()
             if (BeginPopupContextItem("RenameScenePopup"))
             {
                 if (IsKeyPressed(ImGuiKey_Enter))
+                {
+                    m_scene.m_name.size = strlen(m_scene.m_name.data);
                     CloseCurrentPopup();
+                }
 
                 SameLine();
                 InputText(" ", (char*)m_scene.m_name.data, m_scene.m_name.capacity);
@@ -1002,9 +1052,6 @@ void Engine::DrawAssetsBrowser()
     {
         if (BeginTable("AssetsTable", 2, m_imgui.tableFlags))
         {
-            const ImVec2 popupDim(400, 70);
-            ImVec2 windowPos = ImGui::GetIO().DisplaySize;
-
             TableNextRow();
             TableSetColumnIndex(0);
             Text("Models (%d/%d)", m_modelCount, m_maxModel);
@@ -1014,8 +1061,8 @@ void Engine::DrawAssetsBrowser()
             {
                 OpenPopup("Importing a model...");
             }
-            SetNextWindowPos((windowPos - popupDim) / 2);
-            SetNextWindowSize(popupDim);
+            SetNextWindowPos((m_imgui.windowSize - m_imgui.popupDim) / 2);
+            SetNextWindowSize(m_imgui.popupDim);
             if (BeginPopupModal("Importing a model..."))
             {
                 m_imgui.lockEditor = true;
@@ -1057,8 +1104,8 @@ void Engine::DrawAssetsBrowser()
             {
                 OpenPopup("Importing a sound...");
             }
-            SetNextWindowPos((windowPos - popupDim) / 2);
-            SetNextWindowSize(popupDim);
+            SetNextWindowPos((m_imgui.windowSize - m_imgui.popupDim) / 2);
+            SetNextWindowSize(m_imgui.popupDim);
             if (BeginPopupModal("Importing a sound..."))
             {
                 m_imgui.lockEditor = true;
@@ -1396,10 +1443,8 @@ void Engine::DrawWorldProperties()
             {
                 OpenPopup("Importing a shader...");
             }
-            const ImVec2 popupDim(400, 70);
-            ImVec2 windowPos = ImGui::GetIO().DisplaySize;
-            SetNextWindowPos((windowPos - popupDim) / 2);
-            SetNextWindowSize(popupDim);
+            SetNextWindowPos((m_imgui.windowSize - m_imgui.popupDim) / 2);
+            SetNextWindowSize(m_imgui.popupDim);
             if (BeginPopupModal("Importing a shader..."))
             {
                 SetItemDefaultFocus();
@@ -1578,6 +1623,7 @@ void Engine::UpdateIMGUI()
     ImGuizmo::BeginFrame();
 
     DrawDockSpace(GetMainViewport(), m_imgui.dockingFlags, (const ImGuiWindowClass*)0);
+    m_imgui.windowSize = ImGui::GetIO().DisplaySize;
 
     PushFont(m_imgui.defaultFont);
     DrawEditor();
