@@ -49,7 +49,8 @@ struct ImGUI
     float fpsUpdate;
     float dragSpeed = 1.f;
     ImVec2 windowSize;
-    RedFoxMaths::Float2 mousePosEditor = RedFoxMaths::Float2();
+    ImVec2 mousePosEditor;
+    ImVec2 centerEditorViewport;
     float fps[255];
     ImGuizmo::OPERATION gizmoType;
     ImGuizmo::MODE gizmoMode;

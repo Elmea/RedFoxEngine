@@ -556,6 +556,13 @@ void Engine::DrawEditor()
             mousePos.x * dimension.width / content.x - vMin.x,
             mousePos.y * dimension.height / content.y - vMin.y
         };
+        
+        m_imgui.centerEditorViewport = {
+            (dimension.width * (content.x - vMin.x)) / 2,
+            (dimension.height * (content.y - vMin.y)) / 2
+        };
+        
+        printf("%.2f %.2f\n", m_imgui.centerEditorViewport.x, m_imgui.centerEditorViewport.y);
 
         RedFoxMaths::Float2 uiPos, convertedPos, uiSize;
         for (int i = 1; i < m_scene.gameUICount; i++)
@@ -727,45 +734,45 @@ void Engine::DrawEditor()
             }
         }
 
-        if (m_imgui.mousePosEditor.x > 0 && m_imgui.mousePosEditor.x < content.x &&
-            m_imgui.mousePosEditor.y > 0 && m_imgui.mousePosEditor.y < content.y)
+        if (m_scene.isPaused)
         {
-            RedFoxMaths::Float3 ray_ndc = {
-                (2.0f * m_imgui.mousePosEditor.x) / content.x - 1.0f,
-                1.0f - (2.0f * m_imgui.mousePosEditor.y) / content.y,
-                1
-            };
-            RedFoxMaths::Float4 ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };
-            RedFoxMaths::Float4 ray_eye = m_editorCamera.m_projection.GetInverseMatrix() * ray_clip;
-            ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };
-            RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
-            ray_world.Normalize();
-
-            if (IsMouseClicked(ImGuiMouseButton_Left) && !m_imgui.manipulatingGizmo && !m_imgui.lockEditor && m_scene.isPaused)
+            if (m_imgui.mousePosEditor.x > 0 && m_imgui.mousePosEditor.x < content.x &&
+                m_imgui.mousePosEditor.y > 0 && m_imgui.mousePosEditor.y < content.y)
             {
-                RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
-                physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
-                physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
-                physx::PxRaycastBuffer hitCalls;
-                if (m_physx.m_scene->raycast(origin, unitDir, m_editorCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
+                RedFoxMaths::Float3 ray_ndc = {
+                    (2.0f * m_imgui.mousePosEditor.x) / content.x - 1.0f,
+                    1.0f - (2.0f * m_imgui.mousePosEditor.y) / content.y,
+                    1
+                };
+                RedFoxMaths::Float4 ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };
+                RedFoxMaths::Float4 ray_eye = m_editorCamera.m_projection.GetInverseMatrix() * ray_clip;
+                ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };
+                RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
+                ray_world.Normalize();
+
+                if (IsMouseClicked(ImGuiMouseButton_Left) && !m_imgui.manipulatingGizmo && !m_imgui.lockEditor && m_scene.isPaused)
                 {
-                    physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
-                    if (hit.actor)
+                    RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
+                    physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
+                    physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
+                    physx::PxRaycastBuffer hitCalls;
+                    if (m_physx.m_scene->raycast(origin, unitDir, m_editorCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
                     {
-                        for (int i = 0; i < m_scene.gameObjectCount; i++)
+                        physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
+                        if (hit.actor)
                         {
-                            if (m_scene.gameObjects[i].body == hit.actor)
+                            for (int i = 0; i < m_scene.gameObjectCount; i++)
                             {
-                                m_imgui.selectedObject = i;
-                                break;
+                                if (m_scene.gameObjects[i].body == hit.actor)
+                                {
+                                    m_imgui.selectedObject = i;
+                                    break;
+                                }
                             }
                         }
                     }
                 }
-            }
-
-            if (m_scene.isPaused)
-            {
+            
                 if (IsMouseDown(ImGuiMouseButton_Right))
                 {
                     m_input.lockMouse = m_editorCameraEnabled = true;
@@ -776,10 +783,10 @@ void Engine::DrawEditor()
                     m_input.lockMouse = m_editorCameraEnabled = false;
                 }
             }
-        }
 
-        if (IsKeyPressed(ImGuiKey_Escape))
-            m_imgui.selectedObject = 0;
+            if (IsKeyPressed(ImGuiKey_Escape))
+                m_imgui.selectedObject = 0;
+        }
     }
     End();
     PopStyleVar();

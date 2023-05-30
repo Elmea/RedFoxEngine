@@ -40,7 +40,7 @@ UIBEHAVIOUR(UI)
 }
 
 
-
+/*
 Mat4 GetTranslation(const Float3& pTranslation)
 {
     Mat4 result;
@@ -79,6 +79,7 @@ Mat4 GetScale(const Float3& pScale)
     return result;
 }
 
+
 Mat4 CreateTransformMatrix(const Float3& position, const Quaternion& rotation, const Float3& pScale)
 {
     float a_temp = rotation.a;
@@ -87,6 +88,7 @@ Mat4 CreateTransformMatrix(const Float3& position, const Quaternion& rotation, c
     float d_temp = rotation.d;
     return GetTranslation(position) * GetRotationMatrix(a_temp,b_temp,c_temp,d_temp) * GetScale(pScale);
 }
+*/
 
 void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
 {
@@ -97,14 +99,11 @@ void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngin
         RedFoxMaths::Float4 ray_eye = scene->m_gameCamera.m_projection.GetInverseMatrix() * ray_clip;
         ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };        
 
-        //    return Mat4::CreateTransformMatrix(position, orientation, scale).GetInverseMatrix();
-        //    return GetTranslation(position) * rotation.GetRotationMatrix() * GetScale(pScale);
-
-        RedFoxMaths::Mat4 transformMatrix = CreateTransformMatrix(scene->m_gameCamera.position, scene->m_gameCamera.orientation, scene->m_gameCamera.scale);
+        RedFoxMaths::Mat4 transformMatrix = RedFoxMaths::Mat4::CreateTransformMatrix(scene->m_gameCamera.position, scene->m_gameCamera.orientation, scene->m_gameCamera.scale);
         RedFoxMaths::Float4 ray_world = transformMatrix.GetInverseMatrix() * ray_eye;
       
         ray_world.Normalize();
-        transformMatrix = CreateTransformMatrix(scene->m_gameCamera.position, scene->m_gameCamera.orientation, scene->m_gameCamera.scale);
+        transformMatrix = RedFoxMaths::Mat4::CreateTransformMatrix(scene->m_gameCamera.position, scene->m_gameCamera.orientation, scene->m_gameCamera.scale);
         RedFoxMaths::Mat4 view = transformMatrix.GetInverseMatrix();
         physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
         physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
@@ -154,7 +153,7 @@ BEHAVIOUR(Player)
         }
     }
     
-    //Gun(self, scene, inputs, physx);
+    Gun(self, scene, inputs, physx);
 }
 
 __declspec(dllexport) STARTGAME(StartGame)
