@@ -100,7 +100,7 @@ Sound* SoundManager::CreateSound(const char* file, Memory* memAllocator)
     if (!newOne.m_source)
         return nullptr;
     newOne.m_soundEngine = m_soundEngine;
-    m_soundsName[m_soundCount] = initStringChar(file, strlen(file), memAllocator);
+    m_soundsName[m_soundCount] = initStringChar(file + 17, strlen(file + 17), memAllocator);
     
     if (m_freedSound > 0)
     {

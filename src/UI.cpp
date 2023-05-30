@@ -109,16 +109,17 @@ void Engine::InitIMGUI()
     m_imgui.gizmoType = ImGuizmo::OPERATION::TRANSLATE;
     m_imgui.gizmoMode = ImGuizmo::MODE::LOCAL;
 
-    m_imgui.icons[0] = (void*)(u64)LoadTextureFromMemory(new_scene_icon , sizeof(new_scene_icon));
-    m_imgui.icons[1] = (void*)(u64)LoadTextureFromMemory(save_scene_icon, sizeof(save_scene_icon));
-    m_imgui.icons[2] = (void*)(u64)LoadTextureFromMemory(pause_icon     , sizeof(pause_icon));
-    m_imgui.icons[3] = (void*)(u64)LoadTextureFromMemory(resume_icon    , sizeof(resume_icon));
-    m_imgui.icons[4] = (void*)(u64)LoadTextureFromMemory(translate_icon , sizeof(translate_icon));
-    m_imgui.icons[5] = (void*)(u64)LoadTextureFromMemory(rotate_icon    , sizeof(rotate_icon));
-    m_imgui.icons[6] = (void*)(u64)LoadTextureFromMemory(scale_icon     , sizeof(scale_icon));
-    m_imgui.icons[7] = (void*)(u64)LoadTextureFromMemory(new_entity_icon, sizeof(new_entity_icon));
-    m_imgui.icons[8] = (void*)(u64)LoadTextureFromMemory(new_cube_icon  , sizeof(new_cube_icon));
-    m_imgui.icons[9] = (void*)(u64)LoadTextureFromMemory(new_sphere_icon, sizeof(new_sphere_icon));
+    m_imgui.icons[0]  = (void*)LoadTextureFromMemory(new_scene_icon, sizeof(new_scene_icon));
+    m_imgui.icons[1]  = (void*)LoadTextureFromMemory(save_scene_icon, sizeof(save_scene_icon));
+    m_imgui.icons[2]  = (void*)LoadTextureFromMemory(pause_icon, sizeof(pause_icon));
+    m_imgui.icons[3]  = (void*)LoadTextureFromMemory(resume_icon, sizeof(resume_icon));
+    m_imgui.icons[4]  = (void*)LoadTextureFromMemory(translate_icon, sizeof(translate_icon));
+    m_imgui.icons[5]  = (void*)LoadTextureFromMemory(rotate_icon, sizeof(rotate_icon));
+    m_imgui.icons[6]  = (void*)LoadTextureFromMemory(scale_icon, sizeof(scale_icon));
+    m_imgui.icons[7]  = (void*)LoadTextureFromMemory(new_entity_icon, sizeof(new_entity_icon));
+    m_imgui.icons[8]  = (void*)LoadTextureFromMemory(new_cube_icon, sizeof(new_cube_icon));
+    m_imgui.icons[9]  = (void*)LoadTextureFromMemory(new_sphere_icon, sizeof(new_sphere_icon));
+    m_imgui.icons[10] = (void*)LoadTextureFromMemory(stop_button, sizeof(stop_button));
 }
 
 void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, float toolbarSize, float totalHeight, float buttonHeight)
@@ -183,14 +184,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     {
         SaveScene(m_scene.m_name.data, m_scene);
     }
-
-    SameLine();
-    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
-    if (Button("LOAD SCENE", ImVec2(100, 25)))
-    {
-        LoadScene(m_scene.m_name.data);
-    }
-
+    
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
     if (ImageButton("PAUSE", m_scene.isPaused ? m_imgui.icons[3] : m_imgui.icons[2], ImVec2(buttonHeight, buttonHeight)))
@@ -212,6 +206,27 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
             m_imgui.captureMouse = false;
             m_input.HideCursor(false);
         }
+    }
+    
+    SameLine();
+    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
+    if (ImageButton("STOP", m_imgui.icons[10], ImVec2(buttonHeight, buttonHeight)))
+    {
+        char path[255] = "Scene/";
+        int i = 0;
+        while (path[i] != '\0')
+            i++;
+        int j = 0;
+        while (m_scene.m_name.data[j] != '\0')
+             path[i++] = m_scene.m_name.data[j++];
+        LoadScene(path);
+        if (m_scene.isPaused == false)
+        {
+            SetCapture(NULL);
+            m_imgui.captureMouse = false;
+            m_input.HideCursor(false);
+        }
+        m_scene.isPaused = true;
     }
     
     SameLine();
@@ -253,7 +268,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->modelIndex = -1;
     }
 
-    if (IsKeyDown(ImGuiKey_LeftCtrl) && IsKeyPressed(ImGuiKey_D)) //TODO Position and Rotation cant be changed
+    if ((IsKeyDown(ImGuiKey_RightCtrl) || IsKeyDown(ImGuiKey_LeftCtrl)) && IsKeyPressed(ImGuiKey_D)) //TODO Position and Rotation cant be changed
     {
         GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
         *newGameObject = m_scene.gameObjects[m_imgui.selectedObject];
@@ -262,6 +277,11 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         int size = snprintf(tmp, 255, "New entity #%d", m_scene.gameObjectCount - 1);
         newGameObject->parent = 0;
         newGameObject->name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
+        m_imgui.selectedObject = m_scene.gameObjectCount - 1;
+        if (newGameObject->modelIndex == 0)
+            m_physx.CreateDynamicCube(newGameObject, newGameObject->transform);
+        else if (newGameObject->modelIndex == 1)
+            m_physx.CreateDynamicSphere(newGameObject, newGameObject->transform);
     }
 
 
@@ -890,12 +910,19 @@ void Engine::DrawSceneGraph()
             {
                 if (m_scene.gameObjectCount - 1 > 1 && m_imgui.selectedObject != 0)
                 {
-                    int* children = m_scene.GetChildren(m_imgui.selectedObject, &m_memoryManager.m_memory.temp);
-                    if (children != nullptr)
+                    int childrenCount = m_scene.GetChildrenCount(m_imgui.selectedObject);
+                    if (childrenCount)
                     {
-                        int childrenCount = m_scene.GetChildrenCount(m_imgui.selectedObject);
+                        int* children = m_scene.GetChildren(m_imgui.selectedObject, &m_memoryManager.m_memory.temp);
                         for (int i = 0; i < childrenCount; i++)
-                            m_scene.gameObjects[*children + i].parent = 0;
+                            m_scene.gameObjects[*children + i].parent = m_scene.gameObjects[m_imgui.selectedObject].parent;
+                    }
+                    childrenCount = m_scene.GetChildrenCount(m_scene.gameObjectCount - 1);
+                    if (childrenCount)
+                    {
+                        int* children = m_scene.GetChildren(m_scene.gameObjectCount - 1, &m_memoryManager.m_memory.temp);
+                        for (int i = 0; i < childrenCount; i++)
+                            m_scene.gameObjects[*children + i].parent = m_imgui.selectedObject;
                     }
                     m_scene.gameObjects[m_imgui.selectedObject] = m_scene.gameObjects[m_scene.gameObjectCount - 1];
                 }
@@ -1000,12 +1027,12 @@ void Engine::DrawAssetsBrowser()
                 InputText("Path", (char*)path.data, path.capacity);
                 if (Button("Import"))
                 {
-                    if (m_platform.FileExist(path.data))
+                    char tmp[256];
+                    memset(tmp, 0, 256);
+                    int len = ImFormatString(tmp, 256, "../assets/Models/%s", path.data);
+                    if (m_platform.FileExist(tmp) && len >= 17)
                     {
-                        ObjModelPush(path.data);
-                        m_graphics.InitModel(&m_models[m_modelCount - 1]);
-                        m_graphics.m_models = m_models;
-                        m_graphics.m_modelCount = m_modelCount;
+                        ObjModelPush(tmp);
                         m_imgui.lockEditor = false;
                         CloseCurrentPopup();
                     }
@@ -1043,9 +1070,12 @@ void Engine::DrawAssetsBrowser()
                 InputText("Path", (char*)path.data, path.capacity);
                 if (Button("Import"))
                 {
-                    if (m_platform.FileExist(path.data))
+                    char tmp[256];
+                    memset(tmp, 0, 256);
+                    int len = ImFormatString(tmp, 256, "../assets/Sounds/%s", path.data);
+                    if (m_platform.FileExist(tmp) && len >= 17)
                     {
-                        m_soundManager.CreateSound(path.data, &m_memoryManager.m_memory.arena);
+                        m_soundManager.CreateSound(tmp, &m_memoryManager.m_memory.arena);
                         m_imgui.lockEditor = false;
                         CloseCurrentPopup();
                     }
@@ -1142,6 +1172,7 @@ void Engine::DrawProperties()
             if (CollapsingHeader("Behaviour", m_imgui.propertiesFlags))
             {
                 Text("GameObject ID: %d", m_imgui.selectedObject);
+                Text("Parent ID: %d", m_scene.gameObjects[m_imgui.selectedObject].parent);
                 SetNextItemWidth(-FLT_MIN);
                 
                 int* curBehaviourIndex = &m_scene.gameObjects[m_imgui.selectedObject].behaviourIndex;
@@ -1379,9 +1410,12 @@ void Engine::DrawWorldProperties()
                 InputText("Path", (char*)path.data, path.capacity);
                 if (Button("Import"))
                 {
-                    if (m_platform.FileExist(path.data))
+                    char tmp[256];
+                    memset(tmp, 0, 256);
+                    int len = ImFormatString(tmp, 256, "../assets/Shaders/%s", path.data);
+                    if (m_platform.FileExist(tmp) && len >= 18)
                     {
-                        m_graphics.AddPostProcessShader(&m_memoryManager.m_memory, path.data);
+                        m_graphics.AddPostProcessShader(&m_memoryManager.m_memory, tmp);
                         assignString(path, "");
                         CloseCurrentPopup();
                     }

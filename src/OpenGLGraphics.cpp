@@ -27,16 +27,17 @@ namespace RedFoxEngine
         m = resources;
         dimension = p_dimension;
 
-        m_font.fragmentPath        = initStringChar("font.frag", 10, &m->m_memory.arena);
-        m_font.vertexPath          = initStringChar("font.vert", 10, &m->m_memory.arena);
-        m_blinnPhong.fragmentPath  = initStringChar("blinn_phong.frag.glsl", 21, &m->m_memory.arena);
-        m_blinnPhong.vertexPath    = initStringChar("blinn_phong.vert.glsl", 21, &m->m_memory.arena);
-        m_shadow.fragmentPath      = initStringChar("ShadowShader.frag", 24, &m->m_memory.arena);
-        m_shadow.vertexPath        = initStringChar("ShadowShader.vert", 24, &m->m_memory.arena);
-        m_sky.fragmentPath         = initStringChar("skydome.frag", 16, &m->m_memory.arena);
-        m_sky.vertexPath           = initStringChar("skydome.vert", 16, &m->m_memory.arena);
-        m_postProcess.fragmentPath = initStringChar("PostProcess.frag", 16, &m->m_memory.arena);
-        m_postProcess.vertexPath   = initStringChar("PostProcess.vert", 16, &m->m_memory.arena);
+        m_font.fragmentPath        = initStringChar("Shaders/font.frag", 17, &m->m_memory.arena);
+        m_font.vertexPath          = initStringChar("Shaders/font.vert", 17, &m->m_memory.arena);
+        m_blinnPhong.fragmentPath  = initStringChar("Shaders/blinn_phong.frag.glsl", 29, &m->m_memory.arena);
+        m_blinnPhong.vertexPath    = initStringChar("Shaders/blinn_phong.vert.glsl", 29, &m->m_memory.arena);
+        m_shadow.fragmentPath      = initStringChar("Shaders/ShadowShader.frag", 25, &m->m_memory.arena);
+        m_shadow.vertexPath        = initStringChar("Shaders/ShadowShader.vert", 25, &m->m_memory.arena);
+        m_sky.fragmentPath         = initStringChar("Shaders/skydome.frag", 20, &m->m_memory.arena);
+        m_sky.vertexPath           = initStringChar("Shaders/skydome.vert", 20, &m->m_memory.arena);
+        m_postProcess.fragmentPath = initStringChar("Shaders/PostProcess.frag", 24, &m->m_memory.arena);
+        m_postProcess.vertexPath   = initStringChar("Shaders/PostProcess.vert", 24, &m->m_memory.arena);
+        m_materials = (Material*)m->PersistentAllocation(sizeof(Material) * 10000);
         InitShaders();
         // setup global GL state
         {
@@ -217,50 +218,47 @@ namespace RedFoxEngine
         InitImGUIFramebuffer(dimension);
     }
 
-    void Graphics::InitModel(Model* model)
+    void Graphics::InitModel(Model* model, ObjModel obj)
     {
         // vertex buffer containing triangle vertices
         model->vertexOffset = m_vertexCount;
         model->indexOffset = m_indexCount;
-        // model->mesh.count = model->obj.meshCount; //TODO: obj independent engine models
-        model->indexCount = model->obj.indexCount;
+        model->indexCount = obj.indexCount;
         model->materialOffset = m_materialCount;
         int tempTexture = m_textures.textureCount;
-        InitModelTextures(&model->obj);
-
-        Material materials[100] = {};
+        InitModelTextures(&obj.images);
 
         int temp = m_materialCount;
-        for (int i = 0; i < (int)model->obj.materials.count; i++)
+        for (int i = 0; i < (int)obj.materials.count; i++)
         {
-            materials[i].diffuse = { model->obj.materials.material[i].diffuse.x,
-                                    model->obj.materials.material[i].diffuse.y,
-                                    model->obj.materials.material[i].diffuse.z };
-            materials[i].Shininess = model->obj.materials.material[i].Shininess;
-            if (model->obj.materials.material[i].hasTexture == 0)
-                materials[i].diffuseMap = -1;
+            m_materials[i + temp].diffuse = { obj.materials.material[i].diffuse.x,
+                                    obj.materials.material[i].diffuse.y,
+                                    obj.materials.material[i].diffuse.z };
+            m_materials[i + temp].Shininess = obj.materials.material[i].Shininess;
+            if (obj.materials.material[i].hasTexture == 0)
+                m_materials[i + temp].diffuseMap = -1;
             else
-                materials[i].diffuseMap = model->obj.materials.material[i].diffuseMap.index0 + tempTexture;
-            if (model->obj.materials.material[i].hasNormal == 0)
-                materials[i].normalMap = -1;
+                m_materials[i + temp].diffuseMap = obj.materials.material[i].diffuseMap.index0 + tempTexture;
+            if (obj.materials.material[i].hasNormal == 0)
+                m_materials[i + temp].normalMap = -1;
             else
-                materials[i].normalMap = model->obj.materials.material[i].normalMap.index0 + tempTexture;
+                m_materials[i + temp].normalMap = obj.materials.material[i].normalMap.index0 + tempTexture;
             m_materialCount++;
         }
 
-        glNamedBufferSubData(m_materialSSBO, temp * sizeof(Material), (model->obj.materials.count) * sizeof(Material), materials);
+        glNamedBufferSubData(m_materialSSBO, temp * sizeof(Material), (obj.materials.count) * sizeof(Material), m_materials);
         {
             // (GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data);
             glNamedBufferSubData(m_vertexBufferObject, m_vertexCount * sizeof(ObjVertex),
-                model->obj.vertexCount * (sizeof(ObjVertex)), model->obj.vertices);
-            m_vertexCount += model->obj.vertexCount;
+                obj.vertexCount * (sizeof(ObjVertex)), obj.vertices);
+            m_vertexCount += obj.vertexCount;
         }
         {
             glNamedBufferSubData(m_ebo, m_indexCount * sizeof(u32),
-                model->obj.indexCount * sizeof(u32), model->obj.indices);
-            m_indexCount += model->obj.indexCount;
+                obj.indexCount * sizeof(u32), obj.indices);
+            m_indexCount += obj.indexCount;
         }
-        DeInitGraphicsObj(&model->obj);
+        DeInitGraphicsObj(&obj);
     }
 
     void Graphics::InitFont()
@@ -295,16 +293,16 @@ namespace RedFoxEngine
         return (texture);
     }
 
-    void Graphics::InitModelTextures(ObjModel* model)
+    void Graphics::InitModelTextures(ObjImages* images)
     {
-        Platform::WaitForThread(model->images.thread);
+        Platform::WaitForThread(images->thread);
 
-        for (int i = 0; i < (int)model->images.count; i++)
+        for (int i = 0; i < (int)images->count; i++)
         {
-            if (model->images.data[i].height && model->images.data[i].width)
+            if (images->data[i].height && images->data[i].width)
             {
-                m_textures.textures[m_textures.textureCount++] = InitTexture(model->images.data[i].data,
-                    model->images.data[i].width, model->images.data[i].height, true, false);
+                m_textures.textures[m_textures.textureCount++] = InitTexture(images->data[i].data,
+                    images->data[i].width, images->data[i].height, true, false);
             }
         }
     }
@@ -475,9 +473,12 @@ namespace RedFoxEngine
             {
                 Model* model = &m_models[i];
                 int instanceCount = modelCountIndex[i];
-                glProgramUniform1i(m_blinnPhong.fragment, 1, model->materialOffset);
-                if (model->obj.materials.material->hasTexture)
+                glProgramUniform1i(m_blinnPhong.fragment, 1, 0);
+                if (m_materials[model->materialOffset].diffuseMap != -1)
+                {
+                    glProgramUniform1i(m_blinnPhong.fragment, 1, model->materialOffset);
                     bindBuffer(5, m_materialSSBO, m_materialCount * sizeof(Material));
+                }
                 else
                     glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 5, m_materialSSBO, (totalCount + m_materialCount) * sizeof(Material), instanceCount * sizeof(Material));
                 glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 3, m_matrixSSBO, totalCount * sizeof(RedFoxMaths::Mat4), instanceCount * sizeof(RedFoxMaths::Mat4));
@@ -531,9 +532,9 @@ namespace RedFoxEngine
         glNamedBufferSubData(m_matrixSSBO, 0, sizeof(RedFoxMaths::Mat4) * count, matrices);
     }
 
-    void Graphics::PushMaterial(Material *materials, int count)
+    void Graphics::PushMaterial(int count)
     {
-        glNamedBufferSubData(m_materialSSBO, m_materialCount * sizeof(Material), sizeof(Material) * count, materials);
+        glNamedBufferSubData(m_materialSSBO, 0, sizeof(Material) * count + sizeof(Material) * m_materialCount, m_materials);
     }
 
     void Graphics::DrawModelShadowInstances(Model* model, int instanceCount)
@@ -542,7 +543,7 @@ namespace RedFoxEngine
         glBindProgramPipeline(m_shadow.pipeline);
         glBindVertexArray(m_vertexArrayObject);
         bindBuffer(0, m_matrixSSBO, sizeof(RedFoxMaths::Mat4) * instanceCount);
-        glDrawElementsInstanced(GL_TRIANGLES, model->obj.indexCount, GL_UNSIGNED_INT,
+        glDrawElementsInstanced(GL_TRIANGLES, model->indexCount, GL_UNSIGNED_INT,
             0, instanceCount);
     }
 

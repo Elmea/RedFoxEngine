@@ -3,6 +3,7 @@
 #include "RedfoxMaths.hpp"
 #include "Model.hpp"
 #include "Transform.hpp"
+#include "Material.hpp"
 
 namespace physx
 {
@@ -26,12 +27,15 @@ namespace RedFoxEngine
         };
         int parent;
         int modelIndex;
+        // int materialIndex;
+        // int materialIndex1;
+        // int materialIndex2;
         RedFoxMaths::Float3 Color;
         
         physx::PxRigidActor* body;
 
         int behaviourIndex;
-
+        // RedFoxEngine::Material material;
         RedFoxMaths::Mat4 GetLocalMatrix();
         void SetTransform(Transform transform);
         void UpdateTransform();
