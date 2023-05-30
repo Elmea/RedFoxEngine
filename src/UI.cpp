@@ -184,7 +184,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     {
         char tmp[272];
         memset(tmp, 0, 272);
-        int len = ImFormatString(tmp, 272, "../assets/Scene/%s", m_scene.m_name.data);
+        int len = ImFormatString(tmp, 272, "../assets/Scenes/%s", m_scene.m_name.data);
         SaveScene(tmp, m_scene);
     }
 
@@ -203,7 +203,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         {
             char tmp[272];
             memset(tmp, 0, 272);
-            int len = ImFormatString(tmp, 272, "../assets/Scene/%s", path.data);
+            int len = ImFormatString(tmp, 272, "../assets/Scenes/%s", path.data);
             if (m_platform.FileExist(tmp) && len >= 16)
             {
                 LoadScene(tmp);
@@ -239,6 +239,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         if (!m_imgui.captureMouse && !m_scene.isPaused)
         {
             SetCapture(m_platform.m_window);
+            m_platform.SetMousePosition((int)m_imgui.centerEditorViewport.x, (int)m_imgui.centerEditorViewport.y);
             m_imgui.captureMouse = true;
             m_input.lockMouse = true;
             m_input.HideCursor(true);
@@ -260,7 +261,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
     if (ImageButton("STOP", m_imgui.icons[10], ImVec2(buttonHeight, buttonHeight)))
     {
-        char path[255] = "../assets/Scene/";
+        char path[255] = "../assets/Scenes/";
         int i = 0;
         while (path[i] != '\0')
             i++;
@@ -556,18 +557,11 @@ void Engine::DrawEditor()
             mousePos.x * dimension.width / content.x - vMin.x,
             mousePos.y * dimension.height / content.y - vMin.y
         };
+        m_imgui.centerEditorViewport = content / 2;
         
-        m_imgui.centerEditorViewport = {
-            (dimension.width * (content.x - vMin.x)) / 2,
-            (dimension.height * (content.y - vMin.y)) / 2
-        };
-        
-        printf("%.2f %.2f\n", m_imgui.centerEditorViewport.x, m_imgui.centerEditorViewport.y);
-
         RedFoxMaths::Float2 uiPos, convertedPos, uiSize;
         for (int i = 1; i < m_scene.gameUICount; i++)
         {
-
             uiPos = m_scene.gameUIs[i].screenPosition;
             uiSize = m_scene.gameUIs[i].size;
 

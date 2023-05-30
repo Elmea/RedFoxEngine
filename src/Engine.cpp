@@ -61,7 +61,7 @@ Engine::Engine(int width, int height) :
     m_memoryManager.m_sceneUsedMemory = m_memoryManager.m_memory.arena.usedSize;
 
     //TODO transition to an instance based model 'model'
-    LoadScene("../assets/Scene/Sample Scene");
+    LoadScene("../assets/Scenes/Sample Scene");
     Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
     dir->lightInfo.constant = 1.0f;
     dir->lightInfo.linear = 0.09f;
