@@ -34,7 +34,7 @@ namespace RedFoxEngine
         void LockDynamicBody(GameObject* object, bool x, bool y, bool z);
         void InitPhysics();
         void InitScene(Scene *scene, int sphereIndex, int cubeIndex);
-        void UpdatePhysics(f32 deltaTime, Scene *scene, ResourcesManager m);
+        void UpdatePhysics(f32 deltaTime, Scene *scene);
 
         ~Physx()
         {

@@ -1137,6 +1137,7 @@ void Engine::DrawProperties()
             {
                 if (BeginTable("TransformTable", 2, m_imgui.tableFlags))
                 {
+                    bool isTranformed = false;
                     TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
                     TableNextRow();
                     TableSetColumnIndex(0);
@@ -1144,7 +1145,7 @@ void Engine::DrawProperties()
                     TableSetColumnIndex(1);
                     SetNextItemWidth(-FLT_MIN);
                     if (DragFloat3("TransformPosition", &m_scene.gameObjects[m_imgui.selectedObject].position.x, m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp))
-                        m_scene.gameObjects[m_imgui.selectedObject].SetTransform(m_scene.gameObjects[m_imgui.selectedObject].transform);
+                        isTranformed = true;
 
                     TableNextRow();
                     TableSetColumnIndex(0);
@@ -1156,7 +1157,7 @@ void Engine::DrawProperties()
                     {
                         RedFoxMaths::Float3 radRotation = rotation * DEG2RAD;
                         m_scene.gameObjects[m_imgui.selectedObject].orientation = RedFoxMaths::Quaternion::FromEuler(radRotation);
-                        m_scene.gameObjects[m_imgui.selectedObject].SetTransform(m_scene.gameObjects[m_imgui.selectedObject].transform);
+                        isTranformed = true;
                     }
 
                     TableNextRow();
@@ -1164,11 +1165,105 @@ void Engine::DrawProperties()
                     Text("Scale");
                     TableSetColumnIndex(1);
                     SetNextItemWidth(-FLT_MIN);
-                    DragFloat3("TransformScale", &m_scene.gameObjects[m_imgui.selectedObject].scale.x, m_imgui.dragSpeed, 1.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+                    if (DragFloat3("TransformScale", &m_scene.gameObjects[m_imgui.selectedObject].scale.x, m_imgui.dragSpeed, 1, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp))
+                    {
+                            physx::PxRigidActor* actor;
+                            GameObject *object = &m_scene.gameObjects[m_imgui.selectedObject];
+                            bool isDynamic = false;
+                            if ((actor = m_scene.gameObjects[m_imgui.selectedObject].body))
+                            {
+                                if (actor->is<physx::PxRigidDynamic>())
+                                    isDynamic = true;
+                                physx::PxShape *shape;
+                                if (actor->getShapes(&shape, 1, 0))
+                                {
+                                    physx::PxGeometryType::Enum geo = shape->getGeometryType();
+                                    switch (geo)
+                                    {
+                                        case physx::PxGeometryType::eSPHERE:
+                                        {
+                                            actor->release();
+                                            if (!isDynamic)
+                                            m_physx.CreateStaticSphere(object, object->transform);
+                                            else
+                                            m_physx.CreateDynamicSphere(object, object->transform);
+                                        }break;
+                                        case physx::PxGeometryType::eBOX:
+                                        {
+                                            actor->release();
+                                            if (!isDynamic)
+                                            m_physx.CreateStaticCube(object, object->transform);
+                                            else
+                                            m_physx.CreateDynamicCube(object, object->transform);
+                                        }break;
+                                    }
+                                }
+                            }
+                    }
+                    if (isTranformed)
+                    {
+                        m_scene.gameObjects[m_imgui.selectedObject].SetTransform(m_scene.gameObjects[m_imgui.selectedObject].transform);
+                        int childrenCount = m_scene.GetChildrenCount(m_imgui.selectedObject);
+                        int *indices = m_scene.GetChildren(m_imgui.selectedObject, &m_memoryManager.m_memory.temp);
+                        for (int i = 0; i < childrenCount; i++)
+                        {
+                            if (m_scene.gameObjects[indices[i]].body)
+                                m_scene.gameObjects[indices[i]].SetTransform(m_scene.GetWorldTransform(indices[i]));
+                        }
+                    }
                     EndTable();
                 }
             }
+            if (CollapsingHeader("Physx"), m_imgui.propertiesFlags)
+            {
+                physx::PxRigidActor* actor;
+                GameObject *object = &m_scene.gameObjects[m_imgui.selectedObject];
+                if ((actor = m_scene.gameObjects[m_imgui.selectedObject].body))
+                {
+                    char dynamic[] = "Dynamic";
+                    char stat[] = "Static";
+                    char *current = stat;
+                    char *alternative = stat;
+                    if (actor->is<physx::PxRigidDynamic>())
+                        current = dynamic;
+                    else
+                        alternative = dynamic;
+                    if (ImGui::BeginCombo("Physx behaviour", current))
+                    {
+                        bool is_selected = false;
+                        if (ImGui::Selectable(alternative, is_selected))
+                        {
+                            physx::PxShape *shape;
+                            if (actor->getShapes(&shape, 1, 0))
+                            {
+                                physx::PxGeometryType::Enum geo = shape->getGeometryType();
+                                switch (geo)
+                                {
+                                    case physx::PxGeometryType::eSPHERE:
+                                    {
+                                        actor->release();
+                                        if (current == dynamic)
+                                        m_physx.CreateStaticSphere(object, object->transform);
+                                        else
+                                        m_physx.CreateDynamicSphere(object, object->transform);
+                                    }break;
+                                    case physx::PxGeometryType::eBOX:
+                                    {
+                                        actor->release();
+                                        if (current == dynamic)
+                                        m_physx.CreateStaticCube(object, object->transform);
+                                        else
+                                        m_physx.CreateDynamicCube(object, object->transform);
+                                    }break;
+                                }
+                            }
 
+                        }
+                        ImGui::EndCombo();
+                    }
+                }
+
+            }
             if (CollapsingHeader("Behaviour", m_imgui.propertiesFlags))
             {
                 Text("GameObject ID: %d", m_imgui.selectedObject);

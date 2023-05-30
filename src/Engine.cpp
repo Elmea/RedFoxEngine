@@ -320,12 +320,10 @@ void Engine::Update()
     UpdateSkyDome();
     m_soundManager.UpdateListener(m_editorCamera.position, m_editorCamera.orientation.ToEuler());
     UpdateLights(&m_graphics.lightStorage);
-    m_physx.UpdatePhysics(1.0 / 60.0, &m_scene, m_memoryManager);
+    m_physx.UpdatePhysics(1.0 / 60.0, &m_scene);
     m_game.update(&m_scene, &m_physx, &m_input, 1.0 / 60.0);
     if (!m_scene.isPaused)
-    {
         UpdateBehaviours();
-    }
     UpdateUIBehaviours();
     UpdateModelMatrices();
     UpdateIMGUI();
