@@ -1029,7 +1029,7 @@ void Engine::DrawAssetsBrowser()
                 {
                     char tmp[256];
                     memset(tmp, 0, 256);
-                    int len = ImFormatString(tmp, 256, "../assets/Models/%s", path.data);
+                    int len = ImFormatString(tmp, 256, "../assets/%s", path.data);
                     if (m_platform.FileExist(tmp) && len >= 17)
                     {
                         ObjModelPush(tmp);
@@ -1072,7 +1072,7 @@ void Engine::DrawAssetsBrowser()
                 {
                     char tmp[256];
                     memset(tmp, 0, 256);
-                    int len = ImFormatString(tmp, 256, "../assets/Sounds/%s", path.data);
+                    int len = ImFormatString(tmp, 256, "../assets/%s", path.data);
                     if (m_platform.FileExist(tmp) && len >= 17)
                     {
                         m_soundManager.CreateSound(tmp, &m_memoryManager.m_memory.arena);
@@ -1412,7 +1412,7 @@ void Engine::DrawWorldProperties()
                 {
                     char tmp[256];
                     memset(tmp, 0, 256);
-                    int len = ImFormatString(tmp, 256, "../assets/Shaders/%s", path.data);
+                    int len = ImFormatString(tmp, 256, "../assets/%s", path.data);
                     if (m_platform.FileExist(tmp) && len >= 18)
                     {
                         m_graphics.AddPostProcessShader(&m_memoryManager.m_memory, tmp);
