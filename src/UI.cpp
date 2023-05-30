@@ -228,12 +228,14 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     {
         OpenPopup("Load scene");
     }
-    
+
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
     if (ImageButton("PAUSE", m_scene.isPaused ? m_imgui.icons[3] : m_imgui.icons[2], ImVec2(buttonHeight, buttonHeight)))
     {
         m_scene.isPaused = !m_scene.isPaused;
+        if (!m_scene.isPaused)
+            m_game.start(&m_scene, &m_physx, &m_input);
         if (!m_imgui.captureMouse && !m_scene.isPaused)
         {
             SetCapture(m_platform.m_window);

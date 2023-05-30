@@ -115,10 +115,7 @@ void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngin
             if (hit.actor) printf("OEUF\n");
         } 
     }
-    printf("\n");
 }
-
-
 
 BEHAVIOUR(Cube)
 {
@@ -186,9 +183,10 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
         player->behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
         player->UpdateTransform();
 
-        scene->gameUIs[1].behaviourIndex = scene->AddUIBehaviour("UI", UI);
+        // This UI object must be initialized in editor before playing
 
         scene->AddGameObjectBehaviour("Cube", Cube);
+
 
         scene->isInit = true;
         reloaded = true;
