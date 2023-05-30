@@ -1365,8 +1365,25 @@ void Engine::DrawWorldProperties()
                 TableSetColumnIndex(0);
                 Text(m_graphics.m_postProcessShaders[i].name.c_str());
                 TableSetColumnIndex(1);
-                Checkbox("Is active", &m_graphics.m_postProcessShaders[i].active);
-                Checkbox("Use kernels", &m_graphics.m_postProcessShaders[i].useKernels);
+                Checkbox("Is active" + i, &m_graphics.m_postProcessShaders[i].active);
+                Checkbox("Use kernels" + i, &m_graphics.m_postProcessShaders[i].useKernels);
+
+                if (Button("Up" + i))
+                {
+                    if (i > 0)
+                        m_graphics.SwapPostProcessShader(i, i--);
+                }
+                if (Button("Down" + i))
+                {
+                    if (i < m_graphics.m_postProcessShaders.size() - 1)
+                        m_graphics.SwapPostProcessShader(i, i++);
+                }
+                if (Button("Remove" + i))
+                {
+                    m_graphics.RemovePostProcessShader(&m_memoryManager.m_memory.arena, i);
+                    i--;
+                    continue;
+                }
 
                 for (int j = 0; j < m_graphics.m_postProcessShaders[i].kernels.size(); j++)
                 {
@@ -1385,7 +1402,7 @@ void Engine::DrawWorldProperties()
                     m_graphics.m_postProcessShaders[i].EditKernel(i, m_graphics.m_postProcessShaders[i].kernels[j].kernel);
                 }
                 
-                if (Button("Add empty kernel") && m_graphics.m_postProcessShaders[i].kernels.size() < MAX_KERNEL)
+                if (Button("Add empty kernel" + i) && m_graphics.m_postProcessShaders[i].kernels.size() < MAX_KERNEL)
                 {
                     float mat[4][4] = { 0 }; mat[1][1] = 1;
                     Kernel* k = m_graphics.m_postProcessShaders[i].AddKernel(RedFoxMaths::Mat4(mat));
@@ -1457,6 +1474,7 @@ void Engine::DrawWorldProperties()
                 float mat[4][4] = { 0 }; mat[1][1] = 1;
                 Kernel* k = m_graphics.AddKernel(RedFoxMaths::Mat4(mat));
             }
+
         }
     }
     End();
