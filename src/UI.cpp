@@ -3,7 +3,6 @@
 #include "Icons.hpp"
 #include "Engine.hpp"
 #include <unordered_map>
-
 #include "Fonts.hpp"
 
 using namespace RedFoxEngine;
@@ -1449,6 +1448,8 @@ void Engine::DrawWorldProperties()
 {
     if (Begin("World Properties", (bool*)0, ImGuiWindowFlags_NoCollapse))
     {
+        char tmp[256];
+        memset(tmp, 0, 256);
         if (CollapsingHeader("Shaders", m_imgui.propertiesFlags))
         {
             BeginTable("PostProcessTable", 2, m_imgui.tableFlags);
@@ -1460,20 +1461,29 @@ void Engine::DrawWorldProperties()
                 TableSetColumnIndex(0);
                 Text(m_graphics.m_postProcessShaders[i].name.c_str());
                 TableSetColumnIndex(1);
-                Checkbox("Is active" + i, &m_graphics.m_postProcessShaders[i].active);
-                Checkbox("Use kernels" + i, &m_graphics.m_postProcessShaders[i].useKernels);
 
-                if (Button("Up" + i))
+                ImFormatString(tmp, 256, "Is active##%d", i);
+                Checkbox(tmp, &m_graphics.m_postProcessShaders[i].active);
+                ImFormatString(tmp, 256, "Use kernels##%d", i);
+                Checkbox(tmp, &m_graphics.m_postProcessShaders[i].useKernels);
+
+                ImFormatString(tmp, 256, "Up##%d", i);
+                if (Button(tmp))
                 {
                     if (i > 0)
                         m_graphics.SwapPostProcessShader(i, i--);
+                    Checkbox(tmp, &m_graphics.m_postProcessShaders[i].active);
                 }
-                if (Button("Down" + i))
+                
+                ImFormatString(tmp, 256, "Down##%d", i);
+                if (Button(tmp))
                 {
                     if (i < m_graphics.m_postProcessShaders.size() - 1)
                         m_graphics.SwapPostProcessShader(i, i++);
                 }
-                if (Button("Remove" + i))
+                
+                ImFormatString(tmp, 256, "Remove##%d", i);
+                if (Button(tmp))
                 {
                     m_graphics.RemovePostProcessShader(&m_memoryManager.m_memory.arena, i);
                     i--;
@@ -1492,18 +1502,21 @@ void Engine::DrawWorldProperties()
                     DragFloat3("KernelRow2" + i + j, &m_graphics.m_postProcessShaders[i].kernels[j].kernel.mat16[4], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                     SetNextItemWidth(-FLT_MIN);
                     DragFloat3("KernelRow3" + i + j, &m_graphics.m_postProcessShaders[i].kernels[j].kernel.mat16[8], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-                    Checkbox("Is active" + i + j, &m_graphics.m_postProcessShaders[i].kernels[j].active);
+                    ImFormatString(tmp, 256, "Is active##%d", i);
+                    Checkbox(tmp, &m_graphics.m_postProcessShaders[i].kernels[j].active);
                 
                     m_graphics.m_postProcessShaders[i].EditKernel(i, m_graphics.m_postProcessShaders[i].kernels[j].kernel);
                 }
                 
-                if (Button("Add empty kernel" + i) && m_graphics.m_postProcessShaders[i].kernels.size() < MAX_KERNEL)
+                ImFormatString(tmp, 256, "Add empty kernel##%d", i);
+                if (Button(tmp) && m_graphics.m_postProcessShaders[i].kernels.size() < MAX_KERNEL)
                 {
                     float mat[4][4] = { 0 }; mat[1][1] = 1;
                     Kernel* k = m_graphics.m_postProcessShaders[i].AddKernel(RedFoxMaths::Mat4(mat));
                 }
             }
             EndTable();
+
             if (Button("Import", ImVec2(GetContentRegionAvail().x, 20)) && m_graphics.m_postProcessShaders.size() < m_graphics.m_maxPostProcessShader)
             {
                 OpenPopup("Importing a shader...");
@@ -1559,7 +1572,9 @@ void Engine::DrawWorldProperties()
                 DragFloat3("KernelRow2" + i, &m_graphics.m_kernels[i].kernel.mat16[4], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
                 SetNextItemWidth(-FLT_MIN);
                 DragFloat3("KernelRow3" + i, &m_graphics.m_kernels[i].kernel.mat16[8], m_imgui.dragSpeed, -32767.f, 32767.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-                Checkbox("Is active" + i, &m_graphics.m_kernels[i].active);
+                
+                ImFormatString(tmp, 256, "Is active##%d", i);
+                Checkbox(tmp, &m_graphics.m_kernels[i].active);
                 
                 m_graphics.EditKernel(i, m_graphics.m_kernels[i].kernel);
             }
