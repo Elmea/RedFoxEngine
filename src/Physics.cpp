@@ -174,7 +174,6 @@ void Physx::UpdatePhysics(f32 deltaTime, Scene* scene)
 					scene->gameObjects[i].transform = scene->GetLocalTransformFromWorld(t, i);
 					if (scene->isPaused)
 					{
-						if (i == 2)
 						 dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
 					}
 					if (wasPaused)
