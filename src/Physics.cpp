@@ -95,8 +95,6 @@ void Physx::InitPhysics()
 	physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, PxTolerancesScale(), false);
 #endif
 
-	PxCudaContextManagerDesc cudaContextManagerDesc;
-	cudaContextManager = PxCreateCudaContextManager(*foundation, cudaContextManagerDesc, PxGetProfilerCallback());
 	dispatcher = PxDefaultCpuDispatcherCreate(std::thread::hardware_concurrency());
 }
 
