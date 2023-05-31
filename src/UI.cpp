@@ -272,12 +272,15 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
-    if (ImageButton("STOP", m_imgui.icons[10], ImVec2(buttonHeight, buttonHeight)))
+    if (ImageButton("STOP", m_imgui.icons[10], ImVec2(buttonHeight, buttonHeight)) && !m_scene.isPaused)
     {
         char path[266];
         memset(path, 0, 266);
         ImFormatString(path, 266, "Temp/%s.tmp", m_scene.m_name.data);
-        LoadScene(path);
+        if (m_platform.FileExist(path))
+        {
+            LoadScene(path);
+        }
         if (m_scene.isPaused == false)
         {
             SetCapture(NULL);
