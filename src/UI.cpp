@@ -223,6 +223,14 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
 
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
+    if (Button("RELOAD SCENE", { 0, buttonHeight }))
+    {
+        char tmp[255];
+        ImFormatString(tmp, 255, "../assets/Scenes/%s", m_scene.m_name.data);
+        LoadScene(tmp);
+    }
+    SameLine();
+    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
     if (Button("LOAD SCENE", { 0, buttonHeight }))
     {
         OpenPopup("Load scene");
