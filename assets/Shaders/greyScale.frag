@@ -1,4 +1,4 @@
-﻿#version 450 core
+#version 450 core
 
 in vec2 TexCoords;
 
@@ -14,3 +14,4 @@ void main()
     FragColor = vec4(average, average, average, 1.0);
     o_color = FragColor;
 }
+

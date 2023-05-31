@@ -190,6 +190,4 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
         scene->isInit = true;
         reloaded = true;
     }
-
-    player->UpdateTransform();
 }
