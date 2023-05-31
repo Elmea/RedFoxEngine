@@ -234,11 +234,17 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     {
         m_scene.isPaused = !m_scene.isPaused;
         if (!m_scene.isPaused)
+        {
+            char path[266];
+            memset(path, 0, 266);
+            ImFormatString(path, 266, "Temp/%s.tmp", m_scene.m_name.data);
+            SaveScene(path, m_scene);
+            m_platform.SetMousePosition(&m_input, (int)m_imgui.centerEditorViewport.x, (int)m_imgui.centerEditorViewport.y);
             m_game.start(&m_scene, &m_physx, &m_input);
+        }
         if (!m_imgui.captureMouse && !m_scene.isPaused)
         {
             SetCapture(m_platform.m_window);
-            m_platform.SetMousePosition((int)m_imgui.centerEditorViewport.x, (int)m_imgui.centerEditorViewport.y);
             m_imgui.captureMouse = true;
             m_input.lockMouse = true;
             m_input.HideCursor(true);
@@ -260,13 +266,9 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
     if (ImageButton("STOP", m_imgui.icons[10], ImVec2(buttonHeight, buttonHeight)))
     {
-        char path[255] = "../assets/Scenes/";
-        int i = 0;
-        while (path[i] != '\0')
-            i++;
-        int j = 0;
-        while (m_scene.m_name.data[j] != '\0')
-             path[i++] = m_scene.m_name.data[j++];
+        char path[266];
+        memset(path, 0, 266);
+        ImFormatString(path, 266, "Temp/%s.tmp", m_scene.m_name.data);
         LoadScene(path);
         if (m_scene.isPaused == false)
         {
@@ -648,7 +650,15 @@ void Engine::DrawEditor()
             EndChild();
         }
         SetItemAllowOverlap();
-
+        if (!m_scene.isPaused)
+        {
+            SetCursorPos(GetWindowContentRegionMin());
+            SameLine();
+            
+            Text("Press Esc to show cursor");
+            SetItemAllowOverlap();
+        }
+        
         if (m_imgui.selectedObject != 0 && m_scene.isPaused && !m_imgui.lockEditor)
         {
             ImGuizmo::SetDrawlist();

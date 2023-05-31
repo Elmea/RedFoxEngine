@@ -144,7 +144,7 @@ public:
     void FatalError(const char *message);
     void MessageProcessing(Input *input);
     WindowDimension GetWindowDimension();
-    void SetMousePosition(int x, int y);
+    void SetMousePosition(Input *input, int x, int y);
     static u64 GetTimerFrequency();
     static f64 GetTimer();
     static void WaitForThread(HANDLE thread);

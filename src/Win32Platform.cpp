@@ -217,9 +217,11 @@ void Platform::Maximize()
     }
 }
 
-void Platform::SetMousePosition(int x, int y)
+void Platform::SetMousePosition(RedFoxEngine::Input* input, int x, int y)
 {
     SetCursorPos(x, y);
+    input->mouseXPosition = x;
+    input->mouseYPosition = y;
 }
 
 void Platform::WaitForThread(HANDLE thread)

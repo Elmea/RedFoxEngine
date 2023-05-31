@@ -39,57 +39,6 @@ UIBEHAVIOUR(UI)
         printf("Pressed\n");
 }
 
-
-/*
-Mat4 GetTranslation(const Float3& pTranslation)
-{
-    Mat4 result;
-
-    result.mat[0][0] = 1;
-    result.mat[1][1] = 1;
-    result.mat[2][2] = 1;
-    result.mat[3][3] = 1;
-
-    result.mat[0][3] = pTranslation.x;
-    result.mat[1][3] = pTranslation.y;
-    result.mat[2][3] = pTranslation.z;
-
-    return result;
-}
-
-Mat4 GetRotationMatrix(float a, float b, float c, float d) 
-{
-    float matrix[4][4] =
-    { {2 * (a * a + b * b) - 1,    2 * (b * c - d * a),      2 * (b * d + c * a),  0},
-        {2 * (b * c + d * a),         2 * (a * a + c * c) - 1,  2 * (c * d - b * a),  0},
-        {2 * (b * d - c * a),         2 * (c * d + b * a),      2 * (a * a + d * d) - 1,  0},
-        {0,                     0,                  0,              1.f} };
-
-    return matrix;
-}
-
-Mat4 GetScale(const Float3& pScale)
-{
-    Mat4 result;
-    result.mat[0][0] = pScale.x;
-    result.mat[1][1] = pScale.y;
-    result.mat[2][2] = pScale.z;
-    result.mat[3][3] = 1;
-
-    return result;
-}
-
-
-Mat4 CreateTransformMatrix(const Float3& position, const Quaternion& rotation, const Float3& pScale)
-{
-    float a_temp = rotation.a;
-    float b_temp = rotation.b;
-    float c_temp = rotation.c;
-    float d_temp = rotation.d;
-    return GetTranslation(position) * GetRotationMatrix(a_temp,b_temp,c_temp,d_temp) * GetScale(pScale);
-}
-*/
-
 void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
 {
     if (input->mouseLClick)
@@ -111,14 +60,13 @@ void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngin
         if (physx->m_scene->raycast(origin, unitDir, scene->m_gameCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
         {
             physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
-            if (hit.actor) printf("OEUF\n");
         } 
     }
 }
 
 BEHAVIOUR(Cube)
 {
-    printf("cube\n");
+    //printf("cube\n");
 }
 
 BEHAVIOUR(Player)
@@ -159,7 +107,7 @@ BEHAVIOUR(Player)
 __declspec(dllexport) STARTGAME(StartGame)
 {
 #pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
-    printf("Started the game successfully!\n");
+    //printf("Started the game successfully!\n");
 }
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
@@ -183,7 +131,6 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
         player->UpdateTransform();
 
         // This UI object must be initialized in editor before playing
-
         scene->AddGameObjectBehaviour("Cube", Cube);
 
 
