@@ -513,7 +513,6 @@ namespace RedFoxEngine
                 u64 countIndex = modelCountIndex[i];
                 if (countIndex)
                 {
-                    DrawModelShadowInstances(&m_models[i], countIndex);
                     glBindProgramPipeline(m_shadow.pipeline);
                     glBindVertexArray(m_vertexArrayObject);
                     glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 0, m_matrixSSBO, sizeof(RedFoxMaths::Mat4) * totalIndex, sizeof(RedFoxMaths::Mat4) * countIndex);
