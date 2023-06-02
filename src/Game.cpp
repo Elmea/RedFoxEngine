@@ -148,27 +148,36 @@ BEHAVIOUR(Player)
     if (cameraRotation.x < -M_PI_2) cameraRotation.x = -M_PI_2;
     scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
     self->orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, 0);
-
-    Float3 inputDirection(0, 0, 0);
-
-    if (pressed(inputs->W) || pressed(inputs->Up))    inputDirection.z += -1;
-    if (pressed(inputs->S) || pressed(inputs->Down))  inputDirection.z += 1;
-    if (pressed(inputs->A) || pressed(inputs->Left))  inputDirection.x += -1;
-    if (pressed(inputs->D) || pressed(inputs->Right)) inputDirection.x += 1;
     
-    float speed = 5000000;
     Float3 velocity(0, 0, 0);
+    float speed = 1;
+    if (pressed(inputs->W) || pressed(inputs->Up))
+    {
+        velocity.x -= speed * cosf(- cameraRotation.y - PI / 2);
+        velocity.z += speed * sinf(- cameraRotation.y - PI / 2);
+    }
+    if (pressed(inputs->S) || pressed(inputs->Down))
+    {
+        velocity.x += speed * cosf(- cameraRotation.y - PI / 2);
+        velocity.z -= speed * sinf(- cameraRotation.y - PI / 2);
+    }
+    if (pressed(inputs->D) || pressed(inputs->Right))
+    {
+        velocity.x += speed * cosf(- cameraRotation.y);
+        velocity.z -= speed * sinf(- cameraRotation.y);
+    }
+    if (pressed(inputs->A) || pressed(inputs->Left))
+    {
+        velocity.x -= speed * cosf(- cameraRotation.y);
+        velocity.z += speed * sinf(- cameraRotation.y);
+    }
+
     if (pressed(inputs->W) || pressed(inputs->S) || pressed(inputs->D) || pressed(inputs->A))
     {
-        inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
-        inputDirection.Normalize();
-        velocity.x = speed * deltaTime * inputDirection.x;
-        velocity.y = 0;
-        velocity.z = speed * deltaTime * inputDirection.z;
         physx::PxRigidDynamic* playerCapsule = self->body->is<physx::PxRigidDynamic>();
         if (playerCapsule)
         {
-            playerCapsule->addForce({ velocity.x, velocity.y, velocity.z }, physx::PxForceMode::eFORCE);
+            playerCapsule->addForce({ velocity.x, velocity.y, velocity.z }, physx::PxForceMode::eVELOCITY_CHANGE);
         }
     }
     
