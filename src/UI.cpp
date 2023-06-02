@@ -801,6 +801,16 @@ void Engine::DrawEditor()
             if (IsKeyPressed(ImGuiKey_Escape))
                 m_imgui.selectedObject = 0;
         }
+        else
+        {
+            if (IsWindowHovered() && IsMouseDown(ImGuiMouseButton_Left) && !m_input.lockMouse)
+            {
+                SetCapture(m_platform.m_window);
+                m_imgui.captureMouse = true;
+                m_input.lockMouse = true;
+                m_input.HideCursor(true);
+            }
+        }
     }
     End();
     PopStyleVar();
@@ -1337,7 +1347,10 @@ void Engine::DrawProperties()
                         ImGui::EndCombo();
                     }
                 }
-
+                else
+                {
+                    TextWrapped("The rigidbody actor properties should be created withing the game code!");
+                }
             }
             if (CollapsingHeader("Behaviour", m_imgui.propertiesFlags))
             {
