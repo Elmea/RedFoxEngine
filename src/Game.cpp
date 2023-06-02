@@ -41,10 +41,26 @@ UIBEHAVIOUR(UI)
 
 BEHAVIOUR(Cube)
 {
+    /*
+    physx::PxRigidDynamic* collider = self->body->is<physx::PxRigidDynamic>();
+
+    if (collider->getMass() == 1)
+    {
+    }
+    else if (collider->getMass() == 2)
+    {
+
+    }
+    else if (collider->getMass() == 4)
+    {
+
+    }
+
+    */
     //printf("cube\n");
 }
 
-void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
+void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx, RedFoxEngine::GameObject* storedCube)
 {
     if (input->mouseLClick.isPressed)
     {
@@ -73,21 +89,41 @@ void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngin
                 {
                     if (scene->gameObjects[i].body == hit.actor
                         && scene->gameObjectBehaviours[scene->gameObjects[i].behaviourIndex].function == Cube)
+                    {
+                        if (storedCube != NULL)
                         {
-                            printf(":D");
+                            storedCube = &scene->gameObjects[i];
                         }
+                        else
+                        {
+                            physx::PxRigidDynamic* storedCubeCollider = storedCube->body->is<physx::PxRigidDynamic>();
+                            physx::PxRigidDynamic* hitCubeCollider = scene->gameObjects[i].body->is<physx::PxRigidDynamic>();
+                            physx::PxReal temp = storedCubeCollider->getMass();
+
+                            storedCubeCollider->setMass(hitCubeCollider->getMass());
+                            hitCubeCollider->setMass(temp);
+                            storedCube = NULL;
+                        }
+                            
+                        
                     }
                 }
 
             }
         }
     }
+    
+    else if (input->mouseRClick.isPressed)
+    {
+        storedCube = NULL;
+    }
 }
-
 
 BEHAVIOUR(Player)
 {
     scene->m_gameCamera.position = self->position;
+
+    static RedFoxEngine::GameObject* storedCube = NULL;
 
     static Float3 cameraRotation;
     cameraRotation += {(f32)inputs->mouseYDelta* deltaTime, (f32)inputs->mouseXDelta* deltaTime, 0};
@@ -117,7 +153,7 @@ BEHAVIOUR(Player)
         }
     }
     
-    Gun(self, scene, inputs, physx);
+    Gun(self, scene, inputs, physx, storedCube);
 }
 
 __declspec(dllexport) STARTGAME(StartGame)
