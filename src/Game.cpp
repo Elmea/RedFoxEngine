@@ -39,28 +39,36 @@ UIBEHAVIOUR(UI)
         printf("Pressed\n");
 }
 
+RedFoxMaths::Mat4 RedFoxEngine::Camera::GetViewMatrix()
+{
+    return Mat4::CreateTransformMatrix(position, orientation, scale).GetInverseMatrix();
+}
+
 void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
 {
     if (input->mouseLClick)
     {
-        printf("Clic\n");
-        RedFoxMaths::Float4 ray_clip = { 0, 0, -1, 1 };
+        RedFoxMaths::Float3 ray_ndc = {
+            0,0, 1
+        };
+        RedFoxMaths::Float4 ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };
         RedFoxMaths::Float4 ray_eye = scene->m_gameCamera.m_projection.GetInverseMatrix() * ray_clip;
-        ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };        
-
-        RedFoxMaths::Mat4 transformMatrix = RedFoxMaths::Mat4::CreateTransformMatrix(scene->m_gameCamera.position, scene->m_gameCamera.orientation, scene->m_gameCamera.scale);
-        RedFoxMaths::Float4 ray_world = transformMatrix.GetInverseMatrix() * ray_eye;
-      
+        ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };
+        RedFoxMaths::Float4 ray_world = scene->m_gameCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
         ray_world.Normalize();
-        transformMatrix = RedFoxMaths::Mat4::CreateTransformMatrix(scene->m_gameCamera.position, scene->m_gameCamera.orientation, scene->m_gameCamera.scale);
-        RedFoxMaths::Mat4 view = transformMatrix.GetInverseMatrix();
+        RedFoxMaths::Mat4 view = scene->m_gameCamera.GetViewMatrix().GetInverseMatrix();
+        RedFoxMaths::Float3 front = ray_world.GetXYZF3();
+        front.Normalize();
+        front *= 1.2f;
+        physx::PxVec3 origin = { view.mat[0][3] + front.x, view.mat[1][3] + front.y, view.mat[2][3] +front.z};
         physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
-        physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
         physx::PxRaycastBuffer hitCalls;
         if (physx->m_scene->raycast(origin, unitDir, scene->m_gameCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
         {
             physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
-        } 
+            if (hit.actor)
+                printf(":D");
+        }
     }
 }
 
