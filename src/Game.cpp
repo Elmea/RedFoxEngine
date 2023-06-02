@@ -147,7 +147,8 @@ BEHAVIOUR(Player)
     if (cameraRotation.x > M_PI_2 + deltaTime) cameraRotation.x = M_PI_2;
     if (cameraRotation.x < -M_PI_2) cameraRotation.x = -M_PI_2;
     scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
-    
+    self->orientation = Quaternion::FromEuler(0, -cameraRotation.y, 0);
+
     Float3 inputDirection(0, 0, 0);
 
     if (pressed(inputs->W) || pressed(inputs->Up))    inputDirection.z += -1;

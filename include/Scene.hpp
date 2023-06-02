@@ -71,7 +71,7 @@ public:
         GameObject *current = &gameObjects[gameObjectindex];
         if (current->parent)
         {
-            return current->GetLocalMatrix() * GetWorldMatrix(current->parent);
+            return GetWorldMatrix(current->parent) * current->GetLocalMatrix();
         }
         return gameObjects[gameObjectindex].GetLocalMatrix();
     };
