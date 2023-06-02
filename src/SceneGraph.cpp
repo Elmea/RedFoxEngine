@@ -60,6 +60,14 @@ static void ReadGameObjectFromFile(HANDLE file, RedFoxEngine::GameObject *curren
 static BEHAVIOUR(DefaultBehaviour) { }
 static UIBEHAVIOUR(DefaultUIBehaviour) { }
 
+static void ReadGameUIFromFile(HANDLE file, RedFoxEngine::GameUI* current, RedFoxEngine::ResourcesManager *m)
+{
+    int size = sizeof(RedFoxEngine::GameObject);
+    ReadFile(file, &current->screenPosition, size, nullptr, nullptr);
+    ReadStringFromFile(file, &current->text, m);
+    ReadStringFromFile(file, &current->name, m);
+}
+
 void RedFoxEngine::Engine::LoadScene(const char *fileName)
 {
     m_scene.isInit = false;
@@ -105,6 +113,12 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
     for(int i = 0; i < (int)m_scene.gameObjectCount; i++)
     {
         ReadGameObjectFromFile(file, &m_scene.gameObjects[i], m_models, m_modelCount, &m_memoryManager);
+    }
+    ReadFile(file, &m_scene.gameUICount, sizeof(u32), nullptr, nullptr);
+    for (int i = 0; i < (int)m_scene.gameUICount; i++)
+    {
+        GameUI *current = &m_scene.gameUIs[i];
+        ReadGameUIFromFile(file, current, &m_memoryManager);
     }
     CloseHandle(file);
 
@@ -166,7 +180,7 @@ static void WriteGameObjectToFile(HANDLE file, RedFoxEngine::GameObject *current
     current->body = body;
 }
 
-static void WriteGameUIToFile(HANDLE file, RedFoxEngine::GameUI* current, RedFoxEngine::Model* m_models)
+static void WriteGameUIToFile(HANDLE file, RedFoxEngine::GameUI* current)
 {
     int size = sizeof(RedFoxEngine::GameObject);
     WriteFile(file, &current->screenPosition, size, nullptr, nullptr);
@@ -193,7 +207,7 @@ void RedFoxEngine::Engine::SaveScene(const char *fileName, Scene scene)
     for (int i = 0; i < (int)m_scene.gameUICount; i++)
     {
         GameUI *current = &m_scene.gameUIs[i];
-        WriteGameUIToFile(file, current, m_models);
+        WriteGameUIToFile(file, current);
     }
     CloseHandle(file);
 }
