@@ -41,24 +41,29 @@ UIBEHAVIOUR(UI)
 
 BEHAVIOUR(Cube)
 {
-    /*
+        
     physx::PxRigidDynamic* collider = self->body->is<physx::PxRigidDynamic>();
 
-    if (collider->getMass() == 1)
+    if (collider)
     {
-    }
-    else if (collider->getMass() == 2)
-    {
+        if (collider->getMass() == 1)
+        {
+        }
+        else if (collider->getMass() == 2)
+        {
 
-    }
-    else if (collider->getMass() == 4)
-    {
+        }
+        else if (collider->getMass() == 4)
+        {
 
+        }
     }
-
-    */
+    
+    
     //printf("cube\n");
 }
+
+//void Grab()
 
 void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx, RedFoxEngine::GameObject* storedCube)
 {
@@ -119,6 +124,11 @@ void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngin
     }
 }
 
+static bool pressed(RedFoxEngine::Key key)
+{
+    return (key.isHold || key.isPressed);
+}
+
 BEHAVIOUR(Player)
 {
     scene->m_gameCamera.position = self->position;
@@ -132,15 +142,17 @@ BEHAVIOUR(Player)
     scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
     
     Float3 inputDirection(0, 0, 0);
-    if (inputs->W.isHold || inputs->Up.isHold)    inputDirection.z += -1;
-    if (inputs->S.isHold || inputs->Down.isHold)  inputDirection.z += 1;
-    if (inputs->A.isHold || inputs->Left.isHold)  inputDirection.x += -1;
-    if (inputs->D.isHold || inputs->Right.isHold) inputDirection.x += 1;
+
+    if (pressed(inputs->W) || pressed(inputs->Up))    inputDirection.z += -1;
+    if (pressed(inputs->S) || pressed(inputs->Down))  inputDirection.z += 1;
+    if (pressed(inputs->A) || pressed(inputs->Left))  inputDirection.x += -1;
+    if (pressed(inputs->D) || pressed(inputs->Right)) inputDirection.x += 1;
     
     float speed = 5000000;
     Float3 velocity(0, 0, 0);
-    if (inputs->W.isHold || inputs->S.isHold || inputs->A.isHold || inputs->D.isHold)
+    if (pressed(inputs->W) || pressed(inputs->S) || pressed(inputs->D) || pressed(inputs->A))
     {
+        printf(";) %f %d, %d\n", inputDirection.z, pressed(inputs->W), pressed(inputs->S));
         inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
         inputDirection.Normalize();
         velocity.x = speed * deltaTime * inputDirection.x;
