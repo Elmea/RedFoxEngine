@@ -39,6 +39,11 @@ UIBEHAVIOUR(UI)
         printf("Pressed\n");
 }
 
+BEHAVIOUR(Cube)
+{
+    //printf("cube\n");
+}
+
 void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
 {
     if (input->mouseLClick.isPressed)
@@ -62,15 +67,23 @@ void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngin
         {
             physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
             if (hit.actor)
-                printf(":D");
+            {
+                
+                for (int i = 0; i < scene->gameObjectCount; i++)
+                {
+                    if (scene->gameObjects[i].body == hit.actor
+                        && scene->gameObjectBehaviours[scene->gameObjects[i].behaviourIndex].function == Cube)
+                        {
+                            printf(":D");
+                        }
+                    }
+                }
+
+            }
         }
     }
 }
 
-BEHAVIOUR(Cube)
-{
-    //printf("cube\n");
-}
 
 BEHAVIOUR(Player)
 {
@@ -110,7 +123,7 @@ BEHAVIOUR(Player)
 __declspec(dllexport) STARTGAME(StartGame)
 {
 #pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
-    //printf("Started the game successfully!\n");
+    //printf("Started the game successfully!\n"); 
 }
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
