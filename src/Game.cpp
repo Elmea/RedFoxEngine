@@ -33,6 +33,11 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     return TRUE;
 }
 
+BEHAVIOUR(Gun)
+{
+    self->position;
+}
+
 UIBEHAVIOUR(UI)
 {
     if (self->isPressed)
@@ -45,7 +50,7 @@ BEHAVIOUR(Cube)
     physx::PxRigidDynamic* collider = self->body->is<physx::PxRigidDynamic>();
 
     if (collider)
-    {
+    {   
         if (collider->getMass() == 1)
         {
         }
@@ -65,7 +70,7 @@ BEHAVIOUR(Cube)
 
 //void Grab()
 
-void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx, RedFoxEngine::GameObject* storedCube)
+void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx, RedFoxEngine::GameObject* storedCube)
 {
     if (input->mouseLClick.isPressed)
     {
@@ -95,7 +100,9 @@ void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngin
                     if (scene->gameObjects[i].body == hit.actor
                         && scene->gameObjectBehaviours[scene->gameObjects[i].behaviourIndex].function == Cube)
                     {
-                        if (storedCube != NULL)
+                        printf("cube hit\n");
+                        
+                        if (storedCube == NULL)
                         {
                             storedCube = &scene->gameObjects[i];
                         }
@@ -152,7 +159,6 @@ BEHAVIOUR(Player)
     Float3 velocity(0, 0, 0);
     if (pressed(inputs->W) || pressed(inputs->S) || pressed(inputs->D) || pressed(inputs->A))
     {
-        printf(";) %f %d, %d\n", inputDirection.z, pressed(inputs->W), pressed(inputs->S));
         inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
         inputDirection.Normalize();
         velocity.x = speed * deltaTime * inputDirection.x;
@@ -165,7 +171,7 @@ BEHAVIOUR(Player)
         }
     }
     
-    Gun(self, scene, inputs, physx, storedCube);
+    Shoot(self, scene, inputs, physx, storedCube);
 }
 
 __declspec(dllexport) STARTGAME(StartGame)
@@ -196,6 +202,7 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
 
         // This UI object must be initialized in editor before playing
         scene->AddGameObjectBehaviour("Cube", Cube);
+        scene->AddGameObjectBehaviour("Gun", Gun);
 
 
         scene->isInit = true;
