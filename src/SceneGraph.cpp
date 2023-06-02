@@ -130,9 +130,40 @@ static void WriteStringToFile(HANDLE file, MyString string)
 static void WriteGameObjectToFile(HANDLE file, RedFoxEngine::GameObject *current, RedFoxEngine::Model *m_models)
 {
     int size = sizeof(RedFoxEngine::GameObject);
+    physx::PxRigidActor *body = current->body;
+    current->state = RedFoxEngine::ST_NONE;
+    current->type = RedFoxEngine::CT_NONE;
+    if (body)
+    {
+        if (body && body->is<physx::PxRigidDynamic>())
+            current->state = RedFoxEngine::ST_DYNAMIC;
+        else 
+            current->state = RedFoxEngine::ST_STATIC;
+        physx::PxShape *shape;
+        if (body && body->getShapes(&shape, 1, 0))
+        {
+            physx::PxGeometryType::Enum geo = shape->getGeometryType();
+            switch (geo)
+            {
+                case physx::PxGeometryType::eSPHERE:
+                {
+                    current->type = RedFoxEngine::CT_SPHERE;
+                }break;
+                case physx::PxGeometryType::eBOX:
+                {
+                    current->type = RedFoxEngine::CT_CUBE;
+                }break;
+                case physx::PxGeometryType::eCAPSULE:
+                {
+                    current->type = RedFoxEngine::CT_CAPSULE;
+                }break;
+            }
+        }
+    }
     WriteFile(file, &current->transform, size, nullptr, nullptr);
     WriteFile(file, &m_models[current->modelIndex].hash, sizeof(u64), nullptr, nullptr);
     WriteStringToFile(file, current->name);
+    current->body = body;
 }
 
 static void WriteGameUIToFile(HANDLE file, RedFoxEngine::GameUI* current, RedFoxEngine::Model* m_models)

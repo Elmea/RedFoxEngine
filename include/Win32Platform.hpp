@@ -54,7 +54,6 @@ public:
     int mouseYDelta;
     Key  mouseLClick;
     Key  mouseRClick;
-    union {
     Key Q;
     Key W;
     Key E;
@@ -101,59 +100,6 @@ public:
     Key Left;
     Key Right;
     Key Delete;
-    // struct {
-    //     Key  mouseLClick;
-    //     Key  mouseRClick;
-
-    //     Key Q;
-    //     Key W;
-    //     Key E;
-    //     Key R;
-    //     Key T;
-    //     Key Y;
-    //     Key U;
-    //     Key I;
-    //     Key O;
-    //     Key P;
-    //     Key OpenBracket;
-    //     Key CloseBracket;
-    //     Key BackSlash;
-    //     Key A;
-    //     Key S;
-    //     Key D;
-    //     Key F;
-    //     Key G;
-    //     Key H;
-    //     Key J;
-    //     Key K;
-    //     Key L;
-    //     Key SemiColon;
-    //     Key Apostrophe;
-    //     Key Tilda;
-    //     Key LShift;
-    //     Key Enter;
-    //     Key LControl;
-    //     Key Escape;
-    //     Key Z;
-    //     Key X;
-    //     Key C;
-    //     Key V;
-    //     Key B;
-    //     Key N;
-    //     Key M;
-    //     Key Comma;
-    //     Key Period;
-    //     Key Slash;
-    //     Key RShift;
-    //     Key Spacebar;
-    //     Key Up;
-    //     Key Down;
-    //     Key Left;
-    //     Key Right;
-    //     Key Delete;
-            
-    // };
-    };
     void HideCursor(bool state)
     {
         if (state != hideCursor)
