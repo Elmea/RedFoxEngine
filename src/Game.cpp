@@ -39,11 +39,6 @@ UIBEHAVIOUR(UI)
         printf("Pressed\n");
 }
 
-RedFoxMaths::Mat4 RedFoxEngine::Camera::GetViewMatrix()
-{
-    return Mat4::CreateTransformMatrix(position, orientation, scale).GetInverseMatrix();
-}
-
 void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
 {
     if (input->mouseLClick)
