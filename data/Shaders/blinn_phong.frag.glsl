@@ -39,7 +39,7 @@ struct Material
     int _padding;
 };
 
-layout (location = 0) uniform invariant vec3 viewPos;
+layout (location = 0) uniform vec3 viewPos;
 
 layout(location = 0)in FS_IN
 {

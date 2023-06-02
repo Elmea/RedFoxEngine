@@ -217,9 +217,11 @@ void Platform::Maximize()
     }
 }
 
-void Platform::SetMousePosition(int x, int y)
+void Platform::SetMousePosition(RedFoxEngine::Input* input, int x, int y)
 {
     SetCursorPos(x, y);
+    input->mouseXPosition = x;
+    input->mouseYPosition = y;
 }
 
 void Platform::WaitForThread(HANDLE thread)
@@ -246,6 +248,16 @@ static void updateMouse(RedFoxEngine::Window m_window,
 void RedFoxEngine::Platform::MessageProcessing(Input *input)
 {
     MSG Message;
+    if (input->mouseLClick.isPressed)
+    {
+        input->mouseLClick.isHold = true;
+        input->mouseLClick.isPressed = false;
+    }
+    if (input->mouseRClick.isPressed)
+    {
+        input->mouseRClick.isHold = true;
+        input->mouseRClick.isPressed = false;
+    }
     while (PeekMessageA(&Message, nullptr, 0, 0, PM_REMOVE))
     {
         switch (Message.message)
@@ -280,8 +292,8 @@ void RedFoxEngine::Platform::MessageProcessing(Input *input)
         }
         break;
 
-        case WM_LBUTTONDOWN: {
-            input->mouseLClick = true;
+        case WM_LBUTTONDOWN: {          
+            input->mouseLClick.isPressed = true;
             SetCapture(m_window);
             TranslateMessage(&Message);
             DispatchMessage(&Message);
@@ -289,13 +301,13 @@ void RedFoxEngine::Platform::MessageProcessing(Input *input)
         break;
         case WM_LBUTTONUP:
         {
-            input->mouseLClick = false;
+            input->mouseLClick.isPressed = input->mouseLClick.isHold = false;
             ReleaseCapture();
             TranslateMessage(&Message);
             DispatchMessage(&Message);
         }break;
         case WM_RBUTTONDOWN: {
-            input->mouseRClick = true;
+            input->mouseRClick.isPressed = true;
             SetCapture(m_window);
             TranslateMessage(&Message);
             DispatchMessage(&Message);
@@ -303,7 +315,7 @@ void RedFoxEngine::Platform::MessageProcessing(Input *input)
         break;
         case WM_RBUTTONUP:
         {
-            input->mouseRClick = false;
+            input->mouseRClick.isPressed = input->mouseRClick.isHold = false;
             ReleaseCapture();
             TranslateMessage(&Message);
             DispatchMessage(&Message);
@@ -317,7 +329,7 @@ void RedFoxEngine::Platform::MessageProcessing(Input *input)
 
             int VKCode = (int)Message.wParam;
             // NOTE: variable names explain the bit shift
-            // int WasDown = ((Message.lParam & (1 << 30)) != 0);
+            int WasDown = ((Message.lParam & (1 << 30)) != 0);
             int IsDown = ((Message.lParam & (1 << 31)) == 0);
 
             // NOTE(V. Caraulan): This function maps the Virtual Keys of 
@@ -325,59 +337,70 @@ void RedFoxEngine::Platform::MessageProcessing(Input *input)
             UINT scanCode = MapVirtualKeyEx(VKCode, MAPVK_VK_TO_VSC,
                     GetKeyboardLayout(0));
 
+            Key key = {};
+            if (IsDown && WasDown)
+            {
+                key.isHold = true;
+                key.isPressed = false;
+            }
+            else if (IsDown)
+            {
+                key.isHold = false;
+                key.isPressed = true;
+            }
             // NOTE(V. Caraulan): the comments are for US/ISO international keys
             // https://www.win.tue.nl/~aeb/linux/kbd/scancodes-1.html
             switch (scanCode)
             {
-                case 0x01: input->Escape = IsDown; break; // Escape
-                case 0x10: input->Q = IsDown; break; // Q
-                case 0x11: input->W = IsDown; break; // W
-                case 0x12: input->E = IsDown; break; // E
-                case 0x13: input->R = IsDown; break; // R
-                case 0x14: input->T = IsDown; break; // T
-                case 0x15: input->Y = IsDown; break; // Y
-                case 0x16: input->U = IsDown; break; // U
-                case 0x17: input->I = IsDown; break; // I
-                case 0x18: input->O = IsDown; break; // O
-                case 0x19: input->P = IsDown; break; // P
-                case 0x1A: input->OpenBracket = IsDown; break; // [
-                case 0x1B: input->CloseBracket = IsDown; break; // ]
-                case 0x1C: input->Enter = IsDown; break; // Enter / Return
-                case 0x1D: input->LControl = IsDown; break; // LCtrl
-                case 0x1E: input->A = IsDown; break; // A
-                case 0x1F: input->S = IsDown; break; // S
-                case 0x20: input->D = IsDown; break; // D
-                case 0x21: input->F = IsDown; break; // F
-                case 0x22: input->G = IsDown; break; // G
-                case 0x23: input->H = IsDown; break; // H
-                case 0x24: input->J = IsDown; break; // J
-                case 0x25: input->K = IsDown; break; // K
-                case 0x26: input->L = IsDown; break; // L
-                case 0x27: input->SemiColon = IsDown; break;// ;
-                case 0x28: input->Apostrophe = IsDown; break;// '
-                case 0x29: input->Tilda = IsDown; break;// `~
-                case 0x2A: input->LShift = IsDown; break;// LShift
-                case 0x2B: input->BackSlash = IsDown; break;// \|
-                case 0x2D: input->X = IsDown; break;// X
-                case 0x2E: input->C = IsDown; break;// C
-                case 0x2F: input->V = IsDown; break;// V
-                case 0x30: input->B = IsDown; break;// B
-                case 0x31: input->N = IsDown; break;// N
-                case 0x32: input->M = IsDown; break;// M
-                case 0x33: input->Comma = IsDown; break;// <
-                case 0x34: input->Period = IsDown; break;// >
-                case 0x35: input->Slash = IsDown; break;// /?
-                case 0x36: input->RShift = IsDown; break;// RShift
+                case 0x01: input->Escape = key; break; // Escape
+                case 0x10: input->Q = key; break; // Q
+                case 0x11: input->W = key; break; // W
+                case 0x12: input->E = key; break; // E
+                case 0x13: input->R = key; break; // R
+                case 0x14: input->T = key; break; // T
+                case 0x15: input->Y = key; break; // Y
+                case 0x16: input->U = key; break; // U
+                case 0x17: input->I = key; break; // I
+                case 0x18: input->O = key; break; // O
+                case 0x19: input->P = key; break; // P
+                case 0x1A: input->OpenBracket = key; break; // [
+                case 0x1B: input->CloseBracket = key; break; // ]
+                case 0x1C: input->Enter = key; break; // Enter / Return
+                case 0x1D: input->LControl = key; break; // LCtrl
+                case 0x1E: input->A = key; break; // A
+                case 0x1F: input->S = key; break; // S
+                case 0x20: input->D = key; break; // D
+                case 0x21: input->F = key; break; // F
+                case 0x22: input->G = key; break; // G
+                case 0x23: input->H = key; break; // H
+                case 0x24: input->J = key; break; // J
+                case 0x25: input->K = key; break; // K
+                case 0x26: input->L = key; break; // L
+                case 0x27: input->SemiColon = key; break;// ;
+                case 0x28: input->Apostrophe = key; break;// '
+                case 0x29: input->Tilda = key; break;// `~
+                case 0x2A: input->LShift = key; break;// LShift
+                case 0x2B: input->BackSlash = key; break;// \|
+                case 0x2D: input->X = key; break;// X
+                case 0x2E: input->C = key; break;// C
+                case 0x2F: input->V = key; break;// V
+                case 0x30: input->B = key; break;// B
+                case 0x31: input->N = key; break;// N
+                case 0x32: input->M = key; break;// M
+                case 0x33: input->Comma = key; break;// <
+                case 0x34: input->Period = key; break;// >
+                case 0x35: input->Slash = key; break;// /?
+                case 0x36: input->RShift = key; break;// RShift
                 // 37 (Keypad-*) or (*/PrtScn) on a 83/84-key keyboard
                 // 38 (LAlt),
-                case 0x39: input->Spacebar = IsDown; break; // Space bar
+                case 0x39: input->Spacebar = key; break; // Space bar
                 // 3a (CapsLock)
                 // 3b (F1), 3c (F2), 3d (F3), 3e (F4), 3f (F5), 40 (F6), 41 (F7), 42 (F8), 43 (F9), 44 (F10)
-                case 0x48: input->Up = IsDown; break; // Up
-                case 0x4b: input->Left = IsDown; break; // Left
-                case 0x4d: input->Right = IsDown; break; // Right
-                case 0x50: input->Down = IsDown; break; // Down
-                case 0x53: input->Delete = IsDown; break;
+                case 0x48: input->Up = key; break; // Up
+                case 0x4b: input->Left = key; break; // Left
+                case 0x4d: input->Right = key; break; // Right
+                case 0x50: input->Down = key; break; // Down
+                case 0x53: input->Delete = key; break;
                 default: { }
             }
         }

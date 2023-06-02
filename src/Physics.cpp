@@ -95,8 +95,6 @@ void Physx::InitPhysics()
 	physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, PxTolerancesScale(), false);
 #endif
 
-	PxCudaContextManagerDesc cudaContextManagerDesc;
-	cudaContextManager = PxCreateCudaContextManager(*foundation, cudaContextManagerDesc, PxGetProfilerCallback());
 	dispatcher = PxDefaultCpuDispatcherCreate(std::thread::hardware_concurrency());
 }
 
@@ -174,7 +172,6 @@ void Physx::UpdatePhysics(f32 deltaTime, Scene* scene)
 					scene->gameObjects[i].transform = scene->GetLocalTransformFromWorld(t, i);
 					if (scene->isPaused)
 					{
-						if (i == 2)
 						 dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
 					}
 					if (wasPaused)

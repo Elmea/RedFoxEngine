@@ -181,18 +181,80 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     if (ImageButton("SAVE SCENE", m_imgui.icons[1], ImVec2(buttonHeight, buttonHeight))
         || (IsKeyDown(ImGuiKey_S) && IsKeyDown(ImGuiKey_LeftCtrl)) ) //TODO Add security on CTRL+S to only add SaveScene when there is a change
     {
-        SaveScene(m_scene.m_name.data, m_scene);
+        char tmp[272];
+        memset(tmp, 0, 272);
+        int len = ImFormatString(tmp, 272, "../assets/Scenes/%s", m_scene.m_name.data);
+        SaveScene(tmp, m_scene);
     }
-    
+
+    SetNextWindowPos((m_imgui.windowSize - m_imgui.popupDim) / 2);
+    SetNextWindowSize(m_imgui.popupDim);
+    if (BeginPopupModal("Load scene"))
+    {
+        m_imgui.lockEditor = true;
+        SetItemDefaultFocus();
+        static MyString path = initStringChar("", 256, &m_memoryManager.m_memory.arena);
+        Text("Path:");
+        SameLine();
+        SetNextItemWidth(-FLT_MIN);
+        InputText("Path", (char*)path.data, path.capacity);
+        if (Button("Load"))
+        {
+            char tmp[272];
+            memset(tmp, 0, 272);
+            int len = ImFormatString(tmp, 272, "../assets/Scenes/%s", path.data);
+            if (m_platform.FileExist(tmp) && len >= 16)
+            {
+                LoadScene(tmp);
+                m_imgui.lockEditor = false;
+                CloseCurrentPopup();
+            }
+            assignString(path, "");
+        }
+        SameLine();
+        if (Button("Cancel"))
+        {
+            assignString(path, "");
+            m_imgui.lockEditor = false;
+            CloseCurrentPopup();
+        }
+        EndPopup();
+    }
+
+    SameLine();
+    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
+    if (Button("RELOAD SCENE", { 0, buttonHeight }))
+    {
+        char tmp[255];
+        ImFormatString(tmp, 255, "../assets/Scenes/%s", m_scene.m_name.data);
+        LoadScene(tmp);
+    }
+    SameLine();
+    SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
+    if (Button("LOAD SCENE", { 0, buttonHeight }))
+    {
+        OpenPopup("Load scene");
+    }
+
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 32.f);
     if (ImageButton("PAUSE", m_scene.isPaused ? m_imgui.icons[3] : m_imgui.icons[2], ImVec2(buttonHeight, buttonHeight)))
     {
         m_scene.isPaused = !m_scene.isPaused;
+        if (!m_scene.isPaused)
+        {
+            char path[266];
+            memset(path, 0, 266);
+            ImFormatString(path, 266, "Temp/%s.tmp", m_scene.m_name.data);
+            SaveScene(path, m_scene);
+            m_platform.SetMousePosition(&m_input, (int)m_imgui.centerEditorViewport.x, (int)m_imgui.centerEditorViewport.y);
+            m_game.start(&m_scene, &m_physx, &m_input);
+        }
         if (!m_imgui.captureMouse && !m_scene.isPaused)
         {
             SetCapture(m_platform.m_window);
             m_imgui.captureMouse = true;
+            m_input.lockMouse = true;
             m_input.HideCursor(true);
         }
     }
@@ -203,22 +265,22 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         {
             SetCapture(NULL);
             m_imgui.captureMouse = false;
+            m_input.lockMouse = false;
             m_input.HideCursor(false);
         }
     }
     
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
-    if (ImageButton("STOP", m_imgui.icons[10], ImVec2(buttonHeight, buttonHeight)))
+    if (ImageButton("STOP", m_imgui.icons[10], ImVec2(buttonHeight, buttonHeight)) && !m_scene.isPaused)
     {
-        char path[255] = "Scene/";
-        int i = 0;
-        while (path[i] != '\0')
-            i++;
-        int j = 0;
-        while (m_scene.m_name.data[j] != '\0')
-             path[i++] = m_scene.m_name.data[j++];
-        LoadScene(path);
+        char path[266];
+        memset(path, 0, 266);
+        ImFormatString(path, 266, "Temp/%s.tmp", m_scene.m_name.data);
+        if (m_platform.FileExist(path))
+        {
+            LoadScene(path);
+        }
         if (m_scene.isPaused == false)
         {
             SetCapture(NULL);
@@ -507,11 +569,11 @@ void Engine::DrawEditor()
             mousePos.x * dimension.width / content.x - vMin.x,
             mousePos.y * dimension.height / content.y - vMin.y
         };
-
+        m_imgui.centerEditorViewport = content / 2;
+        
         RedFoxMaths::Float2 uiPos, convertedPos, uiSize;
         for (int i = 1; i < m_scene.gameUICount; i++)
         {
-
             uiPos = m_scene.gameUIs[i].screenPosition;
             uiSize = m_scene.gameUIs[i].size;
 
@@ -599,7 +661,15 @@ void Engine::DrawEditor()
             EndChild();
         }
         SetItemAllowOverlap();
-
+        if (!m_scene.isPaused)
+        {
+            SetCursorPos(GetWindowContentRegionMin());
+            SameLine();
+            
+            Text("Press Esc to show cursor");
+            SetItemAllowOverlap();
+        }
+        
         if (m_imgui.selectedObject != 0 && m_scene.isPaused && !m_imgui.lockEditor)
         {
             ImGuizmo::SetDrawlist();
@@ -678,56 +748,59 @@ void Engine::DrawEditor()
             }
         }
 
-        if (m_imgui.mousePosEditor.x > 0 && m_imgui.mousePosEditor.x < content.x &&
-            m_imgui.mousePosEditor.y > 0 && m_imgui.mousePosEditor.y < content.y)
+        if (m_scene.isPaused)
         {
-            RedFoxMaths::Float3 ray_ndc = {
-                (2.0f * m_imgui.mousePosEditor.x) / content.x - 1.0f,
-                1.0f - (2.0f * m_imgui.mousePosEditor.y) / content.y,
-                1
-            };
-            RedFoxMaths::Float4 ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };
-            RedFoxMaths::Float4 ray_eye = m_editorCamera.m_projection.GetInverseMatrix() * ray_clip;
-            ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };
-            RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
-            ray_world.Normalize();
-
-            if (IsMouseClicked(ImGuiMouseButton_Left) && !m_imgui.manipulatingGizmo && !m_imgui.lockEditor && m_scene.isPaused)
+            if (m_imgui.mousePosEditor.x > 0 && m_imgui.mousePosEditor.x < content.x &&
+                m_imgui.mousePosEditor.y > 0 && m_imgui.mousePosEditor.y < content.y)
             {
-                RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
-                physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
-                physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
-                physx::PxRaycastBuffer hitCalls;
-                if (m_physx.m_scene->raycast(origin, unitDir, m_editorCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
+                RedFoxMaths::Float3 ray_ndc = {
+                    (2.0f * m_imgui.mousePosEditor.x) / content.x - 1.0f,
+                    1.0f - (2.0f * m_imgui.mousePosEditor.y) / content.y,
+                    1
+                };
+                RedFoxMaths::Float4 ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };
+                RedFoxMaths::Float4 ray_eye = m_editorCamera.m_projection.GetInverseMatrix() * ray_clip;
+                ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };
+                RedFoxMaths::Float4 ray_world = m_editorCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
+                ray_world.Normalize();
+
+                if (IsMouseClicked(ImGuiMouseButton_Left) && !m_imgui.manipulatingGizmo && !m_imgui.lockEditor && m_scene.isPaused)
                 {
-                    physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
-                    if (hit.actor)
+                    RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
+                    physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
+                    physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
+                    physx::PxRaycastBuffer hitCalls;
+                    if (m_physx.m_scene->raycast(origin, unitDir, m_editorCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
                     {
-                        for (int i = 0; i < m_scene.gameObjectCount; i++)
+                        physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
+                        if (hit.actor)
                         {
-                            if (m_scene.gameObjects[i].body == hit.actor)
+                            for (int i = 0; i < m_scene.gameObjectCount; i++)
                             {
-                                m_imgui.selectedObject = i;
-                                break;
+                                if (m_scene.gameObjects[i].body == hit.actor)
+                                {
+                                    m_imgui.selectedObject = i;
+                                    break;
+                                }
                             }
                         }
                     }
                 }
+            
+                if (IsMouseDown(ImGuiMouseButton_Right))
+                {
+                    m_input.lockMouse = m_editorCameraEnabled = true;
+                }
+                else
+                {
+                    m_editorCameraVelocity = { 0.f, 0.f, 0.f };
+                    m_input.lockMouse = m_editorCameraEnabled = false;
+                }
             }
 
-            if (IsMouseDown(ImGuiMouseButton_Right))
-            {
-                m_input.lockMouse = m_editorCameraEnabled = true;
-            }
-            else
-            {
-                m_editorCameraVelocity = { 0.f, 0.f, 0.f };
-                m_input.lockMouse = m_editorCameraEnabled = false;
-            }
+            if (IsKeyPressed(ImGuiKey_Escape))
+                m_imgui.selectedObject = 0;
         }
-
-        if (IsKeyPressed(ImGuiKey_Escape))
-            m_imgui.selectedObject = 0;
     }
     End();
     PopStyleVar();
@@ -749,7 +822,10 @@ void Engine::DrawUIGraph()
             if (BeginPopupContextItem("RenameScenePopup"))
             {
                 if (IsKeyPressed(ImGuiKey_Enter))
+                {
+                    m_scene.m_name.size = strlen(m_scene.m_name.data);
                     CloseCurrentPopup();
+                }
 
                 SameLine();
                 InputText(" ", (char*)m_scene.m_name.data, m_scene.m_name.capacity);
@@ -863,7 +939,10 @@ void Engine::DrawSceneGraph()
             if (BeginPopupContextItem("RenameScenePopup"))
             {
                 if (IsKeyPressed(ImGuiKey_Enter))
+                {
+                    m_scene.m_name.size = strlen(m_scene.m_name.data);
                     CloseCurrentPopup();
+                }
 
                 SameLine();
                 InputText(" ", (char*)m_scene.m_name.data, m_scene.m_name.capacity);
@@ -1001,9 +1080,6 @@ void Engine::DrawAssetsBrowser()
     {
         if (BeginTable("AssetsTable", 2, m_imgui.tableFlags))
         {
-            const ImVec2 popupDim(400, 70);
-            ImVec2 windowPos = ImGui::GetIO().DisplaySize;
-
             TableNextRow();
             TableSetColumnIndex(0);
             Text("Models (%d/%d)", m_modelCount, m_maxModel);
@@ -1013,8 +1089,8 @@ void Engine::DrawAssetsBrowser()
             {
                 OpenPopup("Importing a model...");
             }
-            SetNextWindowPos((windowPos - popupDim) / 2);
-            SetNextWindowSize(popupDim);
+            SetNextWindowPos((m_imgui.windowSize - m_imgui.popupDim) / 2);
+            SetNextWindowSize(m_imgui.popupDim);
             if (BeginPopupModal("Importing a model..."))
             {
                 m_imgui.lockEditor = true;
@@ -1028,7 +1104,7 @@ void Engine::DrawAssetsBrowser()
                 {
                     char tmp[256];
                     memset(tmp, 0, 256);
-                    int len = ImFormatString(tmp, 256, "../assets/%s", path.data);
+                    int len = ImFormatString(tmp, 256, "../assets/Models/%s", path.data);
                     if (m_platform.FileExist(tmp) && len >= 17)
                     {
                         ObjModelPush(tmp);
@@ -1056,8 +1132,8 @@ void Engine::DrawAssetsBrowser()
             {
                 OpenPopup("Importing a sound...");
             }
-            SetNextWindowPos((windowPos - popupDim) / 2);
-            SetNextWindowSize(popupDim);
+            SetNextWindowPos((m_imgui.windowSize - m_imgui.popupDim) / 2);
+            SetNextWindowSize(m_imgui.popupDim);
             if (BeginPopupModal("Importing a sound..."))
             {
                 m_imgui.lockEditor = true;
@@ -1071,7 +1147,7 @@ void Engine::DrawAssetsBrowser()
                 {
                     char tmp[256];
                     memset(tmp, 0, 256);
-                    int len = ImFormatString(tmp, 256, "../assets/%s", path.data);
+                    int len = ImFormatString(tmp, 256, "../assets/Sounds/%s", path.data);
                     if (m_platform.FileExist(tmp) && len >= 17)
                     {
                         m_soundManager.CreateSound(tmp, &m_memoryManager.m_memory.arena);
@@ -1521,10 +1597,8 @@ void Engine::DrawWorldProperties()
             {
                 OpenPopup("Importing a shader...");
             }
-            const ImVec2 popupDim(400, 70);
-            ImVec2 windowPos = ImGui::GetIO().DisplaySize;
-            SetNextWindowPos((windowPos - popupDim) / 2);
-            SetNextWindowSize(popupDim);
+            SetNextWindowPos((m_imgui.windowSize - m_imgui.popupDim) / 2);
+            SetNextWindowSize(m_imgui.popupDim);
             if (BeginPopupModal("Importing a shader..."))
             {
                 SetItemDefaultFocus();
@@ -1537,7 +1611,7 @@ void Engine::DrawWorldProperties()
                 {
                     char tmp[256];
                     memset(tmp, 0, 256);
-                    int len = ImFormatString(tmp, 256, "../assets/%s", path.data);
+                    int len = ImFormatString(tmp, 256, "../assets/Shaders/%s", path.data);
                     if (m_platform.FileExist(tmp) && len >= 18)
                     {
                         m_graphics.AddPostProcessShader(&m_memoryManager.m_memory, tmp);
@@ -1706,6 +1780,7 @@ void Engine::UpdateIMGUI()
     ImGuizmo::BeginFrame();
 
     DrawDockSpace(GetMainViewport(), m_imgui.dockingFlags, (const ImGuiWindowClass*)0);
+    m_imgui.windowSize = ImGui::GetIO().DisplaySize;
 
     PushFont(m_imgui.defaultFont);
     DrawEditor();

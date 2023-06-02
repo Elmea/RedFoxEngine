@@ -61,7 +61,7 @@ Engine::Engine(int width, int height) :
     m_memoryManager.m_sceneUsedMemory = m_memoryManager.m_memory.arena.usedSize;
 
     //TODO transition to an instance based model 'model'
-    LoadScene("Scene/Sample Scene");
+    LoadScene("../assets/Scenes/Sample Scene");
     Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
     dir->lightInfo.constant = 1.0f;
     dir->lightInfo.linear = 0.09f;
@@ -212,10 +212,10 @@ void Engine::UpdateEditorCamera()
         m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
 
         Float3 inputDirection(0, 0, 0);
-        if (m_input.W || m_input.Up)    inputDirection.z += -1;
-        if (m_input.S || m_input.Down)  inputDirection.z +=  1;
-        if (m_input.A || m_input.Left)  inputDirection.x += -1;
-        if (m_input.D || m_input.Right) inputDirection.x +=  1;
+        if (m_input.W.isHold || m_input.Up.isHold)    inputDirection.z += -1;
+        if (m_input.S.isHold || m_input.Down.isHold)  inputDirection.z +=  1;
+        if (m_input.A.isHold || m_input.Left.isHold)  inputDirection.x += -1;
+        if (m_input.D.isHold || m_input.Right.isHold) inputDirection.x +=  1;
         inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
         inputDirection.Normalize();
         inputDirection = inputDirection * 200.f;

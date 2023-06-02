@@ -39,52 +39,38 @@ UIBEHAVIOUR(UI)
         printf("Pressed\n");
 }
 
-
-/*
 void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
 {
-    if (IsMouseClicked(ImGuiMouseButton_Left) && !m_imgui.manipulatingGizmo && !m_imgui.lockEditor && m_scene.isPaused)
+    if (input->mouseLClick.isPressed)
     {
-        RedFoxMaths::Mat4 view = m_editorCamera.GetViewMatrix().GetInverseMatrix();
-        physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
-        physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
-        physx::PxRaycastBuffer hitCalls;
-        if (m_physx.m_scene->raycast(origin, unitDir, m_editorCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
-        {
-            physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
-            if (hit.actor)
-            {
-                int hitIndex = hit.actor->getInternalActorIndex();
-                if (hitIndex < (int)m_scene.gameObjectCount && hitIndex > 0)
-                {
-                    m_imgui.selectedObject = hitIndex;
-                    m_imgui.mousePickNodeIndex = hitIndex;
-                }
-            }
-        }
-    }
-
-    if (input->mouseLClick)
-    {
-        printf("Clic\n");
-        RedFoxMaths::Float4 ray_clip = { 0, 0, -1, 1 };
+        RedFoxMaths::Float3 ray_ndc = {
+            0,0, 1
+        };
+        RedFoxMaths::Float4 ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };
         RedFoxMaths::Float4 ray_eye = scene->m_gameCamera.m_projection.GetInverseMatrix() * ray_clip;
         ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };
         RedFoxMaths::Float4 ray_world = scene->m_gameCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
         ray_world.Normalize();
         RedFoxMaths::Mat4 view = scene->m_gameCamera.GetViewMatrix().GetInverseMatrix();
+        RedFoxMaths::Float3 front = ray_world.GetXYZF3();
+        front.Normalize();
+        front *= 1.2f;
+        physx::PxVec3 origin = { view.mat[0][3] + front.x, view.mat[1][3] + front.y, view.mat[2][3] +front.z};
         physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
-        physx::PxVec3 origin = { view.mat[0][3], view.mat[1][3], view.mat[2][3] };
         physx::PxRaycastBuffer hitCalls;
         if (physx->m_scene->raycast(origin, unitDir, scene->m_gameCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
         {
             physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
-            if (hit.actor) printf("OEUF\n");
-        } 
+            if (hit.actor)
+                printf(":D");
+        }
     }
 }
-*/
 
+BEHAVIOUR(Cube)
+{
+    //printf("cube\n");
+}
 
 BEHAVIOUR(Player)
 {
@@ -97,14 +83,14 @@ BEHAVIOUR(Player)
     scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
     
     Float3 inputDirection(0, 0, 0);
-    if (inputs->W || inputs->Up)    inputDirection.z += -1;
-    if (inputs->S || inputs->Down)  inputDirection.z += 1;
-    if (inputs->A || inputs->Left)  inputDirection.x += -1;
-    if (inputs->D || inputs->Right) inputDirection.x += 1;
+    if (inputs->W.isHold || inputs->Up.isHold)    inputDirection.z += -1;
+    if (inputs->S.isHold || inputs->Down.isHold)  inputDirection.z += 1;
+    if (inputs->A.isHold || inputs->Left.isHold)  inputDirection.x += -1;
+    if (inputs->D.isHold || inputs->Right.isHold) inputDirection.x += 1;
     
     float speed = 5000000;
     Float3 velocity(0, 0, 0);
-    if (inputs->W || inputs->S || inputs->A || inputs->D)
+    if (inputs->W.isHold || inputs->S.isHold || inputs->A.isHold || inputs->D.isHold)
     {
         inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
         inputDirection.Normalize();
@@ -118,13 +104,13 @@ BEHAVIOUR(Player)
         }
     }
     
-    //Gun(self, scene, inputs, physx);
+    Gun(self, scene, inputs, physx);
 }
 
 __declspec(dllexport) STARTGAME(StartGame)
 {
 #pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
-    printf("Started the game successfully!\n");
+    //printf("Started the game successfully!\n");
 }
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
@@ -145,7 +131,12 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     if (!scene->isInit || reloaded == false)
     {
         player->behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
-        scene->gameUIs[1].behaviourIndex = scene->AddUIBehaviour("UI", UI);
+        player->UpdateTransform();
+
+        // This UI object must be initialized in editor before playing
+        scene->AddGameObjectBehaviour("Cube", Cube);
+
+
         scene->isInit = true;
         reloaded = true;
     }

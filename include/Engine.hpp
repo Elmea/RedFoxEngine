@@ -48,13 +48,17 @@ struct ImGUI
     int mousePickNodeIndex = -1;
     float fpsUpdate;
     float dragSpeed = 1.f;
-    RedFoxMaths::Float2 mousePosEditor = RedFoxMaths::Float2();
+    ImVec2 windowSize;
+    ImVec2 mousePosEditor;
+    ImVec2 centerEditorViewport;
     float fps[255];
     ImGuizmo::OPERATION gizmoType;
     ImGuizmo::MODE gizmoMode;
     ImGuiIO* io;
     ImFont* defaultFont;
     ImTextureID icons[11];
+
+    const ImVec2 popupDim = { 400, 70 };
 
     const ImGuiDockNodeFlags dockingFlags =
         ImGuiDockNodeFlags_NoWindowMenuButton |
