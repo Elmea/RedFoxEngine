@@ -41,7 +41,7 @@ UIBEHAVIOUR(UI)
 
 void Gun(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
 {
-    if (input->mouseLClick)
+    if (input->mouseLClick.isPressed)
     {
         RedFoxMaths::Float3 ray_ndc = {
             0,0, 1
@@ -83,14 +83,14 @@ BEHAVIOUR(Player)
     scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
     
     Float3 inputDirection(0, 0, 0);
-    if (inputs->W || inputs->Up)    inputDirection.z += -1;
-    if (inputs->S || inputs->Down)  inputDirection.z += 1;
-    if (inputs->A || inputs->Left)  inputDirection.x += -1;
-    if (inputs->D || inputs->Right) inputDirection.x += 1;
+    if (inputs->W.isHold || inputs->Up.isHold)    inputDirection.z += -1;
+    if (inputs->S.isHold || inputs->Down.isHold)  inputDirection.z += 1;
+    if (inputs->A.isHold || inputs->Left.isHold)  inputDirection.x += -1;
+    if (inputs->D.isHold || inputs->Right.isHold) inputDirection.x += 1;
     
     float speed = 5000000;
     Float3 velocity(0, 0, 0);
-    if (inputs->W || inputs->S || inputs->A || inputs->D)
+    if (inputs->W.isHold || inputs->S.isHold || inputs->A.isHold || inputs->D.isHold)
     {
         inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
         inputDirection.Normalize();

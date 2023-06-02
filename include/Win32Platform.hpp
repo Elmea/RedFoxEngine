@@ -31,6 +31,17 @@ struct WindowDimension
     int height;
 };
 
+struct OtherKey
+{
+    u8 key : 2;
+};
+
+struct Key
+{
+    u8 isPressed : 1;
+    u8 isHold    : 1;
+};
+
 class Input
 {
     bool hideCursor;
@@ -41,56 +52,108 @@ public:
     int mouseYPosition;
     int mouseXDelta;
     int mouseYDelta;
-    u8  mouseLClick : 1;
-    u8  mouseRClick : 1;
+    Key  mouseLClick;
+    Key  mouseRClick;
+    union {
+    Key Q;
+    Key W;
+    Key E;
+    Key R;
+    Key T;
+    Key Y;
+    Key U;
+    Key I;
+    Key O;
+    Key P;
+    Key OpenBracket;
+    Key CloseBracket;
+    Key BackSlash;
+    Key A;
+    Key S;
+    Key D;
+    Key F;
+    Key G;
+    Key H;
+    Key J;
+    Key K;
+    Key L;
+    Key SemiColon;
+    Key Apostrophe;
+    Key Tilda;
+    Key LShift;
+    Key Enter;
+    Key LControl;
+    Key Escape;
+    Key Z;
+    Key X;
+    Key C;
+    Key V;
+    Key B;
+    Key N;
+    Key M;
+    Key Comma;
+    Key Period;
+    Key Slash;
+    Key RShift;
+    Key Spacebar;
+    Key Up;
+    Key Down;
+    Key Left;
+    Key Right;
+    Key Delete;
+    // struct {
+    //     Key  mouseLClick;
+    //     Key  mouseRClick;
 
-    u8 Q : 1;
-    u8 W : 1;
-    u8 E : 1;
-    u8 R : 1;
-    u8 T : 1;
-    u8 Y : 1;
-    u8 U : 1;
-    u8 I : 1;
-    u8 O : 1;
-    u8 P : 1;
-    u8 OpenBracket : 1;
-    u8 CloseBracket : 1;
-    u8 BackSlash : 1;
-    u8 A : 1;
-    u8 S : 1;
-    u8 D : 1;
-    u8 F : 1;
-    u8 G : 1;
-    u8 H : 1;
-    u8 J : 1;
-    u8 K : 1;
-    u8 L : 1;
-    u8 SemiColon : 1;
-    u8 Apostrophe : 1;
-    u8 Tilda : 1;
-    u8 LShift : 1;
-    u8 Enter : 1;
-    u8 LControl : 1;
-    u8 Escape : 1;
-    u8 Z : 1;
-    u8 X : 1;
-    u8 C : 1;
-    u8 V : 1;
-    u8 B : 1;
-    u8 N : 1;
-    u8 M : 1;
-    u8 Comma : 1;
-    u8 Period : 1;
-    u8 Slash : 1;
-    u8 RShift : 1;
-    u8 Spacebar : 1;
-    u8 Up : 1;
-    u8 Down : 1;
-    u8 Left : 1;
-    u8 Right : 1;
-    u8 Delete : 1;
-    
+    //     Key Q;
+    //     Key W;
+    //     Key E;
+    //     Key R;
+    //     Key T;
+    //     Key Y;
+    //     Key U;
+    //     Key I;
+    //     Key O;
+    //     Key P;
+    //     Key OpenBracket;
+    //     Key CloseBracket;
+    //     Key BackSlash;
+    //     Key A;
+    //     Key S;
+    //     Key D;
+    //     Key F;
+    //     Key G;
+    //     Key H;
+    //     Key J;
+    //     Key K;
+    //     Key L;
+    //     Key SemiColon;
+    //     Key Apostrophe;
+    //     Key Tilda;
+    //     Key LShift;
+    //     Key Enter;
+    //     Key LControl;
+    //     Key Escape;
+    //     Key Z;
+    //     Key X;
+    //     Key C;
+    //     Key V;
+    //     Key B;
+    //     Key N;
+    //     Key M;
+    //     Key Comma;
+    //     Key Period;
+    //     Key Slash;
+    //     Key RShift;
+    //     Key Spacebar;
+    //     Key Up;
+    //     Key Down;
+    //     Key Left;
+    //     Key Right;
+    //     Key Delete;
+            
+    // };
+    };
     void HideCursor(bool state)
     {
         if (state != hideCursor)
