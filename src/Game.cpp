@@ -38,6 +38,36 @@ BEHAVIOUR(Gun)
     self->position;
 }
 
+void setColorFromMass(RedFoxMaths::Float3* color, int mass)
+{
+    if (mass == 1)
+    {
+        color->x = 1;
+        color->y = 0;
+        color->z = 0;
+    }
+    else if (mass == 2)
+    {
+        color->x = 0;
+        color->y = 1;
+        color->z = 0;
+    }
+    else if (mass == 4)
+    {
+        color->x = 0;
+        color->y = 0;
+        color->z = 1;
+    }
+    else
+    {
+        color->x = 1;
+        color->y = 1;
+        color->z = 1;
+
+    }
+
+}
+
 UIBEHAVIOUR(UI)
 {
     if (self->isPressed)
@@ -46,26 +76,8 @@ UIBEHAVIOUR(UI)
 
 BEHAVIOUR(Cube)
 {         
-    if (self->mass == 1)
-    {           
-        self->Color.x = 1;
-        self->Color.y = 0;
-        self->Color.z = 0;
-    }
-    else if (self->mass == 2)
-    {
-        self->Color.x = 0;
-        self->Color.y = 1;
-        self->Color.z = 0;
-    }
-    else if (self->mass == 4)
-    {
-        self->Color.x = 0;
-        self->Color.y = 0;
-        self->Color.z = 1;
-    }
+    setColorFromMass(&self->Color, self->mass);
 }
-
 
 static RedFoxEngine::GameObject* storedCube = nullptr;
 static int storedCubeId;
@@ -103,8 +115,9 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
                         printf("cube hit\n");
                         
                         if (storedCube == nullptr)
-                        {
+                        {                         
                             storedCube = &scene->gameObjects[i];
+                            setColorFromMass(&scene->gameUIs[2].selectedColor, storedCube->mass);
                             storedCubeId = i;
                         }
                         else if (storedCubeId != i)
@@ -114,6 +127,7 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
                             storedCube->mass = hitCube->mass;
                             hitCube->mass = temp;
                             storedCube = nullptr;
+                            setColorFromMass(&scene->gameUIs[2].selectedColor, 0);
                             printf("cube swapped\n");
                         }
                     }
