@@ -168,7 +168,7 @@ void Graphics::InitLights()
         GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
 }
 
-void Engine::UpdateLights(LightStorage* lightStorage) //TODO: This function or something like this could be in game or in physics
+void Engine::UpdateLights(LightStorage* lightStorage) 
 {
     int dirCount = 0, pointCount = 0, spotCount = 0;
     LightInfo* dirLights = (LightInfo*)m_memoryManager.TemporaryAllocation(sizeof(LightInfo) * lightStorage->dirLightCount);

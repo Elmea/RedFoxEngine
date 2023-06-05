@@ -179,7 +179,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
     SameLine();
     SetCursorPosX(GetItemRectMin().x + GetItemRectSize().x + 10.f);
     if (ImageButton("SAVE SCENE", m_imgui.icons[1], ImVec2(buttonHeight, buttonHeight))
-        || (IsKeyDown(ImGuiKey_S) && IsKeyDown(ImGuiKey_LeftCtrl)) ) //TODO Add security on CTRL+S to only add SaveScene when there is a change
+        || (IsKeyDown(ImGuiKey_S) && IsKeyDown(ImGuiKey_LeftCtrl)) ) 
     {
         char tmp[272];
         memset(tmp, 0, 272);
@@ -329,7 +329,7 @@ void Engine::DrawTopBar(const ImGuiViewport* viewport, float titleBarHeight, flo
         newGameObject->modelIndex = -1;
     }
 
-    if ((IsKeyDown(ImGuiKey_RightCtrl) || IsKeyDown(ImGuiKey_LeftCtrl)) && IsKeyPressed(ImGuiKey_D)) //TODO Position and Rotation cant be changed
+    if ((IsKeyDown(ImGuiKey_RightCtrl) || IsKeyDown(ImGuiKey_LeftCtrl)) && IsKeyPressed(ImGuiKey_D)) 
     {
         GameObject* newGameObject = &m_scene.gameObjects[m_scene.gameObjectCount++];
         *newGameObject = m_scene.gameObjects[m_imgui.selectedObject];

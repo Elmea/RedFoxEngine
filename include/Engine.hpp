@@ -146,7 +146,6 @@ private:
     void LoadScene(const char *fileName);
     void SaveScene(const char *fileName, Scene scene);
     void UpdateLights(LightStorage* lightStorage);
-    void initSphericalManyGameObjects(int count); //TODO: remove
     u32 LoadTextureFromFilePath(const char *filePath, bool resident = false, bool repeat = false, bool flip = false);
     u32 LoadTextureFromMemory(u8* memory, int size, bool resident = false, bool repeat = false, bool flip = false);
 

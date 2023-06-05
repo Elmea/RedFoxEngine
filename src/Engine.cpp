@@ -60,7 +60,6 @@ Engine::Engine(int width, int height) :
     m_scene.soundManager = &m_soundManager;
     m_memoryManager.m_sceneUsedMemory = m_memoryManager.m_memory.arena.usedSize;
 
-    //TODO transition to an instance based model 'model'
     LoadScene("../assets/Scenes/Sample Scene");
     Light* dir = m_graphics.lightStorage.CreateLight(LightType::DIRECTIONAL);
     dir->lightInfo.constant = 1.0f;
@@ -72,8 +71,6 @@ Engine::Engine(int width, int height) :
     dir->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
     dir->lightInfo.specular = {0.1f, 0.1f, 0.1f};
     m_input = {};
-    //TODO: ask user for what game to load ? or maybe save the game dll
-    // path into the scene data ? maybe both
     m_game = m_platform.LoadGameLibrary("StartGame", "UpdateGame", "game.dll", m_game);
     m_graphics.InitLights();
     m_graphics.InitQuad();
@@ -114,83 +111,6 @@ bool Engine::isRunning()
     return(m_platform.m_running);
 }
 
-void Engine::initSphericalManyGameObjects(int count) //TODO: remove
-{
-    //Init behaviours buffer
-    for (int i = 0; i < 100; i++)
-    {
-        m_scene.gameObjectBehaviours[i].name = initString(64, &m_memoryManager.m_memory.arena);
-        m_scene.gameObjectBehaviours[i].function = nullptr;
-        m_scene.gameUIBehaviours[i].name = initString(64, &m_memoryManager.m_memory.arena);
-        m_scene.gameUIBehaviours[i].function = nullptr;
-    }
-    //Init GameUI
-    m_scene.gameUIs[0] = {};
-    m_scene.gameUIs[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
-    m_scene.gameUIs[0].name.capacity = 255;
-    m_scene.gameUIs[0].screenPosition = { 0, 0 };
-    m_scene.gameUICount++;
-    for (int i = 1; i < 100; i++)
-    {
-        m_scene.gameUIs[i].parent = 0;
-        m_scene.gameUIs[i].behaviourIndex = 0;
-        m_scene.gameUIs[i].isPressed = false;
-        m_scene.gameUIs[i].isHovered = false;
-    }
-
-    //Init GameObject
-    m_scene.gameObjects[0] = {};
-    m_scene.gameObjects[0].name = initStringChar("Root", 255, &m_memoryManager.m_memory.arena);
-    m_scene.gameObjects[0].name.capacity = 255;
-    m_scene.gameObjects[0].position = { 0, 0, 0 };
-    m_scene.gameObjects[0].orientation = { 1, 0, 0, 0 };
-    m_scene.gameObjects[0].scale = { 1, 1, 1 };
-
-    m_scene.gameObjectCount++;
-    m_scene.gameObjectCount = count;
-
-    for (int i = 1; i < (int)m_scene.gameObjectCount; i++)
-    {
-        m_scene.gameObjects[i].parent = 0;
-        m_scene.gameObjects[i].modelIndex = i % m_modelCount;
-        if (m_scene.gameObjects[i].modelIndex == 0)
-            m_scene.gameObjects[i].scale = { 0.5, 0.5, 0.5 };
-        else if (m_scene.gameObjects[i].modelIndex == 1)
-            m_scene.gameObjects[i].scale = {1, 1, 1};
-        m_scene.gameObjects[i].behaviourIndex = 0;
-        m_scene.gameObjects[i].scale.x = m_scene.gameObjects[i].scale.y = m_scene.gameObjects[i].scale.z = 1;
-        m_scene.gameObjects[i].orientation.a = 1;
-        char tmp[255];
-        int size = snprintf(tmp, 255, "Entity%d", i);
-        m_scene.gameObjects[i].name = initStringChar(tmp, size, &m_memoryManager.m_memory.arena);
-        m_scene.gameObjects[i].name.capacity = 255;
-    }
-
-    int countX = (int)sqrtf(count);
-    int countY = count / countX;
-    float longitudeStep = M_PI * 2 / countX;
-    float latitudeStep = M_PI / countY;
-
-    int index = 0;
-    float scale = 50;
-    for (int i = 0; i < countX; i++)
-    {
-        for(int j = 0; j < countY; j++)
-        {
-            m_scene.gameObjects[index++].position =
-                {
-                    cosf(longitudeStep * j) * sinf(i * latitudeStep),
-                    sinf(longitudeStep * j) * sinf(i * latitudeStep) + 1,
-                    cosf(i * latitudeStep - M_PI)
-                };
-            m_scene.gameObjects[index - 1].position =
-                m_scene.gameObjects[index - 1].position * scale;
-        }
-    }
-    m_scene.gameObjects[1].modelIndex = 0;
-    m_scene.gameObjects[1].position = { 0, -10, 0 };
-    m_scene.gameObjects[1].scale = { 1, 1, 1 };
-}
 
 void Engine::ProcessInputs()
 {
