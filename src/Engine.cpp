@@ -202,6 +202,11 @@ void Engine::ProcessInputs()
     m_editorCamera.SetProjection(projectionType::PERSPECTIVE);
 }
 
+static bool pressed(Key key)
+{
+    return (key.isPressed || key.isHold);
+}
+
 void Engine::UpdateEditorCamera()
 {
     if (m_editorCameraEnabled && m_scene.isPaused)
@@ -212,10 +217,10 @@ void Engine::UpdateEditorCamera()
         m_editorCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
 
         Float3 inputDirection(0, 0, 0);
-        if (m_input.W.isPressed || m_input.W.isHold || m_input.Up.isHold)    inputDirection.z += -1;
-        if (m_input.S.isPressed || m_input.S.isHold || m_input.Down.isHold)  inputDirection.z +=  1;
-        if (m_input.A.isPressed || m_input.A.isHold || m_input.Left.isHold)  inputDirection.x += -1;
-        if (m_input.D.isPressed || m_input.D.isHold || m_input.Right.isHold) inputDirection.x +=  1;
+        if (pressed(m_input.W) || pressed(m_input.Up))    inputDirection.z += -1;
+        if (pressed(m_input.S) || pressed(m_input.Down))  inputDirection.z +=  1;
+        if (pressed(m_input.A) || pressed(m_input.Left))  inputDirection.x += -1;
+        if (pressed(m_input.D) || pressed(m_input.Right)) inputDirection.x +=  1;
         inputDirection = (Mat4::GetRotationY(-cameraRotation.y) * Mat4::GetRotationX(-cameraRotation.x) * inputDirection).GetXYZF3();
         inputDirection.Normalize();
         inputDirection = inputDirection * 200.f;

@@ -60,6 +60,14 @@ static void ReadGameObjectFromFile(HANDLE file, RedFoxEngine::GameObject *curren
 static BEHAVIOUR(DefaultBehaviour) { }
 static UIBEHAVIOUR(DefaultUIBehaviour) { }
 
+static void ReadGameUIFromFile(HANDLE file, RedFoxEngine::GameUI* current, RedFoxEngine::ResourcesManager *m)
+{
+    int size = sizeof(RedFoxEngine::GameObject);
+    ReadFile(file, &current->screenPosition, size, nullptr, nullptr);
+    ReadStringFromFile(file, &current->text, m);
+    ReadStringFromFile(file, &current->name, m);
+}
+
 void RedFoxEngine::Engine::LoadScene(const char *fileName)
 {
     m_scene.isInit = false;
@@ -106,6 +114,12 @@ void RedFoxEngine::Engine::LoadScene(const char *fileName)
     {
         ReadGameObjectFromFile(file, &m_scene.gameObjects[i], m_models, m_modelCount, &m_memoryManager);
     }
+    ReadFile(file, &m_scene.gameUICount, sizeof(u32), nullptr, nullptr);
+    for (int i = 0; i < (int)m_scene.gameUICount; i++)
+    {
+        GameUI *current = &m_scene.gameUIs[i];
+        ReadGameUIFromFile(file, current, &m_memoryManager);
+    }
     CloseHandle(file);
 
     //Init behaviours buffer
@@ -130,12 +144,43 @@ static void WriteStringToFile(HANDLE file, MyString string)
 static void WriteGameObjectToFile(HANDLE file, RedFoxEngine::GameObject *current, RedFoxEngine::Model *m_models)
 {
     int size = sizeof(RedFoxEngine::GameObject);
+    physx::PxRigidActor *body = current->body;
+    current->state = RedFoxEngine::ST_NONE;
+    current->type = RedFoxEngine::CT_NONE;
+    if (body)
+    {
+        if (body && body->is<physx::PxRigidDynamic>())
+            current->state = RedFoxEngine::ST_DYNAMIC;
+        else 
+            current->state = RedFoxEngine::ST_STATIC;
+        physx::PxShape *shape;
+        if (body && body->getShapes(&shape, 1, 0))
+        {
+            physx::PxGeometryType::Enum geo = shape->getGeometryType();
+            switch (geo)
+            {
+                case physx::PxGeometryType::eSPHERE:
+                {
+                    current->type = RedFoxEngine::CT_SPHERE;
+                }break;
+                case physx::PxGeometryType::eBOX:
+                {
+                    current->type = RedFoxEngine::CT_CUBE;
+                }break;
+                case physx::PxGeometryType::eCAPSULE:
+                {
+                    current->type = RedFoxEngine::CT_CAPSULE;
+                }break;
+            }
+        }
+    }
     WriteFile(file, &current->transform, size, nullptr, nullptr);
     WriteFile(file, &m_models[current->modelIndex].hash, sizeof(u64), nullptr, nullptr);
     WriteStringToFile(file, current->name);
+    current->body = body;
 }
 
-static void WriteGameUIToFile(HANDLE file, RedFoxEngine::GameUI* current, RedFoxEngine::Model* m_models)
+static void WriteGameUIToFile(HANDLE file, RedFoxEngine::GameUI* current)
 {
     int size = sizeof(RedFoxEngine::GameObject);
     WriteFile(file, &current->screenPosition, size, nullptr, nullptr);
@@ -162,7 +207,7 @@ void RedFoxEngine::Engine::SaveScene(const char *fileName, Scene scene)
     for (int i = 0; i < (int)m_scene.gameUICount; i++)
     {
         GameUI *current = &m_scene.gameUIs[i];
-        WriteGameUIToFile(file, current, m_models);
+        WriteGameUIToFile(file, current);
     }
     CloseHandle(file);
 }

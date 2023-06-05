@@ -33,7 +33,7 @@ void Physx::CreateStaticSphere(GameObject* object, Transform transform)
 	shape->release();
 }
 
-void Physx::CreateDynamicCube(GameObject* object, Transform transform, float mass)
+void Physx::CreateDynamicCube(GameObject* object, Transform transform, float mass, bool Pause)
 {
 	PxQuat q(transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a);
 	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
@@ -46,9 +46,11 @@ void Physx::CreateDynamicCube(GameObject* object, Transform transform, float mas
 	PxRigidBodyExt::updateMassAndInertia(*object->body->is<PxRigidBody>(), mass);
 	m_scene->addActor(*object->body);
 	shape->release();
+	if (Pause)
+		 object->body->is<PxRigidBody>()->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
 }
 
-void Physx::CreateDynamicSphere(GameObject* object, Transform transform, float mass)
+void Physx::CreateDynamicSphere(GameObject* object, Transform transform, float mass, bool Pause)
 {
 	PxReal radius = transform.scale.x;
 	PxTransform t(transform.position.x, transform.position.y, transform.position.z);
@@ -58,9 +60,11 @@ void Physx::CreateDynamicSphere(GameObject* object, Transform transform, float m
 	PxRigidBodyExt::updateMassAndInertia(*object->body->is<PxRigidBody>(), mass);
 	m_scene->addActor(*object->body);
 	shape->release();
+	if (Pause)
+		 object->body->is<PxRigidBody>()->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
 }
 
-void Physx::CreateDynamicCapsule(GameObject* object, Transform transform, float mass)
+void Physx::CreateDynamicCapsule(GameObject* object, Transform transform, float mass, bool Pause)
 {
 	PxQuat q(transform.orientation.b, transform.orientation.c, transform.orientation.d, transform.orientation.a);
 	PxTransform t(transform.position.x, transform.position.y, transform.position.z, q);
@@ -72,6 +76,8 @@ void Physx::CreateDynamicCapsule(GameObject* object, Transform transform, float 
 	PxRigidBodyExt::updateMassAndInertia(*object->body->is<PxRigidBody>(), mass);
 	m_scene->addActor(*object->body);
 	shape->release();
+	if (Pause)
+		 object->body->is<PxRigidBody>()->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
 }
 
 void Physx::LockDynamicBody(GameObject* object, bool x, bool y, bool z)
@@ -125,23 +131,31 @@ void Physx::InitScene(Scene *scene, int sphereIndex, int cubeIndex)
 
 	staticMaterial = physics->createMaterial(1.5f, 0.5f, 0.01f);
 	dynamicMaterial = physics->createMaterial(1.5f, 0.5f, 0.01f);
-	GameObject* player = &scene->gameObjects[2];
-	Transform playerTransform = { { player->position.x, player->position.y, player->position.z },
-								{ player->scale.x, player->scale.y, player->scale.z },
-								RedFoxMaths::Quaternion(1,0,0,0) };
-	CreateDynamicCapsule(player, playerTransform);
-	LockDynamicBody(player, true, true, true);
-
 	for (u32 i = 1; i < (u32)scene->gameObjectCount; i++)
 	{
-			if (i == 2)
-				continue;
-			if (scene->gameObjects[i].modelIndex == sphereIndex)
-				CreateStaticSphere(&scene->gameObjects[i], scene->GetWorldTransform(i));
-			else if(scene->gameObjects[i].modelIndex == cubeIndex)
-				CreateStaticCube(&scene->gameObjects[i], scene->GetWorldTransform(i));
+			if (scene->gameObjects[i].type == CT_SPHERE)
+			{
+				if (scene->gameObjects[i].state == ST_STATIC)
+					CreateStaticSphere(&scene->gameObjects[i], scene->GetWorldTransform(i));
+				else
+					CreateDynamicSphere(&scene->gameObjects[i], scene->GetWorldTransform(i));
+			}
+			else if(scene->gameObjects[i].type == CT_CUBE)
+			{
+				if (scene->gameObjects[i].state == ST_STATIC)
+					CreateStaticCube(&scene->gameObjects[i], scene->GetWorldTransform(i));
+				else
+					CreateDynamicCube(&scene->gameObjects[i], scene->GetWorldTransform(i));
+			}
+			else if(scene->gameObjects[i].type == CT_CAPSULE)
+			{
+					CreateDynamicCapsule(&scene->gameObjects[i], scene->GetWorldTransform(i));
+					LockDynamicBody(&scene->gameObjects[i], true, true, true);
+			}
 			else
-				scene->gameObjects[i].body = nullptr;
+			{
+					scene->gameObjects[i].body = nullptr;
+			}
 	}
 }
 

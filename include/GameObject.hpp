@@ -12,6 +12,20 @@ namespace physx
 
 namespace RedFoxEngine
 {
+    enum ColliderType
+    {
+        CT_NONE,
+        CT_SPHERE,
+        CT_CUBE,
+        CT_CAPSULE,
+    };
+    enum StateType
+    {
+        ST_NONE,
+        ST_DYNAMIC,
+        ST_STATIC,
+    };
+
     struct GameObject
     {
         MyString name;
@@ -27,15 +41,19 @@ namespace RedFoxEngine
         };
         int parent;
         int modelIndex;
-        // int materialIndex;
-        // int materialIndex1;
-        // int materialIndex2;
         RedFoxMaths::Float3 Color;
-        
-        physx::PxRigidActor* body;
+
+        union
+        {
+            struct
+            {
+                ColliderType type;
+                StateType state;
+            };
+            physx::PxRigidActor* body;
+        };
 
         int behaviourIndex;
-        // RedFoxEngine::Material material;
         RedFoxMaths::Mat4 GetLocalMatrix();
         void SetTransform(Transform transform);
         void UpdateTransform();

@@ -1458,6 +1458,7 @@ void Engine::DrawProperties()
                     ImGui::TableSetColumnIndex(1);
                     ImGui::SetNextItemWidth(-FLT_MIN);
                     ImGui::InputText("Text", (char*)m_scene.gameUIs[m_imgui.selectedUI].text.data, m_scene.gameUIs[m_imgui.selectedUI].text.capacity);
+                    m_scene.gameUIs[m_imgui.selectedUI].text.size = strlen(m_scene.gameUIs[m_imgui.selectedUI].text.data);
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
                     ImGui::EndTable();
