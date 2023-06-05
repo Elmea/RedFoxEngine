@@ -129,6 +129,8 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
                             setColorFromMass(&scene->gameUIs[2].selectedColor, 0);
                             printf("cube swapped\n");
                         }
+                        
+                        break;
                     }
                 }
             }
@@ -143,9 +145,58 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
     
 }
 
+static RedFoxEngine::GameObject* objectHold = nullptr;
+
 void Grab(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
 {
+    RedFoxMaths::Float3 ray_ndc = { 0, 0, 1 };
+    RedFoxMaths::Float4 ray_clip = { ray_ndc.x, ray_ndc.y, -1, 1 };
+    RedFoxMaths::Float4 ray_eye = scene->m_gameCamera.m_projection.GetInverseMatrix() * ray_clip;
+    ray_eye = { ray_eye.x, ray_eye.y, -1, 0 };
+    RedFoxMaths::Float4 ray_world = scene->m_gameCamera.GetViewMatrix().GetInverseMatrix() * ray_eye;
+    ray_world.Normalize();
+    RedFoxMaths::Mat4 view = scene->m_gameCamera.GetViewMatrix().GetInverseMatrix();
+    RedFoxMaths::Float3 front = ray_world.GetXYZF3();
+    front.Normalize();
+    front *= 1.2f;
+    physx::PxVec3 origin = { view.mat[0][3] + front.x, view.mat[1][3] + front.y, view.mat[2][3] + front.z };
+    physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
+    physx::PxRaycastBuffer hitCalls;
+    if (physx->m_scene->raycast(origin, unitDir, 5, hitCalls, physx::PxHitFlag::eANY_HIT))
+    {
+        physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
+        if (hit.actor)
+        {
+            for (int i = 0; i < scene->gameObjectCount; i++)
+            {
+                if (scene->gameObjects[i].body == hit.actor
+                    && scene->gameObjectBehaviours[scene->gameObjects[i].behaviourIndex].function == Cube)
+                {
+                    objectHold = &scene->gameObjects[i];
 
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void Throw(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
+{
+    if (objectHold)
+    {
+        RedFoxMaths::Float3 cameraRot = scene->m_gameCamera.orientation.ToEuler();
+        RedFoxMaths::Float3 cameraDir = RedFoxMaths::Float3::EulerToDir(cameraRot);
+
+        physx::PxRigidDynamic* cube = objectHold->body->is<physx::PxRigidDynamic>();
+
+        float force = 500000;
+        physx::PxVec3 forceVec = { cameraDir.x * force, cameraDir.y * force + 250000 , cameraDir.z * force };
+        cube->addForce(forceVec);
+
+
+        objectHold = nullptr;
+    }
 }
 
 static bool pressed(RedFoxEngine::Key key)
@@ -156,37 +207,48 @@ static bool pressed(RedFoxEngine::Key key)
 BEHAVIOUR(Player)
 {
     scene->m_gameCamera.position = self->position;
-
     scene->m_gameCamera.position.y += 1.5f;
 
     static Float3 cameraRotation;
-    cameraRotation += {(f32)inputs->mouseYDelta* deltaTime, (f32)inputs->mouseXDelta* deltaTime, 0};
-    if (cameraRotation.x > M_PI_2 + deltaTime) cameraRotation.x = M_PI_2;
+    cameraRotation -= {(f32)inputs->mouseYDelta* deltaTime, (f32)inputs->mouseXDelta* deltaTime, 0};
+
+    if (cameraRotation.x > M_PI_2) cameraRotation.x = M_PI_2;
     if (cameraRotation.x < -M_PI_2) cameraRotation.x = -M_PI_2;
-    scene->m_gameCamera.orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, cameraRotation.z);
-    self->orientation = Quaternion::FromEuler(-cameraRotation.x, -cameraRotation.y, 0);
+
+    if (cameraRotation.y > PI * 2) cameraRotation.y = -PI * 2;
+    if (cameraRotation.y < -PI * 2) cameraRotation.y = PI * 2;
+
+    scene->m_gameCamera.orientation = Quaternion::FromEuler(cameraRotation.x, cameraRotation.y, cameraRotation.z);
+    self->orientation = Quaternion::FromEuler(cameraRotation.x, cameraRotation.y, 0);
     
+    if (objectHold)
+    {
+        objectHold->position = RedFoxMaths::Float3{ self->position.x + cosf(cameraRotation.y + PI /2 ) * 1.5f ,  self->position.y + 3 , self->position.z + sinf(-cameraRotation.y - PI / 2) * 1.5f };
+        physx::PxTransform transform{ physx::PxVec3{objectHold->position.x, objectHold->position.y, objectHold->position.z} };
+        objectHold->body->setGlobalPose(transform);
+    }
+
     Float3 velocity(0, 0, 0);
     float speed = 1;
     if (pressed(inputs->W) || pressed(inputs->Up))
     {
-        velocity.x -= speed * cosf(- cameraRotation.y - PI / 2);
-        velocity.z += speed * sinf(- cameraRotation.y - PI / 2);    
+        velocity.x -= speed * cosf(cameraRotation.y - PI / 2);
+        velocity.z += speed * sinf(cameraRotation.y - PI / 2);    
     }
     if (pressed(inputs->S) || pressed(inputs->Down))
     {
-        velocity.x += speed * cosf(- cameraRotation.y - PI / 2);
-        velocity.z -= speed * sinf(- cameraRotation.y - PI / 2);
+        velocity.x += speed * cosf(cameraRotation.y - PI / 2);
+        velocity.z -= speed * sinf(cameraRotation.y - PI / 2);
     }
     if (pressed(inputs->D) || pressed(inputs->Right))
     {
-        velocity.x += speed * cosf(- cameraRotation.y);
-        velocity.z -= speed * sinf(- cameraRotation.y);
+        velocity.x += speed * cosf(cameraRotation.y);
+        velocity.z -= speed * sinf(cameraRotation.y);
     }
     if (pressed(inputs->A) || pressed(inputs->Left))
     {
-        velocity.x -= speed * cosf(- cameraRotation.y);
-        velocity.z += speed * sinf(- cameraRotation.y);
+        velocity.x -= speed * cosf(cameraRotation.y);
+        velocity.z += speed * sinf(cameraRotation.y);
     }
 
     if (pressed(inputs->W) || pressed(inputs->S) || pressed(inputs->D) || pressed(inputs->A))
@@ -198,7 +260,7 @@ BEHAVIOUR(Player)
         }
     }
 
-    if (pressed(inputs->Spacebar))
+    if (inputs->Spacebar.isPressed)
     {
         physx::PxRigidDynamic* playerCapsule = self->body->is<physx::PxRigidDynamic>();
         if (playerCapsule)
@@ -207,9 +269,14 @@ BEHAVIOUR(Player)
         }
     }
 
-    if (pressed(inputs->E))
+    if (inputs->E.isPressed)
     {
         Grab(self, scene, inputs, physx);
+    }
+
+    if (inputs->Q.isPressed)
+    {
+        Throw(self, scene, inputs, physx);
     }
     
     Shoot(self, scene, inputs, physx);
