@@ -208,7 +208,7 @@ void Jump(RedFoxEngine::GameObject* self, RedFoxEngine::Input* inputs)
         if (playerCapsule)
         {
             if(playerCapsule->getLinearVelocity().magnitude() < 2000)
-                playerCapsule->addForce({ 0, 7500, 0 }, physx::PxForceMode::eFORCE);
+                playerCapsule->addForce({ 0, 2000, 0 }, physx::PxForceMode::eFORCE);
         }
     }
 
@@ -306,6 +306,7 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
         if (playerCapsule)
         {
             playerCapsule->setLinearDamping(2);
+            playerCapsule->setMass(50);
         }
 
         player->behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
