@@ -67,8 +67,6 @@ BEHAVIOUR(Cube)
 }
 
 
-//void Grab()
-
 static RedFoxEngine::GameObject* storedCube = nullptr;
 static int storedCubeId;
 
@@ -123,6 +121,11 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
             }
         }
     }
+}
+
+void Grab(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
+{
+
 }
 
 static bool pressed(RedFoxEngine::Key key)
@@ -180,6 +183,11 @@ BEHAVIOUR(Player)
         {
             playerCapsule->addForce({ 0, 50000, 0 }, physx::PxForceMode::eFORCE);
         }
+    }
+
+    if (pressed(inputs->E))
+    {
+        Grab(self, scene, inputs, physx);
     }
     
     Shoot(self, scene, inputs, physx);
