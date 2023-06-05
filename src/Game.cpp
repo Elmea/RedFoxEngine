@@ -102,7 +102,7 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
                     {
                         printf("cube hit\n");
                         
-                        if (storedCube == NULL)
+                        if (storedCube == nullptr)
                         {
                             storedCube = &scene->gameObjects[i];
                         }
@@ -114,20 +114,14 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
 
                             storedCubeCollider->setMass(hitCubeCollider->getMass());
                             hitCubeCollider->setMass(temp);
-                            storedCube = NULL;
+                            storedCube = nullptr;
+                            printf("cube swapped\n");
+
                         }
-                            
-                        
                     }
                 }
-
             }
         }
-    }
-    
-    else if (input->mouseRClick.isPressed)
-    {
-        storedCube = NULL;
     }
 }
 
@@ -140,7 +134,7 @@ BEHAVIOUR(Player)
 {
     scene->m_gameCamera.position = self->position;
 
-    static RedFoxEngine::GameObject* storedCube = NULL;
+    static RedFoxEngine::GameObject* storedCube = nullptr;
 
     static Float3 cameraRotation;
     cameraRotation += {(f32)inputs->mouseYDelta* deltaTime, (f32)inputs->mouseXDelta* deltaTime, 0};
@@ -202,7 +196,7 @@ __declspec(dllexport) STARTGAME(StartGame)
 __declspec(dllexport) UPDATEGAME(UpdateGame)
 {
 /* 
-    C++ by default exports functions by name mangeling 
+    C++ by default exports functions by name mangeling  
     Meaning that our function UpdateGame will look like @UpdateGame%int etc...
     To stop that, we use a macro to export the function as the thing we named it
  */
