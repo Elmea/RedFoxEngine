@@ -1383,9 +1383,13 @@ void Engine::DrawProperties()
                 SetNextItemWidth(-FLT_MIN);
                 if (BeginCombo(" ", (*modelIndex != -1) ? (char*)m_modelsName[*modelIndex].data : "None"))
                 {
+                    bool is_selected = (*modelIndex == -1);
+                    if (Selectable("None", is_selected))
+                        *modelIndex = -1;
+
                     for (int i = 0; i < (int)m_modelCount; i++)
                     {
-                        bool is_selected = (*modelIndex == i);
+                        is_selected = (*modelIndex == i);
                         if (Selectable((char*)m_modelsName[i].data, is_selected))
                             *modelIndex = i;
 
