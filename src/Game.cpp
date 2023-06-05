@@ -45,28 +45,27 @@ UIBEHAVIOUR(UI)
 }
 
 BEHAVIOUR(Cube)
-{
-        
-    physx::PxRigidDynamic* collider = self->body->is<physx::PxRigidDynamic>();
-
-    if (collider)
-    {   
-        if (collider->getMass() == 1)
-        {
-        }
-        else if (collider->getMass() == 2)
-        {
-
-        }
-        else if (collider->getMass() == 4)
-        {
-
-        }
+{         
+    if (self->mass == 1)
+    {           
+        self->Color.x = 1;
+        self->Color.y = 0;
+        self->Color.z = 0;
     }
-    
-    
-    //printf("cube\n");
+    else if (self->mass == 2)
+    {
+        self->Color.x = 0;
+        self->Color.y = 1;
+        self->Color.z = 0;
+    }
+    else if (self->mass == 4)
+    {
+        self->Color.x = 0;
+        self->Color.y = 0;
+        self->Color.z = 1;
+    }
 }
+
 
 //void Grab()
 
@@ -112,12 +111,10 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
                         }
                         else if (storedCubeId != i)
                         {
-                            physx::PxRigidDynamic* storedCubeCollider = storedCube->body->is<physx::PxRigidDynamic>();
-                            physx::PxRigidDynamic* hitCubeCollider = scene->gameObjects[i].body->is<physx::PxRigidDynamic>();
-                            physx::PxReal temp = storedCubeCollider->getMass();
-
-                            storedCubeCollider->setMass(hitCubeCollider->getMass());
-                            hitCubeCollider->setMass(temp);
+                            int temp = storedCube->mass;
+                            RedFoxEngine::GameObject* hitCube = &scene->gameObjects[i];
+                            storedCube->mass = hitCube->mass;
+                            hitCube->mass = temp;
                             storedCube = nullptr;
                             printf("cube swapped\n");
                         }

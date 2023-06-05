@@ -43,6 +43,8 @@ namespace RedFoxEngine
         int modelIndex;
         RedFoxMaths::Float3 Color;
 
+        int mass;
+
         union
         {
             struct

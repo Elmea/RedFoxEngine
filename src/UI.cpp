@@ -1218,6 +1218,9 @@ void Engine::DrawProperties()
     {
         if (m_imgui.selectedObject != 0)
         {
+            ImGui::InputInt("Mass", &m_scene.gameObjects[m_imgui.selectedObject].mass);
+
+
             if (CollapsingHeader("Transform", m_imgui.propertiesFlags))
             {
                 if (BeginTable("TransformTable", 2, m_imgui.tableFlags))
@@ -1464,6 +1467,9 @@ void Engine::DrawProperties()
                     ImGui::EndTable();
                 }
             }
+
+            
+            ImGui::InputText("Text", (char*)m_scene.gameUIs[m_imgui.selectedUI].text.data, m_scene.gameUIs[m_imgui.selectedUI].text.capacity);
 
             SeparatorText("Behaviour");
             SetNextItemWidth(-FLT_MIN);
