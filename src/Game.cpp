@@ -70,7 +70,10 @@ BEHAVIOUR(Cube)
 
 //void Grab()
 
-void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx, RedFoxEngine::GameObject* storedCube)
+static RedFoxEngine::GameObject* storedCube = nullptr;
+static int storedCubeId;
+
+void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
 {
     if (input->mouseLClick.isPressed)
     {
@@ -105,8 +108,9 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
                         if (storedCube == nullptr)
                         {
                             storedCube = &scene->gameObjects[i];
+                            storedCubeId = i;
                         }
-                        else
+                        else if (storedCubeId != i)
                         {
                             physx::PxRigidDynamic* storedCubeCollider = storedCube->body->is<physx::PxRigidDynamic>();
                             physx::PxRigidDynamic* hitCubeCollider = scene->gameObjects[i].body->is<physx::PxRigidDynamic>();
@@ -116,7 +120,6 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
                             hitCubeCollider->setMass(temp);
                             storedCube = nullptr;
                             printf("cube swapped\n");
-
                         }
                     }
                 }
@@ -133,8 +136,6 @@ static bool pressed(RedFoxEngine::Key key)
 BEHAVIOUR(Player)
 {
     scene->m_gameCamera.position = self->position;
-
-    static RedFoxEngine::GameObject* storedCube = nullptr;
 
     static Float3 cameraRotation;
     cameraRotation += {(f32)inputs->mouseYDelta* deltaTime, (f32)inputs->mouseXDelta* deltaTime, 0};
@@ -184,7 +185,7 @@ BEHAVIOUR(Player)
         }
     }
     
-    Shoot(self, scene, inputs, physx, storedCube);
+    Shoot(self, scene, inputs, physx);
 }
 
 __declspec(dllexport) STARTGAME(StartGame)
