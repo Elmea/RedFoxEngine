@@ -66,10 +66,10 @@ Engine::Engine(int width, int height) :
     dir->lightInfo.linear = 0.09f;
     dir->lightInfo.quadratic = 0.032f;
     dir->lightInfo.position = {0.0f, 75.0f, 0.0f};
-    dir->rotation = Quaternion::FromEuler(-PI/2.f, 0.f, 0.f );
+    dir->rotation = Quaternion::FromEuler(-PI/4.f, PI/6.f, 0.f );
     dir->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
     dir->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
-    dir->lightInfo.specular = {0.05f, 0.05f, 0.05f};
+    dir->lightInfo.specular = {0.01f, 0.01f, 0.01f};
     m_input = {};
     m_game = m_platform.LoadGameLibrary("StartGame", "UpdateGame", "game.dll", m_game);
     m_graphics.InitLights();
