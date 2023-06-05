@@ -149,7 +149,7 @@ BEHAVIOUR(Player)
     if (pressed(inputs->W) || pressed(inputs->Up))
     {
         velocity.x -= speed * cosf(- cameraRotation.y - PI / 2);
-        velocity.z += speed * sinf(- cameraRotation.y - PI / 2);
+        velocity.z += speed * sinf(- cameraRotation.y - PI / 2);    
     }
     if (pressed(inputs->S) || pressed(inputs->Down))
     {
