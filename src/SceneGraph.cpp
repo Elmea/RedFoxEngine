@@ -3,28 +3,6 @@
 #define MEMORY_IMPLEMENTATION
 #include "MyMemory.hpp"
 
-/*
-    Scene file reference (in progress)
-
-    struct GameObject
-    {
-        u32 nameOfGameObjectSize;
-        u32 nameOfGameObjectCapacity;
-        char nameOfGameObject[nameOfGameObjectSize];
-        int parent; - -l if no parent, >= 0 if parent exists
-        u64 modelHash; hash of the filename string of the model
-        float position[3];
-        float scale[3];
-        float orientation[4];
-    }
-
-    - Start Of File
-    struct
-    {
-        s32 gameObjectCount;
-        GameObject arrayOfGameObjects[gameObjectCount];
-    }
-*/
 
 static void ReadStringFromFile(HANDLE file, MyString *string, RedFoxEngine::ResourcesManager *m)
 {
@@ -169,7 +147,7 @@ static void WriteGameObjectToFile(HANDLE file, RedFoxEngine::GameObject *current
                 }break;
                 case physx::PxGeometryType::eCAPSULE:
                 {
-                //   current->type = RedFoxEngine::CT_CAPSULE;
+                    current->type = RedFoxEngine::CT_CAPSULE;
                 }break;
             }
         }

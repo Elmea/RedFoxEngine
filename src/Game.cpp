@@ -69,8 +69,6 @@ void setColorFromMass(RedFoxMaths::Float3* color, int mass)
 
 UIBEHAVIOUR(UI)
 {
-    if (self->isPressed)
-        printf("Pressed\n");
 }
 
 BEHAVIOUR(Cube)
@@ -111,7 +109,6 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
                     if (scene->gameObjects[i].body == hit.actor
                         && scene->gameObjectBehaviours[scene->gameObjects[i].behaviourIndex].function == Cube)
                     {
-                        printf("cube hit\n");
 
                         if (storedCube == nullptr)
                         {
@@ -127,7 +124,6 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
                             hitCube->mass = temp;
                             storedCube = nullptr;
                             setColorFromMass(&scene->gameUIs[2].selectedColor, 0);
-                            printf("cube swapped\n");
                         }
                         
                         break;
@@ -191,7 +187,7 @@ void Throw(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
         physx::PxRigidDynamic* cube = objectHold->body->is<physx::PxRigidDynamic>();
 
         float force = 500000;
-        physx::PxVec3 forceVec = { cameraDir.x * force, cameraDir.y * force + 250000 , cameraDir.z * force };
+        physx::PxVec3 forceVec = { - cameraDir.x * force, cameraDir.y * force + 250000 , cameraDir.z * force };
         cube->addForce(forceVec);
 
 
@@ -202,6 +198,22 @@ void Throw(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
 static bool pressed(RedFoxEngine::Key key)
 {
     return (key.isHold || key.isPressed);
+}
+
+
+void Jump(RedFoxEngine::GameObject* self, RedFoxEngine::Input* inputs)
+{
+
+    if (pressed(inputs->Spacebar))
+    {
+        physx::PxRigidDynamic* playerCapsule = self->body->is<physx::PxRigidDynamic>();
+        if (playerCapsule)
+        {
+            if(playerCapsule->getLinearVelocity().magnitude() < 2000)
+                playerCapsule->addForce({ 0, 7500, 0 }, physx::PxForceMode::eFORCE);
+        }
+    }
+
 }
 
 BEHAVIOUR(Player)
@@ -229,7 +241,7 @@ BEHAVIOUR(Player)
     }
 
     Float3 velocity(0, 0, 0);
-    float speed = 1;
+    float speed = 0.5f;
     if (pressed(inputs->W) || pressed(inputs->Up))
     {
         velocity.x -= speed * cosf(cameraRotation.y - PI / 2);
@@ -260,16 +272,8 @@ BEHAVIOUR(Player)
         }
     }
 
-    if (inputs->Spacebar.isPressed)
-    {
-        physx::PxRigidDynamic* playerCapsule = self->body->is<physx::PxRigidDynamic>();
-        if (playerCapsule)
-        {
-            playerCapsule->addForce({ 0, 50000, 0 }, physx::PxForceMode::eFORCE);
-        }
-    }
-
-    if (inputs->E.isPressed)
+    Jump(self, inputs);
+    if (pressed(inputs->E))
     {
         Grab(self, scene, inputs, physx);
     }
@@ -282,19 +286,15 @@ BEHAVIOUR(Player)
     Shoot(self, scene, inputs, physx);
 }
 
+
 __declspec(dllexport) STARTGAME(StartGame)
 {
 #pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
-    //printf("Started the game successfully!\n"); 
 }
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
 {
-/* 
-    C++ by default exports functions by name mangeling  
-    Meaning that our function UpdateGame will look like @UpdateGame%int etc...
-    To stop that, we use a macro to export the function as the thing we named it
- */
+
 #pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
 
     RedFoxEngine::Scene *scene = (RedFoxEngine::Scene *)s;
@@ -308,7 +308,6 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
         player->behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
         player->UpdateTransform();
 
-        // This UI object must be initialized in editor before playing
         scene->AddGameObjectBehaviour("Cube", Cube);
         scene->AddGameObjectBehaviour("Gun", Gun);
         player->modelIndex = -1;
