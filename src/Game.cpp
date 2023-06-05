@@ -174,6 +174,15 @@ BEHAVIOUR(Player)
             playerCapsule->addForce({ velocity.x, velocity.y, velocity.z }, physx::PxForceMode::eVELOCITY_CHANGE);
         }
     }
+
+    if (pressed(inputs->Spacebar))
+    {
+        physx::PxRigidDynamic* playerCapsule = self->body->is<physx::PxRigidDynamic>();
+        if (playerCapsule)
+        {
+            playerCapsule->addForce({ 0, 50000, 0 }, physx::PxForceMode::eFORCE);
+        }
+    }
     
     Shoot(self, scene, inputs, physx, storedCube);
 }
