@@ -169,7 +169,7 @@ static void WriteGameObjectToFile(HANDLE file, RedFoxEngine::GameObject *current
                 }break;
                 case physx::PxGeometryType::eCAPSULE:
                 {
-                    current->type = RedFoxEngine::CT_CAPSULE;
+                //   current->type = RedFoxEngine::CT_CAPSULE;
                 }break;
             }
         }
