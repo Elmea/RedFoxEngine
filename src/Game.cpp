@@ -153,6 +153,22 @@ static bool pressed(RedFoxEngine::Key key)
     return (key.isHold || key.isPressed);
 }
 
+
+void Jump(RedFoxEngine::GameObject* self, RedFoxEngine::Input* inputs)
+{
+
+    if (pressed(inputs->Spacebar))
+    {
+        physx::PxRigidDynamic* playerCapsule = self->body->is<physx::PxRigidDynamic>();
+        if (playerCapsule)
+        {
+            if(playerCapsule->getLinearVelocity().magnitude() < 2000)
+                playerCapsule->addForce({ 0, 7500, 0 }, physx::PxForceMode::eFORCE);
+        }
+    }
+
+}
+
 BEHAVIOUR(Player)
 {
     scene->m_gameCamera.position = self->position;
@@ -198,15 +214,7 @@ BEHAVIOUR(Player)
         }
     }
 
-    if (pressed(inputs->Spacebar))
-    {
-        physx::PxRigidDynamic* playerCapsule = self->body->is<physx::PxRigidDynamic>();
-        if (playerCapsule)
-        {
-            playerCapsule->addForce({ 0, 50000, 0 }, physx::PxForceMode::eFORCE);
-        }
-    }
-
+    Jump(self, inputs);
     if (pressed(inputs->E))
     {
         Grab(self, scene, inputs, physx);
@@ -214,6 +222,7 @@ BEHAVIOUR(Player)
     
     Shoot(self, scene, inputs, physx);
 }
+
 
 __declspec(dllexport) STARTGAME(StartGame)
 {
