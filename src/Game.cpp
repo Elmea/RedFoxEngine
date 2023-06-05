@@ -151,6 +151,8 @@ BEHAVIOUR(Player)
 {
     scene->m_gameCamera.position = self->position;
 
+    scene->m_gameCamera.position.y++;
+
     static Float3 cameraRotation;
     cameraRotation += {(f32)inputs->mouseYDelta* deltaTime, (f32)inputs->mouseXDelta* deltaTime, 0};
     if (cameraRotation.x > M_PI_2 + deltaTime) cameraRotation.x = M_PI_2;
