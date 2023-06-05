@@ -177,19 +177,17 @@ void Grab(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngi
     }
 }
 
+static Float3 cameraRotation;
+
 void Throw(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
 {
     if (objectHold)
     {
-        RedFoxMaths::Float3 cameraRot = scene->m_gameCamera.orientation.ToEuler();
-        RedFoxMaths::Float3 cameraDir = RedFoxMaths::Float3::EulerToDir(cameraRot);
-
         physx::PxRigidDynamic* cube = objectHold->body->is<physx::PxRigidDynamic>();
 
         float force = 500000;
-        physx::PxVec3 forceVec = { - cameraDir.x * force, cameraDir.y * force + 250000 , cameraDir.z * force };
+        physx::PxVec3 forceVec = { cosf(cameraRotation.y + PI / 2.f) * force, sinf(cameraRotation.x + PI/4.f) * (force) , sinf(cameraRotation.y - PI / 2.f) * force };
         cube->addForce(forceVec);
-
 
         objectHold = nullptr;
     }
@@ -221,14 +219,13 @@ BEHAVIOUR(Player)
     scene->m_gameCamera.position = self->position;
     scene->m_gameCamera.position.y += 1.5f;
 
-    static Float3 cameraRotation;
     cameraRotation -= {(f32)inputs->mouseYDelta* deltaTime, (f32)inputs->mouseXDelta* deltaTime, 0};
 
     if (cameraRotation.x > M_PI_2) cameraRotation.x = M_PI_2;
     if (cameraRotation.x < -M_PI_2) cameraRotation.x = -M_PI_2;
 
-    if (cameraRotation.y > PI * 2) cameraRotation.y = -PI * 2;
-    if (cameraRotation.y < -PI * 2) cameraRotation.y = PI * 2;
+    if (cameraRotation.y > PI * 2) cameraRotation.y = 0;
+    if (cameraRotation.y < 0) cameraRotation.y = PI * 2;
 
     scene->m_gameCamera.orientation = Quaternion::FromEuler(cameraRotation.x, cameraRotation.y, cameraRotation.z);
     self->orientation = Quaternion::FromEuler(cameraRotation.x, cameraRotation.y, 0);
@@ -305,6 +302,12 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
     static bool reloaded;
     if (!scene->isInit || reloaded == false)
     {
+        physx::PxRigidDynamic* playerCapsule = player->body->is<physx::PxRigidDynamic>();
+        if (playerCapsule)
+        {
+            playerCapsule->setLinearDamping(2);
+        }
+
         player->behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
         player->UpdateTransform();
 
