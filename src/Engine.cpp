@@ -68,7 +68,7 @@ Engine::Engine(int width, int height) :
     dir->lightInfo.quadratic = 0.032f;
     dir->lightInfo.position = {0.0f, 75.0f, 0.0f};
     dir->rotation = Quaternion::FromEuler(-PI/2.f, 0.f, 0.f );
-    dir->lightInfo.ambient = {0.1f, 0.1f, 0.1f};
+    dir->lightInfo.ambient = {0.3f, 0.3f, 0.3f};
     dir->lightInfo.diffuse = {0.6f, 0.6f, 0.6f};
     dir->lightInfo.specular = {0.1f, 0.1f, 0.1f};
     m_input = {};

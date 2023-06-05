@@ -1,10 +1,8 @@
-/* date = February 22nd 2023 2:44 pm */
 
 #pragma once
 #ifdef _WIN32
 #include "Win32Platform.hpp"
 #else
-// TODO(V. Caraulan): linux mac or whatever
 #endif
 
 #include "Scene.hpp"

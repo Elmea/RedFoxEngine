@@ -69,8 +69,6 @@ void setColorFromMass(RedFoxMaths::Float3* color, int mass)
 
 UIBEHAVIOUR(UI)
 {
-    if (self->isPressed)
-        printf("Pressed\n");
 }
 
 BEHAVIOUR(Cube)
@@ -111,7 +109,6 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
                     if (scene->gameObjects[i].body == hit.actor
                         && scene->gameObjectBehaviours[scene->gameObjects[i].behaviourIndex].function == Cube)
                     {
-                        printf("cube hit\n");
 
                         if (storedCube == nullptr)
                         {
@@ -127,7 +124,6 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
                             hitCube->mass = temp;
                             storedCube = nullptr;
                             setColorFromMass(&scene->gameUIs[2].selectedColor, 0);
-                            printf("cube swapped\n");
                         }
                     }
                 }
@@ -227,16 +223,11 @@ BEHAVIOUR(Player)
 __declspec(dllexport) STARTGAME(StartGame)
 {
 #pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
-    //printf("Started the game successfully!\n"); 
 }
 
 __declspec(dllexport) UPDATEGAME(UpdateGame)
 {
-/* 
-    C++ by default exports functions by name mangeling  
-    Meaning that our function UpdateGame will look like @UpdateGame%int etc...
-    To stop that, we use a macro to export the function as the thing we named it
- */
+
 #pragma comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
 
     RedFoxEngine::Scene *scene = (RedFoxEngine::Scene *)s;
@@ -250,7 +241,6 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
         player->behaviourIndex = scene->AddGameObjectBehaviour("Player", Player);
         player->UpdateTransform();
 
-        // This UI object must be initialized in editor before playing
         scene->AddGameObjectBehaviour("Cube", Cube);
         scene->AddGameObjectBehaviour("Gun", Gun);
         player->modelIndex = -1;

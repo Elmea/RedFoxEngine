@@ -69,4 +69,3 @@
     X(PFNGLBINDTEXTURESPROC, glBindTextures)                    \
     X(PFNGLNAMEDBUFFERSUBDATAPROC, glNamedBufferSubData)
 
-// X(PFNGLPROC, gl)                  \ 

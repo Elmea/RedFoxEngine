@@ -1,4 +1,3 @@
-/* date = February 22nd 2023 11:17 am */
 #pragma once
 
 #include <stddef.h>

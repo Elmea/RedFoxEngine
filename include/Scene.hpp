@@ -15,7 +15,6 @@ enum SceneNodeType
     SN_GameObject,
     SN_Camera,
     SN_Light,
-  // SN_GameUI,
 };
 
 struct SceneNode

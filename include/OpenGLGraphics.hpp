@@ -1,4 +1,3 @@
-/* date = February 25th 2023 4:19 am */
 #pragma once
 
 #ifdef _WIN32
@@ -150,13 +149,12 @@ public:
     LightStorage    lightStorage;
     bool            postProcessingEnabled;
     
-    // void InitGraphics(Memory *persistent, Memory* tempArena, WindowDimension p_dimension);
     void InitGraphics(ResourcesManager *manager, WindowDimension p_dimension);
     void InitModel(Model* model, ObjModel obj);
     void InitLights();
     void InitFont();
     void InitQuad();
-    // void InitModelTextures(ObjModel *model);
+
     void InitModelTextures(ObjImages* images);
     u32  InitTexture(void *data, int width, int height, bool resident, bool repeat);
     void InitFramebuffer();
