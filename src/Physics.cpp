@@ -147,11 +147,13 @@ void Physx::InitScene(Scene *scene, int sphereIndex, int cubeIndex)
 				else
 					CreateDynamicCube(&scene->gameObjects[i], scene->GetWorldTransform(i));
 			}
+			
 			else if(scene->gameObjects[i].type == CT_CAPSULE)
 			{
-					CreateDynamicCapsule(&scene->gameObjects[i], scene->GetWorldTransform(i));
+					CreateDynamicCube(&scene->gameObjects[i], scene->GetWorldTransform(i));
 					LockDynamicBody(&scene->gameObjects[i], true, true, true);
 			}
+			
 			else
 			{
 					scene->gameObjects[i].body = nullptr;

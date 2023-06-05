@@ -244,7 +244,7 @@ __declspec(dllexport) UPDATEGAME(UpdateGame)
         // This UI object must be initialized in editor before playing
         scene->AddGameObjectBehaviour("Cube", Cube);
         scene->AddGameObjectBehaviour("Gun", Gun);
-
+        player->modelIndex = -1;
 
         scene->isInit = true;
         reloaded = true;
