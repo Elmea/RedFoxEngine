@@ -63,7 +63,6 @@ void setColorFromMass(RedFoxMaths::Float3* color, int mass)
         color->x = 1;
         color->y = 1;
         color->z = 1;
-
     }
 
 }
@@ -98,7 +97,7 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
         RedFoxMaths::Float3 front = ray_world.GetXYZF3();
         front.Normalize();
         front *= 1.2f;
-        physx::PxVec3 origin = { view.mat[0][3] + front.x, view.mat[1][3] + front.y, view.mat[2][3] +front.z};
+        physx::PxVec3 origin = { view.mat[0][3] + front.x, view.mat[1][3] + front.y, view.mat[2][3] + front.z };
         physx::PxVec3 unitDir = { ray_world.x, ray_world.y, ray_world.z };
         physx::PxRaycastBuffer hitCalls;
         if (physx->m_scene->raycast(origin, unitDir, scene->m_gameCamera.m_parameters._far, hitCalls, physx::PxHitFlag::eANY_HIT))
@@ -106,16 +105,16 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
             physx::PxRaycastHit hit = hitCalls.getAnyHit(0);
             if (hit.actor)
             {
-                
+
                 for (int i = 0; i < scene->gameObjectCount; i++)
                 {
                     if (scene->gameObjects[i].body == hit.actor
                         && scene->gameObjectBehaviours[scene->gameObjects[i].behaviourIndex].function == Cube)
                     {
                         printf("cube hit\n");
-                        
+
                         if (storedCube == nullptr)
-                        {                         
+                        {
                             storedCube = &scene->gameObjects[i];
                             setColorFromMass(&scene->gameUIs[2].selectedColor, storedCube->mass);
                             storedCubeId = i;
@@ -135,6 +134,13 @@ void Shoot(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEng
             }
         }
     }
+
+    if (input->mouseRClick.isPressed)
+    {
+        storedCube = nullptr;
+        setColorFromMass(&scene->gameUIs[2].selectedColor, 0);
+    }
+    
 }
 
 void Grab(RedFoxEngine::GameObject* self, RedFoxEngine::Scene* scene, RedFoxEngine::Input* input, RedFoxEngine::Physx* physx)
